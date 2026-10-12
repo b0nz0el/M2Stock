@@ -303,6 +303,7 @@
 <!-- Scripts (defer agar DOM siap lebih dulu) -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/auth.js" defer></script>
+<script src="../../assets/js/image-utils.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>
@@ -328,6 +329,46 @@
 
     <form id="item-form" class="space-y-4" onsubmit="handleItemSubmit(event)">
       <input type="hidden" id="item-id">
+      <input type="hidden" id="item-image-url">
+
+      <!-- Upload & Preview Foto Produk -->
+      <div>
+        <label class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Foto Produk</label>
+        <div class="flex items-center gap-4 p-3 bg-black/30 border border-white/5 rounded-2xl">
+          <!-- Thumbnail Preview Container -->
+          <div class="relative w-20 h-20 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 group">
+            <img id="item-image-preview" src="" alt="Preview Foto" class="hidden w-full h-full object-cover">
+            <div id="item-image-placeholder" class="text-center text-[#A0A0A5]">
+              <i data-lucide="image" class="w-6 h-6 mx-auto opacity-40" aria-hidden="true"></i>
+              <span class="text-[10px] block mt-1">Belum ada</span>
+            </div>
+            <!-- Tombol Hapus Foto -->
+            <button type="button" id="btn-remove-photo" onclick="removeSelectedPhoto()"
+                    title="Hapus Foto" aria-label="Hapus Foto"
+                    class="hidden absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-[#FF3B30] text-white flex items-center justify-center transition shadow">
+              <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <!-- Controls & Compression Info -->
+          <div class="flex-1 min-w-0 space-y-1.5">
+            <input type="file" id="item-image-file" accept="image/jpeg,image/png,image/webp,image/heic" class="hidden" onchange="handleImageSelection(event)">
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="document.getElementById('item-image-file').click()"
+                      class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition">
+                <i data-lucide="upload" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                <span>Pilih Foto</span>
+              </button>
+              <span class="text-[11px] text-[#A0A0A5]">JPG, PNG, WebP (Maks. 5 MB)</span>
+            </div>
+            <!-- Info Ukuran Kompresi -->
+            <div id="image-compression-info" class="hidden text-[11px] text-[#34C759] flex items-center gap-1.5 font-mono">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#34C759] flex-shrink-0" aria-hidden="true"></i>
+              <span id="compression-info-text">WebP &lt; 500 KB</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
@@ -450,9 +491,90 @@
     }
   }
 
+  let selectedImageBlob = null;
+  let isImageChanged = false;
+
+  function resetImageForm() {
+    selectedImageBlob = null;
+    isImageChanged = false;
+    const fileInput = document.getElementById('item-image-file');
+    const urlInput = document.getElementById('item-image-url');
+    const previewImg = document.getElementById('item-image-preview');
+    const placeholder = document.getElementById('item-image-placeholder');
+    const removeBtn = document.getElementById('btn-remove-photo');
+    const compInfo = document.getElementById('image-compression-info');
+
+    if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = '';
+    if (previewImg) {
+      previewImg.src = '';
+      previewImg.classList.add('hidden');
+    }
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (removeBtn) removeBtn.classList.add('hidden');
+    if (compInfo) compInfo.classList.add('hidden');
+  }
+
+  async function handleImageSelection(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    try {
+      if (typeof ImageUtils === 'undefined') {
+        throw new Error('Modul kompresi gambar (ImageUtils) belum siap');
+      }
+
+      const compInfo = document.getElementById('image-compression-info');
+      const compText = document.getElementById('compression-info-text');
+      if (compInfo && compText) {
+        compText.textContent = 'Mengompresi ke WebP...';
+        compInfo.classList.remove('hidden');
+      }
+
+      const result = await ImageUtils.compressImage(file);
+      selectedImageBlob = result.blob;
+      isImageChanged = true;
+
+      const previewImg = document.getElementById('item-image-preview');
+      const placeholder = document.getElementById('item-image-placeholder');
+      const removeBtn = document.getElementById('btn-remove-photo');
+
+      if (previewImg) {
+        previewImg.src = result.previewUrl;
+        previewImg.classList.remove('hidden');
+      }
+      if (placeholder) placeholder.classList.add('hidden');
+      if (removeBtn) removeBtn.classList.remove('hidden');
+
+      if (compInfo && compText) {
+        compText.textContent = `${result.originalSizeText} → ${result.compressedSizeText} (WebP)`;
+        compInfo.classList.remove('hidden');
+      }
+
+      if (typeof window.refreshIcons === 'function') {
+        window.refreshIcons();
+      }
+    } catch (err) {
+      console.error('Image selection error:', err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Gagal memproses gambar', 'error');
+      }
+      resetImageForm();
+    }
+  }
+
+  function removeSelectedPhoto() {
+    resetImageForm();
+    isImageChanged = true;
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons();
+    }
+  }
+
   function openAddItemModal() {
     const form = document.getElementById('item-form');
     if (form) form.reset();
+    resetImageForm();
     document.getElementById('item-id').value = '';
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
@@ -466,6 +588,9 @@
       modal.classList.add('flex');
     }
     loadCategories();
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons();
+    }
     setTimeout(function () {
       const skuInput = document.getElementById('item-sku');
       if (skuInput) skuInput.focus();
@@ -476,6 +601,7 @@
     const item = currentItems.find(function (i) { return Number(i.id) === Number(id); });
     if (!item) return;
 
+    resetImageForm();
     document.getElementById('item-id').value = item.id;
     document.getElementById('item-sku').value = item.sku || '';
     document.getElementById('item-brand').value = item.brand && item.brand !== '-' ? item.brand : '';
@@ -484,6 +610,20 @@
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
+
+    if (item.image_url) {
+      document.getElementById('item-image-url').value = item.image_url;
+      const previewImg = document.getElementById('item-image-preview');
+      const placeholder = document.getElementById('item-image-placeholder');
+      const removeBtn = document.getElementById('btn-remove-photo');
+      if (previewImg) {
+        previewImg.src = item.image_url;
+        previewImg.classList.remove('hidden');
+      }
+      if (placeholder) placeholder.classList.add('hidden');
+      if (removeBtn) removeBtn.classList.remove('hidden');
+    }
+    isImageChanged = false;
 
     document.getElementById('modal-item-title').textContent = 'Edit Barang';
     const submitBtn = document.getElementById('btn-submit-item');
@@ -502,6 +642,9 @@
     if (modal) {
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons();
     }
     setTimeout(function () {
       const nameInput = document.getElementById('item-name');
@@ -554,23 +697,47 @@
       return;
     }
 
-    const payload = {
-      sku: sku,
-      name: name,
-      brand: brand || null,
-      category_id: category_id ? Number(category_id) : null,
-      stock: stock,
-      cost_price: cost_price,
-      sell_price: sell_price,
-      min_stock: min_stock
-    };
-
     const btnSubmit = document.getElementById('btn-submit-item');
     const originalBtnContent = btnSubmit.innerHTML;
     btnSubmit.disabled = true;
-    btnSubmit.innerHTML = '<span>Menyimpan...</span>';
 
     try {
+      // 1. Upload foto ke Storage jika ada foto baru
+      let finalImageUrl = document.getElementById('item-image-url').value || null;
+
+      if (selectedImageBlob) {
+        btnSubmit.innerHTML = '<span>Mengunggah Foto...</span>';
+        const cleanSku = (sku || 'item').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+        const imagePath = `${cleanSku}-${Date.now()}.webp`;
+
+        const uploadRes = await Api.storage.uploadImage(selectedImageBlob, imagePath);
+        if (!uploadRes.ok) {
+          if (typeof showToast === 'function') {
+            showToast(uploadRes.error?.message || 'Gagal mengunggah foto ke storage', 'error');
+          }
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = originalBtnContent;
+          return;
+        }
+        finalImageUrl = uploadRes.data.publicUrl;
+      } else if (isImageChanged && !selectedImageBlob) {
+        finalImageUrl = null;
+      }
+
+      btnSubmit.innerHTML = '<span>Menyimpan Produk...</span>';
+
+      const payload = {
+        sku: sku,
+        name: name,
+        brand: brand || null,
+        category_id: category_id ? Number(category_id) : null,
+        stock: stock,
+        cost_price: cost_price,
+        sell_price: sell_price,
+        min_stock: min_stock,
+        image_url: finalImageUrl
+      };
+
       let res;
       if (id) {
         res = await Api.items.update(Number(id), payload);
@@ -727,9 +894,15 @@
         tr.innerHTML = `
           <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih ${item.name}" class="accent-[#0088CC] w-4 h-4"></td>
           <td class="px-4 py-3.5">
-            <div class="w-10 h-10 rounded-lg bg-[#0088CC]/15 grid place-items-center">
-              <i data-lucide="package" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
-            </div>
+            ${item.image_url ? `
+              <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0">
+                <img src="${item.image_url}" alt="${item.name}" class="w-full h-full object-cover" loading="lazy">
+              </div>
+            ` : `
+              <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg bg-[#0088CC]/15 grid place-items-center flex-shrink-0">
+                <i data-lucide="package" class="w-6 h-6 md:w-5 md:h-5 text-[#32ADE6]" aria-hidden="true"></i>
+              </div>
+            `}
           </td>
           <td class="px-4 py-3.5 font-medium">${item.name}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5]">${item.brand || '-'}</td>
@@ -775,6 +948,8 @@
   window.openEditItemModal = openEditItemModal;
   window.closeItemModal = closeItemModal;
   window.handleItemSubmit = handleItemSubmit;
+  window.handleImageSelection = handleImageSelection;
+  window.removeSelectedPhoto = removeSelectedPhoto;
   window.openDeleteItemModal = openDeleteItemModal;
   window.closeDeleteModal = closeDeleteModal;
   window.confirmDeleteItem = confirmDeleteItem;
