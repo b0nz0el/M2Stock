@@ -199,7 +199,7 @@ if (document.readyState === 'loading') {
 document.querySelectorAll('.card').forEach(card => card.classList.add('card-hover'));
 
 /* Initial animation */
-setTimeout(animateActivePage, 300);
+setTimeout(animateActivePage, 100);
 
 /* Welcome toast — hanya 1x per session (pindah halaman tidak mengulang) */
 if (!sessionStorage.getItem('welcomeShown')) {

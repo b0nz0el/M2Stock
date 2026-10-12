@@ -26,8 +26,8 @@ function animateActivePage() {
     // Bagi dengan multiplier supaya tampil singkat
     const displayNum = num / mult;
     el.classList.add('ticker-glow');
-    animateNumber(el, displayNum, 1200, prefix, suffix);
-    setTimeout(() => el.classList.remove('ticker-glow'), 900);
+    animateNumber(el, displayNum, 700, prefix, suffix);
+    setTimeout(() => el.classList.remove('ticker-glow'), 500);
   });
 
   if (typeof refreshIcons === 'function') {
