@@ -2,16 +2,18 @@
    aQuaStock Pro — utils.js
    Helper global (toast, format/parse angka, animasi angka)
    ═══════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    TOAST
-   ═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 function showToast(msg, type = 'success') {
   const colors = { success: '#34C759', error: '#FF3B30', info: '#0088CC' };
   const container = document.getElementById('toast-container') || document.body;
   const toast = document.createElement('div');
   toast.className = 'toast';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
   toast.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
-    <span style="width:8px;height:8px;background:${colors[type]};border-radius:50%;flex-shrink:0;"></span>
+    <span style="width:8px;height:8px;background:${colors[type] || colors.info};border-radius:50%;flex-shrink:0;"></span>
     <span style="font-size:14px;font-weight:500;">${msg}</span>
   </div>`;
   container.appendChild(toast);
@@ -28,6 +30,7 @@ function showToast(msg, type = 'success') {
    ANGKA & ANIMASI HELPERS
    ═══════════════════════════════════════════════ */
 function parseIndonesianNumber(text) {
+  if (!text || typeof text !== 'string') return 0;
   // Ambil angka dengan pemisah ribuan titik
   const cleaned = text.replace(/[^\d]/g, '');
   const num = parseFloat(cleaned);
@@ -35,13 +38,18 @@ function parseIndonesianNumber(text) {
 }
 
 function detectMultiplier(text) {
+  if (!text || typeof text !== 'string') return 1;
   if (/jt|juta/i.test(text)) return 1000000;
   if (/rb|ribu/i.test(text)) return 1000;
   return 1;
 }
 
 function animateNumber(el, target, duration = 1200, prefix = '', suffix = '') {
-  if (prefersReducedMotion) {
+  if (!el) return;
+  const isReducedMotion = (typeof prefersReducedMotion !== 'undefined' && prefersReducedMotion) ||
+    (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  if (isReducedMotion) {
     el.textContent = prefix + target.toLocaleString('id-ID') + suffix;
     return;
   }
@@ -55,4 +63,14 @@ function animateNumber(el, target, duration = 1200, prefix = '', suffix = '') {
     else el.textContent = prefix + target.toLocaleString('id-ID') + suffix;
   }
   requestAnimationFrame(tick);
+}
+
+/* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    showToast,
+    parseIndonesianNumber,
+    detectMultiplier,
+    animateNumber
+  };
 }
