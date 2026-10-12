@@ -217,12 +217,7 @@ describe('utils.js', () => {
   });
 
   describe('focusProgrammatically', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
     afterEach(() => {
-      vi.useRealTimers();
       document.body.innerHTML = '';
     });
 
@@ -236,14 +231,17 @@ describe('utils.js', () => {
       expect(document.activeElement).toBe(btn);
     });
 
-    it('menghapus atribut data-programmatic-focus setelah ~100ms', () => {
+    it('mempertahankan atribut sebelum blur dan menghapusnya saat event blur terjadi', () => {
       document.body.innerHTML = '<button id="btn">Click</button>';
       const btn = document.getElementById('btn');
 
       focusProgrammatically(btn);
+      // Atribut tetap ada sebelum blur
       expect(btn.getAttribute('data-programmatic-focus')).toBe('true');
 
-      vi.advanceTimersByTime(100);
+      // Trigger blur
+      btn.dispatchEvent(new Event('blur'));
+      // Atribut dihapus setelah blur
       expect(btn.getAttribute('data-programmatic-focus')).toBeNull();
     });
 

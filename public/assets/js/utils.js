@@ -88,9 +88,10 @@ function focusProgrammatically(el) {
   if (!el || typeof el.focus !== 'function') return;
   el.setAttribute('data-programmatic-focus', 'true');
   el.focus();
-  setTimeout(() => {
+  el.addEventListener('blur', function onBlur() {
     el.removeAttribute('data-programmatic-focus');
-  }, 100);
+    el.removeEventListener('blur', onBlur);
+  }, { once: true });
 }
 
 /* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */

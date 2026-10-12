@@ -91,7 +91,7 @@ describe('<app-sidebar> Component', () => {
     expect(document.activeElement).toBe(toggleBtn);
     expect(toggleBtn.getAttribute('data-programmatic-focus')).toBe('true');
 
-    vi.advanceTimersByTime(100);
+    toggleBtn.dispatchEvent(new Event('blur'));
     expect(toggleBtn.getAttribute('data-programmatic-focus')).toBeNull();
   });
 
