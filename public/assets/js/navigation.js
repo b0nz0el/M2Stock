@@ -286,13 +286,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const heading = document.querySelector('main h1, main h2, .page h1, .page h2');
   if (heading) {
     heading.setAttribute('tabindex', '-1');
-    // Hanya fokus jika pengguna belum memfokuskan elemen form secara manual
-    if (!document.activeElement || document.activeElement === document.body) {
-      if (typeof focusProgrammatically === 'function') {
-        focusProgrammatically(heading);
-      } else {
-        heading.focus();
-      }
+    if (typeof focusProgrammatically === 'function') {
+      focusProgrammatically(heading);
+    } else {
+      heading.focus();
     }
   }
 });

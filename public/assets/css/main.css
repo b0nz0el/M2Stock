@@ -44,7 +44,7 @@
   [data-lucide] { stroke-width: 2; }
 
   /* ═══ ACCESSIBILITY ═══ */
-  :focus-visible {
+  :focus-visible:not([tabindex="-1"]) {
     outline: none !important;
     box-shadow: 0 0 0 3px rgba(50, 173, 230, 0.5);
     border-radius: 8px;
@@ -52,6 +52,13 @@
   :focus:not(:focus-visible) {
     outline: none;
     box-shadow: none;
+  }
+
+  /* Heading/non-interaktif dengan tabindex="-1" tidak boleh punya ring */
+  [tabindex="-1"]:focus,
+  [tabindex="-1"]:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   [data-programmatic-focus="true"] {
