@@ -140,9 +140,14 @@ class AppSidebar extends HTMLElement {
 
     document.removeEventListener('keydown', this._handleTrapFocus);
 
-    if (this._lastFocused && typeof this._lastFocused.focus === 'function') {
+    if (this._lastFocused?.focus) {
+      this._lastFocused.setAttribute('data-programmatic-focus', 'true');
       this._lastFocused.focus();
       this._lastFocused = null;
+      setTimeout(() => {
+        document.querySelectorAll('[data-programmatic-focus]')
+          .forEach(el => el.removeAttribute('data-programmatic-focus'));
+      }, 100);
     }
   }
 
@@ -151,8 +156,8 @@ class AppSidebar extends HTMLElement {
       <aside class="w-64 bg-[#1C1C1E] flex flex-col border-r border-white/5" aria-label="Sidebar navigasi">
         <!-- Brand Header -->
         <div class="p-5 flex items-center gap-3 border-b border-white/5">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center shadow-lg shadow-[#0088CC]/20">
-            <i data-lucide="fish" class="w-5 h-5 text-white" aria-hidden="true"></i>
+          <div class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center shadow-lg shadow-[#0088CC]/20">
+            <img src="../assets/images/logo.svg" alt="aQuaStock" class="w-full h-full">
           </div>
           <div class="min-w-0">
             <span class="text-base font-bold block truncate">aQuaStock</span>

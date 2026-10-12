@@ -80,8 +80,11 @@
     }
   }
 
+  /* Whitelist aksi yang sudah di-handle oleh komponen Web/UI (jangan beri mock toast) */
+  var SKIP_ACTIONS = ['close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu'];
+
   function handle(action, el) {
-    if (!action) return;
+    if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
 
     if (action === 'add' || action.indexOf('add-') === 0) {
       give('Fitur Tambah akan hadir setelah backend'); return;
@@ -117,12 +120,21 @@
   }
 
   document.addEventListener('click', function (e) {
+    // Lewati menu item navigasi dengan data-page
+    if (e.target && e.target.closest && e.target.closest('.menu-item[data-page]')) {
+      return;
+    }
+
     var el = e.target && e.target.closest
       ? e.target.closest('[data-action], .btn-mock')
       : null;
     if (!el) return;
 
     var action = el.getAttribute('data-action') || '';
+    if (SKIP_ACTIONS.indexOf(action) !== -1) {
+      return;
+    }
+
     if (!action) {
       var text = (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ');
       give((text ? text + ' ' : 'Fitur ini ') + 'akan hadir setelah backend');

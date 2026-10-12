@@ -73,7 +73,7 @@ describe('<app-sidebar> Component', () => {
     expect(toggleBtn.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('menutup sidebar dan mengembalikan fokus ke elemen pemicu', () => {
+  it('menutup sidebar dan mengembalikan fokus ke elemen pemicu serta mengatur flag programmatic-focus', () => {
     const toggleBtn = document.querySelector('[data-action="toggle-sidebar"]');
     toggleBtn.focus();
 
@@ -86,6 +86,10 @@ describe('<app-sidebar> Component', () => {
     expect(aside.classList.contains('open')).toBe(false);
     expect(toggleBtn.getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(toggleBtn);
+    expect(toggleBtn.getAttribute('data-programmatic-focus')).toBe('true');
+
+    vi.advanceTimersByTime(100);
+    expect(toggleBtn.getAttribute('data-programmatic-focus')).toBeNull();
   });
 
   it('menutup sidebar saat tombol close diklik', () => {
