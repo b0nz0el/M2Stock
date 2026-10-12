@@ -10,9 +10,16 @@
 
   /* Konfigurasi state API */
   const config = {
-    mockMode: true, // true: gunakan mock data sampai backend siap
+    mockMode: false, // false: gunakan backend Supabase jika tersedia
     defaultTimeout: 15000 // 15 detik timeout default
   };
+
+  /**
+   * Helper pemeriksaan ketersediaan klien Supabase global
+   */
+  function isSupabaseAvailable() {
+    return typeof window !== 'undefined' && Boolean(window.supabase);
+  }
 
   /**
    * Helper pembuat AbortController baru
@@ -235,18 +242,326 @@
 
     // 1. Auth Module
     auth: {
-      login: (credentials, opts) => apiRequest('/auth/login', { method: 'POST', body: credentials, ...opts }),
-      logout: (opts) => apiRequest('/auth/logout', { method: 'POST', ...opts }),
-      me: (opts) => apiRequest('/auth/me', { ...opts })
+      login: async (credentials, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const { data, error } = await window.supabase.auth.signInWithPassword({
+              email: credentials.username || credentials.email,
+              password: credentials.password
+            });
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: error.code || 'AUTH_ERROR',
+                  message: error.message || 'Login gagal',
+                  details: error
+                }
+              });
+            }
+            return formatResponse({
+              ok: true,
+              data: { token: data.session ? data.session.access_token : null, user: data.user, session: data.session },
+              meta: { message: 'Login berhasil' }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest('/auth/login', { method: 'POST', body: credentials, ...opts });
+      },
+      logout: async (opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const { error } = await window.supabase.auth.signOut();
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: { code: error.code || 'AUTH_ERROR', message: error.message, details: error }
+              });
+            }
+            return formatResponse({ ok: true, data: { success: true }, meta: { message: 'Logout berhasil' } });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest('/auth/logout', { method: 'POST', ...opts });
+      },
+      me: async (opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const { data, error } = await window.supabase.auth.getUser();
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: { code: error.code || 'AUTH_ERROR', message: error.message, details: error }
+              });
+            }
+            return formatResponse({ ok: true, data: data.user, meta: {} });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest('/auth/me', { ...opts });
+      }
     },
 
     // 2. Items / Master Barang
     items: {
-      getAll: (params, opts) => apiRequest('/items?' + new URLSearchParams(params || {}).toString(), { ...opts }),
-      getById: (id, opts) => apiRequest(`/items/${id}`, { ...opts }),
-      create: (data, opts) => apiRequest('/items', { method: 'POST', body: data, ...opts }),
-      update: (id, data, opts) => apiRequest(`/items/${id}`, { method: 'PUT', body: data, ...opts }),
-      delete: (id, opts) => apiRequest(`/items/${id}`, { method: 'DELETE', ...opts })
+      getAll: async (params, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            let query = window.supabase
+              .from('products')
+              .select('*, categories(name)')
+              .order('created_at', { ascending: false });
+
+            if (params && params.category_id) {
+              query = query.eq('category_id', Number(params.category_id));
+            }
+            if (params && params.search) {
+              query = query.or('name.ilike.%' + params.search + '%,sku.ilike.%' + params.search + '%');
+            }
+            if (opts && opts.signal) {
+              query = query.abortSignal(opts.signal);
+            }
+
+            const { data, error } = await query;
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: error.code || 'SUPABASE_ERROR',
+                  message: error.message || 'Gagal mengambil data produk',
+                  details: error
+                }
+              });
+            }
+
+            const mapped = (data || []).map(function (item) {
+              return {
+                id: item.id,
+                sku: item.sku || '',
+                name: item.name || '',
+                brand: item.brand || '-',
+                category_id: item.category_id,
+                category: (item.categories && item.categories.name) || 'Umum',
+                stock: Number(item.stock) || 0,
+                minStock: Number(item.min_stock) || 0,
+                min_stock: Number(item.min_stock) || 0,
+                costPrice: Number(item.cost_price) || 0,
+                cost_price: Number(item.cost_price) || 0,
+                sellPrice: Number(item.sell_price) || 0,
+                sell_price: Number(item.sell_price) || 0,
+                unitPrice: Number(item.sell_price) || 0,
+                image_url: item.image_url || null,
+                created_at: item.created_at,
+                updated_at: item.updated_at
+              };
+            });
+
+            return formatResponse({
+              ok: true,
+              data: mapped,
+              meta: { total: mapped.length, source: 'supabase' }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest('/items?' + new URLSearchParams(params || {}).toString(), { ...opts });
+      },
+
+      getById: async (id, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const numId = Number(id);
+            let query = window.supabase
+              .from('products')
+              .select('*, categories(name)');
+
+            if (!isNaN(numId) && Number.isInteger(numId) && String(numId) === String(id).trim()) {
+              query = query.eq('id', numId);
+            } else {
+              query = query.eq('sku', String(id).trim());
+            }
+
+            if (opts && opts.signal) {
+              query = query.abortSignal(opts.signal);
+            }
+
+            const { data, error } = await query.single();
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: error.code === 'PGRST116' ? 'NOT_FOUND' : (error.code || 'SUPABASE_ERROR'),
+                  message: error.code === 'PGRST116' ? 'Produk tidak ditemukan' : (error.message || 'Gagal mengambil produk'),
+                  details: error
+                }
+              });
+            }
+
+            const mapped = {
+              id: data.id,
+              sku: data.sku || '',
+              name: data.name || '',
+              brand: data.brand || '-',
+              category_id: data.category_id,
+              category: (data.categories && data.categories.name) || 'Umum',
+              stock: Number(data.stock) || 0,
+              minStock: Number(data.min_stock) || 0,
+              min_stock: Number(data.min_stock) || 0,
+              costPrice: Number(data.cost_price) || 0,
+              cost_price: Number(data.cost_price) || 0,
+              sellPrice: Number(data.sell_price) || 0,
+              sell_price: Number(data.sell_price) || 0,
+              unitPrice: Number(data.sell_price) || 0,
+              image_url: data.image_url || null,
+              created_at: data.created_at,
+              updated_at: data.updated_at
+            };
+
+            return formatResponse({
+              ok: true,
+              data: mapped,
+              meta: { source: 'supabase' }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest(`/items/${id}`, { ...opts });
+      },
+
+      create: async (data, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const row = {
+              name: data.name,
+              sku: data.sku || data.code || null,
+              category_id: data.category_id ? Number(data.category_id) : null,
+              brand: data.brand || null,
+              stock: data.stock !== undefined ? Number(data.stock) : 0,
+              min_stock: (data.min_stock !== undefined ? data.min_stock : data.minStock) !== undefined ? Number(data.min_stock || data.minStock) : 0,
+              cost_price: (data.cost_price !== undefined ? data.cost_price : data.costPrice) !== undefined ? Number(data.cost_price || data.costPrice) : 0,
+              sell_price: (data.sell_price !== undefined ? data.sell_price : (data.sellPrice || data.unitPrice)) !== undefined ? Number(data.sell_price || data.sellPrice || data.unitPrice) : 0,
+              image_url: data.image_url || null
+            };
+
+            let query = window.supabase
+              .from('products')
+              .insert([row])
+              .select();
+
+            if (opts && opts.signal) {
+              query = query.abortSignal(opts.signal);
+            }
+
+            const { data: inserted, error } = await query;
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: error.code || 'SUPABASE_ERROR',
+                  message: error.message || 'Gagal menambahkan produk',
+                  details: error
+                }
+              });
+            }
+
+            return formatResponse({
+              ok: true,
+              data: inserted && inserted[0] ? inserted[0] : null,
+              meta: { message: 'Produk berhasil ditambahkan' }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest('/items', { method: 'POST', body: data, ...opts });
+      },
+
+      update: async (id, data, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const numId = Number(id);
+            const row = { ...data };
+            if (row.minStock !== undefined) { row.min_stock = row.minStock; delete row.minStock; }
+            if (row.costPrice !== undefined) { row.cost_price = row.costPrice; delete row.costPrice; }
+            if (row.sellPrice !== undefined) { row.sell_price = row.sellPrice; delete row.sellPrice; }
+            if (row.unitPrice !== undefined && row.sell_price === undefined) { row.sell_price = row.unitPrice; delete row.unitPrice; }
+
+            let query = window.supabase
+              .from('products')
+              .update(row)
+              .eq('id', numId)
+              .select();
+
+            if (opts && opts.signal) {
+              query = query.abortSignal(opts.signal);
+            }
+
+            const { data: updated, error } = await query;
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: error.code || 'SUPABASE_ERROR',
+                  message: error.message || 'Gagal memperbarui produk',
+                  details: error
+                }
+              });
+            }
+
+            return formatResponse({
+              ok: true,
+              data: updated && updated[0] ? updated[0] : null,
+              meta: { message: 'Produk berhasil diperbarui' }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest(`/items/${id}`, { method: 'PUT', body: data, ...opts });
+      },
+
+      delete: async (id, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const numId = Number(id);
+            let query = window.supabase
+              .from('products')
+              .delete()
+              .eq('id', numId);
+
+            if (opts && opts.signal) {
+              query = query.abortSignal(opts.signal);
+            }
+
+            const { error } = await query;
+            if (error) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: error.code || 'SUPABASE_ERROR',
+                  message: error.message || 'Gagal menghapus produk',
+                  details: error
+                }
+              });
+            }
+
+            return formatResponse({
+              ok: true,
+              data: { success: true },
+              meta: { message: 'Produk berhasil dihapus' }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return apiRequest(`/items/${id}`, { method: 'DELETE', ...opts });
+      }
     },
 
     // 3. Transaksi Barang Masuk & Keluar

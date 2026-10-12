@@ -79,7 +79,7 @@
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Barang</h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">10 barang · 106 total stok · Rp 11.2jt nilai</p>
+          <p id="items-subtitle" class="text-sm text-[#A0A0A5] mt-1">10 barang · 106 total stok · Rp 11.2jt nilai</p>
         </div>
         <div class="flex gap-2">
           <button data-action="import" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
@@ -130,7 +130,7 @@
               <th class="px-4 py-3 w-24"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="items-tbody">
             <tr class="table-row border-b border-white/5">
               <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih Filter Canister" class="accent-[#0088CC] w-4 h-4"></td>
               <td class="px-4 py-3.5"><div class="w-10 h-10 rounded-lg bg-[#0088CC]/15 grid place-items-center"><i data-lucide="package" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i></div></td>
@@ -296,13 +296,131 @@
      role="status" aria-live="polite"></div>
 
 <!-- Scripts (defer agar DOM siap lebih dulu) -->
+<script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/utils.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/api.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+
+<script>
+  async function loadItemsFromBackend() {
+    const tbody = document.getElementById('items-tbody');
+    const subtitle = document.getElementById('items-subtitle');
+    if (!tbody || typeof Api === 'undefined') return;
+
+    try {
+      const res = await Api.items.getAll();
+      if (!res.ok) {
+        console.error('Gagal mengambil data produk:', res.error);
+        return;
+      }
+
+      const items = res.data || [];
+      tbody.innerHTML = '';
+
+      if (items.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" class="text-center py-12 text-[#A0A0A5]">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i data-lucide="package" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
+                <p class="text-sm font-medium">Belum ada produk. Klik 'Tambah Barang' untuk mulai.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        if (subtitle) {
+          subtitle.textContent = '0 barang · 0 total stok · Rp 0 nilai';
+        }
+        if (typeof refreshIcons === 'function') refreshIcons();
+        return;
+      }
+
+      let totalStock = 0;
+      let totalValue = 0;
+
+      items.forEach(function (item) {
+        const stock = Number(item.stock) || 0;
+        const minStock = Number(item.min_stock || item.minStock) || 0;
+        const costPrice = Number(item.cost_price || item.costPrice) || 0;
+        const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
+        const margin = sellPrice > 0 ? Math.round(((sellPrice - costPrice) / sellPrice) * 100) : 0;
+
+        totalStock += stock;
+        totalValue += (stock * sellPrice);
+
+        const isLow = stock <= minStock;
+        const stockDisplay = isLow
+          ? '<span class="font-semibold text-[#FF3B30] flex items-center justify-end gap-1">' + stock + ' unit <i data-lucide="alert-triangle" class="w-3.5 h-3.5" aria-hidden="true"></i></span>'
+          : '<span class="font-medium">' + stock + ' unit</span>';
+
+        const formatRupiah = function (num) {
+          return 'Rp ' + Number(num).toLocaleString('id-ID');
+        };
+
+        const tr = document.createElement('tr');
+        tr.className = 'table-row border-b border-white/5';
+        tr.innerHTML = `
+          <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih ${item.name}" class="accent-[#0088CC] w-4 h-4"></td>
+          <td class="px-4 py-3.5">
+            <div class="w-10 h-10 rounded-lg bg-[#0088CC]/15 grid place-items-center">
+              <i data-lucide="package" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
+            </div>
+          </td>
+          <td class="px-4 py-3.5 font-medium">${item.name}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${item.brand || '-'}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${item.sku || '-'}</td>
+          <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${item.category || 'Umum'}</span></td>
+          <td class="px-4 py-3.5 text-right">${stockDisplay}</td>
+          <td class="px-4 py-3.5 text-right">${formatRupiah(costPrice)}</td>
+          <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
+          <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">${margin}%</td>
+          <td class="px-4 py-3.5">
+            <div class="flex gap-1 justify-end">
+              <button data-action="edit" data-id="${item.id}" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
+                <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
+              <button data-action="delete" data-id="${item.id}" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
+                <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (subtitle) {
+        const valStr = totalValue >= 1000000 ? (totalValue / 1000000).toFixed(1) + 'jt' : Number(totalValue).toLocaleString('id-ID');
+        subtitle.textContent = items.length + ' barang · ' + totalStock + ' total stok · Rp ' + valStr + ' nilai';
+      }
+
+      if (typeof refreshIcons === 'function') {
+        refreshIcons();
+      }
+    } catch (err) {
+      console.error('Error saat memuat produk:', err);
+    }
+  }
+
+  async function initItems() {
+    let retries = 0;
+    while (typeof window.supabase === 'undefined' && retries < 20) {
+      await new Promise(r => setTimeout(r, 50));
+      retries++;
+    }
+    await loadItemsFromBackend();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initItems);
+  } else {
+    initItems();
+  }
+</script>
 </body>
 </html>
