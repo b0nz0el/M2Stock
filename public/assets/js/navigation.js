@@ -288,7 +288,11 @@ document.addEventListener('DOMContentLoaded', function() {
     heading.setAttribute('tabindex', '-1');
     // Hanya fokus jika pengguna belum memfokuskan elemen form secara manual
     if (!document.activeElement || document.activeElement === document.body) {
-      heading.focus();
+      if (typeof focusProgrammatically === 'function') {
+        focusProgrammatically(heading);
+      } else {
+        heading.focus();
+      }
     }
   }
 });

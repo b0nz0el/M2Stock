@@ -81,12 +81,25 @@ function animateNumber(el, target, duration = 1200, prefix = '', suffix = '') {
   requestAnimationFrame(tick);
 }
 
+/* ═══════════════════════════════════════════════
+   AKSESIBILITAS / FOCUS HELPERS
+   ═══════════════════════════════════════════════ */
+function focusProgrammatically(el) {
+  if (!el || typeof el.focus !== 'function') return;
+  el.setAttribute('data-programmatic-focus', 'true');
+  el.focus();
+  setTimeout(() => {
+    el.removeAttribute('data-programmatic-focus');
+  }, 100);
+}
+
 /* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     showToast,
     parseIndonesianNumber,
     detectMultiplier,
-    animateNumber
+    animateNumber,
+    focusProgrammatically
   };
 }

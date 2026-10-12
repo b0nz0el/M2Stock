@@ -3,7 +3,8 @@ import {
   parseIndonesianNumber,
   detectMultiplier,
   animateNumber,
-  showToast
+  showToast,
+  focusProgrammatically
 } from '../public/assets/js/utils.js';
 
 describe('utils.js', () => {
@@ -212,6 +213,44 @@ describe('utils.js', () => {
       // Maju 300ms lagi (total 3300ms) untuk remove
       vi.advanceTimersByTime(300);
       expect(document.querySelector('.toast')).toBeNull();
+    });
+  });
+
+  describe('focusProgrammatically', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      document.body.innerHTML = '';
+    });
+
+    it('men-set atribut data-programmatic-focus="true" dan memfokuskan elemen', () => {
+      document.body.innerHTML = '<button id="btn">Click</button>';
+      const btn = document.getElementById('btn');
+
+      focusProgrammatically(btn);
+
+      expect(btn.getAttribute('data-programmatic-focus')).toBe('true');
+      expect(document.activeElement).toBe(btn);
+    });
+
+    it('menghapus atribut data-programmatic-focus setelah ~100ms', () => {
+      document.body.innerHTML = '<button id="btn">Click</button>';
+      const btn = document.getElementById('btn');
+
+      focusProgrammatically(btn);
+      expect(btn.getAttribute('data-programmatic-focus')).toBe('true');
+
+      vi.advanceTimersByTime(100);
+      expect(btn.getAttribute('data-programmatic-focus')).toBeNull();
+    });
+
+    it('tidak melempar error jika elemen bernilai null atau tidak memiliki method focus', () => {
+      expect(() => focusProgrammatically(null)).not.toThrow();
+      expect(() => focusProgrammatically({})).not.toThrow();
+      expect(() => focusProgrammatically(undefined)).not.toThrow();
     });
   });
 });

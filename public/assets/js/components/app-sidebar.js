@@ -141,13 +141,12 @@ class AppSidebar extends HTMLElement {
     document.removeEventListener('keydown', this._handleTrapFocus);
 
     if (this._lastFocused?.focus) {
-      this._lastFocused.setAttribute('data-programmatic-focus', 'true');
-      this._lastFocused.focus();
+      if (typeof focusProgrammatically === 'function') {
+        focusProgrammatically(this._lastFocused);
+      } else {
+        this._lastFocused.focus();
+      }
       this._lastFocused = null;
-      setTimeout(() => {
-        document.querySelectorAll('[data-programmatic-focus]')
-          .forEach(el => el.removeAttribute('data-programmatic-focus'));
-      }, 100);
     }
   }
 

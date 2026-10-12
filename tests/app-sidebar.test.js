@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { focusProgrammatically } from '../public/assets/js/utils.js';
 import '../public/assets/js/components/app-sidebar.js';
+
+globalThis.focusProgrammatically = focusProgrammatically;
 
 describe('<app-sidebar> Component', () => {
   let sidebar;
