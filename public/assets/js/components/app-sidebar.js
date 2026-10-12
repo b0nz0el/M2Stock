@@ -156,7 +156,17 @@ class AppSidebar extends HTMLElement {
         <!-- Brand Header -->
         <div class="p-5 flex items-center gap-3 border-b border-white/5">
           <div class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center shadow-lg shadow-[#0088CC]/20">
-            <img src="../assets/images/logo.svg" alt="aQuaStock" class="w-full h-full">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-hidden="true">
+              <defs>
+                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0088CC"/>
+                  <stop offset="100%" stop-color="#32ADE6"/>
+                </linearGradient>
+              </defs>
+              <rect x="10" y="10" width="80" height="80" rx="20" fill="url(#logo-gradient)"/>
+              <path d="M30 50 C30 40, 40 32, 55 32 C65 32, 72 38, 75 45 L82 38 L80 50 L82 62 L75 55 C72 62, 65 68, 55 68 C40 68, 30 60, 30 50 Z" fill="#FFFFFF"/>
+              <circle cx="60" cy="46" r="2.5" fill="#1C1C1E"/>
+            </svg>
           </div>
           <div class="min-w-0">
             <span class="text-base font-bold block truncate">aQuaStock</span>
