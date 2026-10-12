@@ -140,17 +140,17 @@
                  oninput="handleSearch(this.value)"
                  class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
         </div>
-        <div class="flex items-center gap-1.5 bg-[#1C1C1E] p-1 rounded-xl border border-white/5 overflow-x-auto">
+        <div class="report-tabs sm:flex sm:flex-wrap sm:gap-2" id="supplier-filter-tabs">
           <button type="button" onclick="filterByStatus('all')" id="tab-all"
-                  class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0088CC] text-white transition">
+                  class="filter-tab-btn active">
             Semua
           </button>
           <button type="button" onclick="filterByStatus('active')" id="tab-active"
-                  class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#A0A0A5] hover:text-white transition">
+                  class="filter-tab-btn">
             Aktif
           </button>
           <button type="button" onclick="filterByStatus('inactive')" id="tab-inactive"
-                  class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#A0A0A5] hover:text-white transition">
+                  class="filter-tab-btn">
             Nonaktif
           </button>
         </div>
@@ -531,13 +531,13 @@ function filterByStatus(status) {
   currentFilter = status;
   currentPage = 1;
   document.querySelectorAll('.filter-tab-btn').forEach(btn => {
-    btn.classList.remove('bg-[#0088CC]', 'text-white', 'font-semibold');
+    btn.classList.remove('active', 'bg-[#0088CC]', 'text-white', 'font-semibold');
     btn.classList.add('text-[#A0A0A5]', 'font-medium');
   });
   const activeBtn = document.getElementById(`tab-${status}`);
   if (activeBtn) {
     activeBtn.classList.remove('text-[#A0A0A5]', 'font-medium');
-    activeBtn.classList.add('bg-[#0088CC]', 'text-white', 'font-semibold');
+    activeBtn.classList.add('active', 'bg-[#0088CC]', 'text-white', 'font-semibold');
   }
   renderSuppliers();
 }

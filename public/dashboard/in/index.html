@@ -149,11 +149,11 @@
                  oninput="handleSearchIn(this.value)"
                  class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
         </div>
-        <div class="flex gap-2 flex-wrap" id="in-filter-buttons">
-          <button type="button" data-period="today" onclick="filterInPeriod('today')" class="in-period-btn px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium text-white transition">Hari Ini</button>
-          <button type="button" data-period="7d" onclick="filterInPeriod('7d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">7 Hari</button>
-          <button type="button" data-period="30d" onclick="filterInPeriod('30d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">30 Hari</button>
-          <button type="button" data-period="all" onclick="filterInPeriod('all')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">Semua</button>
+        <div class="report-tabs sm:flex sm:flex-wrap sm:gap-2" id="in-filter-buttons">
+          <button type="button" data-period="today" onclick="filterInPeriod('today')" class="in-period-btn active">Hari Ini</button>
+          <button type="button" data-period="7d" onclick="filterInPeriod('7d')" class="in-period-btn">7 Hari</button>
+          <button type="button" data-period="30d" onclick="filterInPeriod('30d')" class="in-period-btn">30 Hari</button>
+          <button type="button" data-period="all" onclick="filterInPeriod('all')" class="in-period-btn">Semua</button>
         </div>
       </div>
 
@@ -622,10 +622,10 @@
     const buttons = document.querySelectorAll('.in-period-btn');
     buttons.forEach(btn => {
       if (btn.getAttribute('data-period') === period) {
-        btn.classList.add('bg-[#0088CC]', 'text-white');
+        btn.classList.add('active', 'bg-[#0088CC]', 'text-white');
         btn.classList.remove('bg-[#1C1C1E]', 'border', 'border-white/5');
       } else {
-        btn.classList.remove('bg-[#0088CC]');
+        btn.classList.remove('active', 'bg-[#0088CC]', 'text-white');
         btn.classList.add('bg-[#1C1C1E]', 'border', 'border-white/5');
       }
     });

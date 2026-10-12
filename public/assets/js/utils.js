@@ -6,8 +6,8 @@
    TOAST
    ═══════════════════════════════════════════════════ */
 function showToast(msg, type = 'success') {
-  const colors = { success: '#34C759', error: '#FF3B30', info: '#0088CC' };
-  const iconNames = { success: 'check', error: 'alert-circle', info: 'info' };
+  const colors = { success: '#34C759', error: '#FF3B30', info: '#0088CC', warning: '#FF9500' };
+  const iconNames = { success: 'check', error: 'alert-circle', info: 'info', warning: 'alert-triangle' };
   const container = document.getElementById('toast-container') || document.body;
   const toast = document.createElement('div');
   toast.className = 'toast';

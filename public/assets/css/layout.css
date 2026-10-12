@@ -4,8 +4,18 @@
    ═══════════════════════════════════════════════════ */
   /* ═══ PAGE TRANSITIONS ═══ */
   .page { display: none; }
-  .page.active { display: block; animation: fadeIn 0.2s ease-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .page.active {
+    display: block;
+    animation: pageEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  main {
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 
   /* ═══ BOTTOM NAV (default hidden, tampil di mobile) ═══ */
   .bottom-nav {

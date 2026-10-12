@@ -291,15 +291,17 @@
 </div>
 
 <!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1 text-white" id="bulk-count">0 produk dipilih</span>
-  <button type="button" onclick="clearSelection()" class="text-xs text-[#A0A0A5] hover:text-white px-3 py-2 transition">Batal</button>
-  <button type="button" onclick="openBulkPriceModal()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition">
-    <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit Harga
-  </button>
-  <button type="button" onclick="openBulkDeleteModal()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition">
-    <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i> Hapus
-  </button>
+<div id="bulk-bar" class="hidden fixed z-50 items-center justify-between transition-all" role="region" aria-label="Aksi massal">
+  <span class="text-xs sm:text-sm font-semibold text-white truncate shrink-0 mr-2" id="bulk-count">0 dipilih</span>
+  <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+    <button type="button" onclick="clearSelection()" class="text-xs text-[#A0A0A5] hover:text-white px-2.5 sm:px-3 py-2 min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/5 transition">Batal</button>
+    <button type="button" onclick="openBulkPriceModal()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition justify-center">
+      <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit<span class="hidden sm:inline"> Harga</span>
+    </button>
+    <button type="button" onclick="openBulkDeleteModal()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#FF3B30]/20 transition justify-center">
+      <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i> Hapus
+    </button>
+  </div>
 </div>
 
 <!-- ═══════════ MODAL KONFIRMASI HAPUS MASSAL ═══════════ -->
@@ -1306,11 +1308,11 @@
       if (count > 0 && filtered.length > 0) {
         bulkBar.classList.remove('hidden');
         bulkBar.classList.add('flex');
-        bulkCountText.textContent = `${count} produk dipilih`;
+        bulkCountText.textContent = `${count} dipilih`;
       } else {
         bulkBar.classList.add('hidden');
         bulkBar.classList.remove('flex');
-        bulkCountText.textContent = `${count} produk dipilih`;
+        bulkCountText.textContent = `${count} dipilih`;
       }
     }
 

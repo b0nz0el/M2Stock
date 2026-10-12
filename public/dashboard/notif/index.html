@@ -80,7 +80,7 @@
     <div id="page-notif" class="page active p-6 space-y-5">
       <div class="flex items-center justify-between">
         <h2 class="text-3xl font-bold tracking-tight">Notifikasi</h2>
-        <button data-action="mark-read" class="text-sm text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium">
+        <button id="btn-mark-all-read" onclick="handleMarkAllRead()" class="text-sm text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium transition">
           <i data-lucide="check-check" class="w-4 h-4" aria-hidden="true"></i> Tandai semua dibaca
         </button>
       </div>
@@ -98,7 +98,7 @@
                 <i data-lucide="clock" class="w-3 h-3" aria-hidden="true"></i> 5 menit lalu
               </p>
             </div>
-            <button data-action="restock" class="bg-[#0088CC] hover:bg-[#0077BB] px-3.5 py-2 rounded-lg text-xs font-semibold btn">Restock</button>
+            <a href="/dashboard/in/" class="bg-[#0088CC] hover:bg-[#0077BB] px-3.5 py-2 rounded-lg text-xs font-semibold btn inline-flex items-center text-white transition">Restock</a>
           </div>
         </div>
 
@@ -202,5 +202,20 @@
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+<script>
+function handleMarkAllRead() {
+  const cards = document.querySelectorAll('#page-notif .card');
+  cards.forEach(card => {
+    card.classList.remove('border-l-[#FF3B30]', 'border-l-[#FFCC00]', 'border-l-[#34C759]', 'border-l-[#0088CC]');
+    card.classList.add('border-l-white/10', 'opacity-70');
+  });
+  const bellDot = document.querySelector('header [data-action="notif"] span');
+  if (bellDot) bellDot.classList.add('hidden');
+
+  if (typeof showToast === 'function') {
+    showToast('Semua notifikasi telah ditandai dibaca', 'success');
+  }
+}
+</script>
 </body>
 </html>

@@ -95,14 +95,14 @@
         </div>
       </div>
 
-      <div class="flex gap-2 flex-wrap">
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium">Penjualan</button>
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Laba</button>
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Stok</button>
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Kategori</button>
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Channel</button>
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Supplier</button>
-        <button data-action="report-type" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Kasir</button>
+      <div class="report-tabs" id="report-filter-tabs">
+        <button type="button" data-action="report-type" class="active">Penjualan</button>
+        <button type="button" data-action="report-type">Laba</button>
+        <button type="button" data-action="report-type">Stok</button>
+        <button type="button" data-action="report-type">Kategori</button>
+        <button type="button" data-action="report-type">Channel</button>
+        <button type="button" data-action="report-type">Supplier</button>
+        <button type="button" data-action="report-type">Kasir</button>
       </div>
 
       <div class="grid grid-cols-4 gap-4">
@@ -272,5 +272,16 @@
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const tabs = document.querySelectorAll('#report-filter-tabs > button');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+});
+</script>
 </body>
 </html>

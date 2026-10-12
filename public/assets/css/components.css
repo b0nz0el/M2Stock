@@ -180,3 +180,104 @@
     background: #0088CC;
     border-radius: 0 0 3px 3px;
   }
+
+  /* ═══ FLOATING BULK ACTION BAR ═══ */
+  #bulk-bar {
+    position: fixed;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: calc(100% - 32px);
+    margin: 0 auto;
+    background: rgba(28, 28, 30, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 12px 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+    z-index: 50;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  #bulk-bar.hidden {
+    display: none !important;
+  }
+
+  @media (min-width: 1025px) {
+    #bulk-bar {
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%) !important;
+      bottom: 24px !important;
+      min-width: 480px;
+      max-width: 600px;
+      padding: 14px 24px !important;
+      border-radius: 20px !important;
+    }
+  }
+
+  /* ═══ TAB FILTER / REPORT TABS SERAGAM ═══ */
+  .report-tabs, .filter-tabs-uniform {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .report-tabs > button,
+  .report-tabs > a,
+  .filter-tabs-uniform > button,
+  .filter-tabs-uniform > a {
+    width: 100%;
+    min-height: 44px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #1C1C1E;
+    color: #A0A0A5;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .report-tabs > button:hover,
+  .filter-tabs-uniform > button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+  }
+
+  .report-tabs > button.active,
+  .report-tabs > button.bg-\[\#0088CC\],
+  .filter-tabs-uniform > button.active,
+  .filter-tabs-uniform > button.bg-\[\#0088CC\] {
+    background-color: #0088CC !important;
+    color: #FFFFFF !important;
+    border-color: #0088CC !important;
+    font-weight: 600;
+  }
+
+  @media (min-width: 640px) {
+    .report-tabs, .filter-tabs-uniform {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: auto;
+    }
+    .report-tabs > button,
+    .report-tabs > a,
+    .filter-tabs-uniform > button,
+    .filter-tabs-uniform > a {
+      width: auto;
+      min-height: 40px;
+      padding: 10px 16px;
+    }
+  }
