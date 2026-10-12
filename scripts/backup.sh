@@ -14,7 +14,7 @@ mkdir -p "$BACKUP_DIR"
 
 tar -czf "$ARCHIVE" \
   -C "$ROOT_DIR" \
-  public docs database scripts \
+  public docs scripts \
   README.md package.json .gitignore 2>/dev/null || true
 
 echo "✅ Backup dibuat: ${ARCHIVE}"
