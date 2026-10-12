@@ -28,3 +28,6 @@ build/
 .cache/
 coverage/
 visual-baseline/
+
+# Visual regression screenshots (generated)
+visual-baseline/
