@@ -50,13 +50,19 @@ function syncActiveState() {
   const bc = document.getElementById('breadcrumb');
   if (bc && pageTitles[pageId]) bc.textContent = pageTitles[pageId];
 
-  document.querySelectorAll('.menu-item').forEach(function(m) {
-    const match = m.getAttribute('onclick') && m.getAttribute('onclick').match(/'([a-z]+)'/);
-    const isActive = !!match && match[1] === pageId;
-    m.classList.toggle('active', isActive);
-    if (isActive) m.setAttribute('aria-current', 'page');
-    else m.removeAttribute('aria-current');
-  });
+  const appSidebar = document.querySelector('app-sidebar');
+  if (appSidebar && typeof appSidebar._highlightActiveMenu === 'function') {
+    appSidebar._highlightActiveMenu(pageId);
+  } else {
+    document.querySelectorAll('.menu-item').forEach(function(m) {
+      const match = (m.getAttribute('onclick') && m.getAttribute('onclick').match(/'([a-z]+)'/))
+        || (m.dataset && m.dataset.page ? [null, m.dataset.page] : null);
+      const isActive = !!match && match[1] === pageId;
+      m.classList.toggle('active', isActive);
+      if (isActive) m.setAttribute('aria-current', 'page');
+      else m.removeAttribute('aria-current');
+    });
+  }
 
   const tabLabels = {
     dashboard: 'Dashboard',
@@ -106,10 +112,10 @@ let lastFocusedElement = null;
 
 function updateSidebarAria(isOpen) {
   const aside = document.querySelector('aside');
-  if (aside) {
+  if (aside && !aside.closest('app-sidebar')) {
     aside.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
   }
-  document.querySelectorAll('button[onclick*="toggleSidebar"], button[onclick*="openMenuDrawer"]').forEach(b => {
+  document.querySelectorAll('button[onclick*="toggleSidebar"], button[onclick*="openMenuDrawer"], [data-action="toggle-sidebar"], [data-action="open-menu"]').forEach(b => {
     b.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
 }
@@ -146,6 +152,21 @@ function trapSidebarFocus(e) {
 }
 
 function openMenuDrawer(event) {
+  const appSidebar = document.querySelector('app-sidebar');
+  if (appSidebar && typeof appSidebar.open === 'function') {
+    const aside = appSidebar.querySelector('aside');
+    if (aside && aside.classList.contains('open')) {
+      closeSidebar();
+      return;
+    }
+    document.querySelectorAll('.bottom-nav-item').forEach(function(item) {
+      item.classList.remove('active');
+    });
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    appSidebar.open();
+    return;
+  }
+
   const aside = document.querySelector('aside');
   if (!aside) return;
 
@@ -171,6 +192,17 @@ function openMenuDrawer(event) {
 }
 
 function toggleSidebar(event) {
+  const appSidebar = document.querySelector('app-sidebar');
+  if (appSidebar && typeof appSidebar.open === 'function') {
+    const aside = appSidebar.querySelector('aside');
+    if (aside && aside.classList.contains('open')) {
+      closeSidebar();
+    } else {
+      appSidebar.open();
+    }
+    return;
+  }
+
   const aside = document.querySelector('aside');
   if (!aside) return;
 
@@ -187,10 +219,15 @@ function toggleSidebar(event) {
 }
 
 function closeSidebar() {
-  const aside = document.querySelector('aside');
-  if (aside) aside.classList.remove('open');
-  updateSidebarAria(false);
-  document.removeEventListener('keydown', trapSidebarFocus);
+  const appSidebar = document.querySelector('app-sidebar');
+  if (appSidebar && typeof appSidebar.close === 'function') {
+    appSidebar.close();
+  } else {
+    const aside = document.querySelector('aside');
+    if (aside) aside.classList.remove('open');
+    updateSidebarAria(false);
+    document.removeEventListener('keydown', trapSidebarFocus);
+  }
 
   document.querySelectorAll('.bottom-nav-item').forEach(function(b) {
     b.classList.remove('active');
@@ -203,7 +240,7 @@ function closeSidebar() {
   }
 
   // Kembalikan fokus ke elemen pemicu
-  if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+  if (!appSidebar && lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
     lastFocusedElement.focus();
     lastFocusedElement = null;
   }
@@ -213,31 +250,33 @@ function closeSidebar() {
    EVENT SIDEBAR & PAGE HEADING FOCUS
    ═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
-  // Event menu sidebar — HANYA SATU tempat
-  document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', function() {
-      const match = this.getAttribute('onclick')?.match(/'(\w+)'/);
-      if (!match) return;
-      const tab = match[1];
-      activeBottomTab = tab;
-      document.querySelectorAll('.bottom-nav-item').forEach(b => {
-        const isActive = b.dataset.tab === tab;
-        b.classList.toggle('active', isActive);
-        if (isActive) b.setAttribute('aria-current', 'page');
-        else b.removeAttribute('aria-current');
+  // Event menu sidebar (hanya jika bukan app-sidebar, karena app-sidebar punya event delegation sendiri)
+  if (!document.querySelector('app-sidebar')) {
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const match = this.getAttribute('onclick')?.match(/'(\w+)'/);
+        if (!match) return;
+        const tab = match[1];
+        activeBottomTab = tab;
+        document.querySelectorAll('.bottom-nav-item').forEach(b => {
+          const isActive = b.dataset.tab === tab;
+          b.classList.toggle('active', isActive);
+          if (isActive) b.setAttribute('aria-current', 'page');
+          else b.removeAttribute('aria-current');
+        });
+        if (window.innerWidth <= (typeof MOBILE_BREAKPOINT !== 'undefined' ? MOBILE_BREAKPOINT : 1024)) {
+          closeSidebar();
+        }
       });
-      if (window.innerWidth <= (typeof MOBILE_BREAKPOINT !== 'undefined' ? MOBILE_BREAKPOINT : 1024)) {
-        closeSidebar();
-      }
     });
-  });
 
-  // Tap area gelap di luar sidebar
-  const aside = document.querySelector('aside');
-  if (aside) {
-    aside.addEventListener('click', function(e) {
-      if (e.target === aside) closeSidebar();
-    });
+    // Tap area gelap di luar sidebar
+    const aside = document.querySelector('aside');
+    if (aside) {
+      aside.addEventListener('click', function(e) {
+        if (e.target === aside) closeSidebar();
+      });
+    }
   }
 
   // Sinkronkan tab aktif dengan halaman yang sedang dibuka

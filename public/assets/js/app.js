@@ -8,6 +8,15 @@
 lucide.createIcons();
 
 /* ═══════════════════════════════════════════════
+   CUSTOM EVENT LISTENERS (Web Components)
+   ═══════════════════════════════════════════════ */
+document.addEventListener('app-sidebar:navigate', function(e) {
+  if (e.detail && e.detail.pageId && typeof showPage === 'function') {
+    showPage(e.detail.pageId);
+  }
+});
+
+/* ═══════════════════════════════════════════════
    AUTO-CONVERT TABLE → CARD (data-label)
    ═══════════════════════════════════════════════ */
 const MOBILE_BREAKPOINT = 1024;
