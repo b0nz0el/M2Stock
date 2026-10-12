@@ -747,16 +747,20 @@
 
     renderInPagination(filtered.length);
 
+    const pagWrap = document.getElementById('in-pagination-wrap');
     if (filtered.length === 0) {
+      if (pagWrap) pagWrap.classList.add('hidden');
       const emptyText = searchQuery
         ? 'Tidak ada data barang masuk yang cocok dengan pencarian / filter'
         : 'Belum ada transaksi barang masuk pada periode ini';
       tbody.innerHTML = `
-        <tr class="table-row">
-          <td colspan="9" class="px-4 py-12 text-center text-[#A0A0A5]">
-            <div class="flex flex-col items-center justify-center gap-2">
-              <i data-lucide="package-search" class="w-8 h-8 opacity-40"></i>
-              <p class="text-sm">${emptyText}</p>
+        <tr class="empty-state-row table-row">
+          <td colspan="9" class="empty-state-cell px-4 py-12 text-center text-[#A0A0A5]">
+            <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
+              <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
+                <i data-lucide="package-search" class="w-6 h-6 text-[#A0A0A5]/60"></i>
+              </div>
+              <p class="text-sm font-semibold text-white">${emptyText}</p>
             </div>
           </td>
         </tr>
@@ -765,6 +769,8 @@
       if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
       return;
     }
+
+    if (pagWrap) pagWrap.classList.remove('hidden');
 
     const startIdx = (currentPage - 1) * pageSize;
     const paged = filtered.slice(startIdx, startIdx + pageSize);

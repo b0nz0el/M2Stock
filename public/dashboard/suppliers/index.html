@@ -459,17 +459,21 @@ function renderSuppliers() {
 
   renderSuppliersPagination(filtered.length);
 
+  const pagWrap = document.getElementById('suppliers-pagination-wrap');
   if (filtered.length === 0) {
+    if (pagWrap) pagWrap.classList.add('hidden');
     const emptyText = (searchQuery.trim() || currentFilter !== 'all')
       ? 'Tidak ada supplier yang cocok dengan filter / pencarian'
       : 'Tidak ada data supplier';
     tbody.innerHTML = `
-      <tr>
-        <td colspan="5" class="px-5 py-12 text-center text-[#A0A0A5]">
-          <div class="flex flex-col items-center justify-center gap-2">
-            <i data-lucide="inbox" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
-            <p class="font-medium text-white">${emptyText}</p>
-            <p class="text-xs">Klik tombol Tambah Supplier untuk mendaftarkan mitra baru.</p>
+      <tr class="empty-state-row">
+        <td colspan="5" class="empty-state-cell px-5 py-12 text-center text-[#A0A0A5]">
+          <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
+            <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
+              <i data-lucide="inbox" class="w-6 h-6 text-[#A0A0A5]/40" aria-hidden="true"></i>
+            </div>
+            <p class="font-semibold text-white">${emptyText}</p>
+            <p class="text-xs text-[#A0A0A5]">Klik tombol Tambah Supplier untuk mendaftarkan mitra baru.</p>
           </div>
         </td>
       </tr>
@@ -477,6 +481,8 @@ function renderSuppliers() {
     if (window.lucide) lucide.createIcons();
     return;
   }
+
+  if (pagWrap) pagWrap.classList.remove('hidden');
 
   const startIdx = (currentPage - 1) * pageSize;
   const paged = filtered.slice(startIdx, startIdx + pageSize);

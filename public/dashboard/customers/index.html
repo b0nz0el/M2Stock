@@ -476,17 +476,21 @@ function renderCustomers() {
 
   renderCustomersPagination(filtered.length);
 
+  const pagWrap = document.getElementById('customers-pagination-wrap');
   if (filtered.length === 0) {
+    if (pagWrap) pagWrap.classList.add('hidden');
     const emptyText = searchQuery.trim()
       ? 'Tidak ada data customer yang cocok dengan pencarian'
       : 'Tidak ada data customer';
     tbody.innerHTML = `
-      <tr>
-        <td colspan="8" class="px-5 py-12 text-center text-[#A0A0A5]">
-          <div class="flex flex-col items-center justify-center gap-2">
-            <i data-lucide="users" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
-            <p class="font-medium text-white">${emptyText}</p>
-            <p class="text-xs">Klik tombol Tambah Customer untuk mencatat pelanggan baru.</p>
+      <tr class="empty-state-row">
+        <td colspan="8" class="empty-state-cell px-5 py-12 text-center text-[#A0A0A5]">
+          <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
+            <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
+              <i data-lucide="users" class="w-6 h-6 text-[#A0A0A5]/40" aria-hidden="true"></i>
+            </div>
+            <p class="font-semibold text-white">${emptyText}</p>
+            <p class="text-xs text-[#A0A0A5]">Klik tombol Tambah Customer untuk mencatat pelanggan baru.</p>
           </div>
         </td>
       </tr>
@@ -494,6 +498,8 @@ function renderCustomers() {
     if (window.lucide) lucide.createIcons();
     return;
   }
+
+  if (pagWrap) pagWrap.classList.remove('hidden');
 
   const startIdx = (currentPage - 1) * pageSize;
   const paged = filtered.slice(startIdx, startIdx + pageSize);
