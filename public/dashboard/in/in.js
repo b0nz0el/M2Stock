@@ -1,0 +1,553 @@
+  let allInTransactions = [];
+  let availableProducts = [];
+  let currentFilterPeriod = 'today';
+  let searchQuery = '';
+  let currentPage = 1;
+  const pageSize = 10;
+  let deleteInId = null;
+
+  function formatRupiahVal(val) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
+  }
+
+  function formatShortRupiah(val) {
+    if (!val || val === 0) return 'Rp 0';
+    if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1).replace('.0', '') + 'jt';
+    if (val >= 1000) return 'Rp ' + (val / 1000).toFixed(0) + 'rb';
+    return 'Rp ' + val;
+  }
+
+  function formatTxDate(isoStr) {
+    if (!isoStr) return '-';
+    const d = new Date(isoStr);
+    const day = d.getDate();
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const m = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${day} ${m} ${hh}:${mm}`;
+  }
+
+  async function loadDropdowns() {
+    try {
+      const prodRes = await Api.items.getAll();
+      if (prodRes && prodRes.ok) {
+        availableProducts = prodRes.data || [];
+        const prodSelect = document.getElementById('in-product-id');
+        if (prodSelect) {
+          prodSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
+          availableProducts.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.name} (Stok: ${p.stock ?? 0})`;
+            prodSelect.appendChild(opt);
+          });
+        }
+      }
+
+      const supRes = await Api.suppliers.getAll();
+      if (supRes && supRes.ok) {
+        const supSelect = document.getElementById('in-supplier-id');
+        if (supSelect) {
+          supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
+          (supRes.data || []).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            supSelect.appendChild(opt);
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error loading dropdowns:', err);
+    }
+  }
+
+  function handleInProductChange() {
+    const select = document.getElementById('in-product-id');
+    const pId = select.value;
+    const prod = availableProducts.find(p => Number(p.id) === Number(pId));
+    const priceInput = document.getElementById('in-price');
+    if (prod && priceInput) {
+      priceInput.value = prod.cost_price || 0;
+    }
+    calculateInTotal();
+  }
+
+  function calculateInTotal() {
+    const qty = Number(document.getElementById('in-qty')?.value || 0);
+    const price = Number(document.getElementById('in-price')?.value || 0);
+    const total = qty * price;
+    const preview = document.getElementById('in-total-preview');
+    if (preview) {
+      preview.textContent = formatRupiahVal(total);
+    }
+  }
+
+  function openAddInModal() {
+    const form = document.getElementById('form-in');
+    if (form) form.reset();
+    calculateInTotal();
+    loadDropdowns();
+    const modal = document.getElementById('modal-in');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeInModal() {
+    const modal = document.getElementById('modal-in');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function openDeleteInModal(id) {
+    deleteInId = id;
+    const modal = document.getElementById('modal-delete-in');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeDeleteInModal() {
+    deleteInId = null;
+    const modal = document.getElementById('modal-delete-in');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  async function handleInSubmit(e) {
+    e.preventDefault();
+    const productId = document.getElementById('in-product-id').value;
+    const supplierId = document.getElementById('in-supplier-id').value;
+    const qty = Number(document.getElementById('in-qty').value);
+    const price = Number(document.getElementById('in-price').value);
+    const note = document.getElementById('in-note').value.trim();
+
+    if (!productId) {
+      if (typeof showToast === 'function') showToast('Pilih produk terlebih dahulu', 'error');
+      return;
+    }
+    if (!qty || qty <= 0) {
+      if (typeof showToast === 'function') showToast('Jumlah masuk harus lebih dari 0', 'error');
+      return;
+    }
+
+    const submitBtn = document.getElementById('btn-submit-in');
+    const originalHtml = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Menyimpan...</span>';
+
+    try {
+      let currentUserId = null;
+      if (typeof window.Auth !== 'undefined') {
+        const user = await window.Auth.getCurrentUser();
+        currentUserId = user?.id || null;
+      }
+
+      const res = await Api.transactions.createIn({
+        product_id: Number(productId),
+        supplier_id: supplierId ? Number(supplierId) : null,
+        qty: qty,
+        price: price,
+        note: note || null,
+        created_by: currentUserId
+      });
+
+      if (!res.ok) {
+        throw new Error(res.error?.message || 'Gagal menyimpan barang masuk');
+      }
+
+      if (typeof showToast === 'function') {
+        showToast('Barang masuk berhasil dicatat! Stok diperbarui.', 'success');
+      }
+      closeInModal();
+      await loadInTransactions();
+    } catch (err) {
+      console.error('Submit in error:', err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Terjadi kesalahan saat menyimpan', 'error');
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalHtml;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    }
+  }
+
+  async function confirmDeleteIn() {
+    if (!deleteInId) return;
+    const btn = document.getElementById('btn-confirm-delete-in');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>Menghapus...</span>';
+
+    try {
+      const res = await Api.transactions.delete(deleteInId);
+      if (!res.ok) {
+        throw new Error(res.error?.message || 'Gagal menghapus transaksi');
+      }
+      if (typeof showToast === 'function') {
+        showToast('Transaksi berhasil dihapus & stok disesuaikan', 'success');
+      }
+      closeDeleteInModal();
+      await loadInTransactions();
+    } catch (err) {
+      console.error('Delete error:', err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Gagal menghapus transaksi', 'error');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    }
+  }
+
+  function updateMetrics(list) {
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+    let todayCount = 0, todayAmount = 0;
+    let sevenCount = 0, sevenAmount = 0;
+    let thirtyCount = 0, thirtyAmount = 0;
+    let totalCount = 0, totalAmount = 0;
+
+    list.forEach(tx => {
+      const tTime = new Date(tx.created_at).getTime();
+      const qty = tx.qty || 0;
+      const amount = (tx.qty || 0) * (tx.price || 0);
+
+      totalCount += qty;
+      totalAmount += amount;
+
+      if (tTime >= startToday) {
+        todayCount += qty;
+        todayAmount += amount;
+      }
+      if (tTime >= sevenDaysAgo) {
+        sevenCount += qty;
+        sevenAmount += amount;
+      }
+      if (tTime >= thirtyDaysAgo) {
+        thirtyCount += qty;
+        thirtyAmount += amount;
+      }
+    });
+
+    const elTodayCount = document.getElementById('stat-in-today-count');
+    const elTodayAmount = document.getElementById('stat-in-today-amount');
+    const el7dCount = document.getElementById('stat-in-7d-count');
+    const el7dAmount = document.getElementById('stat-in-7d-amount');
+    const el30dCount = document.getElementById('stat-in-30d-count');
+    const el30dAmount = document.getElementById('stat-in-30d-amount');
+    const elTotalCount = document.getElementById('stat-in-total-count');
+    const elTotalAmount = document.getElementById('stat-in-total-amount');
+
+    if (elTodayCount) elTodayCount.textContent = `+${todayCount}`;
+    if (elTodayAmount) elTodayAmount.textContent = formatShortRupiah(todayAmount);
+    if (el7dCount) el7dCount.textContent = `+${sevenCount}`;
+    if (el7dAmount) el7dAmount.textContent = formatShortRupiah(sevenAmount);
+    if (el30dCount) el30dCount.textContent = `+${thirtyCount}`;
+    if (el30dAmount) el30dAmount.textContent = formatShortRupiah(thirtyAmount);
+    if (elTotalCount) elTotalCount.textContent = `${totalCount}`;
+    if (elTotalAmount) elTotalAmount.textContent = formatShortRupiah(totalAmount);
+  }
+
+  function filterInPeriod(period) {
+    currentFilterPeriod = period;
+    currentPage = 1;
+    const buttons = document.querySelectorAll('.in-period-btn');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('data-period') === period) {
+        btn.classList.add('active', 'bg-[#0088CC]', 'text-white');
+        btn.classList.remove('bg-[#1C1C1E]', 'border', 'border-white/5');
+      } else {
+        btn.classList.remove('active', 'bg-[#0088CC]', 'text-white');
+        btn.classList.add('bg-[#1C1C1E]', 'border', 'border-white/5');
+      }
+    });
+    renderInTable();
+  }
+
+  function handleSearchIn(val) {
+    searchQuery = (val || '').trim().toLowerCase();
+    currentPage = 1;
+    const pageSearch = document.getElementById('search-in');
+    const globalSearch = document.getElementById('global-search');
+    if (pageSearch && pageSearch.value !== val) pageSearch.value = val;
+    if (globalSearch && globalSearch.value !== val) globalSearch.value = val;
+    renderInTable();
+  }
+
+  function goToInPage(page) {
+    currentPage = page;
+    renderInTable();
+  }
+
+  function renderInPagination(totalFiltered) {
+    const totalPages = Math.ceil(totalFiltered / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIdx = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const endIdx = Math.min(currentPage * pageSize, totalFiltered);
+
+    const infoEl = document.getElementById('in-pagination-info');
+    if (infoEl) {
+      infoEl.textContent = `Menampilkan ${startIdx}-${endIdx} dari ${totalFiltered} data`;
+    }
+
+    const btnContainer = document.getElementById('in-pagination-buttons');
+    if (!btnContainer) return;
+    btnContainer.innerHTML = '';
+
+    // Prev Button
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+      currentPage <= 1
+        ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+        : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    prevBtn.setAttribute('aria-label', 'Halaman sebelumnya');
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.onclick = () => goToInPage(currentPage - 1);
+    prevBtn.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>';
+    btnContainer.appendChild(prevBtn);
+
+    // Page Numbers (max 5)
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.type = 'button';
+      const isActive = p === currentPage;
+      pageBtn.className = `px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+        isActive
+          ? 'bg-[#0088CC] text-white shadow-lg shadow-[#0088CC]/20'
+          : 'bg-[#1C1C1E] border border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+      }`;
+      pageBtn.textContent = p;
+      if (isActive) pageBtn.setAttribute('aria-current', 'page');
+      pageBtn.onclick = () => goToInPage(p);
+      btnContainer.appendChild(pageBtn);
+    }
+
+    // Next Button
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+      currentPage >= totalPages
+        ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+        : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    nextBtn.setAttribute('aria-label', 'Halaman berikutnya');
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.onclick = () => goToInPage(currentPage + 1);
+    nextBtn.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>';
+    btnContainer.appendChild(nextBtn);
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function renderInTable() {
+    const tbody = document.getElementById('in-tbody');
+    if (!tbody) return;
+
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+    const filtered = allInTransactions.filter(tx => {
+      const tTime = new Date(tx.created_at).getTime();
+      if (currentFilterPeriod === 'today' && tTime < startToday) return false;
+      if (currentFilterPeriod === '7d' && tTime < sevenDaysAgo) return false;
+      if (currentFilterPeriod === '30d' && tTime < thirtyDaysAgo) return false;
+
+      if (searchQuery) {
+        const code = `IN-${String(tx.id).padStart(6, '0')}`.toLowerCase();
+        const prodName = (tx.products?.name || '').toLowerCase();
+        const supName = (tx.suppliers?.name || 'umum').toLowerCase();
+        const kasir = (tx.created_by || '').toLowerCase();
+        const note = (tx.note || '').toLowerCase();
+        if (!code.includes(searchQuery) &&
+            !prodName.includes(searchQuery) &&
+            !supName.includes(searchQuery) &&
+            !kasir.includes(searchQuery) &&
+            !note.includes(searchQuery)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    renderInPagination(filtered.length);
+
+    const pagWrap = document.getElementById('in-pagination-wrap');
+    if (filtered.length === 0) {
+      if (pagWrap) pagWrap.classList.add('hidden');
+      const emptyText = searchQuery
+        ? 'Tidak ada data barang masuk yang cocok dengan pencarian / filter'
+        : 'Belum ada transaksi barang masuk pada periode ini';
+      tbody.innerHTML = `
+        <tr class="empty-state-row table-row">
+          <td colspan="9" class="empty-state-cell px-4 py-12 text-center text-[#A0A0A5]">
+            <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
+              <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
+                <i data-lucide="package-search" class="w-6 h-6 text-[#A0A0A5]/60"></i>
+              </div>
+              <p class="text-sm font-semibold text-white">${emptyText}</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+      return;
+    }
+
+    if (pagWrap) pagWrap.classList.remove('hidden');
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const paged = filtered.slice(startIdx, startIdx + pageSize);
+
+    tbody.innerHTML = paged.map(tx => {
+      const code = `IN-${String(tx.id).padStart(6, '0')}`;
+      const dateStr = formatTxDate(tx.created_at);
+      const prodName = tx.products?.name || 'Produk ID #' + tx.product_id;
+      const supName = tx.suppliers?.name || 'Umum';
+      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const qty = tx.qty || 0;
+      const price = tx.price || 0;
+      const total = qty * price;
+
+      return `
+        <tr class="table-row border-b border-white/5">
+          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">${code}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+          <td class="px-4 py-3.5 font-medium">${prodName}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${supName}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${kasir}</td>
+          <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+${qty}</td>
+          <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
+          <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
+          <td class="px-4 py-3.5 text-right">
+            <button type="button" onclick="openDeleteInModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
+                    class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
+              <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+  }
+
+  async function handleRefreshIn() {
+    const icon1 = document.getElementById('icon-refresh-in');
+    const headerBtn = document.getElementById('btn-refresh-in-header');
+    const icon2 = headerBtn ? headerBtn.querySelector('i') : null;
+    if (icon1) icon1.classList.add('animate-spin');
+    if (icon2) icon2.classList.add('animate-spin');
+
+    try {
+      await loadInTransactions();
+      await loadDropdowns();
+      if (typeof showToast === 'function') {
+        showToast('Data berhasil di-refresh', 'success');
+      }
+    } catch (err) {
+      console.error('Refresh in error:', err);
+      if (typeof showToast === 'function') {
+        showToast('Gagal memuat ulang data', 'error');
+      }
+    } finally {
+      setTimeout(() => {
+        if (icon1) icon1.classList.remove('animate-spin');
+        if (icon2) icon2.classList.remove('animate-spin');
+        if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      }, 400);
+    }
+  }
+
+  function handleExportIn() {
+    if (!allInTransactions || allInTransactions.length === 0) {
+      if (typeof showToast === 'function') showToast('Tidak ada data barang masuk untuk diexport', 'warning');
+      return;
+    }
+
+    const headers = ['No. Transaksi', 'Tanggal', 'Nama Barang', 'Supplier', 'Kasir', 'Jumlah', 'Harga (Rp)', 'Total (Rp)', 'Catatan'];
+    const rows = allInTransactions.map(tx => {
+      const code = `IN-${String(tx.id).padStart(6, '0')}`;
+      const dateStr = formatTxDate(tx.created_at);
+      const prodName = tx.products?.name || ('Produk #' + tx.product_id);
+      const supName = tx.suppliers?.name || 'Umum';
+      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const qty = tx.qty || 0;
+      const price = tx.price || 0;
+      const total = qty * price;
+      const note = tx.note || '';
+
+      return [code, dateStr, prodName, supName, kasir, qty, price, total, note];
+    });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const filename = `barang-masuk-${todayStr}.csv`;
+    if (typeof exportToCSV === 'function') {
+      exportToCSV(filename, rows, headers);
+      if (typeof showToast === 'function') showToast(`Berhasil export ${rows.length} transaksi barang masuk`, 'success');
+    }
+  }
+
+  async function loadInTransactions() {
+    try {
+      const res = await Api.transactions.getByType('in');
+      if (res && res.ok) {
+        allInTransactions = res.data || [];
+        updateMetrics(allInTransactions);
+        renderInTable();
+      }
+    } catch (err) {
+      console.error('Error loading in transactions:', err);
+    }
+  }
+
+  function setupSearchListeners() {
+    const pageSearch = document.getElementById('search-in');
+    const globalSearch = document.getElementById('global-search');
+
+    if (pageSearch) {
+      pageSearch.addEventListener('input', function (e) {
+        handleSearchIn(e.target.value);
+      });
+    }
+    if (globalSearch) {
+      globalSearch.addEventListener('input', function (e) {
+        handleSearchIn(e.target.value);
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    setupSearchListeners();
+    loadInTransactions();
+    loadDropdowns();
+  });
