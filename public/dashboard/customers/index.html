@@ -85,9 +85,17 @@
           <h2 class="text-3xl font-bold tracking-tight">Customer</h2>
           <p class="text-sm text-[#A0A0A5] mt-1">Pelanggan tetap & riwayat akumulasi pembelian</p>
         </div>
-        <button onclick="openCustomerModal()" data-action="add-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn self-start sm:self-auto">
-          <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Customer
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-refresh-customers" onclick="handleRefreshCustomers()" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+            <i data-lucide="rotate-cw" id="icon-refresh-customers" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
+          </button>
+          <button type="button" onclick="handleExportCustomers()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+            <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
+          </button>
+          <button onclick="openCustomerModal()" data-action="add-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn self-start sm:self-auto">
+            <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Customer
+          </button>
+        </div>
       </div>
 
       <!-- METRICS HEADER -->
@@ -162,6 +170,14 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="flex items-center justify-between flex-wrap gap-3" id="customers-pagination-wrap">
+        <span class="text-sm text-[#A0A0A5]" id="customers-pagination-info">0-0 dari 0 customer</span>
+        <div class="flex items-center gap-1" id="customers-pagination-buttons">
+          <!-- Dinamis via renderCustomersPagination() -->
         </div>
       </div>
     </div>
@@ -301,6 +317,8 @@
 <script>
 let customersData = [];
 let searchQuery = '';
+let currentPage = 1;
+const pageSize = 10;
 let targetDeleteId = null;
 
 const AVATAR_GRADIENTS = [
@@ -367,6 +385,81 @@ function updateCustomerMetrics() {
   document.getElementById('customers-count-info').textContent = `Total: ${total} pelanggan`;
 }
 
+function goToCustomersPage(page) {
+  currentPage = page;
+  renderCustomers();
+}
+
+function renderCustomersPagination(totalFiltered) {
+  const totalPages = Math.ceil(totalFiltered / pageSize) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIdx = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIdx = Math.min(currentPage * pageSize, totalFiltered);
+
+  const infoEl = document.getElementById('customers-pagination-info');
+  if (infoEl) {
+    infoEl.textContent = `Menampilkan ${startIdx}-${endIdx} dari ${totalFiltered} customer`;
+  }
+
+  const btnContainer = document.getElementById('customers-pagination-buttons');
+  if (!btnContainer) return;
+  btnContainer.innerHTML = '';
+
+  // Prev Button
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+    currentPage <= 1
+      ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+      : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+  }`;
+  prevBtn.setAttribute('aria-label', 'Halaman sebelumnya');
+  prevBtn.disabled = currentPage <= 1;
+  prevBtn.onclick = () => goToCustomersPage(currentPage - 1);
+  prevBtn.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>';
+  btnContainer.appendChild(prevBtn);
+
+  // Page Numbers (max 5)
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, startPage + 4);
+  if (endPage - startPage < 4) {
+    startPage = Math.max(1, endPage - 4);
+  }
+
+  for (let p = startPage; p <= endPage; p++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.type = 'button';
+    const isActive = p === currentPage;
+    pageBtn.className = `px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+      isActive
+        ? 'bg-[#0088CC] text-white shadow-lg shadow-[#0088CC]/20'
+        : 'bg-[#1C1C1E] border border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    pageBtn.textContent = p;
+    if (isActive) pageBtn.setAttribute('aria-current', 'page');
+    pageBtn.onclick = () => goToCustomersPage(p);
+    btnContainer.appendChild(pageBtn);
+  }
+
+  // Next Button
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+    currentPage >= totalPages
+      ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+      : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+  }`;
+  nextBtn.setAttribute('aria-label', 'Halaman berikutnya');
+  nextBtn.disabled = currentPage >= totalPages;
+  nextBtn.onclick = () => goToCustomersPage(currentPage + 1);
+  nextBtn.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>';
+  btnContainer.appendChild(nextBtn);
+
+  if (window.lucide) lucide.createIcons();
+}
+
 function renderCustomers() {
   const tbody = document.getElementById('customers-table-body');
   let filtered = customersData;
@@ -381,13 +474,18 @@ function renderCustomers() {
     );
   }
 
+  renderCustomersPagination(filtered.length);
+
   if (filtered.length === 0) {
+    const emptyText = searchQuery.trim()
+      ? 'Tidak ada data customer yang cocok dengan pencarian'
+      : 'Tidak ada data customer';
     tbody.innerHTML = `
       <tr>
         <td colspan="8" class="px-5 py-12 text-center text-[#A0A0A5]">
           <div class="flex flex-col items-center justify-center gap-2">
             <i data-lucide="users" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
-            <p class="font-medium text-white">Tidak ada data customer</p>
+            <p class="font-medium text-white">${emptyText}</p>
             <p class="text-xs">Klik tombol Tambah Customer untuk mencatat pelanggan baru.</p>
           </div>
         </td>
@@ -397,9 +495,12 @@ function renderCustomers() {
     return;
   }
 
-  tbody.innerHTML = filtered.map((c, idx) => {
+  const startIdx = (currentPage - 1) * pageSize;
+  const paged = filtered.slice(startIdx, startIdx + pageSize);
+
+  tbody.innerHTML = paged.map((c, idx) => {
     const initial = (c.name || 'C').charAt(0).toUpperCase();
-    const grad = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+    const grad = AVATAR_GRADIENTS[(startIdx + idx) % AVATAR_GRADIENTS.length];
     const totalSpentText = formatShortRupiah(c.total_spent);
     const txCount = c.total_transactions || 0;
     const lastDate = formatDateWIB(c.last_transaction_at);
@@ -442,7 +543,55 @@ function renderCustomers() {
 
 function handleSearch(val) {
   searchQuery = val || '';
+  currentPage = 1;
   renderCustomers();
+}
+
+async function handleRefreshCustomers() {
+  const icon = document.getElementById('icon-refresh-customers');
+  if (icon) icon.classList.add('animate-spin');
+  try {
+    await loadCustomers();
+    if (typeof showToast === 'function') {
+      showToast('Data customer berhasil diperbarui', 'info');
+    }
+  } catch (err) {
+    console.error('Refresh customers error:', err);
+    if (typeof showToast === 'function') {
+      showToast('Gagal memuat ulang data', 'error');
+    }
+  } finally {
+    setTimeout(() => {
+      if (icon) icon.classList.remove('animate-spin');
+    }, 500);
+  }
+}
+
+function handleExportCustomers() {
+  if (!customersData || customersData.length === 0) {
+    if (typeof showToast === 'function') showToast('Tidak ada data customer untuk diexport', 'warning');
+    return;
+  }
+
+  const headers = ['Nama Customer', 'Telepon', 'Email', 'Kota', 'Total Beli (Rp)', 'Jumlah Transaksi', 'Transaksi Terakhir'];
+  const rows = customersData.map(c => {
+    return [
+      c.name || '',
+      c.phone || '',
+      c.email || '',
+      c.city || '',
+      c.total_spent || 0,
+      c.total_transactions || 0,
+      formatDateWIB(c.last_transaction_at)
+    ];
+  });
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const filename = `customers-${todayStr}.csv`;
+  if (typeof exportToCSV === 'function') {
+    exportToCSV(filename, rows, headers);
+    if (typeof showToast === 'function') showToast(`Berhasil export ${rows.length} customer`, 'success');
+  }
 }
 
 function openCustomerModal(customer = null) {

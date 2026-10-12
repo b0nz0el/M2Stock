@@ -87,11 +87,11 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat barang masuk dari supplier</p>
         </div>
         <div class="flex gap-2">
-          <button data-action="export-pdf" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
-            <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i> Export PDF
+          <button type="button" id="btn-refresh-in" onclick="handleRefreshIn()" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+            <i data-lucide="rotate-cw" id="icon-refresh-in" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
           </button>
-          <button data-action="bulk-input" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
-            <i data-lucide="list-plus" class="w-4 h-4" aria-hidden="true"></i> Bulk Input
+          <button type="button" onclick="handleExportIn()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+            <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
           <button data-action="add-in" onclick="openAddInModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
@@ -142,11 +142,19 @@
         </div>
       </div>
 
-      <div class="flex gap-2 flex-wrap" id="in-filter-buttons">
-        <button type="button" data-period="today" onclick="filterInPeriod('today')" class="in-period-btn px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium text-white transition">Hari Ini</button>
-        <button type="button" data-period="7d" onclick="filterInPeriod('7d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">7 Hari</button>
-        <button type="button" data-period="30d" onclick="filterInPeriod('30d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">30 Hari</button>
-        <button type="button" data-period="all" onclick="filterInPeriod('all')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">Semua</button>
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+          <input type="text" id="search-in" placeholder="Cari nomor transaksi, barang, supplier, kasir..."
+                 oninput="handleSearchIn(this.value)"
+                 class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        </div>
+        <div class="flex gap-2 flex-wrap" id="in-filter-buttons">
+          <button type="button" data-period="today" onclick="filterInPeriod('today')" class="in-period-btn px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium text-white transition">Hari Ini</button>
+          <button type="button" data-period="7d" onclick="filterInPeriod('7d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">7 Hari</button>
+          <button type="button" data-period="30d" onclick="filterInPeriod('30d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">30 Hari</button>
+          <button type="button" data-period="all" onclick="filterInPeriod('all')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">Semua</button>
+        </div>
       </div>
 
       <div class="card overflow-hidden">
@@ -169,6 +177,13 @@
             <!-- Diisi secara dinamis dari Supabase -->
           </tbody>
         </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between flex-wrap gap-3" id="in-pagination-wrap">
+        <span class="text-sm text-[#A0A0A5]" id="in-pagination-info">0-0 dari 0 data</span>
+        <div class="flex items-center gap-1" id="in-pagination-buttons">
+          <!-- Dinamis via renderInPagination() -->
         </div>
       </div>
     </div>
@@ -338,6 +353,9 @@
   let allInTransactions = [];
   let availableProducts = [];
   let currentFilterPeriod = 'today';
+  let searchQuery = '';
+  let currentPage = 1;
+  const pageSize = 10;
   let deleteInId = null;
 
   function formatRupiahVal(val) {
@@ -600,6 +618,7 @@
 
   function filterInPeriod(period) {
     currentFilterPeriod = period;
+    currentPage = 1;
     const buttons = document.querySelectorAll('.in-period-btn');
     buttons.forEach(btn => {
       if (btn.getAttribute('data-period') === period) {
@@ -613,6 +632,87 @@
     renderInTable();
   }
 
+  function handleSearchIn(val) {
+    searchQuery = (val || '').trim().toLowerCase();
+    currentPage = 1;
+    renderInTable();
+  }
+
+  function goToInPage(page) {
+    currentPage = page;
+    renderInTable();
+  }
+
+  function renderInPagination(totalFiltered) {
+    const totalPages = Math.ceil(totalFiltered / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIdx = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const endIdx = Math.min(currentPage * pageSize, totalFiltered);
+
+    const infoEl = document.getElementById('in-pagination-info');
+    if (infoEl) {
+      infoEl.textContent = `Menampilkan ${startIdx}-${endIdx} dari ${totalFiltered} data`;
+    }
+
+    const btnContainer = document.getElementById('in-pagination-buttons');
+    if (!btnContainer) return;
+    btnContainer.innerHTML = '';
+
+    // Prev Button
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+      currentPage <= 1
+        ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+        : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    prevBtn.setAttribute('aria-label', 'Halaman sebelumnya');
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.onclick = () => goToInPage(currentPage - 1);
+    prevBtn.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>';
+    btnContainer.appendChild(prevBtn);
+
+    // Page Numbers (max 5)
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.type = 'button';
+      const isActive = p === currentPage;
+      pageBtn.className = `px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+        isActive
+          ? 'bg-[#0088CC] text-white shadow-lg shadow-[#0088CC]/20'
+          : 'bg-[#1C1C1E] border border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+      }`;
+      pageBtn.textContent = p;
+      if (isActive) pageBtn.setAttribute('aria-current', 'page');
+      pageBtn.onclick = () => goToInPage(p);
+      btnContainer.appendChild(pageBtn);
+    }
+
+    // Next Button
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+      currentPage >= totalPages
+        ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+        : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    nextBtn.setAttribute('aria-label', 'Halaman berikutnya');
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.onclick = () => goToInPage(currentPage + 1);
+    nextBtn.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>';
+    btnContainer.appendChild(nextBtn);
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
   function renderInTable() {
     const tbody = document.getElementById('in-tbody');
     if (!tbody) return;
@@ -624,19 +724,39 @@
 
     const filtered = allInTransactions.filter(tx => {
       const tTime = new Date(tx.created_at).getTime();
-      if (currentFilterPeriod === 'today') return tTime >= startToday;
-      if (currentFilterPeriod === '7d') return tTime >= sevenDaysAgo;
-      if (currentFilterPeriod === '30d') return tTime >= thirtyDaysAgo;
-      return true; // 'all'
+      if (currentFilterPeriod === 'today' && tTime < startToday) return false;
+      if (currentFilterPeriod === '7d' && tTime < sevenDaysAgo) return false;
+      if (currentFilterPeriod === '30d' && tTime < thirtyDaysAgo) return false;
+
+      if (searchQuery) {
+        const code = `IN-${String(tx.id).padStart(6, '0')}`.toLowerCase();
+        const prodName = (tx.products?.name || '').toLowerCase();
+        const supName = (tx.suppliers?.name || 'umum').toLowerCase();
+        const kasir = (tx.created_by || '').toLowerCase();
+        const note = (tx.note || '').toLowerCase();
+        if (!code.includes(searchQuery) &&
+            !prodName.includes(searchQuery) &&
+            !supName.includes(searchQuery) &&
+            !kasir.includes(searchQuery) &&
+            !note.includes(searchQuery)) {
+          return false;
+        }
+      }
+      return true;
     });
 
+    renderInPagination(filtered.length);
+
     if (filtered.length === 0) {
+      const emptyText = searchQuery
+        ? 'Tidak ada data barang masuk yang cocok dengan pencarian / filter'
+        : 'Belum ada transaksi barang masuk pada periode ini';
       tbody.innerHTML = `
         <tr class="table-row">
           <td colspan="9" class="px-4 py-12 text-center text-[#A0A0A5]">
             <div class="flex flex-col items-center justify-center gap-2">
               <i data-lucide="package-search" class="w-8 h-8 opacity-40"></i>
-              <p class="text-sm">Belum ada transaksi barang masuk pada periode ini</p>
+              <p class="text-sm">${emptyText}</p>
             </div>
           </td>
         </tr>
@@ -646,7 +766,10 @@
       return;
     }
 
-    tbody.innerHTML = filtered.map(tx => {
+    const startIdx = (currentPage - 1) * pageSize;
+    const paged = filtered.slice(startIdx, startIdx + pageSize);
+
+    tbody.innerHTML = paged.map(tx => {
       const code = `IN-${String(tx.id).padStart(6, '0')}`;
       const dateStr = formatTxDate(tx.created_at);
       const prodName = tx.products?.name || 'Produk ID #' + tx.product_id;
@@ -678,6 +801,56 @@
 
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+  }
+
+  async function handleRefreshIn() {
+    const icon = document.getElementById('icon-refresh-in');
+    if (icon) icon.classList.add('animate-spin');
+    try {
+      await loadInTransactions();
+      await loadDropdowns();
+      if (typeof showToast === 'function') {
+        showToast('Data barang masuk berhasil diperbarui', 'info');
+      }
+    } catch (err) {
+      console.error('Refresh in error:', err);
+      if (typeof showToast === 'function') {
+        showToast('Gagal memuat ulang data', 'error');
+      }
+    } finally {
+      setTimeout(() => {
+        if (icon) icon.classList.remove('animate-spin');
+      }, 500);
+    }
+  }
+
+  function handleExportIn() {
+    if (!allInTransactions || allInTransactions.length === 0) {
+      if (typeof showToast === 'function') showToast('Tidak ada data barang masuk untuk diexport', 'warning');
+      return;
+    }
+
+    const headers = ['No. Transaksi', 'Tanggal', 'Nama Barang', 'Supplier', 'Kasir', 'Jumlah', 'Harga (Rp)', 'Total (Rp)', 'Catatan'];
+    const rows = allInTransactions.map(tx => {
+      const code = `IN-${String(tx.id).padStart(6, '0')}`;
+      const dateStr = formatTxDate(tx.created_at);
+      const prodName = tx.products?.name || ('Produk #' + tx.product_id);
+      const supName = tx.suppliers?.name || 'Umum';
+      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const qty = tx.qty || 0;
+      const price = tx.price || 0;
+      const total = qty * price;
+      const note = tx.note || '';
+
+      return [code, dateStr, prodName, supName, kasir, qty, price, total, note];
+    });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const filename = `barang-masuk-${todayStr}.csv`;
+    if (typeof exportToCSV === 'function') {
+      exportToCSV(filename, rows, headers);
+      if (typeof showToast === 'function') showToast(`Berhasil export ${rows.length} transaksi barang masuk`, 'success');
+    }
   }
 
   async function loadInTransactions() {

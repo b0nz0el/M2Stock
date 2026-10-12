@@ -83,7 +83,9 @@
   /* Whitelist aksi yang sudah di-handle oleh komponen Web/UI (jangan beri mock toast) */
   var SKIP_ACTIONS = [
     'close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu',
-    'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out'
+    'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out',
+    'refresh', 'export', 'export-items', 'export-pdf', 'export-csv',
+    'print', 'edit-bulk', 'delete-bulk', 'page', 'page-prev', 'page-next', 'bulk-input'
   ];
 
   function handle(action, el) {

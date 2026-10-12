@@ -25,6 +25,26 @@
 <link rel="stylesheet" href="../../assets/css/layout.css">
 <link rel="stylesheet" href="../../assets/css/pages.css">
 <link rel="stylesheet" href="../../assets/css/responsive.css">
+<style>
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #modal-packing-list, #modal-packing-list * {
+    visibility: visible;
+  }
+  #modal-packing-list {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+</style>
 </head>
 <body class="bg-black text-white antialiased">
 
@@ -87,7 +107,13 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat penjualan & pengeluaran barang</p>
         </div>
         <div class="flex gap-2">
-          <button data-action="print" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+          <button type="button" id="btn-refresh-out" onclick="handleRefreshOut()" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+            <i data-lucide="rotate-cw" id="icon-refresh-out" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
+          </button>
+          <button type="button" onclick="handleExportOut()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+            <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
+          </button>
+          <button type="button" data-action="print" onclick="openPackingListModal()" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i> Packing List
           </button>
           <button data-action="add-out" onclick="openAddOutModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
@@ -139,11 +165,19 @@
         </div>
       </div>
 
-      <div class="flex gap-2 flex-wrap" id="out-filter-buttons">
-        <button type="button" data-period="today" onclick="filterOutPeriod('today')" class="out-period-btn px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium text-white transition">Hari Ini</button>
-        <button type="button" data-period="7d" onclick="filterOutPeriod('7d')" class="out-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">7 Hari</button>
-        <button type="button" data-period="30d" onclick="filterOutPeriod('30d')" class="out-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">30 Hari</button>
-        <button type="button" data-period="all" onclick="filterOutPeriod('all')" class="out-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">Semua</button>
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+          <input type="text" id="search-out" placeholder="Cari nomor transaksi, resi/invoice, barang, customer..."
+                 oninput="handleSearchOut(this.value)"
+                 class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        </div>
+        <div class="flex gap-2 flex-wrap" id="out-filter-buttons">
+          <button type="button" data-period="today" onclick="filterOutPeriod('today')" class="out-period-btn px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium text-white transition">Hari Ini</button>
+          <button type="button" data-period="7d" onclick="filterOutPeriod('7d')" class="out-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">7 Hari</button>
+          <button type="button" data-period="30d" onclick="filterOutPeriod('30d')" class="out-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">30 Hari</button>
+          <button type="button" data-period="all" onclick="filterOutPeriod('all')" class="out-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">Semua</button>
+        </div>
       </div>
 
       <div class="card overflow-hidden">
@@ -167,6 +201,13 @@
             <!-- Diisi secara dinamis dari Supabase -->
           </tbody>
         </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between flex-wrap gap-3" id="out-pagination-wrap">
+        <span class="text-sm text-[#A0A0A5]" id="out-pagination-info">0-0 dari 0 data</span>
+        <div class="flex items-center gap-1" id="out-pagination-buttons">
+          <!-- Dinamis via renderOutPagination() -->
         </div>
       </div>
     </div>
@@ -329,6 +370,66 @@
   </div>
 </div>
 
+<!-- ═══════════ MODAL PACKING LIST (PRINT) ═══════════ -->
+<div id="modal-packing-list" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-packing-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="printer" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-packing-title" class="text-lg font-bold text-white">Packing List Pengiriman</h3>
+          <p class="text-xs text-[#A0A0A5]">Daftar pesanan & barang keluar hari ini untuk tim gudang</p>
+        </div>
+      </div>
+      <button type="button" onclick="closePackingListModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div id="printable-packing-area" class="space-y-4 text-sm bg-black/20 p-4 rounded-xl border border-white/5">
+      <div class="flex justify-between items-start border-b border-white/10 pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-white">AquaStock Pro — Packing List</h2>
+          <p class="text-xs text-[#A0A0A5] mt-0.5" id="packing-date-text">Tanggal: -</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs bg-[#0088CC]/20 text-[#32ADE6] px-2.5 py-1 rounded-full font-semibold" id="packing-total-orders">0 Pesanan</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-white/10 text-[#A0A0A5]">
+              <th class="py-2 px-2">No. Resi / Order</th>
+              <th class="py-2 px-2">Barang</th>
+              <th class="py-2 px-2 text-center">Qty</th>
+              <th class="py-2 px-2">Channel</th>
+              <th class="py-2 px-2">Customer</th>
+              <th class="py-2 px-2 text-center w-12">Check</th>
+            </tr>
+          </thead>
+          <tbody id="packing-list-tbody">
+            <!-- Diisi dinamis -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/5">
+      <button type="button" onclick="closePackingListModal()" class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+        Tutup
+      </button>
+      <button type="button" onclick="window.print()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+        <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Cetak (Print)</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toast-container" 
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
@@ -351,6 +452,9 @@
   let allOutTransactions = [];
   let availableProducts = [];
   let currentFilterPeriod = 'today';
+  let searchQuery = '';
+  let currentPage = 1;
+  const pageSize = 10;
   let deleteOutId = null;
 
   function formatRupiahVal(val) {
@@ -653,6 +757,7 @@
 
   function filterOutPeriod(period) {
     currentFilterPeriod = period;
+    currentPage = 1;
     const buttons = document.querySelectorAll('.out-period-btn');
     buttons.forEach(btn => {
       if (btn.getAttribute('data-period') === period) {
@@ -666,6 +771,87 @@
     renderOutTable();
   }
 
+  function handleSearchOut(val) {
+    searchQuery = (val || '').trim().toLowerCase();
+    currentPage = 1;
+    renderOutTable();
+  }
+
+  function goToOutPage(page) {
+    currentPage = page;
+    renderOutTable();
+  }
+
+  function renderOutPagination(totalFiltered) {
+    const totalPages = Math.ceil(totalFiltered / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIdx = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const endIdx = Math.min(currentPage * pageSize, totalFiltered);
+
+    const infoEl = document.getElementById('out-pagination-info');
+    if (infoEl) {
+      infoEl.textContent = `Menampilkan ${startIdx}-${endIdx} dari ${totalFiltered} data`;
+    }
+
+    const btnContainer = document.getElementById('out-pagination-buttons');
+    if (!btnContainer) return;
+    btnContainer.innerHTML = '';
+
+    // Prev Button
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+      currentPage <= 1
+        ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+        : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    prevBtn.setAttribute('aria-label', 'Halaman sebelumnya');
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.onclick = () => goToOutPage(currentPage - 1);
+    prevBtn.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>';
+    btnContainer.appendChild(prevBtn);
+
+    // Page Numbers (max 5)
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.type = 'button';
+      const isActive = p === currentPage;
+      pageBtn.className = `px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+        isActive
+          ? 'bg-[#0088CC] text-white shadow-lg shadow-[#0088CC]/20'
+          : 'bg-[#1C1C1E] border border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+      }`;
+      pageBtn.textContent = p;
+      if (isActive) pageBtn.setAttribute('aria-current', 'page');
+      pageBtn.onclick = () => goToOutPage(p);
+      btnContainer.appendChild(pageBtn);
+    }
+
+    // Next Button
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = `px-3 py-1.5 rounded-lg border text-sm transition flex items-center justify-center ${
+      currentPage >= totalPages
+        ? 'bg-[#1C1C1E]/50 border-white/5 text-[#A0A0A5]/40 cursor-not-allowed'
+        : 'bg-[#1C1C1E] border-white/5 text-[#A0A0A5] hover:text-white hover:bg-white/5'
+    }`;
+    nextBtn.setAttribute('aria-label', 'Halaman berikutnya');
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.onclick = () => goToOutPage(currentPage + 1);
+    nextBtn.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>';
+    btnContainer.appendChild(nextBtn);
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
   function renderOutTable() {
     const tbody = document.getElementById('out-tbody');
     if (!tbody) return;
@@ -677,19 +863,44 @@
 
     const filtered = allOutTransactions.filter(tx => {
       const tTime = new Date(tx.created_at).getTime();
-      if (currentFilterPeriod === 'today') return tTime >= startToday;
-      if (currentFilterPeriod === '7d') return tTime >= sevenDaysAgo;
-      if (currentFilterPeriod === '30d') return tTime >= thirtyDaysAgo;
-      return true; // 'all'
+      if (currentFilterPeriod === 'today' && tTime < startToday) return false;
+      if (currentFilterPeriod === '7d' && tTime < sevenDaysAgo) return false;
+      if (currentFilterPeriod === '30d' && tTime < thirtyDaysAgo) return false;
+
+      if (searchQuery) {
+        const code = (tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
+          ? tx.note.split(' ')[0]
+          : `OUT-${String(tx.id).padStart(6, '0')}`).toLowerCase();
+        const prodName = (tx.products?.name || '').toLowerCase();
+        const custName = (tx.customers?.name || 'umum').toLowerCase();
+        const channel = (tx.channel || 'offline').toLowerCase();
+        const kasir = (tx.created_by || '').toLowerCase();
+        const note = (tx.note || '').toLowerCase();
+
+        if (!code.includes(searchQuery) &&
+            !prodName.includes(searchQuery) &&
+            !custName.includes(searchQuery) &&
+            !channel.includes(searchQuery) &&
+            !kasir.includes(searchQuery) &&
+            !note.includes(searchQuery)) {
+          return false;
+        }
+      }
+      return true;
     });
 
+    renderOutPagination(filtered.length);
+
     if (filtered.length === 0) {
+      const emptyText = searchQuery
+        ? 'Tidak ada data barang keluar yang cocok dengan pencarian / filter'
+        : 'Belum ada transaksi barang keluar pada periode ini';
       tbody.innerHTML = `
         <tr class="table-row">
           <td colspan="10" class="px-4 py-12 text-center text-[#A0A0A5]">
             <div class="flex flex-col items-center justify-center gap-2">
               <i data-lucide="package-search" class="w-8 h-8 opacity-40"></i>
-              <p class="text-sm">Belum ada transaksi barang keluar pada periode ini</p>
+              <p class="text-sm">${emptyText}</p>
             </div>
           </td>
         </tr>
@@ -699,7 +910,10 @@
       return;
     }
 
-    tbody.innerHTML = filtered.map(tx => {
+    const startIdx = (currentPage - 1) * pageSize;
+    const paged = filtered.slice(startIdx, startIdx + pageSize);
+
+    tbody.innerHTML = paged.map(tx => {
       const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
         ? tx.note.split(' ')[0]
         : `OUT-${String(tx.id).padStart(6, '0')}`;
@@ -735,6 +949,122 @@
 
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+  }
+
+  function openPackingListModal() {
+    const modal = document.getElementById('modal-packing-list');
+    const tbody = document.getElementById('packing-list-tbody');
+    const dateText = document.getElementById('packing-date-text');
+    const countBadge = document.getElementById('packing-total-orders');
+
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    // Ambil transaksi keluar hari ini (atau semua transaksi keluar jika hari ini belum ada transaksi)
+    let todaysOut = allOutTransactions.filter(tx => new Date(tx.created_at).getTime() >= startToday);
+    if (todaysOut.length === 0) {
+      todaysOut = allOutTransactions.slice(0, 10); // fallback ke 10 transaksi terakhir
+    }
+
+    const dStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (dateText) dateText.textContent = `Tanggal: ${dStr}`;
+    if (countBadge) countBadge.textContent = `${todaysOut.length} Pesanan`;
+
+    if (tbody) {
+      if (todaysOut.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-[#A0A0A5]">Belum ada pesanan keluar hari ini</td></tr>`;
+      } else {
+        tbody.innerHTML = todaysOut.map(tx => {
+          const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
+            ? tx.note.split(' ')[0]
+            : `OUT-${String(tx.id).padStart(6, '0')}`;
+          const prodName = tx.products?.name || ('Produk #' + tx.product_id);
+          const channel = tx.channel || 'Offline';
+          const cust = tx.customers?.name || 'Umum';
+          const qty = tx.qty || 0;
+
+          return `
+            <tr class="border-b border-white/5 print:border-gray-200">
+              <td class="py-2.5 px-2 font-mono text-xs">${code}</td>
+              <td class="py-2.5 px-2 font-medium">${prodName}</td>
+              <td class="py-2.5 px-2 text-center font-bold text-white print:text-black">${qty}</td>
+              <td class="py-2.5 px-2">${channel}</td>
+              <td class="py-2.5 px-2 text-[#A0A0A5] print:text-gray-700">${cust}</td>
+              <td class="py-2.5 px-2 text-center">
+                <div class="w-4 h-4 border border-white/20 print:border-black rounded mx-auto inline-block"></div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closePackingListModal() {
+    const modal = document.getElementById('modal-packing-list');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  async function handleRefreshOut() {
+    const icon = document.getElementById('icon-refresh-out');
+    if (icon) icon.classList.add('animate-spin');
+    try {
+      await loadOutTransactions();
+      await loadDropdowns();
+      if (typeof showToast === 'function') {
+        showToast('Data barang keluar berhasil diperbarui', 'info');
+      }
+    } catch (err) {
+      console.error('Refresh out error:', err);
+      if (typeof showToast === 'function') {
+        showToast('Gagal memuat ulang data', 'error');
+      }
+    } finally {
+      setTimeout(() => {
+        if (icon) icon.classList.remove('animate-spin');
+      }, 500);
+    }
+  }
+
+  function handleExportOut() {
+    if (!allOutTransactions || allOutTransactions.length === 0) {
+      if (typeof showToast === 'function') showToast('Tidak ada data barang keluar untuk diexport', 'warning');
+      return;
+    }
+
+    const headers = ['No. Transaksi / Resi', 'Tanggal', 'Nama Barang', 'Channel', 'Customer', 'Kasir', 'Jumlah', 'Harga Jual (Rp)', 'Total (Rp)', 'Catatan'];
+    const rows = allOutTransactions.map(tx => {
+      const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
+        ? tx.note.split(' ')[0]
+        : `OUT-${String(tx.id).padStart(6, '0')}`;
+      const dateStr = formatTxDate(tx.created_at);
+      const prodName = tx.products?.name || ('Produk #' + tx.product_id);
+      const channel = tx.channel || 'Offline';
+      const custName = tx.customers?.name || 'Umum';
+      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const qty = tx.qty || 0;
+      const price = tx.price || 0;
+      const total = qty * price;
+      const note = tx.note || '';
+
+      return [code, dateStr, prodName, channel, custName, kasir, qty, price, total, note];
+    });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const filename = `barang-keluar-${todayStr}.csv`;
+    if (typeof exportToCSV === 'function') {
+      exportToCSV(filename, rows, headers);
+      if (typeof showToast === 'function') showToast(`Berhasil export ${rows.length} transaksi barang keluar`, 'success');
+    }
   }
 
   async function loadOutTransactions() {

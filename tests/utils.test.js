@@ -4,7 +4,8 @@ import {
   detectMultiplier,
   animateNumber,
   showToast,
-  focusProgrammatically
+  focusProgrammatically,
+  exportToCSV
 } from '../public/assets/js/utils.js';
 
 describe('utils.js', () => {
@@ -249,6 +250,56 @@ describe('utils.js', () => {
       expect(() => focusProgrammatically(null)).not.toThrow();
       expect(() => focusProgrammatically({})).not.toThrow();
       expect(() => focusProgrammatically(undefined)).not.toThrow();
+    });
+  });
+
+  describe('exportToCSV', () => {
+    beforeEach(() => {
+      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:http://localhost/test-uuid');
+      global.URL.revokeObjectURL = vi.fn();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('menghasilkan CSV string dengan UTF-8 BOM, headers, dan rows yang diformat dengan benar', () => {
+      const headers = ['Kode', 'Nama', 'Harga'];
+      const rows = [
+        ['BRG001', 'Pelet Ikan', 25000],
+        ['BRG002', 'Filter Pompa', 75000]
+      ];
+
+      const csv = exportToCSV('test.csv', rows, headers);
+
+      expect(csv.startsWith('\uFEFF')).toBe(true);
+      expect(csv).toContain('"Kode","Nama","Harga"');
+      expect(csv).toContain('"BRG001","Pelet Ikan","25000"');
+      expect(csv).toContain('"BRG002","Filter Pompa","75000"');
+    });
+
+    it('melakukan escaping dengan tanda kutip untuk sel yang mengandung koma atau tanda kutip ganda', () => {
+      const headers = ['Nama', 'Deskripsi'];
+      const rows = [
+        ['Pakan "Super", Premium', 'Cocok untuk ikan hias\nUkuran sedang']
+      ];
+
+      const csv = exportToCSV('escape.csv', rows, headers);
+
+      expect(csv).toContain('"Pakan ""Super"", Premium"');
+      expect(csv).toContain('"Cocok untuk ikan hias\nUkuran sedang"');
+    });
+
+    it('membuat tag <a> dan memicu link.click() untuk mengunduh file', () => {
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click');
+      const headers = ['ID', 'Nama'];
+      const rows = [['1', 'Supplier A']];
+
+      exportToCSV('supplier.csv', rows, headers);
+
+      expect(global.URL.createObjectURL).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/test-uuid');
     });
   });
 });

@@ -34,6 +34,12 @@ function showToast(msg, type = 'success') {
   toast.appendChild(wrapper);
   container.appendChild(toast);
 
+  if (typeof window !== 'undefined' && typeof window.refreshIcons === 'function') {
+    window.refreshIcons();
+  } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+    lucide.createIcons();
+  }
+
   setTimeout(() => {
     toast.style.transition = 'opacity 0.3s, transform 0.3s';
     toast.style.opacity = '0';
@@ -94,6 +100,57 @@ function focusProgrammatically(el) {
   }, { once: true });
 }
 
+/* ═══════════════════════════════════════════════
+   EXPORT CSV
+   ═══════════════════════════════════════════════ */
+function exportToCSV(filename, rows, headers) {
+  if (!rows || !rows.length) {
+    if (typeof showToast === 'function') showToast('Tidak ada data untuk diekspor', 'info');
+    return null;
+  }
+
+  function escapeCell(val) {
+    if (val === null || val === undefined) return '""';
+    var str = String(val).replace(/"/g, '""');
+    return '"' + str + '"';
+  }
+
+  var lines = [];
+  if (headers && headers.length) {
+    lines.push(headers.map(escapeCell).join(','));
+  }
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var cells = Array.isArray(row) ? row : Object.values(row);
+    lines.push(cells.map(escapeCell).join(','));
+  }
+
+  var csvString = '\uFEFF' + lines.join('\r\n');
+  if (typeof document !== 'undefined' && typeof Blob !== 'undefined') {
+    var blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      var url = URL.createObjectURL(blob);
+      link.href = url;
+      link.setAttribute('download', filename || ('export-' + new Date().toISOString().slice(0, 10) + '.csv'));
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('Berhasil mengekspor ' + rows.length + ' baris data ke CSV', 'success');
+  }
+  return csvString;
+}
+
+if (typeof window !== 'undefined') {
+  window.exportToCSV = exportToCSV;
+}
+
 /* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -101,6 +158,7 @@ if (typeof module !== 'undefined' && module.exports) {
     parseIndonesianNumber,
     detectMultiplier,
     animateNumber,
-    focusProgrammatically
+    focusProgrammatically,
+    exportToCSV
   };
 }

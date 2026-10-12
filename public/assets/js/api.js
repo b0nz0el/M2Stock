@@ -571,6 +571,138 @@
           }
         }
         return apiRequest(`/items/${id}`, { method: 'DELETE', ...opts });
+      },
+
+      checkDeletable: async (ids, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const numIds = (ids || []).map(Number).filter(n => !isNaN(n));
+            if (!numIds.length) {
+              return formatResponse({ ok: true, data: { deletableIds: [], skippedIds: [] } });
+            }
+            let query = window.supabase
+              .from('transactions')
+              .select('product_id')
+              .in('product_id', numIds);
+
+            if (opts && opts.signal) query = query.abortSignal(opts.signal);
+            const { data: txData, error } = await query;
+            if (error) {
+              return formatResponse({ ok: false, error: { message: error.message || 'Gagal memeriksa riwayat transaksi produk' } });
+            }
+            const usedSet = new Set((txData || []).map(t => Number(t.product_id)));
+            const deletableIds = numIds.filter(id => !usedSet.has(id));
+            const skippedIds = numIds.filter(id => usedSet.has(id));
+            return formatResponse({
+              ok: true,
+              data: { deletableIds, skippedIds, totalRequested: numIds.length }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return formatResponse({ ok: true, data: { deletableIds: ids, skippedIds: [] } });
+      },
+
+      bulkDelete: async (ids, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            const numIds = (ids || []).map(Number).filter(n => !isNaN(n));
+            if (!numIds.length) {
+              return formatResponse({ ok: false, error: { message: 'Tidak ada produk yang dipilih untuk dihapus' } });
+            }
+
+            const checkRes = await Api.items.checkDeletable(numIds, opts);
+            if (!checkRes.ok) return checkRes;
+
+            const { deletableIds, skippedIds } = checkRes.data;
+
+            if (deletableIds.length === 0) {
+              return formatResponse({
+                ok: false,
+                error: {
+                  code: 'ALL_REFERENCED',
+                  message: 'Semua produk yang dipilih tidak dapat dihapus karena memiliki riwayat transaksi'
+                },
+                data: { deletedIds: [], skippedIds, deletedCount: 0, skippedCount: skippedIds.length }
+              });
+            }
+
+            let deleteQuery = window.supabase
+              .from('products')
+              .delete()
+              .in('id', deletableIds);
+
+            if (opts && opts.signal) deleteQuery = deleteQuery.abortSignal(opts.signal);
+            const { error: delError } = await deleteQuery;
+            if (delError) {
+              return formatResponse({
+                ok: false,
+                error: { code: delError.code || 'SUPABASE_ERROR', message: delError.message || 'Gagal menghapus produk terpilih' }
+              });
+            }
+
+            return formatResponse({
+              ok: true,
+              data: {
+                deletedIds: deletableIds,
+                skippedIds: skippedIds,
+                deletedCount: deletableIds.length,
+                skippedCount: skippedIds.length
+              },
+              meta: {
+                message: skippedIds.length > 0
+                  ? `${deletableIds.length} berhasil, ${skippedIds.length} dilewati (memiliki transaksi)`
+                  : `${deletableIds.length} produk berhasil dihapus`
+              }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return formatResponse({
+          ok: true,
+          data: { deletedIds: ids, skippedIds: [], deletedCount: ids.length, skippedCount: 0 }
+        });
+      },
+
+      bulkUpdatePrice: async (updates, opts) => {
+        if (!config.mockMode && isSupabaseAvailable()) {
+          try {
+            if (!updates || !updates.length) {
+              return formatResponse({ ok: false, error: { message: 'Tidak ada data harga untuk diperbarui' } });
+            }
+
+            const results = [];
+            for (let i = 0; i < updates.length; i++) {
+              const u = updates[i];
+              const numId = Number(u.id);
+              const newPrice = Math.max(0, Math.round(Number(u.sell_price) || 0));
+
+              let query = window.supabase
+                .from('products')
+                .update({ sell_price: newPrice })
+                .eq('id', numId);
+
+              if (opts && opts.signal) query = query.abortSignal(opts.signal);
+              const { error } = await query;
+              if (error) {
+                console.error(`Gagal update harga produk ID ${numId}:`, error);
+              } else {
+                results.push(numId);
+              }
+            }
+
+            return formatResponse({
+              ok: true,
+              data: { updatedIds: results, updatedCount: results.length },
+              meta: { message: `${results.length} produk berhasil diperbarui harganya` }
+            });
+          } catch (err) {
+            return handleError(err);
+          }
+        }
+        return formatResponse({ ok: true, data: { updatedCount: (updates || []).length } });
       }
     },
 
