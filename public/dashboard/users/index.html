@@ -6,7 +6,6 @@
 <title>aQuaStock Pro — Kelola User</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
-
 <!-- Auth guard (redirect jika belum login) -->
 <script>
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
@@ -54,7 +53,7 @@
       <div class="hidden md:flex items-center gap-2 text-sm">
         <span class="text-[#A0A0A5]">aQuaStock</span>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium"></span>
+        <span id="breadcrumb" class="font-medium text-white">Kelola User</span>
       </div>
 
       <div class="flex-1 md:max-w-md md:ml-6 relative">
@@ -72,128 +71,74 @@
         <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
-        </button>
       </div>
     </header>
 
-    <!-- ═══════════ KELOLA USER ═══════════ -->
+    <!-- ═══════════ KELOLA USER CONTENT ═══════════ -->
     <div id="page-users" class="page active p-6 space-y-5">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Kelola User</h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">Atur akses staff, viewer, dan co-owner</p>
-        </div>
-        <div class="flex gap-2 flex-wrap">
-          <button data-action="role-co-owner" class="bg-[#AF52DE] hover:bg-[#9B3DC8] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#AF52DE]/20 btn">
-            <i data-lucide="crown" class="w-4 h-4" aria-hidden="true"></i> Co-Owner
-          </button>
-          <button data-action="role-staff" class="bg-[#34C759] hover:bg-[#28A745] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#34C759]/20 btn">
-            <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i> Staff
-          </button>
-          <button data-action="role-viewer" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-            <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i> Viewer
-          </button>
+          <p class="text-sm text-[#A0A0A5] mt-1">Daftar pengguna terdaftar & pengaturan hak akses (Role)</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-4">
+      <!-- METRICS HEADER -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="card p-5">
           <p class="text-xs text-[#A0A0A5] font-medium">Total User</p>
-          <p class="text-2xl font-bold mt-1">8</p>
+          <p class="text-2xl font-bold mt-1 text-white" id="metric-total-users">0</p>
         </div>
         <div class="card p-5">
-          <p class="text-xs text-[#A0A0A5] font-medium">Aktif</p>
-          <p class="text-2xl font-bold text-[#34C759] mt-1">7</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Owner</p>
+          <p class="text-2xl font-bold mt-1 text-[#32ADE6]" id="metric-owner-count">0</p>
         </div>
         <div class="card p-5">
-          <p class="text-xs text-[#A0A0A5] font-medium">Online</p>
-          <p class="text-2xl font-bold text-[#32ADE6] mt-1">3</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Staff</p>
+          <p class="text-2xl font-bold mt-1 text-[#34C759]" id="metric-staff-count">0</p>
         </div>
         <div class="card p-5">
-          <p class="text-xs text-[#A0A0A5] font-medium">Nonaktif</p>
-          <p class="text-2xl font-bold text-[#A0A0A5] mt-1">1</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Viewer</p>
+          <p class="text-2xl font-bold mt-1 text-[#AF52DE]" id="metric-viewer-count">0</p>
         </div>
       </div>
 
+      <!-- SEARCH BAR -->
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+          <input type="text" id="search-users" placeholder="Cari nama atau email pengguna..."
+                 oninput="handleSearch(this.value)"
+                 class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        </div>
+        <span class="text-xs text-[#A0A0A5]" id="users-count-info">Memuat user...</span>
+      </div>
+
+      <!-- TABEL PENGGUNA -->
       <div class="card overflow-hidden">
         <div class="card-table-wrap">
-        <table class="w-full text-sm">
-          <thead class="bg-white/[0.02] border-b border-white/5">
-            <tr class="text-left text-[#A0A0A5]">
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">User</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Email</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Role</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Status</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Terakhir Login</th>
-              <th class="px-5 py-3 w-32"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm">M</div>
-                  <span class="font-medium">Mr David</span>
-                </div>
-              </td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">yt.hackrandom@gmail.com</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">OWNER</span></td>
-              <td class="px-5 py-3.5"><span class="flex items-center gap-1.5 text-[#34C759]"><span class="w-2 h-2 bg-[#34C759] rounded-full"></span>Aktif</span></td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">Sekarang</td>
-              <td class="px-5 py-3.5">
-                  <div class="flex gap-1 justify-end">
-                    <button data-action="edit-profile" aria-label="Edit profil" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
-                      <i data-lucide="pencil" class="w-4 h-4"></i>
-                        </button>
-                          <button data-action="change-password" aria-label="Ganti password" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]">
-                            <i data-lucide="key" class="w-4 h-4"></i>
-                          </button>
+          <table class="w-full text-sm">
+            <thead class="bg-white/[0.02] border-b border-white/5">
+              <tr class="text-left text-[#A0A0A5]">
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">User</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Email</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Role</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Status</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Terakhir Login</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right w-24">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr>
+                <td colspan="6" class="px-5 py-8 text-center text-[#A0A0A5]">
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-[#0088CC]" aria-hidden="true"></i>
+                    <span>Memuat daftar user...</span>
                   </div>
-            </td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#34C759] to-[#28A745] grid place-items-center font-bold text-sm">S</div>
-                  <span class="font-medium">Staff Satu</span>
-                </div>
-              </td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">staff1@gmail.com</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">STAFF</span></td>
-              <td class="px-5 py-3.5"><span class="flex items-center gap-1.5 text-[#34C759]"><span class="w-2 h-2 bg-[#34C759] rounded-full"></span>Aktif</span></td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">15 menit lalu</td>
-              <td class="px-5 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="suspend" aria-label="Suspend" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]"><i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-5 py-3.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#AF52DE] to-[#9B3DC8] grid place-items-center font-bold text-sm">F</div>
-                  <span class="font-medium">Follikein</span>
-                </div>
-              </td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">follikein@gmail.com</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#8E8E93]/15 text-[#A0A0A5]">VIEWER</span></td>
-              <td class="px-5 py-3.5"><span class="flex items-center gap-1.5 text-[#34C759]"><span class="w-2 h-2 bg-[#34C759] rounded-full"></span>Aktif</span></td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">1 jam lalu</td>
-              <td class="px-5 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="suspend" aria-label="Suspend" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]"><i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -227,12 +172,53 @@
   </nav>
 </div>
 
-<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
-  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
-  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
-  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
+<!-- ═══════════ MODAL UBAH ROLE USER ═══════════ -->
+<div id="modal-user-role" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-role-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="shield-check" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-role-title" class="text-lg font-bold text-white">Ubah Role Pengguna</h3>
+          <p class="text-xs text-[#A0A0A5] mt-0.5">Atur tingkat hak akses pengguna</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeRoleModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <form id="form-user-role" class="space-y-4" onsubmit="handleSaveRole(event)">
+      <input type="hidden" id="role-target-user-id">
+
+      <div class="bg-black/30 border border-white/5 rounded-xl p-3.5 space-y-1">
+        <p class="text-xs text-[#A0A0A5]">Pengguna:</p>
+        <p class="text-sm font-semibold text-white" id="role-target-user-name">-</p>
+        <p class="text-xs text-[#A0A0A5]" id="role-target-user-email">-</p>
+      </div>
+
+      <div>
+        <label for="select-user-role" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Pilih Role Baru <span class="text-[#FF3B30]">*</span></label>
+        <select id="select-user-role" required
+                class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+          <option value="owner">Owner (Akses Penuh & Kelola User)</option>
+          <option value="staff">Staff (Operasional & Transaksi)</option>
+          <option value="viewer">Viewer (Hanya Lihat)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeRoleModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+          Batal
+        </button>
+        <button type="submit" id="btn-save-user-role" class="bg-[#0088CC] hover:bg-[#0077BB] px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Simpan Role
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
@@ -240,10 +226,11 @@
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
      role="status" aria-live="polite"></div>
 
-<!-- Scripts (defer agar DOM siap lebih dulu) -->
+<!-- Scripts -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/auth.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
+<script src="../../assets/js/api.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
@@ -251,5 +238,212 @@
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+
+<!-- Logika Users Management Live -->
+<script>
+let usersData = [];
+let searchQuery = '';
+
+const AVATAR_GRADIENTS = [
+  'from-[#0088CC] to-[#32ADE6]',
+  'from-[#34C759] to-[#28A745]',
+  'from-[#AF52DE] to-[#9B3DC8]',
+  'from-[#FF9500] to-[#FF5E3A]'
+];
+
+function formatTimeAgoWIB(dateStr) {
+  if (!dateStr) return 'Belum pernah login';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffSec = Math.floor((now - d) / 1000);
+
+  if (diffSec < 60) return 'Baru saja';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} menit lalu`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} jam lalu`;
+
+  return d.toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+function getRoleBadge(role) {
+  const r = (role || 'staff').toLowerCase();
+  if (r === 'owner') {
+    return `<span class="badge bg-[#0088CC]/15 text-[#32ADE6] font-bold">OWNER</span>`;
+  }
+  if (r === 'viewer') {
+    return `<span class="badge bg-[#AF52DE]/15 text-[#AF52DE] font-semibold">VIEWER</span>`;
+  }
+  return `<span class="badge bg-[#34C759]/15 text-[#34C759] font-semibold">STAFF</span>`;
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById('users-table-body');
+  try {
+    const res = await Api.users.getAll();
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-[#FF3B30]">${res.error?.message || 'Gagal memuat daftar pengguna'}</td></tr>`;
+      return;
+    }
+    usersData = res.data || [];
+    updateUserMetrics();
+    renderUsers();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-[#FF3B30]">Terjadi kesalahan: ${err.message}</td></tr>`;
+  }
+}
+
+function updateUserMetrics() {
+  const total = usersData.length;
+  const ownerCount = usersData.filter(u => (u.role || '').toLowerCase() === 'owner').length;
+  const staffCount = usersData.filter(u => (u.role || '').toLowerCase() === 'staff').length;
+  const viewerCount = usersData.filter(u => (u.role || '').toLowerCase() === 'viewer').length;
+
+  document.getElementById('metric-total-users').textContent = total;
+  document.getElementById('metric-owner-count').textContent = ownerCount;
+  document.getElementById('metric-staff-count').textContent = staffCount;
+  document.getElementById('metric-viewer-count').textContent = viewerCount;
+  document.getElementById('users-count-info').textContent = `Total: ${total} user`;
+}
+
+function renderUsers() {
+  const tbody = document.getElementById('users-table-body');
+  let filtered = usersData;
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(u =>
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+      (u.role && u.role.toLowerCase().includes(q))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="px-5 py-12 text-center text-[#A0A0A5]">
+          <div class="flex flex-col items-center justify-center gap-2">
+            <i data-lucide="user-x" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
+            <p class="font-medium text-white">Tidak ada data pengguna</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((u, idx) => {
+    const initial = (u.full_name || u.email || 'U').charAt(0).toUpperCase();
+    const grad = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+    const roleBadge = getRoleBadge(u.role);
+    const lastLoginText = formatTimeAgoWIB(u.last_sign_in_at);
+
+    return `
+      <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
+        <td class="px-5 py-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br ${grad} grid place-items-center font-bold text-sm text-white shadow-sm">
+              ${initial}
+            </div>
+            <div>
+              <span class="font-medium text-white">${escapeHtml(u.full_name || u.email.split('@')[0])}</span>
+            </div>
+          </div>
+        </td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(u.email || '-')}</td>
+        <td class="px-5 py-3.5">${roleBadge}</td>
+        <td class="px-5 py-3.5">
+          <span class="flex items-center gap-1.5 text-[#34C759] text-xs">
+            <span class="w-2 h-2 bg-[#34C759] rounded-full"></span>
+            Aktif
+          </span>
+        </td>
+        <td class="px-5 py-3.5 text-[#A0A0A5] text-xs">${lastLoginText}</td>
+        <td class="px-5 py-3.5 text-right">
+          <button onclick="openRoleModal('${u.id}')" title="Ubah Role" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+            <i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.syncTableLabels) window.syncTableLabels();
+  if (window.lucide) lucide.createIcons();
+}
+
+function handleSearch(val) {
+  searchQuery = val || '';
+  renderUsers();
+}
+
+function openRoleModal(userId) {
+  const user = usersData.find(u => u.id === userId);
+  if (!user) return;
+
+  document.getElementById('role-target-user-id').value = user.id;
+  document.getElementById('role-target-user-name').textContent = user.full_name || user.email.split('@')[0];
+  document.getElementById('role-target-user-email').textContent = user.email;
+  document.getElementById('select-user-role').value = (user.role || 'staff').toLowerCase();
+
+  const modal = document.getElementById('modal-user-role');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeRoleModal() {
+  const modal = document.getElementById('modal-user-role');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function handleSaveRole(e) {
+  e.preventDefault();
+  const userId = document.getElementById('role-target-user-id').value;
+  const newRole = document.getElementById('select-user-role').value;
+
+  if (!userId || !newRole) return;
+
+  const btn = document.getElementById('btn-save-user-role');
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...`;
+
+  try {
+    const res = await Api.users.updateRole(userId, newRole);
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal mengubah role', 'error');
+      return;
+    }
+    showToast(`Role berhasil diubah menjadi ${newRole.toUpperCase()}`, 'success');
+    closeRoleModal();
+    await loadUsers();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simpan Role`;
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadUsers();
+});
+</script>
 </body>
 </html>

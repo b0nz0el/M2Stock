@@ -86,14 +86,19 @@
   function handle(action, el) {
     if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
 
-    // Aksi CRUD produk & transaksi pada halaman items, in, out ditangani langsung oleh live backend CRUD
+    // Aksi CRUD live pada items, in, out, suppliers, customers, users ditangani langsung oleh backend CRUD
     if (el && el.closest && (
       el.closest('#page-items') || el.closest('#modal-item') || el.closest('#modal-delete') ||
       el.closest('#page-in') || el.closest('#modal-in') || el.closest('#modal-delete-in') ||
-      el.closest('#page-out') || el.closest('#modal-out') || el.closest('#modal-delete-out')
+      el.closest('#page-out') || el.closest('#modal-out') || el.closest('#modal-delete-out') ||
+      el.closest('#page-suppliers') || el.closest('#modal-supplier') || el.closest('#modal-delete-supplier') ||
+      el.closest('#page-customers') || el.closest('#modal-customer') || el.closest('#modal-delete-customer') ||
+      el.closest('#page-users') || el.closest('#modal-user-role')
     )) {
       if (action === 'add' || action === 'add-item' || action === 'add-in' || action === 'add-out' ||
-          action === 'edit' || action === 'delete' || action === 'filter') {
+          action === 'add-supplier' || action === 'add-customer' ||
+          action === 'edit' || action === 'delete' || action === 'filter' ||
+          action === 'detail' || action === 'edit-profile' || action.indexOf('role-') === 0) {
         return;
       }
     }

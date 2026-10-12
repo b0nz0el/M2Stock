@@ -6,7 +6,6 @@
 <title>aQuaStock Pro — Supplier</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
-
 <!-- Auth guard (redirect jika belum login) -->
 <script>
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
@@ -54,7 +53,7 @@
       <div class="hidden md:flex items-center gap-2 text-sm">
         <span class="text-[#A0A0A5]">aQuaStock</span>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium"></span>
+        <span id="breadcrumb" class="font-medium text-white">Supplier</span>
       </div>
 
       <div class="flex-1 md:max-w-md md:ml-6 relative">
@@ -72,97 +71,107 @@
         <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button onclick="openSupplierModal()" data-action="add-supplier" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
+          <span class="hidden md:inline">Tambah Supplier</span>
         </button>
       </div>
     </header>
 
-    <!-- ═══════════ SUPPLIER ═══════════ -->
+    <!-- ═══════════ SUPPLIER CONTENT ═══════════ -->
     <div id="page-suppliers" class="page active p-6 space-y-5">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Supplier</h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">Daftar supplier & riwayat pembelian</p>
+          <p class="text-sm text-[#A0A0A5] mt-1">Daftar mitra pemasok & status kerjasama</p>
         </div>
-        <button data-action="add-supplier" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button onclick="openSupplierModal()" data-action="add-supplier" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn self-start sm:self-auto">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Supplier
         </button>
       </div>
 
-      <div class="grid grid-cols-3 gap-4">
+      <!-- METRICS HEADER -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="card p-5">
-          <div class="flex items-start justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center">
-              <i data-lucide="factory" class="w-5 h-5 text-white" aria-hidden="true"></i>
-            </div>
-            <span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>
-          </div>
-          <p class="font-semibold text-lg">CV Aqua Teknik</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Jakarta · 0812-3456-7890</p>
-          <div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p class="text-xs text-[#A0A0A5]">Total Beli</p>
-              <p class="font-semibold mt-0.5">Rp 24.5jt</p>
-            </div>
-            <div>
-              <p class="text-xs text-[#A0A0A5]">Transaksi</p>
-              <p class="font-semibold mt-0.5">12</p>
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-[#A0A0A5] font-medium">Total Supplier</p>
+            <div class="w-8 h-8 rounded-lg bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
+              <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="mt-4 flex gap-2">
-            <button data-action="edit" class="flex-1 text-xs bg-white/5 hover:bg-white/10 py-2 rounded-lg font-medium transition">Edit</button>
-            <button data-action="detail" class="flex-1 text-xs bg-white/5 hover:bg-white/10 py-2 rounded-lg font-medium transition">Detail</button>
-          </div>
+          <p class="text-2xl font-bold mt-2 text-white" id="metric-total-suppliers">0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Mitra terdaftar</p>
         </div>
         <div class="card p-5">
-          <div class="flex items-start justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#34C759] to-[#28A745] grid place-items-center">
-              <i data-lucide="factory" class="w-5 h-5 text-white" aria-hidden="true"></i>
-            </div>
-            <span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>
-          </div>
-          <p class="font-semibold text-lg">PT Sumber Pakan</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Bandung · 0813-9876-5432</p>
-          <div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p class="text-xs text-[#A0A0A5]">Total Beli</p>
-              <p class="font-semibold mt-0.5">Rp 18.2jt</p>
-            </div>
-            <div>
-              <p class="text-xs text-[#A0A0A5]">Transaksi</p>
-              <p class="font-semibold mt-0.5">8</p>
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-[#A0A0A5] font-medium">Supplier Aktif</p>
+            <div class="w-8 h-8 rounded-lg bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+              <i data-lucide="check-circle-2" class="w-4 h-4" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="mt-4 flex gap-2">
-            <button data-action="edit" class="flex-1 text-xs bg-white/5 hover:bg-white/10 py-2 rounded-lg font-medium transition">Edit</button>
-            <button data-action="detail" class="flex-1 text-xs bg-white/5 hover:bg-white/10 py-2 rounded-lg font-medium transition">Detail</button>
-          </div>
+          <p class="text-2xl font-bold mt-2 text-[#34C759]" id="metric-active-suppliers">0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Status aktif saat ini</p>
         </div>
-        <div class="card p-5 opacity-60">
-          <div class="flex items-start justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#8E8E93] to-[#636366] grid place-items-center">
-              <i data-lucide="factory" class="w-5 h-5 text-white" aria-hidden="true"></i>
-            </div>
-            <span class="badge bg-[#8E8E93]/15 text-[#A0A0A5]">Nonaktif</span>
-          </div>
-          <p class="font-semibold text-lg">Toko Akuarium Sejahtera</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Surabaya · 0856-1234-5678</p>
-          <div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p class="text-xs text-[#A0A0A5]">Total Beli</p>
-              <p class="font-semibold mt-0.5">Rp 5.4jt</p>
-            </div>
-            <div>
-              <p class="text-xs text-[#A0A0A5]">Transaksi</p>
-              <p class="font-semibold mt-0.5">3</p>
+        <div class="card p-5">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-[#A0A0A5] font-medium">Supplier Nonaktif</p>
+            <div class="w-8 h-8 rounded-lg bg-white/5 text-[#A0A0A5] grid place-items-center">
+              <i data-lucide="pause-circle" class="w-4 h-4" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="mt-4 flex gap-2">
-            <button data-action="edit" class="flex-1 text-xs bg-white/5 hover:bg-white/10 py-2 rounded-lg font-medium transition">Edit</button>
-            <button data-action="detail" class="flex-1 text-xs bg-white/5 hover:bg-white/10 py-2 rounded-lg font-medium transition">Detail</button>
-          </div>
+          <p class="text-2xl font-bold mt-2 text-[#A0A0A5]" id="metric-inactive-suppliers">0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Kerjasama ditangguhkan</p>
+        </div>
+      </div>
+
+      <!-- FILTER & SEARCH BAR -->
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+          <input type="text" id="search-suppliers" placeholder="Cari nama, telepon, atau alamat..."
+                 oninput="handleSearch(this.value)"
+                 class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        </div>
+        <div class="flex items-center gap-1.5 bg-[#1C1C1E] p-1 rounded-xl border border-white/5 overflow-x-auto">
+          <button type="button" onclick="filterByStatus('all')" id="tab-all"
+                  class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0088CC] text-white transition">
+            Semua
+          </button>
+          <button type="button" onclick="filterByStatus('active')" id="tab-active"
+                  class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#A0A0A5] hover:text-white transition">
+            Aktif
+          </button>
+          <button type="button" onclick="filterByStatus('inactive')" id="tab-inactive"
+                  class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#A0A0A5] hover:text-white transition">
+            Nonaktif
+          </button>
+        </div>
+      </div>
+
+      <!-- TABEL SUPPLIER -->
+      <div class="card overflow-hidden">
+        <div class="card-table-wrap">
+          <table class="w-full text-sm">
+            <thead class="bg-white/[0.02] border-b border-white/5">
+              <tr class="text-left text-[#A0A0A5]">
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Nama Supplier</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Telepon</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Alamat</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Status</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right w-32">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="suppliers-table-body">
+              <tr>
+                <td colspan="5" class="px-5 py-8 text-center text-[#A0A0A5]">
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-[#0088CC]" aria-hidden="true"></i>
+                    <span>Memuat data supplier...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -196,12 +205,91 @@
   </nav>
 </div>
 
-<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
-  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
-  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
-  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
+<!-- ═══════════ MODAL FORM SUPPLIER (TAMBAH / EDIT) ═══════════ -->
+<div id="modal-supplier" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-supplier-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="factory" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-supplier-title" class="text-lg font-bold text-white">Tambah Supplier</h3>
+          <p class="text-xs text-[#A0A0A5] mt-0.5">Kelola data mitra pemasok persediaan</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeSupplierModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <form id="form-supplier" class="space-y-4" onsubmit="handleSupplierSubmit(event)">
+      <input type="hidden" id="supplier-id">
+
+      <div>
+        <label for="supplier-name" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Nama Supplier / PT / CV <span class="text-[#FF3B30]">*</span></label>
+        <input type="text" id="supplier-name" required placeholder="Contoh: CV Aqua Teknik"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="supplier-phone" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Nomor Telepon / WhatsApp</label>
+          <input type="text" id="supplier-phone" placeholder="0812-xxxx-xxxx"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label for="supplier-status" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Status Kerjasama</label>
+          <select id="supplier-status"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+            <option value="true">Aktif</option>
+            <option value="false">Nonaktif</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="supplier-address" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Alamat / Lokasi</label>
+        <textarea id="supplier-address" rows="3" placeholder="Alamat kantor / gudang supplier..."
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none resize-none"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeSupplierModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+          Batal
+        </button>
+        <button type="submit" id="btn-save-supplier" class="bg-[#0088CC] hover:bg-[#0077BB] px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Simpan Supplier
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL KONFIRMASI HAPUS SUPPLIER ═══════════ -->
+<div id="modal-delete-supplier" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center text-[#FF3B30]">
+        <i data-lucide="alert-triangle" class="w-5 h-5" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 id="modal-delete-title" class="text-lg font-bold text-white">Hapus Supplier</h3>
+        <p class="text-xs text-[#A0A0A5]">Tindakan ini tidak dapat dibatalkan</p>
+      </div>
+    </div>
+    <p class="text-sm text-[#A0A0A5] leading-relaxed">
+      Apakah Anda yakin ingin menghapus supplier <strong class="text-white" id="delete-supplier-name">-</strong>?
+    </p>
+    <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+      <button type="button" onclick="closeDeleteSupplierModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+        Batal
+      </button>
+      <button type="button" id="btn-confirm-delete-supplier" onclick="executeDeleteSupplier()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#FF3B30]/20 transition">
+        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i> Hapus
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
@@ -209,10 +297,11 @@
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
      role="status" aria-live="polite"></div>
 
-<!-- Scripts (defer agar DOM siap lebih dulu) -->
+<!-- Scripts -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/auth.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
+<script src="../../assets/js/api.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
@@ -220,5 +309,265 @@
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+
+<!-- Logika CRUD Live Supplier -->
+<script>
+let suppliersData = [];
+let currentFilter = 'all';
+let searchQuery = '';
+let targetDeleteId = null;
+
+async function loadSuppliers() {
+  const tbody = document.getElementById('suppliers-table-body');
+  try {
+    const res = await Api.suppliers.getAll();
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-8 text-center text-[#FF3B30]">${res.error?.message || 'Gagal memuat supplier'}</td></tr>`;
+      return;
+    }
+    suppliersData = res.data || [];
+    updateSupplierMetrics();
+    renderSuppliers();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-8 text-center text-[#FF3B30]">Terjadi kesalahan: ${err.message}</td></tr>`;
+  }
+}
+
+function updateSupplierMetrics() {
+  const total = suppliersData.length;
+  const active = suppliersData.filter(s => s.is_active).length;
+  const inactive = total - active;
+
+  document.getElementById('metric-total-suppliers').textContent = total;
+  document.getElementById('metric-active-suppliers').textContent = active;
+  document.getElementById('metric-inactive-suppliers').textContent = inactive;
+}
+
+function renderSuppliers() {
+  const tbody = document.getElementById('suppliers-table-body');
+  let filtered = suppliersData;
+
+  // Filter status
+  if (currentFilter === 'active') {
+    filtered = filtered.filter(s => s.is_active);
+  } else if (currentFilter === 'inactive') {
+    filtered = filtered.filter(s => !s.is_active);
+  }
+
+  // Filter pencarian
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(s => 
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.phone && s.phone.toLowerCase().includes(q)) ||
+      (s.address && s.address.toLowerCase().includes(q))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-5 py-12 text-center text-[#A0A0A5]">
+          <div class="flex flex-col items-center justify-center gap-2">
+            <i data-lucide="inbox" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
+            <p class="font-medium text-white">Tidak ada data supplier</p>
+            <p class="text-xs">Klik tombol Tambah Supplier untuk mendaftarkan mitra baru.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(s => {
+    const isActive = !!s.is_active;
+    const statusBadge = isActive
+      ? `<span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>`
+      : `<span class="badge bg-[#8E8E93]/15 text-[#A0A0A5]">Nonaktif</span>`;
+
+    return `
+      <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
+        <td class="px-5 py-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-[#0088CC]/15 text-[#32ADE6]' : 'bg-white/5 text-[#A0A0A5]'} grid place-items-center text-sm font-bold">
+              <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i>
+            </div>
+            <div>
+              <p class="font-medium text-white">${escapeHtml(s.name)}</p>
+              <p class="text-[11px] text-[#A0A0A5] md:hidden">${escapeHtml(s.phone || '-')}</p>
+            </div>
+          </div>
+        </td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(s.phone || '-')}</td>
+        <td class="px-5 py-3.5 text-[#A0A0A5] max-w-xs truncate">${escapeHtml(s.address || '-')}</td>
+        <td class="px-5 py-3.5">${statusBadge}</td>
+        <td class="px-5 py-3.5 text-right">
+          <div class="flex items-center justify-end gap-1.5">
+            <button onclick="editSupplier(${s.id})" title="Edit" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+              <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+            <button onclick="confirmDeleteSupplier(${s.id}, '${escapeHtml(s.name)}')" title="Hapus" class="p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
+              <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.syncTableLabels) window.syncTableLabels();
+  if (window.lucide) lucide.createIcons();
+}
+
+function filterByStatus(status) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-tab-btn').forEach(btn => {
+    btn.classList.remove('bg-[#0088CC]', 'text-white', 'font-semibold');
+    btn.classList.add('text-[#A0A0A5]', 'font-medium');
+  });
+  const activeBtn = document.getElementById(`tab-${status}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('text-[#A0A0A5]', 'font-medium');
+    activeBtn.classList.add('bg-[#0088CC]', 'text-white', 'font-semibold');
+  }
+  renderSuppliers();
+}
+
+function handleSearch(val) {
+  searchQuery = val || '';
+  renderSuppliers();
+}
+
+function openSupplierModal(supplier = null) {
+  const modal = document.getElementById('modal-supplier');
+  const title = document.getElementById('modal-supplier-title');
+  const form = document.getElementById('form-supplier');
+
+  form.reset();
+  if (supplier) {
+    title.textContent = 'Edit Supplier';
+    document.getElementById('supplier-id').value = supplier.id;
+    document.getElementById('supplier-name').value = supplier.name || '';
+    document.getElementById('supplier-phone').value = supplier.phone || '';
+    document.getElementById('supplier-address').value = supplier.address || '';
+    document.getElementById('supplier-status').value = supplier.is_active ? 'true' : 'false';
+  } else {
+    title.textContent = 'Tambah Supplier';
+    document.getElementById('supplier-id').value = '';
+    document.getElementById('supplier-status').value = 'true';
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  setTimeout(() => document.getElementById('supplier-name').focus(), 50);
+}
+
+function closeSupplierModal() {
+  const modal = document.getElementById('modal-supplier');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function editSupplier(id) {
+  const s = suppliersData.find(item => item.id === id);
+  if (s) openSupplierModal(s);
+}
+
+async function handleSupplierSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('supplier-id').value;
+  const name = document.getElementById('supplier-name').value.trim();
+  const phone = document.getElementById('supplier-phone').value.trim();
+  const address = document.getElementById('supplier-address').value.trim();
+  const isActive = document.getElementById('supplier-status').value === 'true';
+
+  if (!name) {
+    showToast('Nama supplier wajib diisi', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-supplier');
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...`;
+
+  try {
+    let res;
+    if (id) {
+      res = await Api.suppliers.update(id, { name, phone, address, is_active: isActive });
+    } else {
+      res = await Api.suppliers.create({ name, phone, address, is_active: isActive });
+    }
+
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal menyimpan supplier', 'error');
+      return;
+    }
+
+    showToast(id ? 'Supplier berhasil diperbarui' : 'Supplier berhasil ditambahkan', 'success');
+    closeSupplierModal();
+    await loadSuppliers();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simpan Supplier`;
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function confirmDeleteSupplier(id, name) {
+  targetDeleteId = id;
+  document.getElementById('delete-supplier-name').textContent = name;
+  const modal = document.getElementById('modal-delete-supplier');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeDeleteSupplierModal() {
+  targetDeleteId = null;
+  const modal = document.getElementById('modal-delete-supplier');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function executeDeleteSupplier() {
+  if (!targetDeleteId) return;
+  const btn = document.getElementById('btn-confirm-delete-supplier');
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menghapus...`;
+
+  try {
+    const res = await Api.suppliers.delete(targetDeleteId);
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal menghapus supplier', 'error');
+      return;
+    }
+    showToast('Supplier berhasil dihapus', 'success');
+    closeDeleteSupplierModal();
+    await loadSuppliers();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i> Hapus`;
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSuppliers();
+});
+</script>
 </body>
 </html>

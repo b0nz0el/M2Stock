@@ -6,7 +6,6 @@
 <title>aQuaStock Pro — Customer</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
-
 <!-- Auth guard (redirect jika belum login) -->
 <script>
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
@@ -54,7 +53,7 @@
       <div class="hidden md:flex items-center gap-2 text-sm">
         <span class="text-[#A0A0A5]">aQuaStock</span>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium"></span>
+        <span id="breadcrumb" class="font-medium text-white">Customer</span>
       </div>
 
       <div class="flex-1 md:max-w-md md:ml-6 relative">
@@ -72,84 +71,97 @@
         <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
+        <button onclick="openCustomerModal()" data-action="add-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i>
+          <span class="hidden md:inline">Tambah Customer</span>
         </button>
       </div>
     </header>
 
-    <!-- ═══════════ CUSTOMER ═══════════ -->
+    <!-- ═══════════ CUSTOMER CONTENT ═══════════ -->
     <div id="page-customers" class="page active p-6 space-y-5">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Customer</h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">Pelanggan tetap & riwayat pembelian</p>
+          <p class="text-sm text-[#A0A0A5] mt-1">Pelanggan tetap & riwayat akumulasi pembelian</p>
         </div>
-        <button data-action="add-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button onclick="openCustomerModal()" data-action="add-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn self-start sm:self-auto">
           <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Customer
         </button>
       </div>
 
+      <!-- METRICS HEADER -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="card p-5">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-[#A0A0A5] font-medium">Total Pelanggan</p>
+            <div class="w-8 h-8 rounded-lg bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
+              <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i>
+            </div>
+          </div>
+          <p class="text-2xl font-bold mt-2 text-white" id="metric-total-customers">0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Pelanggan terdaftar</p>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-[#A0A0A5] font-medium">Akumulasi Belanja</p>
+            <div class="w-8 h-8 rounded-lg bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+              <i data-lucide="coins" class="w-4 h-4" aria-hidden="true"></i>
+            </div>
+          </div>
+          <p class="text-2xl font-bold mt-2 text-[#34C759]" id="metric-total-spent">Rp 0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Total seluruh pembelian</p>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-[#A0A0A5] font-medium">Total Transaksi</p>
+            <div class="w-8 h-8 rounded-lg bg-[#AF52DE]/10 text-[#AF52DE] grid place-items-center">
+              <i data-lucide="shopping-cart" class="w-4 h-4" aria-hidden="true"></i>
+            </div>
+          </div>
+          <p class="text-2xl font-bold mt-2 text-[#AF52DE]" id="metric-total-transactions">0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Order selesai</p>
+        </div>
+      </div>
+
+      <!-- FILTER & SEARCH BAR -->
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+          <input type="text" id="search-customers" placeholder="Cari nama, nomor telepon, email, atau kota..."
+                 oninput="handleSearch(this.value)"
+                 class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        </div>
+        <span class="text-xs text-[#A0A0A5] self-end sm:self-center" id="customers-count-info">Memuat data...</span>
+      </div>
+
+      <!-- TABEL CUSTOMER -->
       <div class="card overflow-hidden">
         <div class="card-table-wrap">
-        <table class="w-full text-sm">
-          <thead class="bg-white/[0.02] border-b border-white/5">
-            <tr class="text-left text-[#A0A0A5]">
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Nama</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Telepon</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Email</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Kota</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Total Beli</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Transaksi</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Terakhir</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center text-xs font-bold">B</div>
-                  <span class="font-medium">Budi Santoso</span>
-                </div>
-              </td>
-              <td class="px-4 py-3.5">0812-3456-7890</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">budi@gmail.com</td>
-              <td class="px-4 py-3.5">Jakarta</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 3.4jt</td>
-              <td class="px-4 py-3.5 text-right">8</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">29 Sep</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#34C759] to-[#28A745] grid place-items-center text-xs font-bold">S</div>
-                  <span class="font-medium">Siti Nurhaliza</span>
-                </div>
-              </td>
-              <td class="px-4 py-3.5">0813-9876-5432</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">siti@gmail.com</td>
-              <td class="px-4 py-3.5">Bandung</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 2.1jt</td>
-              <td class="px-4 py-3.5 text-right">5</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">28 Sep</td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-4 py-3.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#AF52DE] to-[#9B3DC8] grid place-items-center text-xs font-bold">A</div>
-                  <span class="font-medium">Ahmad Wijaya</span>
-                </div>
-              </td>
-              <td class="px-4 py-3.5">0856-1234-5678</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">ahmad@gmail.com</td>
-              <td class="px-4 py-3.5">Surabaya</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 1.8jt</td>
-              <td class="px-4 py-3.5 text-right">4</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">27 Sep</td>
-            </tr>
-          </tbody>
-        </table>
+          <table class="w-full text-sm">
+            <thead class="bg-white/[0.02] border-b border-white/5">
+              <tr class="text-left text-[#A0A0A5]">
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Nama</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Telepon</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Email</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Kota</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Total Beli</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Transaksi</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Terakhir</th>
+                <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right w-28">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table-body">
+              <tr>
+                <td colspan="8" class="px-5 py-8 text-center text-[#A0A0A5]">
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-[#0088CC]" aria-hidden="true"></i>
+                    <span>Memuat data customer...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -183,12 +195,88 @@
   </nav>
 </div>
 
-<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
-  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
-  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
-  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
+<!-- ═══════════ MODAL FORM CUSTOMER (TAMBAH / EDIT) ═══════════ -->
+<div id="modal-customer" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-customer-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="user-plus" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-customer-title" class="text-lg font-bold text-white">Tambah Customer</h3>
+          <p class="text-xs text-[#A0A0A5] mt-0.5">Kelola data pelanggan & informasi kontak</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeCustomerModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <form id="form-customer" class="space-y-4" onsubmit="handleCustomerSubmit(event)">
+      <input type="hidden" id="customer-id">
+
+      <div>
+        <label for="customer-name" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Nama Lengkap <span class="text-[#FF3B30]">*</span></label>
+        <input type="text" id="customer-name" required placeholder="Contoh: Budi Santoso"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="customer-phone" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Nomor Telepon / WhatsApp</label>
+          <input type="text" id="customer-phone" placeholder="0812-xxxx-xxxx"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label for="customer-email" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Email</label>
+          <input type="email" id="customer-email" placeholder="budi@example.com"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label for="customer-city" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Kota / Domisili</label>
+        <input type="text" id="customer-city" placeholder="Contoh: Jakarta, Bandung, Surabaya..."
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeCustomerModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+          Batal
+        </button>
+        <button type="submit" id="btn-save-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Simpan Customer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL KONFIRMASI HAPUS CUSTOMER ═══════════ -->
+<div id="modal-delete-customer" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center text-[#FF3B30]">
+        <i data-lucide="alert-triangle" class="w-5 h-5" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 id="modal-delete-title" class="text-lg font-bold text-white">Hapus Customer</h3>
+        <p class="text-xs text-[#A0A0A5]">Tindakan ini tidak dapat dibatalkan</p>
+      </div>
+    </div>
+    <p class="text-sm text-[#A0A0A5] leading-relaxed">
+      Apakah Anda yakin ingin menghapus data customer <strong class="text-white" id="delete-customer-name">-</strong>?
+    </p>
+    <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+      <button type="button" onclick="closeDeleteCustomerModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+        Batal
+      </button>
+      <button type="button" id="btn-confirm-delete-customer" onclick="executeDeleteCustomer()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#FF3B30]/20 transition">
+        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i> Hapus
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
@@ -196,10 +284,11 @@
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
      role="status" aria-live="polite"></div>
 
-<!-- Scripts (defer agar DOM siap lebih dulu) -->
+<!-- Scripts -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/auth.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
+<script src="../../assets/js/api.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
@@ -207,5 +296,283 @@
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+
+<!-- Logika CRUD Live Customer -->
+<script>
+let customersData = [];
+let searchQuery = '';
+let targetDeleteId = null;
+
+const AVATAR_GRADIENTS = [
+  'from-[#0088CC] to-[#32ADE6]',
+  'from-[#34C759] to-[#28A745]',
+  'from-[#AF52DE] to-[#9B3DC8]',
+  'from-[#FF9500] to-[#FF5E3A]',
+  'from-[#FF2D55] to-[#D81B60]'
+];
+
+function formatRupiah(num) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(num || 0);
+}
+
+function formatShortRupiah(num) {
+  const n = Number(num) || 0;
+  if (n >= 1000000) {
+    return 'Rp ' + (n / 1000000).toFixed(1).replace('.0', '') + 'jt';
+  }
+  if (n >= 1000) {
+    return 'Rp ' + (n / 1000).toFixed(0) + 'rb';
+  }
+  return 'Rp ' + n;
+}
+
+function formatDateWIB(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric',
+    month: 'short'
+  });
+}
+
+async function loadCustomers() {
+  const tbody = document.getElementById('customers-table-body');
+  try {
+    const res = await Api.customers.getAll();
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-[#FF3B30]">${res.error?.message || 'Gagal memuat customer'}</td></tr>`;
+      return;
+    }
+    customersData = res.data || [];
+    updateCustomerMetrics();
+    renderCustomers();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-[#FF3B30]">Terjadi kesalahan: ${err.message}</td></tr>`;
+  }
+}
+
+function updateCustomerMetrics() {
+  const total = customersData.length;
+  const totalSpent = customersData.reduce((acc, c) => acc + (Number(c.total_spent) || 0), 0);
+  const totalTx = customersData.reduce((acc, c) => acc + (Number(c.total_transactions) || 0), 0);
+
+  document.getElementById('metric-total-customers').textContent = total;
+  document.getElementById('metric-total-spent').textContent = formatRupiah(totalSpent);
+  document.getElementById('metric-total-transactions').textContent = totalTx;
+  document.getElementById('customers-count-info').textContent = `Total: ${total} pelanggan`;
+}
+
+function renderCustomers() {
+  const tbody = document.getElementById('customers-table-body');
+  let filtered = customersData;
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(c =>
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.phone && c.phone.toLowerCase().includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q)) ||
+      (c.city && c.city.toLowerCase().includes(q))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="px-5 py-12 text-center text-[#A0A0A5]">
+          <div class="flex flex-col items-center justify-center gap-2">
+            <i data-lucide="users" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
+            <p class="font-medium text-white">Tidak ada data customer</p>
+            <p class="text-xs">Klik tombol Tambah Customer untuk mencatat pelanggan baru.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((c, idx) => {
+    const initial = (c.name || 'C').charAt(0).toUpperCase();
+    const grad = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+    const totalSpentText = formatShortRupiah(c.total_spent);
+    const txCount = c.total_transactions || 0;
+    const lastDate = formatDateWIB(c.last_transaction_at);
+
+    return `
+      <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
+        <td class="px-5 py-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br ${grad} grid place-items-center text-xs font-bold text-white shadow-sm">
+              ${initial}
+            </div>
+            <div>
+              <span class="font-medium text-white">${escapeHtml(c.name)}</span>
+            </div>
+          </div>
+        </td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(c.phone || '-')}</td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(c.email || '-')}</td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(c.city || '-')}</td>
+        <td class="px-5 py-3.5 text-right font-semibold text-white">${totalSpentText}</td>
+        <td class="px-5 py-3.5 text-right font-medium text-white">${txCount}</td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${lastDate}</td>
+        <td class="px-5 py-3.5 text-right">
+          <div class="flex items-center justify-end gap-1.5">
+            <button onclick="editCustomer(${c.id})" title="Edit" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+              <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+            <button onclick="confirmDeleteCustomer(${c.id}, '${escapeHtml(c.name)}')" title="Hapus" class="p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
+              <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.syncTableLabels) window.syncTableLabels();
+  if (window.lucide) lucide.createIcons();
+}
+
+function handleSearch(val) {
+  searchQuery = val || '';
+  renderCustomers();
+}
+
+function openCustomerModal(customer = null) {
+  const modal = document.getElementById('modal-customer');
+  const title = document.getElementById('modal-customer-title');
+  const form = document.getElementById('form-customer');
+
+  form.reset();
+  if (customer) {
+    title.textContent = 'Edit Customer';
+    document.getElementById('customer-id').value = customer.id;
+    document.getElementById('customer-name').value = customer.name || '';
+    document.getElementById('customer-phone').value = customer.phone || '';
+    document.getElementById('customer-email').value = customer.email || '';
+    document.getElementById('customer-city').value = customer.city || '';
+  } else {
+    title.textContent = 'Tambah Customer';
+    document.getElementById('customer-id').value = '';
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  setTimeout(() => document.getElementById('customer-name').focus(), 50);
+}
+
+function closeCustomerModal() {
+  const modal = document.getElementById('modal-customer');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function editCustomer(id) {
+  const c = customersData.find(item => item.id === id);
+  if (c) openCustomerModal(c);
+}
+
+async function handleCustomerSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('customer-id').value;
+  const name = document.getElementById('customer-name').value.trim();
+  const phone = document.getElementById('customer-phone').value.trim();
+  const email = document.getElementById('customer-email').value.trim();
+  const city = document.getElementById('customer-city').value.trim();
+
+  if (!name) {
+    showToast('Nama customer wajib diisi', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-customer');
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...`;
+
+  try {
+    let res;
+    if (id) {
+      res = await Api.customers.update(id, { name, phone, email, city });
+    } else {
+      res = await Api.customers.create({ name, phone, email, city });
+    }
+
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal menyimpan customer', 'error');
+      return;
+    }
+
+    showToast(id ? 'Customer berhasil diperbarui' : 'Customer berhasil ditambahkan', 'success');
+    closeCustomerModal();
+    await loadCustomers();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simpan Customer`;
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function confirmDeleteCustomer(id, name) {
+  targetDeleteId = id;
+  document.getElementById('delete-customer-name').textContent = name;
+  const modal = document.getElementById('modal-delete-customer');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeDeleteCustomerModal() {
+  targetDeleteId = null;
+  const modal = document.getElementById('modal-delete-customer');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function executeDeleteCustomer() {
+  if (!targetDeleteId) return;
+  const btn = document.getElementById('btn-confirm-delete-customer');
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menghapus...`;
+
+  try {
+    const res = await Api.customers.delete(targetDeleteId);
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal menghapus customer', 'error');
+      return;
+    }
+    showToast('Customer berhasil dihapus', 'success');
+    closeDeleteCustomerModal();
+    await loadCustomers();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i> Hapus`;
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadCustomers();
+});
+</script>
 </body>
 </html>
