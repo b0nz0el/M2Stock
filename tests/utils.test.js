@@ -162,6 +162,18 @@ describe('utils.js', () => {
       expect(indicator.getAttribute('style')).toContain('#34C759');
     });
 
+    it('mencegah serangan XSS dengan merender teks secara aman (bukan elemen HTML)', () => {
+      const maliciousPayload = '<img src=x onerror=alert(1)>';
+      showToast(maliciousPayload, 'error');
+
+      const toast = document.querySelector('.toast');
+      expect(toast).not.toBeNull();
+      // Pastikan elemen img tidak dibuat di DOM sama sekali
+      expect(toast.querySelector('img')).toBeNull();
+      // Pastikan teks mentah dirender sebagai string aman
+      expect(toast.textContent).toContain(maliciousPayload);
+    });
+
     it('mendukung tipe error, info, dan default fallback', () => {
       showToast('Terjadi kesalahan', 'error');
       showToast('Informasi sistem', 'info');

@@ -12,10 +12,26 @@ function showToast(msg, type = 'success') {
   toast.className = 'toast';
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
-  toast.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
-    <span style="width:8px;height:8px;background:${colors[type] || colors.info};border-radius:50%;flex-shrink:0;"></span>
-    <span style="font-size:14px;font-weight:500;">${msg}</span>
-  </div>`;
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'flex';
+  wrapper.style.alignItems = 'center';
+  wrapper.style.gap = '10px';
+
+  const dot = document.createElement('span');
+  dot.style.width = '8px';
+  dot.style.height = '8px';
+  dot.style.background = colors[type] || colors.info;
+  dot.style.borderRadius = '50%';
+  dot.style.flexShrink = '0';
+
+  const textSpan = document.createElement('span');
+  textSpan.style.fontSize = '14px';
+  textSpan.style.fontWeight = '500';
+  textSpan.textContent = msg;
+
+  wrapper.appendChild(dot);
+  wrapper.appendChild(textSpan);
+  toast.appendChild(wrapper);
   container.appendChild(toast);
 
   setTimeout(() => {
