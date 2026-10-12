@@ -1,0 +1,6 @@
+/* ═══════════════════════════════════════════════════
+   aQuaStock Pro — pages.css
+   Style spesifik per halaman (mis. chart-container)
+   ═══════════════════════════════════════════════════ */
+  /* ═══ CHART ═══ */
+  .chart-container { position: relative; height: 240px; }

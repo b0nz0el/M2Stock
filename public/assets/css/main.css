@@ -1,0 +1,68 @@
+/* ═══════════════════════════════════════════════════
+   aQuaStock Pro — main.css
+   Reset, :root, html/body, typography, scrollbar, form focus, aksesibilitas
+   ═══════════════════════════════════════════════════ */
+  /* ═══ RESET & BASE ═══ */
+  :root { color-scheme: dark; }
+  html, body {
+    height: 100%;
+    min-height: 100vh;
+    background-color: #000;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ═══ TYPOGRAPHY ═══ */
+  .section-title {
+    color: #A0A0A5;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 16px 12px 6px;
+    font-weight: 600;
+  }
+
+  /* ═══ SCROLLBAR ═══ */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3C3C3E; }
+
+  /* ═══ FORM FOCUS ═══ */
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #0088CC;
+    box-shadow: 0 0 0 3px rgba(0,136,204,0.15);
+  }
+
+  /* ═══ ICONS ═══ */
+  [data-lucide] { stroke-width: 2; }
+
+  /* ═══ ACCESSIBILITY ═══ */
+  :focus-visible {
+    outline: 2px solid #32ADE6;
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
+
+  .skip-link {
+    position: absolute;
+    top: -60px;
+    left: 8px;
+    background: #0088CC;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    z-index: 9999;
+    font-weight: 600;
+    text-decoration: none;
+    transition: top 0.2s;
+  }
+  .skip-link:focus { top: 8px; }
+
+  /* Kontras teks lebih baik */
+  .text-primary-accessible { color: #32ADE6; }
+  .text-secondary-accessible { color: #A0A0A5; }

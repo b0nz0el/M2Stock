@@ -1,0 +1,20 @@
+{
+  "name": "aquastock-pro",
+  "version": "3.0.0",
+  "description": "aQuaStock Pro — sistem manajemen stok peralatan aquarium (static frontend, siap dihubungkan ke backend)",
+  "private": true,
+  "scripts": {
+    "start": "npx serve public",
+    "dev": "npx serve public --listen 8000"
+  },
+  "keywords": [
+    "aquarium",
+    "inventory",
+    "stock",
+    "aquastock"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.0.0"
+  }
+}

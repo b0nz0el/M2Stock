@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════
+   aQuaStock Pro — responsive.css
+   Semua @media (max-width:1024px), @supports fallback, prefers-reduced-motion
+   ═══════════════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════
+     TABLET & MOBILE — max-width: 1024px
+     ═══════════════════════════════════════════════════ */
+  @media (max-width: 1024px) {
+    /* Sidebar jadi drawer */
+    aside {
+      position: fixed;
+      left: -280px;
+      z-index: 60;
+      transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 100vh;
+      width: 280px;
+    }
+    aside.open {
+      left: 0;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+    aside::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: -1;
+    }
+    aside.open::before { opacity: 1; visibility: visible; }
+
+    /* Main full width */
+    main {
+      width: 100%;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      max-width: 100vw !important;
+      overflow-x: hidden;
+    }
+    body > div.flex { display: block !important; }
+
+    /* Page padding + ruang untuk bottom nav */
+    .page {
+      padding: 16px !important;
+      padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Header sticky & compact */
+    header {
+      padding: 12px 16px !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 40 !important;
+      background: rgba(0,0,0,0.85) !important;
+      backdrop-filter: blur(20px) !important;
+    }
+    header > div:first-child > span:first-child,
+    header > div:first-child > svg:first-child { display: none; }
+    #breadcrumb { display: none; }
+    header .max-w-md { max-width: 100%; margin-left: 0; }
+    header .ml-6 { margin-left: 0; }
+
+    /* Grid collapse */
+    .grid-cols-4 { grid-template-columns: 1fr !important; }
+    .grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid-cols-2 { grid-template-columns: 1fr !important; }
+    .col-span-2 { grid-column: span 1 !important; }
+
+    /* Bottom nav muncul */
+    .bottom-nav { display: block; }
+
+    /* Tap target 44px */
+    button:not(.bottom-nav-item):not(.menu-item):not(.card table button) {
+      min-height: 44px;
+    }
+    .menu-item { min-height: 44px; }
+
+    /* Tombol header wrap */
+    .page > div:first-child { flex-wrap: wrap; }
+    .page > div:first-child .flex.gap-2 {
+      flex-wrap: wrap;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .page > div:first-child .flex.gap-2 > button,
+    .page > div:first-child .flex.gap-2 > a {
+      flex: 1;
+      min-width: 0;
+      font-size: 0.8125rem;
+      padding: 12px;
+    }
+    header button span:not(.ml-auto) { display: none; }
+
+    /* ═══ TABLE → CARD ═══ */
+    .card-table-wrap { overflow: visible; }
+    .card table { min-width: unset !important; }
+    .card:has(table) { overflow: visible !important; }
+
+    .card table thead { display: none !important; }
+
+    .card table tbody tr {
+      display: block !important;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      position: relative;
+      animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* tr tanpa padding ekstra */
+    .card table tbody tr:has(td:last-child button) {
+      padding-right: 14px;
+    }
+
+    /* HANYA baris pertama (yang bertemu tombol) punya padding ekstra */
+    .card table tbody tr:has(td:last-child button) td:first-child {
+        padding-right: 130px !important;
+    }
+    .card table tbody td {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 12px;
+      padding: 5px 0 !important;
+      border: none !important;
+      font-size: 0.8125rem;
+      text-align: right;
+      background: transparent !important;
+    }
+
+    .card table tbody td::before {
+      content: attr(data-label) !important;
+      color: #A0A0A5 !important;
+      font-size: 0.6875rem !important;
+      font-weight: 500 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px;
+      text-align: left !important;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* Sembunyikan kolom placeholder di mobile */
+    .card table tbody td.hide-on-mobile {
+        display: none !important;
+        }
+
+    /* Checkbox cell: tanpa label */
+    .card table tbody td:first-child:has(input[type="checkbox"])::before {
+      display: none !important;
+    }
+
+    /* Aksi cell (tombol): pojok kanan atas — HANYA jika berisi tombol */
+    .card table tbody td:last-child:has(button) {
+      position: absolute !important;
+      top: 14px;
+      right: 14px;
+      padding: 0 !important;
+      border: none !important;
+      margin: 0 !important;
+      width: auto;
+      justify-content: flex-end !important;
+      display: flex !important;
+    }
+    .card table tbody td:last-child:has(button)::before { display: none !important; }
+
+    /* Field sekunder — kecil & redup */
+    .card table tbody td[data-label="BRAND"],
+    .card table tbody td[data-label="SKU"],
+    .card table tbody td[data-label="KATEGORI"],
+    .card table tbody td[data-label="KASIR"],
+    .card table tbody td[data-label="CHANNEL"] {
+      font-size: 0.75rem !important;
+      color: #A0A0A5;
+    }
+
+    /* Field tersier - cegah wrap & kecilkan */
+    .card table tbody td[data-label="NO. TRANSAKSI"],
+    .card table tbody td[data-label="NO. RESI"],
+    .card table tbody td[data-label="NO. PO"],
+    .card table tbody td[data-label="NO. RETUR"] {
+      font-size: 0.625rem !important;
+      color: #8E8E93;
+       white-space: nowrap !important;
+       gap: 6px !important
+    }
+    /* Label lebih kecil untuk field ini */
+    .card table tbody td[data-label="NO. TRANSAKSI"]::before,
+    .card table tbody td[data-label="NO. RESI"]::before,
+    .card table tbody td[data-label="NO. PO"]::before,
+    .card table tbody td[data-label="NO. RETUR"]::before {
+      font-size: 0.5625rem !important;
+      letter-spacing: 0.3px !important;
+  }
+
+  /* ═══ iOS < 15 fallback untuk :has() ═══ */
+  @supports not (selector(:has(*))) {
+    .card table tbody td:first-child::before { content: none !important; }
+  }
+
+  /* ═══ REDUCED MOTION ═══ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .ticker-glow, .animate-pulse-badge, .skeleton, .skeleton-line {
+      animation: none !important;
+    }
+  }

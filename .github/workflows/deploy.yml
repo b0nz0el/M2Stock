@@ -1,0 +1,45 @@
+# ═══════════════════════════════════════════════════════════════════
+# aQuaStock Pro — Deploy static site ke GitHub Pages
+# Publish HANYA isi folder `public/` (root web), bukan seluruh repo.
+# ═══════════════════════════════════════════════════════════════════
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Izin minimum yang dibutuhkan Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Batalkan run sebelumnya bila ada push baru (hemat kuota Pages)
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact (folder public)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public'
+
+      - name: Deploy ke GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

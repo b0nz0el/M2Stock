@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>aQuaStock Pro — Customer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐠</text></svg>">
+
+<!-- CDN: Tailwind, Lucide, Chart.js -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Styles -->
+<link rel="stylesheet" href="../../assets/css/main.css">
+<link rel="stylesheet" href="../../assets/css/components.css">
+<link rel="stylesheet" href="../../assets/css/layout.css">
+<link rel="stylesheet" href="../../assets/css/pages.css">
+<link rel="stylesheet" href="../../assets/css/responsive.css">
+</head>
+<body class="bg-black text-white antialiased">
+
+<a href="#main-content" class="skip-link">Lewati ke konten utama</a>
+
+<div class="flex min-h-screen">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="w-64 bg-[#1C1C1E] flex flex-col border-r border-white/5">
+
+    <div class="p-5 flex items-center gap-3 border-b border-white/5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center shadow-lg shadow-[#0088CC]/20">
+        <i data-lucide="fish" class="w-5 h-5 text-white" aria-hidden="true"></i>
+      </div>
+      <div class="min-w-0">
+        <span class="text-base font-bold block truncate">aQuaStock</span>
+        <span class="text-[10px] text-[#A0A0A5] flex items-center gap-1">
+          <span class="w-1.5 h-1.5 bg-[#34C759] rounded-full"></span>
+          v3.0 PRO
+        </span>
+      </div>
+    </div>
+    <button onclick="closeSidebar()" aria-label="Tutup menu"
+            class="md:hidden absolute top-4 right-4 text-[#A0A0A5] hover:text-white p-2 z-10">
+      <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+    </button>
+
+    <nav class="flex-1 p-2 overflow-y-auto" aria-label="Menu utama">
+
+      <div class="section-title">Utama</div>
+      <button type="button"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium"
+              onclick="showPage('dashboard', this)">
+        <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i> Dashboard
+      </button>
+
+      <div class="section-title">Inventori</div>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('items', this)">
+        <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Barang
+        <span class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">10</span>
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('in', this)">
+        <i data-lucide="arrow-down-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Masuk
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('out', this)">
+        <i data-lucide="arrow-up-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Keluar
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('po', this)">
+        <i data-lucide="clipboard-list" class="w-4 h-4" aria-hidden="true"></i> Purchase Order
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('return', this)">
+        <i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i> Retur
+      </button>
+
+      <div class="section-title">Master Data</div>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('suppliers', this)">
+        <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i> Supplier
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('customers', this)">
+        <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i> Customer
+      </button>
+
+      <div class="section-title">Keuangan</div>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('cash', this)">
+        <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i> Kas & Keuangan
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('debt', this)">
+        <i data-lucide="trending-down" class="w-4 h-4" aria-hidden="true"></i> Hutang & Piutang
+      </button>
+
+      <div class="section-title">Laporan</div>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('report', this)">
+        <i data-lucide="bar-chart-3" class="w-4 h-4" aria-hidden="true"></i> Laporan
+      </button>
+
+      <div class="section-title">Sistem</div>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('users', this)">
+        <i data-lucide="user-cog" class="w-4 h-4" aria-hidden="true"></i> Kelola User
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('audit', this)">
+        <i data-lucide="scroll-text" class="w-4 h-4" aria-hidden="true"></i> Audit Log
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('notif', this)">
+        <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i> Notifikasi
+        <span class="ml-auto text-xs bg-[#FF3B30] px-2 py-0.5 rounded-full font-semibold">3</span>
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('backup', this)">
+        <i data-lucide="database-backup" class="w-4 h-4" aria-hidden="true"></i> Backup
+      </button>
+      <button type="button" aria-current="false"
+              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
+              onclick="showPage('settings', this)">
+        <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i> Settings
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-white/5 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg">M</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate">Mr David</p>
+        <span class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
+      </div>
+      <button aria-label="Menu pengguna" class="text-[#A0A0A5] hover:text-white p-1.5 rounded-lg hover:bg-white/5">
+        <i data-lucide="more-vertical" class="w-4 h-4" aria-hidden="true"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main id="main-content" class="flex-1 overflow-y-auto">
+
+    <header class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10">
+
+      <button onclick="toggleSidebar()" aria-label="Buka menu" class="md:hidden text-white p-1">
+        <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+
+      <div class="hidden md:flex items-center gap-2 text-sm">
+        <span class="text-[#A0A0A5]">aQuaStock</span>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
+        <span id="breadcrumb" class="font-medium"></span>
+      </div>
+
+      <div class="flex-1 md:max-w-md md:ml-6 relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+        <input type="text" id="global-search" placeholder="Cari apa saja..." aria-label="Pencarian global"
+               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        <kbd class="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#A0A0A5] bg-white/5 px-1.5 py-0.5 rounded border border-white/10">⌘K</kbd>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+        <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
+          <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
+        </button>
+        <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+          <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+          <span class="hidden md:inline">Tambah</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══════════ CUSTOMER ═══════════ -->
+    <div id="page-customers" class="page active p-6 space-y-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-bold tracking-tight">Customer</h2>
+          <p class="text-sm text-[#A0A0A5] mt-1">Pelanggan tetap & riwayat pembelian</p>
+        </div>
+        <button data-action="add-customer" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Customer
+        </button>
+      </div>
+
+      <div class="card overflow-hidden">
+        <div class="card-table-wrap">
+        <table class="w-full text-sm">
+          <thead class="bg-white/[0.02] border-b border-white/5">
+            <tr class="text-left text-[#A0A0A5]">
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Nama</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Telepon</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Email</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Kota</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Total Beli</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Transaksi</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Terakhir</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-row border-b border-white/5">
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center text-xs font-bold">B</div>
+                  <span class="font-medium">Budi Santoso</span>
+                </div>
+              </td>
+              <td class="px-4 py-3.5">0812-3456-7890</td>
+              <td class="px-4 py-3.5 text-[#A0A0A5]">budi@gmail.com</td>
+              <td class="px-4 py-3.5">Jakarta</td>
+              <td class="px-4 py-3.5 text-right font-semibold">Rp 3.4jt</td>
+              <td class="px-4 py-3.5 text-right">8</td>
+              <td class="px-4 py-3.5 text-[#A0A0A5]">29 Sep</td>
+            </tr>
+            <tr class="table-row border-b border-white/5">
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#34C759] to-[#28A745] grid place-items-center text-xs font-bold">S</div>
+                  <span class="font-medium">Siti Nurhaliza</span>
+                </div>
+              </td>
+              <td class="px-4 py-3.5">0813-9876-5432</td>
+              <td class="px-4 py-3.5 text-[#A0A0A5]">siti@gmail.com</td>
+              <td class="px-4 py-3.5">Bandung</td>
+              <td class="px-4 py-3.5 text-right font-semibold">Rp 2.1jt</td>
+              <td class="px-4 py-3.5 text-right">5</td>
+              <td class="px-4 py-3.5 text-[#A0A0A5]">28 Sep</td>
+            </tr>
+            <tr class="table-row">
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#AF52DE] to-[#9B3DC8] grid place-items-center text-xs font-bold">A</div>
+                  <span class="font-medium">Ahmad Wijaya</span>
+                </div>
+              </td>
+              <td class="px-4 py-3.5">0856-1234-5678</td>
+              <td class="px-4 py-3.5 text-[#A0A0A5]">ahmad@gmail.com</td>
+              <td class="px-4 py-3.5">Surabaya</td>
+              <td class="px-4 py-3.5 text-right font-semibold">Rp 1.8jt</td>
+              <td class="px-4 py-3.5 text-right">4</td>
+              <td class="px-4 py-3.5 text-[#A0A0A5]">27 Sep</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════ BOTTOM TAB BAR (MOBILE) ═══════════ -->
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+    <div class="bottom-nav-items">
+      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="bottomNavTap('dashboard', event)">
+        <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+        <span>Dashboard</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="items" onclick="bottomNavTap('items', event)">
+        <i data-lucide="package" aria-hidden="true"></i>
+        <span>Barang</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="in" onclick="bottomNavTap('in', event)">
+        <i data-lucide="arrow-down-circle" aria-hidden="true"></i>
+        <span>Masuk</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="out" onclick="bottomNavTap('out', event)">
+        <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
+        <span>Keluar</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="menu" onclick="openMenuDrawer(event)">
+        <i data-lucide="menu" aria-hidden="true"></i>
+        <span>Menu</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
+<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
+  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
+  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
+  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
+  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
+</div>
+
+<!-- ═══════════ TOAST CONTAINER ═══════════ -->
+<div id="toast-container" 
+     class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
+     role="status" aria-live="polite"></div>
+
+<!-- Scripts (defer agar DOM siap lebih dulu) -->
+<script src="../../assets/js/utils.js" defer></script>
+<script src="../../assets/js/navigation.js" defer></script>
+<script src="../../assets/js/charts.js" defer></script>
+<script src="../../assets/js/animations.js" defer></script>
+<script src="../../assets/js/app.js" defer></script>
+<script src="../../assets/js/mock-actions.js" defer></script>
+</body>
+</html>

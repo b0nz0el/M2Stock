@@ -1,0 +1,227 @@
+/* ═══════════════════════════════════════════════════
+   aQuaStock Pro — login.css
+   Style khusus halaman login (splash, glow, card, tombol, toast)
+   ═══════════════════════════════════════════════════ */
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+    background: #000;
+    overflow: hidden;
+  }
+
+  /* ═══ SPLASH SCREEN ═══ */
+  .splash {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.7s;
+  }
+  .splash.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .splash-logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, #0088CC 0%, #32ADE6 100%);
+    display: grid;
+    place-items: center;
+    animation: splashLogoIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    box-shadow: 0 20px 60px -10px rgba(0,136,204,0.5);
+  }
+  @keyframes splashLogoIn {
+    0% { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .splash-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-top: 20px;
+    color: #fff;
+    animation: splashTextIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+  }
+  .splash-subtitle {
+    font-size: 13px;
+    color: #8E8E93;
+    margin-top: 6px;
+    animation: splashTextIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  }
+  @keyframes splashTextIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .splash-loader {
+    position: absolute;
+    bottom: 80px;
+    display: flex;
+    gap: 8px;
+    animation: splashTextIn 0.6s ease-out 0.8s both;
+  }
+  .splash-loader span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0088CC;
+    animation: splashDot 1.2s ease-in-out infinite;
+  }
+  .splash-loader span:nth-child(1) { animation-delay: 0s; }
+  .splash-loader span:nth-child(2) { animation-delay: 0.15s; }
+  .splash-loader span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes splashDot {
+    0%, 60%, 100% { transform: scale(0.7); opacity: 0.3; }
+    30% { transform: scale(1.2); opacity: 1; }
+  }
+
+  /* ═══ SPLASH LOADING (setelah login) ═══ */
+  .splash-loading {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.4s;
+  }
+  .splash-loading.show {
+    opacity: 1;
+    visibility: visible;
+  }
+  .splash-loading .splash-logo {
+    animation: splashLogoIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* ═══ ANIMATED BACKGROUND ═══ */
+  .bg-glow {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(0,136,204,0.15), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(50,173,230,0.1), transparent 40%);
+    animation: glowShift 12s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+  @keyframes glowShift {
+    0% { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.15) translate(-20px, -10px); }
+  }
+
+  /* ═══ CARD ENTRANCE ═══ */
+  .login-card {
+    animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .login-card.fade-out {
+    animation: cardOut 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes cardOut {
+    to { opacity: 0; transform: translateY(-20px) scale(0.98); }
+  }
+
+  /* ═══ LOGO PULSE ═══ */
+  .logo-pulse {
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,136,204,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(0,136,204,0); }
+  }
+
+  /* ═══ INPUT FIELD ═══ */
+  .input-field {
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.2s;
+    color: #fff;
+  }
+  .input-field:focus {
+    border-color: #0088CC;
+    box-shadow: 0 0 0 3px rgba(0,136,204,0.15);
+    outline: none;
+  }
+  .input-field::placeholder { color: #636366; }
+
+  /* ═══ BUTTON ═══ */
+  .btn-login {
+    background: linear-gradient(135deg, #0088CC 0%, #32ADE6 100%);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 16px -4px rgba(0,136,204,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-login:hover:not(.loading) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px -4px rgba(0,136,204,0.6);
+  }
+  .btn-login:active:not(.loading) { transform: scale(0.98); }
+  .btn-login.loading {
+    background: linear-gradient(135deg, #0077BB 0%, #2B8FCC 100%);
+    cursor: wait;
+    pointer-events: none;
+    animation: btnPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes btnPulse {
+    0%, 100% { box-shadow: 0 4px 16px -4px rgba(0,136,204,0.4); }
+    50% { box-shadow: 0 4px 24px -4px rgba(0,136,204,0.8); }
+  }
+
+  /* ═══ DOT LOADER ═══ */
+  .dot-loader {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .dot-loader span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .dot-loader span:nth-child(1) { animation-delay: 0s; }
+  .dot-loader span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-loader span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotPulse {
+    0%, 60%, 100% { transform: scale(0.6); opacity: 0.4; }
+    30% { transform: scale(1.2); opacity: 1; }
+  }
+
+  /* ═══ PROGRESS BAR ═══ */
+  .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 0 0 12px 12px;
+    animation: progressFill 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes progressFill {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+
+  /* ═══ SUCCESS CHECKMARK ═══ */
+  .checkmark {
+    display: inline-block;
+    animation: checkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes checkPop {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }

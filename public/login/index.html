@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aQuaStock - Login</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐠</text></svg>">
+
+<!-- CDN: Tailwind, Lucide -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Styles -->
+<link rel="stylesheet" href="../assets/css/main.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/login.css">
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 text-white">
+
+<!-- ═══════════ SPLASH SCREEN ═══════════ -->
+<div class="splash" id="splash">
+  <div class="splash-logo">
+    <i data-lucide="fish" class="w-12 h-12 text-white"></i>
+  </div>
+  <h1 class="splash-title">aQuaStock</h1>
+  <p class="splash-subtitle">Stok peralatan aquarium Anda</p>
+  <div class="splash-loader">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- ═══════════ SPLASH LOADING (setelah login) ═══════════ -->
+<div class="splash-loading" id="splash-loading">
+  <div class="splash-logo">
+    <i data-lucide="fish" class="w-12 h-12 text-white"></i>
+  </div>
+  <h1 class="splash-title">Mengalihkan...</h1>
+  <p class="splash-subtitle">Menyiapkan dashboard Anda</p>
+  <div class="splash-loader">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- Background glow -->
+<div class="bg-glow"></div>
+
+<!-- Login Card -->
+<div class="login-card relative z-10 w-full max-w-sm">
+
+  <!-- Logo -->
+  <div class="text-center mb-8">
+    <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center mb-5 logo-pulse">
+      <i data-lucide="fish" class="w-10 h-10 text-white"></i>
+    </div>
+    <h1 class="text-3xl font-bold tracking-tight">aQuaStock</h1>
+    <p class="text-sm text-[#8E8E93] mt-2">Stok peralatan aquarium Anda</p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-[#1C1C1E] rounded-2xl p-6 border border-white/5">
+    <h2 class="text-lg font-semibold mb-5">Masuk</h2>
+
+    <form onsubmit="handleLogin(event)">
+
+      <!-- Email -->
+      <div class="mb-4">
+        <label class="block text-xs text-[#8E8E93] font-medium mb-2">Email</label>
+        <div class="relative">
+          <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
+          <input type="email" id="email" placeholder="nama@gmail.com" required autocomplete="email"
+                 class="input-field w-full rounded-xl pl-10 pr-4 py-3 text-sm">
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-4">
+        <label class="block text-xs text-[#8E8E93] font-medium mb-2">Kata Sandi</label>
+        <div class="relative">
+          <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password"
+                 class="input-field w-full rounded-xl pl-10 pr-10 py-3 text-sm">
+          <button type="button" onclick="togglePassword()" aria-label="Tampilkan sandi"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-white transition p-1">
+            <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Remember + Forgot -->
+      <div class="flex items-center justify-between mb-6">
+        <label class="flex items-center gap-2 text-xs text-[#8E8E93] cursor-pointer select-none">
+          <input type="checkbox" class="accent-[#0088CC] w-3.5 h-3.5 rounded">
+          Ingat saya
+        </label>
+        <a href="#" class="text-xs text-[#0088CC] hover:underline">Lupa sandi?</a>
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" id="login-btn"
+              class="btn-login w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+        <span id="btn-text">Masuk</span>
+        <i data-lucide="arrow-right" class="w-4 h-4" id="btn-icon"></i>
+      </button>
+
+    </form>
+
+    <!-- Divider -->
+    <div class="flex items-center gap-3 my-6">
+      <div class="flex-1 h-px bg-white/5"></div>
+      <span class="text-xs text-[#8E8E93]">atau</span>
+      <div class="flex-1 h-px bg-white/5"></div>
+    </div>
+
+    <!-- Register -->
+    <a href="#" class="block w-full py-3 rounded-xl border border-white/10 text-center text-sm font-medium hover:bg-white/5 transition">
+      Daftar sebagai Owner
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <p class="text-center text-xs text-[#8E8E93] mt-6">
+    © 2026 aQuaStock · v3.0 PRO
+  </p>
+
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-5 right-5 bg-[#1C1C1E] px-5 py-3.5 rounded-xl border border-white/10 hidden items-center gap-2 z-50 shadow-2xl">
+  <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+  <span class="text-sm font-medium" id="toast-msg">Login berhasil</span>
+</div>
+
+<script src="../assets/js/login.js" defer></script>
+</body>
+</html>
