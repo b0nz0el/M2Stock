@@ -81,26 +81,38 @@
   }
 
   /* Whitelist aksi yang sudah di-handle oleh komponen Web/UI (jangan beri mock toast) */
-  var SKIP_ACTIONS = ['close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu'];
+  var SKIP_ACTIONS = [
+    'close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu',
+    'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out'
+  ];
 
   function handle(action, el) {
     if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
 
-    // Aksi CRUD live pada items, in, out, suppliers, customers, users ditangani langsung oleh backend CRUD
-    if (el && el.closest && (
-      el.closest('#page-items') || el.closest('#modal-item') || el.closest('#modal-delete') ||
-      el.closest('#page-in') || el.closest('#modal-in') || el.closest('#modal-delete-in') ||
-      el.closest('#page-out') || el.closest('#modal-out') || el.closest('#modal-delete-out') ||
-      el.closest('#page-suppliers') || el.closest('#modal-supplier') || el.closest('#modal-delete-supplier') ||
-      el.closest('#page-customers') || el.closest('#modal-customer') || el.closest('#modal-delete-customer') ||
-      el.closest('#page-users') || el.closest('#modal-user-role')
+    // Aksi CRUD live pada suppliers, customers, users, items, in, out ditangani langsung oleh backend CRUD
+    if (
+      action === 'add-supplier' || action === 'add-customer' ||
+      action === 'add-item' || action === 'add-in' || action === 'add-out'
+    ) {
+      return;
+    }
+
+    if (action === 'add' && (
+      document.getElementById('page-suppliers') ||
+      document.getElementById('page-customers') ||
+      document.getElementById('page-users') ||
+      document.getElementById('page-items') ||
+      document.getElementById('page-in') ||
+      document.getElementById('page-out')
     )) {
-      if (action === 'add' || action === 'add-item' || action === 'add-in' || action === 'add-out' ||
-          action === 'add-supplier' || action === 'add-customer' ||
-          action === 'edit' || action === 'delete' || action === 'filter' ||
-          action === 'detail' || action === 'edit-profile' || action.indexOf('role-') === 0) {
-        return;
-      }
+      return;
+    }
+
+    if (el && el.closest && (
+      el.closest('#page-suppliers, #page-customers, #page-users, #page-items, #page-in, #page-out') ||
+      el.closest('[role="dialog"], [id^="modal-"], .modal')
+    )) {
+      return;
     }
 
     if (action === 'add' || action.indexOf('add-') === 0) {
@@ -137,8 +149,22 @@
   }
 
   document.addEventListener('click', function (e) {
-    // Lewati menu item navigasi dengan data-page
+    // 1. Lewati menu item navigasi dengan data-page
     if (e.target && e.target.closest && e.target.closest('.menu-item[data-page]')) {
+      return;
+    }
+
+    // 2. Whitelist semua tombol di halaman Master Data & live CRUD (#page-suppliers, #page-customers, #page-users, dll)
+    if (e.target && e.target.closest && e.target.closest(
+      '#page-suppliers, #page-customers, #page-users, #page-items, #page-in, #page-out'
+    )) {
+      return;
+    }
+
+    // 3. Whitelist semua tombol di dalam modal apapun (save, cancel, hapus, close)
+    if (e.target && e.target.closest && e.target.closest(
+      '[role="dialog"], [id^="modal-"], .modal'
+    )) {
       return;
     }
 
@@ -149,6 +175,25 @@
 
     var action = el.getAttribute('data-action') || '';
     if (SKIP_ACTIONS.indexOf(action) !== -1) {
+      return;
+    }
+
+    // 4. Tombol Tambah di header halaman live CRUD
+    if (
+      action === 'add-supplier' || action === 'add-customer' ||
+      action === 'add-item' || action === 'add-in' || action === 'add-out'
+    ) {
+      return;
+    }
+
+    if (action === 'add' && (
+      document.getElementById('page-suppliers') ||
+      document.getElementById('page-customers') ||
+      document.getElementById('page-users') ||
+      document.getElementById('page-items') ||
+      document.getElementById('page-in') ||
+      document.getElementById('page-out')
+    )) {
       return;
     }
 
