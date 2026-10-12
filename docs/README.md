@@ -79,3 +79,11 @@ Semua script dimuat dengan `defer` agar DOM siap lebih dulu.
    - Digantikan oleh subset statis lokal `public/assets/js/icons.js` yang memuat 74 SVG ikon aktif project.
    - Ukuran: ~17.2 KB raw / ~4.8 KB gzip (menghemat transfer bandwidth ~96%).
    - Fungsi global `window.refreshIcons(root)` menggantikan `lucide.createIcons()` dengan auto-initialization saat `DOMContentLoaded`.
+
+10. **Chart.js Lazy Load (Fase 3.3):**
+    - CDN runtime `https://cdn.jsdelivr.net/npm/chart.js` (~200 KB raw / ~70 KB gzip) telah dihapus dari seluruh 19 file HTML.
+    - Script `public/assets/js/vendor/chart.min.js` hanya di-load secara bersyarat (lazy) di 2 halaman yang membutuhkan:
+      - `/dashboard/` (sales bar & channel doughnut chart)
+      - `/dashboard/report/` (report line chart)
+    - 17 halaman lainnya tidak memuat Chart.js sama sekali, menghemat ~70 KB bandwidth gzip per page visit.
+    - Script `charts.js` dilengkapi guard `if (typeof Chart === 'undefined') return;` sehingga aman tanpa melempar runtime error di halaman tanpa chart.

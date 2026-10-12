@@ -5,7 +5,13 @@
 /* ═══════════════════════════════════════════════
    CHARTS
    ═══════════════════════════════════════════════ */
-const chartSalesEl = document.getElementById('chartSales');
+(function() {
+  if (typeof Chart === 'undefined') {
+    // Chart.js tidak dimuat di halaman ini, skip rendering
+    return;
+  }
+
+  const chartSalesEl = document.getElementById('chartSales');
 if (chartSalesEl) {
   new Chart(chartSalesEl.getContext('2d'), {
     type: 'bar',
@@ -99,3 +105,5 @@ if (chartReportEl) {
     }
   });
 }
+})();
+
