@@ -3,7 +3,8 @@
    Style khusus halaman login (splash, glow, card, tombol, toast)
    ═══════════════════════════════════════════════════ */
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+    font-family: 'InterVariable', -apple-system, BlinkMacSystemFont,
+                 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
     background: #000;
     overflow: hidden;
   }

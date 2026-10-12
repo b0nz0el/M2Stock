@@ -3,6 +3,9 @@
    Reset, :root, typography stack, scrollbar, form focus, aksesibilitas (universal)
    ═══════════════════════════════════════════════════ */
 
+/* ═══ INTER FONT (self-host) ═══ */
+/* File woff2 di-load via inter.css */
+
 /* ═══ RESET & BASE ═══ */
 :root { color-scheme: dark; }
 html, body {
@@ -11,7 +14,8 @@ html, body {
   background-color: #000;
 }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+  font-family: 'InterVariable', -apple-system, BlinkMacSystemFont,
+               'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
 }
 
