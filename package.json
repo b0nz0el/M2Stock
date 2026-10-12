@@ -8,7 +8,8 @@
     "dev": "npx serve public --listen 8000",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "size": "node scripts/check-size.js"
+    "size": "node scripts/check-size.js",
+    "build:css": "tailwindcss -i src/input.css -o public/assets/css/tailwind.static.css --minify"
   },
   "keywords": [
     "aquarium",
@@ -22,6 +23,7 @@
     "happy-dom": "^21.0.1",
     "playwright": "^1.64.0",
     "serve": "^14.0.0",
+    "tailwindcss": "^3.4.19",
     "vitest": "^4.1.11"
   }
 }

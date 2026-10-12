@@ -14,7 +14,9 @@ dan keputusan pemisahan (refactor) dari file monolith ke struktur modular.
 
 | File | Tanggung jawab |
 |---|---|
-| `public/assets/css/main.css` | Reset, `:root`, `html/body`, typography, scrollbar, form focus, aksesibilitas, `skip-link` |
+| `public/assets/css/tailwind.static.css` | Kompilasi static utility Tailwind (minified, ~20 KB raw / ~4.6 KB gzip) |
+| `public/assets/css/base.css` | Reset universal, `:root`, typography InterVariable, scrollbar, form focus, aksesibilitas |
+| `public/assets/css/main.css` | Shell dashboard khusus (`app-sidebar`, `.section-title`, meng-import `base.css`) |
 | `public/assets/css/components.css` | `.card`, `.badge`, `.btn`, `.toast`, `.skeleton`, `.menu-item`, `.bottom-nav-item`, tabel & animasi komponen |
 | `public/assets/css/layout.css` | `.page` (transisi), struktur `.bottom-nav` |
 | `public/assets/css/pages.css` | Style spesifik halaman (mis. `.chart-container`) |
@@ -61,3 +63,12 @@ Semua script dimuat dengan `defer` agar DOM siap lebih dulu.
    - Implementasi focus trap pada drawer mobile (siklus Tab / Shift+Tab di dalam menu, Escape untuk keluar) dan pengembalian fokus otomatis ke elemen pemicu saat drawer ditutup.
    - Otomatis memindahkan fokus screen reader ke heading halaman (`h2`/`h1`) ber-`tabindex="-1"` setelah navigasi halaman terbuka.
 
+8. **Tailwind Static CSS (Fase 3.1):**
+   - Runtime CDN `https://cdn.tailwindcss.com` (~100 KB - 300 KB JIT) telah sepenuhnya dihapus dari seluruh 19 file HTML.
+   - Digantikan oleh file statis yang di-compile: `public/assets/css/tailwind.static.css` (~20 KB raw / ~4.6 KB gzip).
+   - **Workflow Development:**
+     Jika developer menambahkan class Tailwind baru di HTML atau JS, jalankan:
+     ```bash
+     npm run build:css
+     ```
+     File `tailwind.static.css` di-commit langsung ke repositori sehingga lingkungan CI/CD atau static file server tidak memerlukan dependensi build runtime.
