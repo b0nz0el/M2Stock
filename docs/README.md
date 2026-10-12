@@ -54,3 +54,10 @@ Semua script dimuat dengan `defer` agar DOM siap lebih dulu.
 6. **`login/index.html` memuat `main.css` + `components.css` + `login.css`** sesuai
    instruksi. Ini menambahkan `:focus-visible` (hanya tampil saat navigasi
    keyboard) — tidak mengubah tampilan saat klik mouse.
+7. **Accessibility Pass (Fase 1.2):**
+   - Toast notification dilengkapi dengan `role="status"` dan `aria-live="polite"`.
+   - Bottom navigation memiliki `aria-label` eksplisit di setiap tab dan `aria-current="page"` pada tab aktif.
+   - Sidebar drawer dilengkapi atribut `aria-expanded` pada toggle dan `aria-hidden` dinamis pada `aside`.
+   - Implementasi focus trap pada drawer mobile (siklus Tab / Shift+Tab di dalam menu, Escape untuk keluar) dan pengembalian fokus otomatis ke elemen pemicu saat drawer ditutup.
+   - Otomatis memindahkan fokus screen reader ke heading halaman (`h2`/`h1`) ber-`tabindex="-1"` setelah navigasi halaman terbuka.
+

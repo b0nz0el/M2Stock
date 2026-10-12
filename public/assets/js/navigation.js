@@ -57,14 +57,29 @@ function syncActiveState() {
     m.setAttribute('aria-current', isActive ? 'page' : 'false');
   });
 
+  const tabLabels = {
+    dashboard: 'Dashboard',
+    items: 'Barang',
+    in: 'Barang Masuk',
+    out: 'Barang Keluar',
+    menu: 'Menu navigasi'
+  };
+
   const tabToActivate = BOTTOM_TABS.indexOf(pageId) !== -1 ? pageId : 'menu';
   document.querySelectorAll('.bottom-nav-item').forEach(function(b) {
-    const isActive = b.dataset.tab === tabToActivate;
+    const tab = b.dataset.tab;
+    if (!b.getAttribute('aria-label') && tabLabels[tab]) {
+      b.setAttribute('aria-label', tabLabels[tab]);
+    }
+    const isActive = tab === tabToActivate;
     b.classList.toggle('active', isActive);
     if (isActive) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
   activeBottomTab = tabToActivate;
+
+  // Inisialisasi aria-expanded pada tombol toggle
+  updateSidebarAria(false);
 }
 
 /* Bangun URL bersih untuk sebuah halaman, mis. "/aquastock-pro/dashboard/items/" */
@@ -83,6 +98,52 @@ function bottomNavTap(tab, event) {
   showPage(tab);
 }
 
+/* ═══════════════════════════════════════════════
+   ACCESSIBILITY & FOCUS TRAP
+   ═══════════════════════════════════════════════ */
+let lastFocusedElement = null;
+
+function updateSidebarAria(isOpen) {
+  const aside = document.querySelector('aside');
+  if (aside) {
+    aside.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+  }
+  document.querySelectorAll('button[onclick*="toggleSidebar"], button[onclick*="openMenuDrawer"]').forEach(b => {
+    b.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+}
+
+function trapSidebarFocus(e) {
+  const aside = document.querySelector('aside');
+  if (!aside || !aside.classList.contains('open')) return;
+
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeSidebar();
+    return;
+  }
+
+  if (e.key !== 'Tab') return;
+
+  const focusables = aside.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+  if (!focusables || focusables.length === 0) return;
+
+  const firstFocusable = focusables[0];
+  const lastFocusable = focusables[focusables.length - 1];
+
+  if (e.shiftKey) {
+    if (document.activeElement === firstFocusable) {
+      e.preventDefault();
+      lastFocusable.focus();
+    }
+  } else {
+    if (document.activeElement === lastFocusable) {
+      e.preventDefault();
+      firstFocusable.focus();
+    }
+  }
+}
+
 function openMenuDrawer(event) {
   const aside = document.querySelector('aside');
   if (!aside) return;
@@ -92,22 +153,43 @@ function openMenuDrawer(event) {
     return;
   }
 
+  lastFocusedElement = (event && event.currentTarget) || document.activeElement;
+
   document.querySelectorAll('.bottom-nav-item').forEach(function(item) {
     item.classList.remove('active');
   });
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
   aside.classList.add('open');
+  updateSidebarAria(true);
+
+  document.addEventListener('keydown', trapSidebarFocus);
+
+  // Fokus elemen pertama di sidebar
+  const closeBtn = aside.querySelector('button[onclick*="closeSidebar"]') || aside.querySelector('.menu-item');
+  if (closeBtn) setTimeout(() => closeBtn.focus(), 60);
 }
 
-function toggleSidebar() {
+function toggleSidebar(event) {
   const aside = document.querySelector('aside');
   if (!aside) return;
-  aside.classList.toggle('open');
+
+  if (aside.classList.contains('open')) {
+    closeSidebar();
+  } else {
+    lastFocusedElement = (event && event.currentTarget) || document.activeElement;
+    aside.classList.add('open');
+    updateSidebarAria(true);
+    document.addEventListener('keydown', trapSidebarFocus);
+    const closeBtn = aside.querySelector('button[onclick*="closeSidebar"]') || aside.querySelector('.menu-item');
+    if (closeBtn) setTimeout(() => closeBtn.focus(), 60);
+  }
 }
 
 function closeSidebar() {
   const aside = document.querySelector('aside');
   if (aside) aside.classList.remove('open');
+  updateSidebarAria(false);
+  document.removeEventListener('keydown', trapSidebarFocus);
 
   document.querySelectorAll('.bottom-nav-item').forEach(function(b) {
     b.classList.remove('active');
@@ -118,10 +200,16 @@ function closeSidebar() {
     target.classList.add('active');
     target.setAttribute('aria-current', 'page');
   }
+
+  // Kembalikan fokus ke elemen pemicu
+  if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+    lastFocusedElement.focus();
+    lastFocusedElement = null;
+  }
 }
 
 /* ═══════════════════════════════════════════════
-   EVENT SIDEBAR (menu-item & area gelap)
+   EVENT SIDEBAR & PAGE HEADING FOCUS
    ═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
   // Event menu sidebar — HANYA SATU tempat
@@ -137,7 +225,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isActive) b.setAttribute('aria-current', 'page');
         else b.removeAttribute('aria-current');
       });
-      if (window.innerWidth <= MOBILE_BREAKPOINT) closeSidebar();
+      if (window.innerWidth <= (typeof MOBILE_BREAKPOINT !== 'undefined' ? MOBILE_BREAKPOINT : 1024)) {
+        closeSidebar();
+      }
     });
   });
 
@@ -148,6 +238,37 @@ document.addEventListener('DOMContentLoaded', function() {
       if (e.target === aside) closeSidebar();
     });
   }
+
   // Sinkronkan tab aktif dengan halaman yang sedang dibuka
   syncActiveState();
+
+  // A11y: Pindahkan fokus ke heading halaman setelah navigasi
+  const heading = document.querySelector('main h1, main h2, .page h1, .page h2');
+  if (heading) {
+    heading.setAttribute('tabindex', '-1');
+    // Hanya fokus jika pengguna belum memfokuskan elemen form secara manual
+    if (!document.activeElement || document.activeElement === document.body) {
+      heading.focus();
+    }
+  }
 });
+
+/* Export untuk keperluan pengujian / module */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    pageTitles,
+    PAGE_SLUGS,
+    BOTTOM_TABS,
+    dashboardBase,
+    currentPageId,
+    syncActiveState,
+    pageUrl,
+    showPage,
+    bottomNavTap,
+    openMenuDrawer,
+    toggleSidebar,
+    closeSidebar,
+    updateSidebarAria,
+    trapSidebarFocus
+  };
+}
