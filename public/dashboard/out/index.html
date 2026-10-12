@@ -85,6 +85,9 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
+        <button onclick="handleRefreshOut()" data-action="refresh-out" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-out-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
@@ -107,7 +110,7 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat penjualan & pengeluaran barang</p>
         </div>
         <div class="flex gap-2">
-          <button type="button" id="btn-refresh-out" onclick="handleRefreshOut()" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+          <button type="button" id="btn-refresh-out" onclick="handleRefreshOut()" data-action="refresh-out" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
             <i data-lucide="rotate-cw" id="icon-refresh-out" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
           </button>
           <button type="button" onclick="handleExportOut()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
@@ -779,6 +782,10 @@
 
   function handleSearchOut(val) {
     searchQuery = (val || '').trim().toLowerCase();
+    const searchInput = document.getElementById('search-out');
+    const globalInput = document.getElementById('global-search');
+    if (searchInput && searchInput.value !== val) searchInput.value = val || '';
+    if (globalInput && globalInput.value !== val) globalInput.value = val || '';
     currentPage = 1;
     renderOutTable();
   }
@@ -1070,13 +1077,18 @@
   }
 
   async function handleRefreshOut() {
-    const icon = document.getElementById('icon-refresh-out');
-    if (icon) icon.classList.add('animate-spin');
+    const iconToolbar = document.getElementById('icon-refresh-out');
+    const headerBtn = document.getElementById('btn-refresh-out-header');
+    const iconHeader = headerBtn ? headerBtn.querySelector('svg, i') : null;
+
+    if (iconToolbar) iconToolbar.classList.add('animate-spin');
+    if (iconHeader) iconHeader.classList.add('animate-spin');
+
     try {
       await loadOutTransactions();
       await loadDropdowns();
       if (typeof showToast === 'function') {
-        showToast('Data barang keluar berhasil diperbarui', 'info');
+        showToast('Data berhasil di-refresh', 'success');
       }
     } catch (err) {
       console.error('Refresh out error:', err);
@@ -1085,8 +1097,26 @@
       }
     } finally {
       setTimeout(() => {
-        if (icon) icon.classList.remove('animate-spin');
+        if (iconToolbar) iconToolbar.classList.remove('animate-spin');
+        if (iconHeader) iconHeader.classList.remove('animate-spin');
       }, 500);
+    }
+  }
+
+  function setupSearchListeners() {
+    const searchInput = document.getElementById('search-out');
+    const globalInput = document.getElementById('global-search');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        handleSearchOut(e.target.value);
+      });
+    }
+
+    if (globalInput) {
+      globalInput.addEventListener('input', (e) => {
+        handleSearchOut(e.target.value);
+      });
     }
   }
 
@@ -1136,6 +1166,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    setupSearchListeners();
     loadOutTransactions();
     loadDropdowns();
   });

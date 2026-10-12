@@ -65,7 +65,7 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
-        <button onclick="handleRefreshItems()" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-items" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+        <button onclick="handleRefreshItems()" data-action="refresh-items" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-items" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
         </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
@@ -90,6 +90,9 @@
           <p id="items-subtitle" class="text-sm text-[#A0A0A5] mt-1">0 barang · 0 total stok · Rp 0 nilai</p>
         </div>
         <div class="flex gap-2">
+          <button type="button" id="btn-refresh-items-toolbar" onclick="handleRefreshItems()" data-action="refresh-items" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+            <i data-lucide="rotate-cw" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
+          </button>
           <button data-action="import" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="upload" class="w-4 h-4" aria-hidden="true"></i> Import
           </button>
@@ -1215,6 +1218,10 @@
   function handleSearchItems(val) {
     searchQuery = (val || '').trim();
     currentPage = 1;
+    const pageSearch = document.getElementById('search-items');
+    const globalSearch = document.getElementById('global-search');
+    if (pageSearch && pageSearch.value !== val) pageSearch.value = val;
+    if (globalSearch && globalSearch.value !== val) globalSearch.value = val;
     renderItemsTable();
   }
 
@@ -1244,6 +1251,8 @@
     currentPage = 1;
     const searchInput = document.getElementById('search-items');
     if (searchInput) searchInput.value = '';
+    const globalSearch = document.getElementById('global-search');
+    if (globalSearch) globalSearch.value = '';
     const catSelect = document.getElementById('filter-category');
     if (catSelect) catSelect.value = 'all';
     const stockSelect = document.getElementById('filter-stock');
@@ -1583,15 +1592,23 @@
   // REFRESH & EXPORT CSV
   // ═══════════════════════════════════════════════
   async function handleRefreshItems() {
-    const btn = document.getElementById('btn-refresh-items');
-    const icon = btn ? btn.querySelector('i') : null;
-    if (icon) icon.classList.add('animate-spin');
+    const btn1 = document.getElementById('btn-refresh-items');
+    const btn2 = document.getElementById('btn-refresh-items-toolbar');
+    const icon1 = btn1 ? btn1.querySelector('i') : null;
+    const icon2 = btn2 ? btn2.querySelector('i') : null;
+    if (icon1) icon1.classList.add('animate-spin');
+    if (icon2) icon2.classList.add('animate-spin');
 
     try {
       await loadItemsFromBackend();
-      if (typeof showToast === 'function') showToast('Data produk berhasil dimuat ulang', 'info');
+      if (typeof showToast === 'function') showToast('Data berhasil di-refresh', 'success');
+    } catch (err) {
+      console.error('Refresh items error:', err);
+      if (typeof showToast === 'function') showToast('Gagal memuat ulang data', 'error');
     } finally {
-      if (icon) icon.classList.remove('animate-spin');
+      if (icon1) icon1.classList.remove('animate-spin');
+      if (icon2) icon2.classList.remove('animate-spin');
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
     }
   }
 
@@ -1706,7 +1723,24 @@
     }
   });
 
+  function setupSearchListeners() {
+    const pageSearch = document.getElementById('search-items');
+    const globalSearch = document.getElementById('global-search');
+
+    if (pageSearch) {
+      pageSearch.addEventListener('input', function (e) {
+        handleSearchItems(e.target.value);
+      });
+    }
+    if (globalSearch) {
+      globalSearch.addEventListener('input', function (e) {
+        handleSearchItems(e.target.value);
+      });
+    }
+  }
+
   async function initItems() {
+    setupSearchListeners();
     let retries = 0;
     while (typeof window.supabase === 'undefined' && retries < 20) {
       await new Promise(r => setTimeout(r, 50));

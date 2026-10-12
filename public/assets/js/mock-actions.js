@@ -84,12 +84,20 @@
   var SKIP_ACTIONS = [
     'close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu',
     'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out',
-    'refresh', 'export', 'export-items', 'export-pdf', 'export-csv',
+    'refresh', 'refresh-items', 'refresh-in', 'refresh-out', 'refresh-suppliers', 'refresh-customers',
+    'export', 'export-items', 'export-pdf', 'export-csv',
     'print', 'edit-bulk', 'delete-bulk', 'page', 'page-prev', 'page-next', 'bulk-input'
   ];
 
   function handle(action, el) {
     if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
+
+    if (
+      action === 'refresh' || action === 'refresh-items' || action === 'refresh-in' ||
+      action === 'refresh-out' || action === 'refresh-suppliers' || action === 'refresh-customers'
+    ) {
+      return;
+    }
 
     // Aksi CRUD live pada suppliers, customers, users, items, in, out ditangani langsung oleh backend CRUD
     if (
@@ -166,6 +174,13 @@
     // 3. Whitelist semua tombol di dalam modal apapun (save, cancel, hapus, close)
     if (e.target && e.target.closest && e.target.closest(
       '[role="dialog"], [id^="modal-"], .modal'
+    )) {
+      return;
+    }
+
+    // 4. Whitelist semua tombol refresh (baik di header navbar maupun di dalam halaman)
+    if (e.target && e.target.closest && e.target.closest(
+      '[id^="btn-refresh"], [data-action^="refresh"], button[title*="Refresh"], button[aria-label*="Refresh"], button[title*="Muat ulang"]'
     )) {
       return;
     }

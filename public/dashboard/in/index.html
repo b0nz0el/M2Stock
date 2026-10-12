@@ -65,6 +65,9 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
+        <button onclick="handleRefreshIn()" data-action="refresh-in" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-in-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
@@ -87,7 +90,7 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat barang masuk dari supplier</p>
         </div>
         <div class="flex gap-2">
-          <button type="button" id="btn-refresh-in" onclick="handleRefreshIn()" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+          <button type="button" id="btn-refresh-in" onclick="handleRefreshIn()" data-action="refresh-in" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
             <i data-lucide="rotate-cw" id="icon-refresh-in" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
           </button>
           <button type="button" onclick="handleExportIn()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
@@ -635,6 +638,10 @@
   function handleSearchIn(val) {
     searchQuery = (val || '').trim().toLowerCase();
     currentPage = 1;
+    const pageSearch = document.getElementById('search-in');
+    const globalSearch = document.getElementById('global-search');
+    if (pageSearch && pageSearch.value !== val) pageSearch.value = val;
+    if (globalSearch && globalSearch.value !== val) globalSearch.value = val;
     renderInTable();
   }
 
@@ -810,13 +817,17 @@
   }
 
   async function handleRefreshIn() {
-    const icon = document.getElementById('icon-refresh-in');
-    if (icon) icon.classList.add('animate-spin');
+    const icon1 = document.getElementById('icon-refresh-in');
+    const headerBtn = document.getElementById('btn-refresh-in-header');
+    const icon2 = headerBtn ? headerBtn.querySelector('i') : null;
+    if (icon1) icon1.classList.add('animate-spin');
+    if (icon2) icon2.classList.add('animate-spin');
+
     try {
       await loadInTransactions();
       await loadDropdowns();
       if (typeof showToast === 'function') {
-        showToast('Data barang masuk berhasil diperbarui', 'info');
+        showToast('Data berhasil di-refresh', 'success');
       }
     } catch (err) {
       console.error('Refresh in error:', err);
@@ -825,8 +836,10 @@
       }
     } finally {
       setTimeout(() => {
-        if (icon) icon.classList.remove('animate-spin');
-      }, 500);
+        if (icon1) icon1.classList.remove('animate-spin');
+        if (icon2) icon2.classList.remove('animate-spin');
+        if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      }, 400);
     }
   }
 
@@ -872,7 +885,24 @@
     }
   }
 
+  function setupSearchListeners() {
+    const pageSearch = document.getElementById('search-in');
+    const globalSearch = document.getElementById('global-search');
+
+    if (pageSearch) {
+      pageSearch.addEventListener('input', function (e) {
+        handleSearchIn(e.target.value);
+      });
+    }
+    if (globalSearch) {
+      globalSearch.addEventListener('input', function (e) {
+        handleSearchIn(e.target.value);
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    setupSearchListeners();
     loadInTransactions();
     loadDropdowns();
   });

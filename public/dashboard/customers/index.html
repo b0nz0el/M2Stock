@@ -64,6 +64,9 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
+        <button onclick="handleRefreshCustomers()" data-action="refresh-customers" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-customers-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
@@ -86,7 +89,7 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Pelanggan tetap & riwayat akumulasi pembelian</p>
         </div>
         <div class="flex items-center gap-2">
-          <button type="button" id="btn-refresh-customers" onclick="handleRefreshCustomers()" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+          <button type="button" id="btn-refresh-customers" onclick="handleRefreshCustomers()" data-action="refresh-customers" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
             <i data-lucide="rotate-cw" id="icon-refresh-customers" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
           </button>
           <button type="button" onclick="handleExportCustomers()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
@@ -548,18 +551,44 @@ function renderCustomers() {
 }
 
 function handleSearch(val) {
-  searchQuery = val || '';
+  searchQuery = (val || '').trim().toLowerCase();
+  const searchInput = document.getElementById('search-customers');
+  const globalInput = document.getElementById('global-search');
+  if (searchInput && searchInput.value !== val) searchInput.value = val || '';
+  if (globalInput && globalInput.value !== val) globalInput.value = val || '';
   currentPage = 1;
   renderCustomers();
 }
 
+function setupSearchListeners() {
+  const searchInput = document.getElementById('search-customers');
+  const globalInput = document.getElementById('global-search');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      handleSearch(e.target.value);
+    });
+  }
+
+  if (globalInput) {
+    globalInput.addEventListener('input', (e) => {
+      handleSearch(e.target.value);
+    });
+  }
+}
+
 async function handleRefreshCustomers() {
-  const icon = document.getElementById('icon-refresh-customers');
-  if (icon) icon.classList.add('animate-spin');
+  const iconToolbar = document.getElementById('icon-refresh-customers');
+  const headerBtn = document.getElementById('btn-refresh-customers-header');
+  const iconHeader = headerBtn ? headerBtn.querySelector('svg, i') : null;
+
+  if (iconToolbar) iconToolbar.classList.add('animate-spin');
+  if (iconHeader) iconHeader.classList.add('animate-spin');
+
   try {
     await loadCustomers();
     if (typeof showToast === 'function') {
-      showToast('Data customer berhasil diperbarui', 'info');
+      showToast('Data berhasil di-refresh', 'success');
     }
   } catch (err) {
     console.error('Refresh customers error:', err);
@@ -568,7 +597,8 @@ async function handleRefreshCustomers() {
     }
   } finally {
     setTimeout(() => {
-      if (icon) icon.classList.remove('animate-spin');
+      if (iconToolbar) iconToolbar.classList.remove('animate-spin');
+      if (iconHeader) iconHeader.classList.remove('animate-spin');
     }, 500);
   }
 }
@@ -726,6 +756,7 @@ function escapeHtml(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  setupSearchListeners();
   loadCustomers();
 });
 </script>
