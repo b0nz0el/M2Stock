@@ -5,7 +5,11 @@
 /* ═══════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════ */
-lucide.createIcons();
+if (typeof refreshIcons === 'function') {
+  refreshIcons();
+} else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+  lucide.createIcons();
+}
 
 /* ═══════════════════════════════════════════════
    CUSTOM EVENT LISTENERS (Web Components)

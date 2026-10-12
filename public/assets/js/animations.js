@@ -30,5 +30,9 @@ function animateActivePage() {
     setTimeout(() => el.classList.remove('ticker-glow'), 900);
   });
 
-  if (window.lucide) lucide.createIcons();
+  if (typeof refreshIcons === 'function') {
+    refreshIcons();
+  } else if (window.lucide && typeof lucide.createIcons === 'function') {
+    lucide.createIcons();
+  }
 }

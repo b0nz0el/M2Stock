@@ -15,7 +15,9 @@ class AppSidebar extends HTMLElement {
     this.render();
 
     // Inisialisasi ikon Lucide
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons(this);
+    } else if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
 

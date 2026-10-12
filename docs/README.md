@@ -27,6 +27,7 @@ dan keputusan pemisahan (refactor) dari file monolith ke struktur modular.
 
 | File | Tanggung jawab |
 |---|---|
+| `public/assets/js/icons.js` | Subset SVG ikon lokal (74 ikon, ~17.2 KB raw / ~4.8 KB gzip), fungsi `refreshIcons()` |
 | `public/assets/js/utils.js` | `showToast`, `parseIndonesianNumber`, `detectMultiplier`, `animateNumber` |
 | `public/assets/js/navigation.js` | `showPage`, `bottomNavTap`, `openMenuDrawer`, `toggleSidebar`, `closeSidebar`, sinkronisasi tab aktif |
 | `public/assets/js/charts.js` | Konfigurasi Chart.js (sales, channel, report) |
@@ -72,3 +73,9 @@ Semua script dimuat dengan `defer` agar DOM siap lebih dulu.
      npm run build:css
      ```
      File `tailwind.static.css` di-commit langsung ke repositori sehingga lingkungan CI/CD atau static file server tidak memerlukan dependensi build runtime.
+
+9. **Lucide Local Subset (Fase 3.2):**
+   - CDN runtime `https://unpkg.com/lucide@latest/dist/umd/lucide.js` (~1.1 MB raw / ~120 KB gzip) telah dihapus dari seluruh 19 file HTML.
+   - Digantikan oleh subset statis lokal `public/assets/js/icons.js` yang memuat 74 SVG ikon aktif project.
+   - Ukuran: ~17.2 KB raw / ~4.8 KB gzip (menghemat transfer bandwidth ~96%).
+   - Fungsi global `window.refreshIcons(root)` menggantikan `lucide.createIcons()` dengan auto-initialization saat `DOMContentLoaded`.

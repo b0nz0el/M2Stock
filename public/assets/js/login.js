@@ -3,7 +3,11 @@
    Logika halaman login (splash, toggle password, login handler)
    ═══════════════════════════════════════════════════ */
   // Init icons
-  lucide.createIcons();
+  if (typeof refreshIcons === 'function') {
+    refreshIcons();
+  } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+    lucide.createIcons();
+  }
 
   // ═══ SPLASH SCREEN (cuma 1x per session) ═══
   window.addEventListener('load', () => {
@@ -33,7 +37,11 @@
     const isPassword = input.type === 'password';
     input.type = isPassword ? 'text' : 'password';
     icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
-    lucide.createIcons();
+    if (typeof refreshIcons === 'function') {
+      refreshIcons();
+    } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+      lucide.createIcons();
+    }
   }
 
   // ═══ TOAST ═══
@@ -75,8 +83,12 @@
       // Hilangkan progress bar kalau ada
       document.querySelectorAll('.progress-bar').forEach(p => p.remove());
 
-      // Re-init Lucide
-      lucide.createIcons();
+      // Re-init Icons
+      if (typeof refreshIcons === 'function') {
+        refreshIcons();
+      } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+      }
     }
   });
 
@@ -102,7 +114,11 @@
     // 3. Sukses setelah 3 detik
     setTimeout(() => {
       btnText.innerHTML = '<span class="checkmark"><i data-lucide="check" class="w-4 h-4"></i></span> Berhasil';
-      lucide.createIcons();
+      if (typeof refreshIcons === 'function') {
+        refreshIcons();
+      } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+      }
       progress.remove();
 
       // 4. Fade out card + toast
