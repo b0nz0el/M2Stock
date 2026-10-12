@@ -45,20 +45,52 @@
   }
 
   // ═══ TOAST ═══
-  function showToast(msg) {
+  let toastTimer = null;
+  function showToast(msg, type = 'success') {
     const toast = document.getElementById('toast');
-    document.getElementById('toast-msg').textContent = msg;
+    if (!toast) return;
+    const toastMsg = document.getElementById('toast-msg');
+    if (toastMsg) toastMsg.textContent = msg;
+    const dot = toast.querySelector('span:first-child');
+    if (dot) {
+      dot.className = 'w-2 h-2 rounded-full ' + (type === 'error' ? 'bg-[#FF3B30]' : type === 'info' ? 'bg-[#0088CC]' : 'bg-[#34C759]');
+    }
     toast.classList.remove('hidden');
     toast.classList.add('flex');
-    setTimeout(() => {
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
       toast.classList.add('hidden');
       toast.classList.remove('flex');
-    }, 2500);
+    }, 3500);
   }
-  
-    // ═══ RESET SAAT BACK/FORWARD (bfcache) ═══
+
+  // ═══ TOGGLE REGISTER / LOGIN MODE ═══
+  let isRegisterMode = false;
+  function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    const formTitle = document.getElementById('form-title');
+    const btnText = document.getElementById('btn-text');
+    const toggleBtn = document.getElementById('toggle-auth-btn');
+    const loginOptions = document.getElementById('login-options');
+    const pwdInput = document.getElementById('password');
+
+    if (isRegisterMode) {
+      if (formTitle) formTitle.textContent = 'Daftar Akun Baru';
+      if (btnText) btnText.textContent = 'Daftar Sekarang';
+      if (toggleBtn) toggleBtn.textContent = 'Sudah punya akun? Masuk';
+      if (loginOptions) loginOptions.classList.add('hidden');
+      if (pwdInput) pwdInput.setAttribute('autocomplete', 'new-password');
+    } else {
+      if (formTitle) formTitle.textContent = 'Masuk';
+      if (btnText) btnText.textContent = 'Masuk';
+      if (toggleBtn) toggleBtn.textContent = 'Belum punya akun? Daftar';
+      if (loginOptions) loginOptions.classList.remove('hidden');
+      if (pwdInput) pwdInput.setAttribute('autocomplete', 'current-password');
+    }
+  }
+
+  // ═══ RESET SAAT BACK/FORWARD (bfcache) ═══
   window.addEventListener('pageshow', (e) => {
-    // Kalau halaman di-restore dari cache (klik back/forward)
     if (e.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
       const splash = document.getElementById('splash');
       const splashLoading = document.getElementById('splash-loading');
@@ -66,24 +98,18 @@
       const btnText = document.getElementById('btn-text');
       const card = document.querySelector('.login-card');
 
-      // Sembunyikan semua splash
       if (splash) splash.remove();
       if (splashLoading) splashLoading.classList.remove('show');
 
-      // Reset tombol
       if (btn) {
         btn.classList.remove('loading');
         btn.disabled = false;
       }
-      if (btnText) btnText.textContent = 'Masuk';
-
-      // Reset card (hilangkan fade-out)
+      if (btnText) btnText.textContent = isRegisterMode ? 'Daftar Sekarang' : 'Masuk';
       if (card) card.classList.remove('fade-out');
 
-      // Hilangkan progress bar kalau ada
       document.querySelectorAll('.progress-bar').forEach(p => p.remove());
 
-      // Re-init Icons
       if (typeof refreshIcons === 'function') {
         refreshIcons();
       } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
@@ -92,49 +118,93 @@
     }
   });
 
-  // ═══ LOGIN HANDLER ═══
-  function handleLogin(e) {
+  // ═══ AUTO-REDIRECT JIKA SUDAH LOGIN ═══
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      let retries = 0;
+      while (!window.Auth && retries < 25) {
+        await new Promise(r => setTimeout(r, 40));
+        retries++;
+      }
+      if (window.Auth && typeof window.Auth.getCurrentUser === 'function') {
+        const user = await window.Auth.getCurrentUser();
+        if (user) {
+          window.location.replace('/dashboard/');
+        }
+      }
+    } catch (_) {}
+  });
+
+  // ═══ AUTH HANDLER (LIVE SUPABASE) ═══
+  async function handleAuthSubmit(e) {
     e.preventDefault();
 
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
     const btn = document.getElementById('login-btn');
     const btnText = document.getElementById('btn-text');
     const card = document.querySelector('.login-card');
     const splashLoading = document.getElementById('splash-loading');
 
+    if (!email || !password) {
+      showToast('Email dan kata sandi wajib diisi', 'error');
+      return;
+    }
+
     // 1. Loading state tombol
     btn.classList.add('loading');
     btn.disabled = true;
-    btnText.innerHTML = '<span class="dot-loader"><span></span><span></span><span></span></span> Memverifikasi...';
+    const originalText = btnText.innerHTML;
+    btnText.innerHTML = '<span class="dot-loader"><span></span><span></span><span></span></span> ' + (isRegisterMode ? 'Mendaftarkan...' : 'Memverifikasi...');
 
-    // 2. Progress bar
-    const progress = document.createElement('div');
-    progress.className = 'progress-bar';
-    btn.appendChild(progress);
+    try {
+      let res;
+      if (isRegisterMode) {
+        res = await window.Auth.register(email, password);
+      } else {
+        res = await window.Auth.login(email, password);
+      }
 
-    // 3. Sukses setelah 3 detik
-    setTimeout(() => {
+      if (!res.ok) {
+        showToast(res.error?.message || 'Gagal memproses permintaan', 'error');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        btnText.innerHTML = originalText;
+        return;
+      }
+
+      // 2. Tampilkan status berhasil
       btnText.innerHTML = '<span class="checkmark"><i data-lucide="check" class="w-4 h-4"></i></span> Berhasil';
       if (typeof refreshIcons === 'function') {
         refreshIcons();
-      } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
-        lucide.createIcons();
       }
-      progress.remove();
 
-      // 4. Fade out card + toast
+      // 3. Fade out card + toast
       setTimeout(() => {
-        card.classList.add('fade-out');
-        showToast('Login berhasil — mengalihkan...');
+        if (card) card.classList.add('fade-out');
+        showToast(isRegisterMode ? 'Pendaftaran berhasil — mengalihkan...' : 'Login berhasil — mengalihkan...');
 
-        // 5. Munculkan splash loading overlay
+        // 4. Splash loading overlay
         setTimeout(() => {
-          splashLoading.classList.add('show');
-
-          // 6. Redirect setelah splash tampil 1.5 detik
+          if (splashLoading) splashLoading.classList.add('show');
           setTimeout(() => {
-            window.location.href = '../dashboard/';
-          }, 1500);
-        }, 300);
-      }, 500);
-    }, 3000);
+            window.location.href = '/dashboard/';
+          }, 1000);
+        }, 200);
+      }, 300);
+
+    } catch (err) {
+      console.error('Auth submit error:', err);
+      showToast('Terjadi kesalahan jaringan', 'error');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btnText.innerHTML = originalText;
+    }
   }
+
+  // Ekspos ke global window
+  window.togglePassword = togglePassword;
+  window.showToast = showToast;
+  window.toggleAuthMode = toggleAuthMode;
+  window.handleAuthSubmit = handleAuthSubmit;
+  window.handleLogin = handleAuthSubmit;

@@ -24,6 +24,7 @@ class AppSidebar extends HTMLElement {
     // Event delegation & highlight menu aktif
     this.addEventListener('click', this._handleClick);
     this._highlightActiveMenu();
+    this._loadUserProfile();
   }
 
   disconnectedCallback() {
@@ -31,7 +32,42 @@ class AppSidebar extends HTMLElement {
     document.removeEventListener('keydown', this._handleTrapFocus);
   }
 
+  async _loadUserProfile() {
+    try {
+      let retries = 0;
+      while ((typeof window === 'undefined' || !window.Auth) && retries < 25) {
+        await new Promise(r => setTimeout(r, 40));
+        retries++;
+      }
+      if (typeof window !== 'undefined' && window.Auth && typeof window.Auth.getCurrentUser === 'function') {
+        const user = await window.Auth.getCurrentUser();
+        if (user && user.email) {
+          const emailEl = this.querySelector('#sidebar-user-email');
+          const avatarEl = this.querySelector('#sidebar-user-avatar');
+          if (emailEl) emailEl.textContent = user.email;
+          if (avatarEl) avatarEl.textContent = user.email.charAt(0).toUpperCase();
+        }
+      }
+    } catch (_) {}
+  }
+
   _onClick(e) {
+    // 0. Aksi logout
+    if (e.target.closest('[data-action="logout"]')) {
+      if (typeof window !== 'undefined') {
+        if (window.Auth && typeof window.Auth.logout === 'function') {
+          window.Auth.logout().then(() => {
+            window.location.replace('/login/');
+          }).catch(() => {
+            window.location.replace('/login/');
+          });
+        } else {
+          window.location.replace('/login/');
+        }
+      }
+      return;
+    }
+
     // 1. Aksi tombol tutup (mobile)
     if (e.target.closest('[data-action="close-sidebar"]')) {
       this.close();
@@ -253,11 +289,15 @@ class AppSidebar extends HTMLElement {
 
         <!-- User Profile Footer -->
         <div class="p-4 border-t border-white/5 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg">M</div>
+          <div id="sidebar-user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg flex-shrink-0">D</div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold truncate">Mr David</p>
+            <p id="sidebar-user-email" class="text-sm font-semibold truncate">Mr David</p>
             <span class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
           </div>
+          <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout"
+                  class="p-2 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] transition flex-shrink-0">
+            <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
+          </button>
         </div>
       </aside>
     `;

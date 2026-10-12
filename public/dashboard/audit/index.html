@@ -7,6 +7,11 @@
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
 
+<!-- Auth guard (redirect jika belum login) -->
+<script>
+(function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
+</script>
+
 <!-- Inter font (self-host) -->
 <link rel="preconnect" href="/" crossorigin>
 <link rel="preload" href="../../assets/fonts/InterVariable.woff2"
@@ -183,6 +188,8 @@
      role="status" aria-live="polite"></div>
 
 <!-- Scripts (defer agar DOM siap lebih dulu) -->
+<script type="module" src="../../assets/js/supabase-client.js"></script>
+<script src="../../assets/js/auth.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>

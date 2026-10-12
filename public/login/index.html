@@ -61,13 +61,16 @@
 
   <!-- Form Card -->
   <div class="bg-[#1C1C1E] rounded-2xl p-6 border border-white/5">
-    <h2 class="text-lg font-semibold mb-5">Masuk</h2>
+    <div class="flex items-center justify-between mb-5">
+      <h2 id="form-title" class="text-lg font-semibold">Masuk</h2>
+      <span class="text-xs text-[#8E8E93]">Owner & Staff</span>
+    </div>
 
-    <form onsubmit="handleLogin(event)">
+    <form onsubmit="handleAuthSubmit(event)">
 
       <!-- Email -->
       <div class="mb-4">
-        <label class="block text-xs text-[#8E8E93] font-medium mb-2">Email</label>
+        <label for="email" class="block text-xs text-[#8E8E93] font-medium mb-2">Email</label>
         <div class="relative">
           <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
           <input type="email" id="email" placeholder="nama@gmail.com" required autocomplete="email"
@@ -77,7 +80,7 @@
 
       <!-- Password -->
       <div class="mb-4">
-        <label class="block text-xs text-[#8E8E93] font-medium mb-2">Kata Sandi</label>
+        <label for="password" class="block text-xs text-[#8E8E93] font-medium mb-2">Kata Sandi</label>
         <div class="relative">
           <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
           <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password"
@@ -90,15 +93,15 @@
       </div>
 
       <!-- Remember + Forgot -->
-      <div class="flex items-center justify-between mb-6">
+      <div id="login-options" class="flex items-center justify-between mb-6">
         <label class="flex items-center gap-2 text-xs text-[#8E8E93] cursor-pointer select-none">
           <input type="checkbox" class="accent-[#0088CC] w-3.5 h-3.5 rounded">
           Ingat saya
         </label>
-        <a href="#" class="text-xs text-[#0088CC] hover:underline">Lupa sandi?</a>
+        <a href="#" onclick="showToast('Fitur reset kata sandi via email segera hadir', 'info'); return false;" class="text-xs text-[#0088CC] hover:underline">Lupa sandi?</a>
       </div>
 
-      <!-- Login Button -->
+      <!-- Submit Button -->
       <button type="submit" id="login-btn"
               class="btn-login w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
         <span id="btn-text">Masuk</span>
@@ -114,10 +117,11 @@
       <div class="flex-1 h-px bg-white/5"></div>
     </div>
 
-    <!-- Register -->
-    <a href="#" class="block w-full py-3 rounded-xl border border-white/10 text-center text-sm font-medium hover:bg-white/5 transition">
-      Daftar sebagai Owner
-    </a>
+    <!-- Register Toggle -->
+    <button type="button" id="toggle-auth-btn" onclick="toggleAuthMode()"
+            class="block w-full py-3 rounded-xl border border-white/10 text-center text-sm font-medium hover:bg-white/5 transition">
+      Belum punya akun? Daftar
+    </button>
   </div>
 
   <!-- Footer -->
@@ -128,11 +132,13 @@
 </div>
 
 <!-- Toast -->
-<div id="toast" class="fixed top-5 right-5 bg-[#1C1C1E] px-5 py-3.5 rounded-xl border border-white/10 hidden items-center gap-2 z-50 shadow-2xl" role="status" aria-live="polite">
+<div id="toast" class="hidden fixed top-5 right-5 bg-[#1C1C1E] px-5 py-3.5 rounded-xl border border-white/10 items-center gap-2 z-50 shadow-2xl" role="status" aria-live="polite">
   <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
   <span class="text-sm font-medium" id="toast-msg">Login berhasil</span>
 </div>
 
+<script type="module" src="../assets/js/supabase-client.js"></script>
+<script src="../assets/js/auth.js" defer></script>
 <script src="../assets/js/icons.js" defer></script>
 <script src="../assets/js/login.js" defer></script>
 </body>
