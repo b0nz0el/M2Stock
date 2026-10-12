@@ -27,3 +27,4 @@ dist/
 build/
 .cache/
 coverage/
+visual-baseline/
