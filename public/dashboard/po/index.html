@@ -24,141 +24,22 @@
 
 <div class="flex min-h-screen">
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="w-64 bg-[#1C1C1E] flex flex-col border-r border-white/5">
-
-    <div class="p-5 flex items-center gap-3 border-b border-white/5">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center shadow-lg shadow-[#0088CC]/20">
-        <i data-lucide="fish" class="w-5 h-5 text-white" aria-hidden="true"></i>
-      </div>
-      <div class="min-w-0">
-        <span class="text-base font-bold block truncate">aQuaStock</span>
-        <span class="text-[10px] text-[#A0A0A5] flex items-center gap-1">
-          <span class="w-1.5 h-1.5 bg-[#34C759] rounded-full"></span>
-          v3.0 PRO
-        </span>
-      </div>
-    </div>
-    <button onclick="closeSidebar()" aria-label="Tutup menu"
-            class="md:hidden absolute top-4 right-4 text-[#A0A0A5] hover:text-white p-2 z-10">
-      <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
-    </button>
-
-    <nav class="flex-1 p-2 overflow-y-auto" aria-label="Menu utama">
-
-      <div class="section-title">Utama</div>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium"
-              onclick="showPage('dashboard')">
-        <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i> Dashboard
-      </button>
-
-      <div class="section-title">Inventori</div>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('items')">
-        <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Barang
-        <span class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">10</span>
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('in')">
-        <i data-lucide="arrow-down-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Masuk
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('out')">
-        <i data-lucide="arrow-up-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Keluar
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('po')">
-        <i data-lucide="clipboard-list" class="w-4 h-4" aria-hidden="true"></i> Purchase Order
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('return')">
-        <i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i> Retur
-      </button>
-
-      <div class="section-title">Master Data</div>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('suppliers')">
-        <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i> Supplier
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('customers')">
-        <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i> Customer
-      </button>
-
-      <div class="section-title">Keuangan</div>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('cash')">
-        <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i> Kas & Keuangan
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('debt')">
-        <i data-lucide="trending-down" class="w-4 h-4" aria-hidden="true"></i> Hutang & Piutang
-      </button>
-
-      <div class="section-title">Laporan</div>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('report')">
-        <i data-lucide="bar-chart-3" class="w-4 h-4" aria-hidden="true"></i> Laporan
-      </button>
-
-      <div class="section-title">Sistem</div>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('users')">
-        <i data-lucide="user-cog" class="w-4 h-4" aria-hidden="true"></i> Kelola User
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('audit')">
-        <i data-lucide="scroll-text" class="w-4 h-4" aria-hidden="true"></i> Audit Log
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('notif')">
-        <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i> Notifikasi
-        <span class="ml-auto text-xs bg-[#FF3B30] px-2 py-0.5 rounded-full font-semibold">3</span>
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('backup')">
-        <i data-lucide="database-backup" class="w-4 h-4" aria-hidden="true"></i> Backup
-      </button>
-      <button type="button"
-              class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-              onclick="showPage('settings')">
-        <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i> Settings
-      </button>
-    </nav>
-
-    <div class="p-4 border-t border-white/5 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg">M</div>
-      <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold truncate">Mr David</p>
-        <span class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
-      </div>
-      <button aria-label="Menu pengguna" class="text-[#A0A0A5] hover:text-white p-1.5 rounded-lg hover:bg-white/5">
-        <i data-lucide="more-vertical" class="w-4 h-4" aria-hidden="true"></i>
-      </button>
-    </div>
-  </aside>
+  <!-- ═══════════ SIDEBAR (Web Component) ═══════════ -->
+  <app-sidebar>
+    <noscript>
+      <aside class="w-64 bg-[#1C1C1E] p-4 border-r border-white/5">
+        <p class="text-sm font-bold text-[#32ADE6]">aQuaStock Pro</p>
+        <p class="text-xs text-[#A0A0A5] mt-1">Aktifkan JavaScript untuk navigasi lengkap</p>
+      </aside>
+    </noscript>
+  </app-sidebar>
 
   <!-- ═══════════ MAIN ═══════════ -->
   <main id="main-content" class="flex-1 overflow-y-auto">
 
     <header class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10">
 
-      <button onclick="toggleSidebar()" aria-label="Buka menu" class="md:hidden text-white p-1">
+      <button onclick="toggleSidebar()" data-action="toggle-sidebar" aria-expanded="false" aria-label="Buka menu" class="md:hidden text-white p-1">
         <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
       </button>
 
@@ -284,7 +165,7 @@
         <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
         <span>Keluar</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="menu" onclick="openMenuDrawer(event)">
+      <button type="button" class="bottom-nav-item" data-tab="menu" data-action="open-menu" aria-expanded="false" onclick="openMenuDrawer(event)">
         <i data-lucide="menu" aria-hidden="true"></i>
         <span>Menu</span>
       </button>
@@ -310,6 +191,7 @@
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
+<script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
 </body>
