@@ -1,156 +1,139 @@
-# aQuaStock Pro 🐠
+# aQuaStock Pro
 
-**aQuaStock Pro** adalah sistem manajemen stok (inventory) untuk peralatan
-aquarium. Aplikasi mencakup pencatatan barang, transaksi barang masuk & keluar,
-purchase order, retur, data supplier & customer, kas & keuangan, hutang/piutang,
-laporan, kelola user, audit log, notifikasi, backup, dan pengaturan.
+Sistem manajemen stok untuk toko aksesoris aquarium (Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi).
 
-Versi **3.0.0** — frontend statis (HTML + CSS + Vanilla JS) yang siap
-dihubungkan ke backend.
+## Features
+- **Multi-user auth** (Owner, Staff, Viewer) dengan Supabase Auth
+- **CRUD produk + upload foto** (kompresi Canvas WebP < 500 KB)
+- **Transaksi barang masuk & keluar** dengan auto-stock update trigger
+- **Dashboard real-time** dengan grafik Chart.js (penjualan & distribusi channel)
+- **Search, filter, pagination, bulk actions** (bulk delete dengan proteksi FK, bulk edit harga via nominal / persentase)
+- **Export CSV** & cetak **packing list / label pengiriman**
+- **RLS (Row Level Security)** keamanan terisolasi di seluruh tabel PostgreSQL
 
-## 🔗 Repository & Demo
+## Tech Stack
+- **Frontend**: Vanilla JS (ES Modules) + Tailwind CSS (static build teroptimasi)
+- **Backend**: Supabase (PostgreSQL 15 + Auth + Storage)
+- **Icons**: Lucide (subset 74 SVG ikon mandiri, self-hosted tanpa CDN)
+- **Font**: Inter (self-hosted variable font)
+- **Charts**: Chart.js v4 (lazy loaded khusus di halaman dashboard & laporan)
+- **Tests**: Vitest + happy-dom + Playwright
+- **Size Budget**: CSS ~12 KB gzip (budget 60 KB), JS ~102 KB gzip (budget 120 KB)
 
-| | |
+## Prerequisites
+- Node.js 20+ (LTS)
+- npm 10+
+- Akun [Supabase](https://supabase.com) (free tier atau self-hosted)
+- Web Browser modern (Chrome, Edge, Firefox, Safari)
+
+## Quick Start
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/b0nz0el/aquastock-pro.git
+cd aquastock-pro
+npm install
+```
+
+### 2. Setup Environment
+Kredensial Supabase sudah terkonfigurasi di `public/assets/js/supabase-client.js`.  
+Jika ingin menghubungkan ke instance Supabase milik Anda sendiri, perbarui konstanta `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di file tersebut.
+
+### 3. Setup Supabase
+1. Buat project baru di [supabase.com](https://supabase.com).
+2. Jalankan skrip SQL lengkap yang disediakan di [docs/setup-database.md](docs/setup-database.md) melalui Supabase SQL Editor.
+3. Pastikan **Auth Email provider** dalam kondisi aktif (konfirmasi email dapat dimatikan untuk kemudahan development).
+4. Buat Storage Bucket publik bernama `product-images` dan terapkan storage policy untuk upload authenticated.
+
+### 4. Run Development
+```bash
+npm start
+```
+Buka peramban di `http://localhost:3000`.
+
+---
+
+## Scripts
+
+| Script | Fungsi |
 |---|---|
-| 🌐 **Live (GitHub Pages)** | https://b0nz0el.github.io/aquastock-pro/ |
-| 📦 **Repository** | https://github.com/b0nz0el/aquastock-pro |
-| 👤 **Author** | [b0nz0el](https://github.com/b0nz0el) — Mr David |
-| 📄 **License** | MIT © 2026 Mr David |
+| `npm start` | Menjalankan web server lokal untuk folder `public/` di port 3000 |
+| `npm run dev` | Menjalankan web server lokal alternatif di port 8000 |
+| `npm test` | Menjalankan seluruh test suite unit & integrasi menggunakan Vitest |
+| `npm run test:coverage` | Menjalankan unit test dengan laporan cakupan kode (V8 coverage) |
+| `npm run size` | Memeriksa ukuran aset CSS dan JS terhadap alokasi size budget |
+| `npm run build:css` | Mengompilasi ulang static utility CSS Tailwind ke `public/assets/css/tailwind.static.css` |
 
-Deploy otomatis ke GitHub Pages setiap `push` ke branch `main`
-(`.github/workflows/deploy.yml`, publish dari folder `public/`).
+---
 
-## ✨ Fitur
-
-- 🔐 Login + splash screen, dengan toast notifikasi
-- 📊 Dashboard: kartu statistik (angka beranimasi) + grafik Chart.js
-- 📦 16 modul: Barang, Barang Masuk, Barang Keluar, Purchase Order, Retur,
-  Supplier, Customer, Kas & Keuangan, Hutang & Piutang, Laporan, Kelola User,
-  Audit Log, Notifikasi, Backup, Settings
-- 🔎 Pencarian global + shortcut ⌘K / Ctrl+K
-- ☑️ Bulk selection (pilih banyak baris → bar aksi massal)
-- 📱 Responsive penuh (mobile 390px → tablet 1024px → desktop 1440px),
-  bottom navigation di mobile
-- ♿ Aksesibilitas: `skip-link`, `aria-label`, `role`, `:focus-visible`
-- 🎞️ Animasi yang menghormati `prefers-reduced-motion`
-
-## 📁 Struktur Folder
+## Project Structure
 
 ```
-aquastock/
-├── public/                     # Root web (di-serve ke browser)
-│   ├── index.html              # Redirect ke login
-│   ├── login/index.html        # Halaman login    → /login/
-│   ├── 404.html                # Halaman error
-│   │
-│   ├── dashboard/              # 16 halaman aplikasi (clean URL)
-│   │   ├── index.html          # Dashboard         → /dashboard/
-│   │   ├── items/index.html    # Barang            → /dashboard/items/
-│   │   ├── in/index.html       # Barang Masuk      → /dashboard/in/
-│   │   ├── out/index.html      # Barang Keluar     → /dashboard/out/
-│   │   ├── po/index.html       # Purchase Order    → /dashboard/po/
-│   │   ├── return/index.html   # Retur             → /dashboard/return/
-│   │   ├── suppliers/index.html # Supplier         → /dashboard/suppliers/
-│   │   ├── customers/index.html # Customer         → /dashboard/customers/
-│   │   ├── cash/index.html      # Kas & Keuangan   → /dashboard/cash/
-│   │   ├── debt/index.html      # Hutang & Piutang → /dashboard/debt/
-│   │   ├── report/index.html    # Laporan          → /dashboard/report/
-│   │   ├── users/index.html     # Kelola User      → /dashboard/users/
-│   │   ├── audit/index.html     # Audit Log        → /dashboard/audit/
-│   │   ├── notif/index.html     # Notifikasi       → /dashboard/notif/
-│   │   ├── backup/index.html    # Backup           → /dashboard/backup/
-│   │   └── settings/index.html  # Settings         → /dashboard/settings/
-│   │
-│   └── assets/
-│       ├── css/
-│       │   ├── main.css        # Reset, :root, typography, scrollbar, aksesibilitas
-│       │   ├── components.css  # Card, badge, button, toast, skeleton, menu-item
-│       │   ├── layout.css      # Page transition, aside, bottom-nav
-│       │   ├── pages.css       # Style spesifik halaman (chart-container)
-│       │   ├── responsive.css  # Semua @media + prefers-reduced-motion
-│       │   └── login.css       # Style khusus halaman login
-│       ├── js/
-│       │   ├── utils.js        # showToast, parse/animate angka
-│       │   ├── navigation.js   # showPage, sidebar, sinkronisasi tab aktif
-│       │   ├── charts.js       # Konfigurasi Chart.js
-│       │   ├── animations.js   # animateActivePage, prefersReducedMotion
-│       │   ├── app.js          # Init, tabel→card, bulk selection, ⌘K
-│       │   ├── api.js          # Wrapper fetch (placeholder backend)
-│       │   └── login.js        # Logika halaman login
-│       ├── images/
-│       │   ├── logo.svg
-│       │   └── favicon.ico
-│       └── fonts/              # (kosong, untuk font kustom)
-│
-├── server/                     # (kosong — backend nanti)
-├── database/                   # (kosong — skema/migrasi nanti)
-├── tests/                      # (kosong — testing nanti)
-├── docs/
-│   └── README.md               # Catatan dokumentasi & keputusan refactor
-├── scripts/
-│   ├── backup.sh               # Backup aplikasi ke tar.gz
-│   └── deploy.sh               # Deploy placeholder (netlify/vercel/rsync)
-│
-├── .env.example
-├── .gitignore
-├── package.json
-├── tailwind.config.js          # Opsional (Tailwind saat ini via CDN)
-└── README.md
+aquastock-pro/
+├── public/                       # Root direktori web statis
+│   ├── index.html                # Entry point redirect
+│   ├── 404.html                  # Halaman not found responsif
+│   ├── login/                    # Modul otentikasi login
+│   │   └── index.html
+│   ├── dashboard/                # 16 modul aplikasi berbasis clean URL
+│   │   ├── index.html            # Ringkasan KPI & grafik
+│   │   ├── items/                # Manajemen inventaris produk
+│   │   ├── in/                   # Penerimaan barang masuk
+│   │   ├── out/                  # Transaksi barang keluar & kasir
+│   │   ├── po/                   # Purchase order
+│   │   ├── return/               # Retur & komplain
+│   │   ├── suppliers/            # Master data supplier
+│   │   ├── customers/            # Master data customer
+│   │   ├── cash/                 # Arus kas & keuangan
+│   │   ├── debt/                 # Hutang & piutang
+│   │   ├── report/               # Laporan & analitik
+│   │   ├── users/                # Manajemen pengguna & role
+│   │   ├── audit/                # Audit log aktivitas
+│   │   ├── notif/                # Notifikasi operasional
+│   │   ├── backup/               # Cadangan data
+│   │   └── settings/             # Pengaturan profil toko
+│   └── assets/                   # Aset terkompilasi
+│       ├── css/                  # Arsitektur CSS modular
+│       ├── js/                   # Logika klien & integrasi Supabase
+│       ├── images/               # Favicon & logo SVG
+│       └── fonts/                # InterVariable font
+├── docs/                         # Dokumentasi teknis & arsitektur
+│   ├── README.md                 # Peta arsitektur CSS/JS & keputusan teknis
+│   ├── api-contract.md           # Spesifikasi kontrak REST, RPC, & envelope
+│   ├── architecture.md           # Diagram layer, model keamanan, & modul
+│   ├── setup-database.md         # Skrip DDL PostgreSQL, RLS, & triggers
+│   └── deployment.md             # Panduan deployment fase produksi
+├── tests/                        # Vitest unit test suite
+│   ├── api.test.js
+│   ├── app-sidebar.test.js
+│   ├── mock-actions.test.js
+│   ├── navigation.test.js
+│   └── utils.test.js
+├── scripts/                      # Tooling & otomasi developer
+│   ├── check-size.js
+│   ├── backup.sh
+│   └── deploy.sh
+├── src/                          # File sumber input Tailwind
+│   └── input.css
+├── package.json                  # Konfigurasi dependensi project
+├── tailwind.config.js            # Konfigurasi utility Tailwind
+└── README.md                     # Dokumentasi utama proyek
 ```
 
-## ▶️ Cara Menjalankan
+---
 
-Aplikasi ini statis — cukup serve folder `public/`. Pilih salah satu:
+## Documentation Links
 
-**Python (paling simpel, tanpa install apa pun):**
-```bash
-python3 -m http.server 8000 --directory public
-# lalu buka http://localhost:8000
-```
+- 📐 [Arsitektur Sistem & Diagram Layer](docs/architecture.md)
+- 🔌 [Kontrak API, Envelope & RLS Policies](docs/api-contract.md)
+- 🗄️ [Setup Database PostgreSQL & Skema SQL](docs/setup-database.md)
+- 🚀 [Panduan Deployment Produksi](docs/deployment.md)
+- 📑 [Peta Modul Internal & Rekam Jejak Refactor](docs/README.md)
 
-**Node.js (via `serve`):**
-```bash
-npx serve public
-# atau dengan port eksplisit:
-npx serve public --listen 8000
-```
+---
 
-**Lewat `package.json`:**
-```bash
-npm start        # sama dengan: npx serve public
-npm run dev      # sama dengan: npx serve public --listen 8000
-```
+## Deployment
+Detail panduan hosting statis dan checklist pra-produksi tersedia di [docs/deployment.md](docs/deployment.md).
 
-**PHP (alternatif):**
-```bash
-php -S localhost:8000 -t public
-```
-
-> ⚠️ Jangan buka file HTML langsung lewat `file://` — aset relatif & CDN bisa
-> diblokir browser. Selalu jalankan lewat server lokal di atas.
-
-**Alur:** `public/index.html` → redirect ke `login/` → setelah login →
-`dashboard/`. Perpindahan antar modul memakai **clean URL** (multi-page):
-`showPage('items')` mengarahkan ke `/dashboard/items/` — tanpa ekstensi `.html`.
-
-## 🧰 Tech Stack
-
-| Teknologi | Keterangan |
-|---|---|
-| **HTML5** | Struktur halaman (16 dashboard + login + 404) |
-| **CSS3** | Dipecah per-tanggungjawab (main, components, layout, pages, responsive, login) |
-| **Vanilla JavaScript (ES6+)** | Tanpa framework / bundler |
-| **Tailwind CSS (CDN)** | Utility classes via `cdn.tailwindcss.com` |
-| **Chart.js (CDN)** | Grafik penjualan, channel, & laporan |
-| **Lucide (CDN)** | Ikon SVG |
-| **Python / Node `serve` / PHP** | Untuk menjalankan server lokal |
-
-## 📄 License
-
-Proyek ini didistribusikan di bawah **MIT License**.
-
-## 👤 Author
-
-**Mr David**
-
-
+## License
+Didistribusikan di bawah lisensi [MIT](LICENSE). Hak Cipta © 2026 Mr David — Jaquris (Jatimakmur Aquarium Aksesoris, Bekasi).

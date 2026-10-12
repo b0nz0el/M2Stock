@@ -1,89 +1,88 @@
-# Dokumentasi aQuaStock Pro
+# Dokumentasi Arsitektur Modul & Keputusan Teknis — aQuaStock Pro
 
-Folder ini menampung dokumentasi tambahan. Saat ini berisi catatan struktur
-dan keputusan pemisahan (refactor) dari file monolith ke struktur modular.
+Direktori ini memuat dokumentasi teknis dan referensi arsitektur mendalam untuk proyek **aQuaStock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi").
 
-## File utama
+---
 
-| File | Isi |
+## Indeks Dokumentasi
+
+| Dokumen | Deskripsi |
 |---|---|
-| `../README.md` | Deskripsi project, cara run, cara deploy |
-| `README.md` | Catatan dokumentasi & keputusan refactor (file ini) |
+| [../README.md](../README.md) | Ikhtisar proyek, quick start, daftar npm scripts, dan pohon struktur |
+| [architecture.md](architecture.md) | Diagram layer, arsitektur modul frontend & backend Supabase, model keamanan, dan alokasi performa |
+| [api-contract.md](api-contract.md) | Spesifikasi kontrak API REST, format response envelope, Supabase RPC, Storage, dan aturan RLS |
+| [setup-database.md](setup-database.md) | Skrip lengkap DDL PostgreSQL, pembuatan 7 tabel, trigger auto-stock, RPC keamanan, dan seed data |
+| [deployment.md](deployment.md) | Panduan deployment static hosting (GitHub Pages, Vercel, Netlify) dan checklist pra-produksi |
 
-## Peta CSS
+---
 
-| File | Tanggung jawab |
+## Peta CSS (Updated)
+
+Seluruh style frontend disusun secara terpisah untuk menjaga modularitas, kepatuhan aksesibilitas, dan isolasi breakpoint responsif.
+
+| File | Ukuran (Gzip) | Tanggung Jawab & Cakupan |
+|---|---|---|
+| `public/assets/css/tailwind.static.css` | ~4.8 KB | Utilitas Tailwind hasil kompilasi statis via `@tailwindcss/cli` (`npm run build:css`), menggantikan runtime CDN. |
+| `public/assets/css/base.css` | ~0.9 KB | CSS Reset universal, variabel warna tema `:root`, typography InterVariable, styling scrollbar, form `:focus-visible`, dan kelas pembantu aksesibilitas (`.sr-only`, `.skip-link`). |
+| `public/assets/css/main.css` | ~0.3 KB | **Shell orchestrator**. Menggunakan `@import './base.css';` untuk memastikan fondasi dasar ter-load pertama kali, mendefinisikan layout `app-sidebar`, layout desktop shell, dan typography judul modul (`.section-title`). |
+| `public/assets/css/components.css` | ~2.3 KB | Styling komponen UI reusable: `.card`, `.badge`, `.btn`, `.toast`, `.skeleton`, floating `#bulk-bar`, grid seragam `.report-tabs`, dialog modal, dan animasi interaksi. |
+| `public/assets/css/layout.css` | ~0.8 KB | Transisi pergantian halaman halus (`@keyframes pageEnter` 0.4s cubic-bezier dengan filter blur), struktur fixed `.bottom-nav` mobile, dan sticky scrolling sidebar desktop. |
+| `public/assets/css/pages.css` | ~0.2 KB | Penyesuaian khusus halaman tertentu (seperti dimensi visual `.chart-container` pada Chart.js). |
+| `public/assets/css/responsive.css` | ~2.2 KB | Sentralisasi seluruh aturan breakpoint `@media (max-width: 1024px)`, fallback viewport iOS `@supports`, dan adaptasi bagi pengguna yang mengaktifkan `@media (prefers-reduced-motion)`. |
+| `public/assets/css/login.css` | ~1.8 KB | Styling khusus antarmuka halaman login (latar gelap, form card terpusat, splash screen, efek ambient glow, dan indikator status). |
+
+> [!NOTE]
+> **Peran `@import` di `main.css`:**  
+> File `main.css` berfungsi sebagai entry point CSS utama dashboard. Baris `@import './base.css';` di baris pertama menjamin seluruh deklarasi reset CSS, token warna kustom `:root`, dan font Inter dimuat sebelum komponen shell dashboard dievaluasi oleh peramban.
+
+---
+
+## Peta JavaScript (Updated)
+
+Semua script klien dimuat dengan atribut `defer` agar perenderan awal DOM tidak terblokir.
+
+| File | Tanggung Jawab & Integrasi |
 |---|---|
-| `public/assets/css/tailwind.static.css` | Kompilasi static utility Tailwind (minified, ~20 KB raw / ~4.6 KB gzip) |
-| `public/assets/css/base.css` | Reset universal, `:root`, typography InterVariable, scrollbar, form focus, aksesibilitas |
-| `public/assets/css/main.css` | Shell dashboard khusus (`app-sidebar`, `.section-title`, meng-import `base.css`) |
-| `public/assets/css/components.css` | `.card`, `.badge`, `.btn`, `.toast`, `.skeleton`, `.menu-item`, `.bottom-nav-item`, tabel & animasi komponen |
-| `public/assets/css/layout.css` | `.page` (transisi), struktur `.bottom-nav` |
-| `public/assets/css/pages.css` | Style spesifik halaman (mis. `.chart-container`) |
-| `public/assets/css/responsive.css` | **Semua** `@media (max-width:1024px)`, fallback `@supports`, `@media (prefers-reduced-motion)` |
-| `public/assets/css/login.css` | Style khusus halaman login (splash, glow, tombol, toast) |
+| `public/assets/js/supabase-client.js` | Menginisialisasi klien resmi Supabase SDK (`@supabase/supabase-js@2` via ESM) menggunakan kredensial anon key publik dan menempelkannya ke `window.supabase`. |
+| `public/assets/js/api.js` | Lapisan data terpusat (*Single Source of Truth*). Menangani CRUD Supabase untuk produk, transaksi masuk/keluar, supplier, customer, RPC role manajemen, pembatalan request via `AbortController`, dan response envelope `{ ok, data, error, meta }`. |
+| `public/assets/js/auth.js` | Wrapper otentikasi Supabase Auth: login email/password, registrasi akun baru, sign out, pengecekan sesi aktif, proteksi rute halaman dashboard, serta auto-redirect jika belum login. |
+| `public/assets/js/image-utils.js` | Utilitas kompresi foto produk berbasis HTML5 Canvas API pada sisi klien. Mengonversi gambar apapun menjadi format WebP berdimensi maksimum 1200px dengan batas ukuran ketat < 500 KB sebelum diunggah ke Supabase Storage. |
+| `public/assets/js/icons.js` | Subset mandiri berisikan 74 SVG ikon Lucide aktif. Menyediakan fungsi global `window.refreshIcons(container)` untuk merender ikon tanpa dependensi CDN runtime berukuran besar. |
+| `public/assets/js/mock-actions.js` | Guard dan penanganan fallback fitur yang belum memiliki endpoint backend nyata. Dilengkapi whitelist aksi terverifikasi agar tombol aktif tidak memicu toast tiruan yang salah. |
+| `public/assets/js/components/app-sidebar.js` | Web component sidebar navigasi aplikasi yang konsisten di semua halaman dashboard, menangani status tautan aktif dan informasi profil login. |
+| `public/assets/js/utils.js` | Helper global aplikasi: `showToast()` dengan dot status & ikon Lucide, `parseIndonesianNumber()`, `formatRupiah()`, `syncTableLabels()`, dan ekspor data ke file CSV (`exportToCSV()`). |
+| `public/assets/js/navigation.js` | Routing antarmuka multi-halaman (MPA dengan clean URL), kontrol buka/tutup mobile drawer sidebar, interaksi tab bottom navigation, dan focus trap accessibility. |
+| `public/assets/js/charts.js` | Modul pembungkus konfigurasi Chart.js untuk diagram penjualan harian dan proporsi channel penjualan di dashboard serta modul laporan. |
+| `public/assets/js/animations.js` | Animasi peningkatan interaksi bertahap (counter statistik berputar dan transisi elemen) yang otomatis dinonaktifkan bila pengguna memilih reduced motion. |
+| `public/assets/js/app.js` | Orkestrator inisialisasi aplikasi saat `DOMContentLoaded`: registrasi event shortcut global (⌘K / Ctrl+K), inisialisasi ikon awal, dan sinkronisasi label tabel responsif. |
+| `public/assets/js/login.js` | Logika interaksi form halaman login: validasi kredensial, feedback visual proses loading, penanganan pesan error autentikasi, dan pengalihan ke dashboard. |
+| `public/assets/js/vendor/chart.min.js` | Bundle Chart.js lokal yang hanya dimuat secara malas (*lazy-loaded*) di halaman `/dashboard/` dan `/dashboard/report/`. |
 
-## Peta JS
+---
 
-| File | Tanggung jawab |
-|---|---|
-| `public/assets/js/icons.js` | Subset SVG ikon lokal (74 ikon, ~17.2 KB raw / ~4.8 KB gzip), fungsi `refreshIcons()` |
-| `public/assets/js/utils.js` | `showToast`, `parseIndonesianNumber`, `detectMultiplier`, `animateNumber` |
-| `public/assets/js/navigation.js` | `showPage`, `bottomNavTap`, `openMenuDrawer`, `toggleSidebar`, `closeSidebar`, sinkronisasi tab aktif |
-| `public/assets/js/charts.js` | Konfigurasi Chart.js (sales, channel, report) |
-| `public/assets/js/animations.js` | `animateActivePage`, `prefersReducedMotion` |
-| `public/assets/js/app.js` | Init Lucide, konversi tabel→card, bulk selection, shortcut ⌘K, welcome toast |
-| `public/assets/js/api.js` | Wrapper `fetch` (placeholder untuk backend) |
-| `public/assets/js/login.js` | Logika halaman login |
+## Rekam Jejak Keputusan Refactor & Arsitektur
 
-Semua script dimuat dengan `defer` agar DOM siap lebih dulu.
+### 1. Multi-Page Application (MPA) dengan Clean URL
+- Dipilih pendekatan multi-page statis menggunakan slug folder (`/dashboard/items/`, `/dashboard/in/`, dst.) tanpa ekstensi `.html`.
+- Menyediakan performa awal instan tanpa overhead runtime JavaScript framework besar, tetap ramah SEO, dan memungkinkan tautan langsung di-bookmark oleh staff kasir.
 
-## Keputusan refactor (yang perlu diketahui)
+### 2. Fase 3: Eliminasi Ketergantungan CDN Eksternal
+- **Tailwind Static Build:** Runtime JIT `cdn.tailwindcss.com` dihapus sepenuhnya demi stabilitas jaringan offline toko, digantikan oleh `tailwind.static.css` (~4.8 KB gzip).
+- **Lucide Local Subset:** Paket CDN Lucide utuh (1.1 MB) digantikan oleh 74 SVG terpilih di `icons.js` (~5.0 KB gzip), menghemat 96% konsumsi transfer data.
+- **Chart.js Lazy Load:** Script library grafik hanya disertakan pada halaman dashboard dan laporan, membebaskan 14 halaman lainnya dari beban transfer vendor ~70 KB gzip.
 
-1. **Multi-page (Opsi A) dengan clean URL.** `showPage()` mengarahkan ke
-   `/dashboard/<slug>/` (tanpa `.html`) melalui `pageUrl()`. Peta id→slug ada di
-   `PAGE_SLUGS`. `dashboardBase()` mencari basis path `/dashboard/` supaya URL
-   tetap benar baik di root domain maupun di sub-path (GitHub Pages).
-2. **Shell diduplikasi.** Setiap halaman dashboard memuat sidebar/header/
-   bottom-nav/bulk-bar/toast yang identik. Status aktif diset saat load oleh
-   `syncActiveState()` di `navigation.js` (berdasarkan nama file).
-3. **Blok CSS `ANIMATIONS`** (`.stat-number`, `.animate-in`, `.stagger-*`,
-   `.card-hover`, `tbody tr`, `#breadcrumb`) diletakkan di `components.css`
-   karena mengubah komponen; bukan murni "base" maupun spesifik halaman.
-4. **Blok `TABLE`** (`.card table`, `.card-table-wrap`, `.table-row`) masuk
-   `components.css` karena terikat ke `.card`.
-5. **`@supports` fallback iOS** ditempatkan di `responsive.css` bersama semua
-   `@media` (karena ia fallback untuk layout mobile).
-6. **`login/index.html` memuat `main.css` + `components.css` + `login.css`** sesuai
-   instruksi. Ini menambahkan `:focus-visible` (hanya tampil saat navigasi
-   keyboard) — tidak mengubah tampilan saat klik mouse.
-7. **Accessibility Pass (Fase 1.2):**
-   - Toast notification dilengkapi dengan `role="status"` dan `aria-live="polite"`.
-   - Bottom navigation memiliki `aria-label` eksplisit di setiap tab dan `aria-current="page"` pada tab aktif.
-   - Sidebar drawer dilengkapi atribut `aria-expanded` pada toggle dan `aria-hidden` dinamis pada `aside`.
-   - Implementasi focus trap pada drawer mobile (siklus Tab / Shift+Tab di dalam menu, Escape untuk keluar) dan pengembalian fokus otomatis ke elemen pemicu saat drawer ditutup.
-   - Otomatis memindahkan fokus screen reader ke heading halaman (`h2`/`h1`) ber-`tabindex="-1"` setelah navigasi halaman terbuka.
+### 3. Fase 4.x: Integrasi Layanan Supabase
+- **Otentikasi Pengguna:** Menggunakan Supabase Auth (Email Provider) dengan pembagian role bertingkat: `OWNER`, `STAFF`, dan `VIEWER`.
+- **Single Source of Truth (`api.js`):** Semua panggilan Supabase dikapsulasi di dalam modul `Api.*`. Jika `window.supabase` aktif dan `config.mockMode = false`, query diarahkan ke database cloud; jika tidak, sistem secara elegan beralih ke mock lokal.
+- **Kompresi Gambar Klien (`image-utils.js`):** Mengurangi beban kuota bandwidth dan storage Supabase dengan memproses foto produk sebelum transfer; resolusi dibatasi maksimum 1200px dan dikonversi ke format WebP terkompresi (< 500 KB).
+- **Auto-Update Stok Transaksi:** Pembaruan saldo stok produk saat barang masuk atau keluar ditangani di level database via PostgreSQL Trigger Function (`handle_transaction_stock_update()`), mencegah race condition transaksi kasir simultan.
 
-8. **Tailwind Static CSS (Fase 3.1):**
-   - Runtime CDN `https://cdn.tailwindcss.com` (~100 KB - 300 KB JIT) telah sepenuhnya dihapus dari seluruh 19 file HTML.
-   - Digantikan oleh file statis yang di-compile: `public/assets/css/tailwind.static.css` (~20 KB raw / ~4.6 KB gzip).
-   - **Workflow Development:**
-     Jika developer menambahkan class Tailwind baru di HTML atau JS, jalankan:
-     ```bash
-     npm run build:css
-     ```
-     File `tailwind.static.css` di-commit langsung ke repositori sehingga lingkungan CI/CD atau static file server tidak memerlukan dependensi build runtime.
+### 4. RLS (Row Level Security) Policies
+- Keamanan aplikasi tidak semata-mata bergantung pada validasi frontend, melainkan dilindungi langsung oleh RLS pada setiap tabel:
+  - Seluruh pengguna terotentikasi (`authenticated`) memiliki akses baca terhadap master data katalog.
+  - Modifikasi data sensitif (role pengguna, pengaturan toko, penghapusan produk dengan riwayat transaksi) dibatasi ketat melalui fungsi keamanan `is_owner()`.
+  - Service Role Key **tidak pernah** dipaparkan di sisi frontend; seluruh interaksi klien hanya menggunakan Anon Key publik.
 
-9. **Lucide Local Subset (Fase 3.2):**
-   - CDN runtime `https://unpkg.com/lucide@latest/dist/umd/lucide.js` (~1.1 MB raw / ~120 KB gzip) telah dihapus dari seluruh 19 file HTML.
-   - Digantikan oleh subset statis lokal `public/assets/js/icons.js` yang memuat 74 SVG ikon aktif project.
-   - Ukuran: ~17.2 KB raw / ~4.8 KB gzip (menghemat transfer bandwidth ~96%).
-   - Fungsi global `window.refreshIcons(root)` menggantikan `lucide.createIcons()` dengan auto-initialization saat `DOMContentLoaded`.
-
-10. **Chart.js Lazy Load (Fase 3.3):**
-    - CDN runtime `https://cdn.jsdelivr.net/npm/chart.js` (~200 KB raw / ~70 KB gzip) telah dihapus dari seluruh 19 file HTML.
-    - Script `public/assets/js/vendor/chart.min.js` hanya di-load secara bersyarat (lazy) di 2 halaman yang membutuhkan:
-      - `/dashboard/` (sales bar & channel doughnut chart)
-      - `/dashboard/report/` (report line chart)
-    - 17 halaman lainnya tidak memuat Chart.js sama sekali, menghemat ~70 KB bandwidth gzip per page visit.
-    - Script `charts.js` dilengkapi guard `if (typeof Chart === 'undefined') return;` sehingga aman tanpa melempar runtime error di halaman tanpa chart.
+### 5. Fase 5.x: Pembersihan & Hardening (Planned)
+- Pembersihan script purba yang tidak lagi digunakan dan penghapusan folder kosong (`server/`, `database/` dummy).
+- Otomasi pipeline CI/CD GitHub Actions untuk menjalankan `npm test`, verifikasi bundle size budget, dan deployment otomatis.
