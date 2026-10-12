@@ -86,9 +86,14 @@
   function handle(action, el) {
     if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
 
-    // Aksi CRUD produk pada halaman items ditangani langsung oleh live backend CRUD
-    if (el && el.closest && (el.closest('#page-items') || el.closest('#modal-item') || el.closest('#modal-delete'))) {
-      if (action === 'add' || action === 'add-item' || action === 'edit' || action === 'delete') {
+    // Aksi CRUD produk & transaksi pada halaman items, in, out ditangani langsung oleh live backend CRUD
+    if (el && el.closest && (
+      el.closest('#page-items') || el.closest('#modal-item') || el.closest('#modal-delete') ||
+      el.closest('#page-in') || el.closest('#modal-in') || el.closest('#modal-delete-in') ||
+      el.closest('#page-out') || el.closest('#modal-out') || el.closest('#modal-delete-out')
+    )) {
+      if (action === 'add' || action === 'add-item' || action === 'add-in' || action === 'add-out' ||
+          action === 'edit' || action === 'delete' || action === 'filter') {
         return;
       }
     }

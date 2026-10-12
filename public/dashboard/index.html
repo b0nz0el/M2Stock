@@ -93,7 +93,7 @@
             <option>7 Hari</option>
             <option>30 Hari</option>
           </select>
-          <button data-action="refresh" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+          <button data-action="refresh" onclick="loadDashboardData()" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5" aria-hidden="true"></i> Refresh
           </button>
         </div>
@@ -106,10 +106,10 @@
               <i data-lucide="package" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
             </div>
             <span class="text-xs text-[#34C759] font-semibold flex items-center gap-1 bg-[#34C759]/10 px-2 py-1 rounded-md">
-              <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> 5%
+              <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> Aktif
             </span>
           </div>
-          <p class="text-3xl font-bold text-white tracking-tight">10</p>
+          <p id="dash-total-items" class="text-3xl font-bold text-white tracking-tight">0</p>
           <p class="text-xs text-[#A0A0A5] mt-1 font-medium">Total Barang</p>
         </div>
 
@@ -119,10 +119,10 @@
               <i data-lucide="layers" class="w-5 h-5 text-[#34C759]" aria-hidden="true"></i>
             </div>
             <span class="text-xs text-[#34C759] font-semibold flex items-center gap-1 bg-[#34C759]/10 px-2 py-1 rounded-md">
-              <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> 12%
+              <i data-lucide="box" class="w-3 h-3" aria-hidden="true"></i> Unit
             </span>
           </div>
-          <p class="text-3xl font-bold text-white tracking-tight">106</p>
+          <p id="dash-total-stock" class="text-3xl font-bold text-white tracking-tight">0</p>
           <p class="text-xs text-[#A0A0A5] mt-1 font-medium">Total Stok</p>
         </div>
 
@@ -132,10 +132,10 @@
               <i data-lucide="banknote" class="w-5 h-5 text-[#AF52DE]" aria-hidden="true"></i>
             </div>
             <span class="text-xs text-[#34C759] font-semibold flex items-center gap-1 bg-[#34C759]/10 px-2 py-1 rounded-md">
-              <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> 8%
+              <i data-lucide="check" class="w-3 h-3" aria-hidden="true"></i> Terhitung
             </span>
           </div>
-          <p class="text-3xl font-bold text-white tracking-tight">Rp 11.2jt</p>
+          <p id="dash-stock-value" class="text-3xl font-bold text-white tracking-tight">Rp 0</p>
           <p class="text-xs text-[#A0A0A5] mt-1 font-medium">Nilai Stok</p>
         </div>
 
@@ -145,10 +145,10 @@
               <i data-lucide="alert-triangle" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
             </div>
             <span class="text-xs text-[#FF3B30] font-semibold flex items-center gap-1 bg-[#FF3B30]/10 px-2 py-1 rounded-md">
-              <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> 1
+              <i data-lucide="alert-circle" class="w-3 h-3" aria-hidden="true"></i> Perhatian
             </span>
           </div>
-          <p class="text-3xl font-bold text-white tracking-tight">2</p>
+          <p id="dash-critical-stock" class="text-3xl font-bold text-white tracking-tight">0</p>
           <p class="text-xs text-[#A0A0A5] mt-1 font-medium">Stok Kritis</p>
         </div>
       </section>
@@ -161,7 +161,7 @@
                 <i data-lucide="line-chart" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i>
                 Penjualan & Laba 30 Hari
               </h3>
-              <p class="text-xs text-[#A0A0A5] mt-0.5">Total: Rp 12.450.000 · Laba: Rp 4.230.000</p>
+              <p id="dash-sales-summary" class="text-xs text-[#A0A0A5] mt-0.5">Total: Rp 0 · Laba: Rp 0</p>
             </div>
             <div class="flex gap-3 text-xs">
               <div class="flex items-center gap-1.5">
@@ -184,52 +184,8 @@
             <i data-lucide="trophy" class="w-4 h-4 text-[#FFCC00]" aria-hidden="true"></i>
             Top 5 Terlaris
           </h3>
-          <div class="space-y-3.5">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-sm font-medium">Pakan Hikari 100g</span>
-                <span class="text-sm font-bold text-[#FFCC00]">85</span>
-              </div>
-              <div class="w-full bg-white/5 rounded-full h-1.5">
-                <div class="bg-gradient-to-r from-[#FFCC00] to-[#FF9500] h-1.5 rounded-full progress-animate" style="width: 85%"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-sm font-medium">Filter Canister 1000L/h</span>
-                <span class="text-sm font-bold">62</span>
-              </div>
-              <div class="w-full bg-white/5 rounded-full h-1.5">
-                <div class="bg-gradient-to-r from-[#0088CC] to-[#32ADE6] h-1.5 rounded-full progress-animate" style="width: 62%"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-sm font-medium">Lampu LED Aquascape</span>
-                <span class="text-sm font-bold text-[#FF9500]">48</span>
-              </div>
-              <div class="w-full bg-white/5 rounded-full h-1.5">
-                <div class="bg-gradient-to-r from-[#FF9500] to-[#FFCC00] h-1.5 rounded-full progress-animate" style="width: 48%"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-sm font-medium">Sponge Filter</span>
-                <span class="text-sm font-bold text-[#A0A0A5]">35</span>
-              </div>
-              <div class="w-full bg-white/5 rounded-full h-1.5">
-                <div class="bg-[#A0A0A5] h-1.5 rounded-full progress-animate" style="width: 35%"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-sm font-medium">Thermometer Digital</span>
-                <span class="text-sm font-bold text-[#A0A0A5]">28</span>
-              </div>
-              <div class="w-full bg-white/5 rounded-full h-1.5">
-                <div class="bg-[#A0A0A5] h-1.5 rounded-full progress-animate" style="width: 28%"></div>
-              </div>
-            </div>
+          <div id="top-products-list" class="space-y-3.5">
+            <p class="text-xs text-[#A0A0A5] py-4 text-center">Memuat data produk terlaris...</p>
           </div>
         </div>
       </section>
@@ -241,32 +197,12 @@
               <i data-lucide="alert-circle" class="w-4 h-4 text-[#FF3B30]" aria-hidden="true"></i>
               Perlu Restock
             </h3>
-            <a href="#" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1">
+            <a href="/dashboard/items/" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1">
               Lihat <i data-lucide="arrow-right" class="w-3 h-3" aria-hidden="true"></i>
             </a>
           </div>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="min-w-0">
-                <p class="text-sm font-medium truncate">Kerikil Sungai 2kg</p>
-                <p class="text-xs text-[#A0A0A5]">1 pack</p>
-              </div>
-              <span class="badge bg-[#FF3B30]/15 text-[#FF3B30]">Kritis</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="min-w-0">
-                <p class="text-sm font-medium truncate">Lampu LED 60cm</p>
-                <p class="text-xs text-[#A0A0A5]">2 unit</p>
-              </div>
-              <span class="badge bg-[#FF3B30]/15 text-[#FF3B30]">Kritis</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="min-w-0">
-                <p class="text-sm font-medium truncate">Pakan Hikari 100g</p>
-                <p class="text-xs text-[#A0A0A5]">5 pack</p>
-              </div>
-              <span class="badge bg-[#FFCC00]/15 text-[#FFCC00]">Low</span>
-            </div>
+          <div id="restock-list" class="space-y-3">
+            <p class="text-xs text-[#A0A0A5] py-4 text-center">Memuat data stok...</p>
           </div>
         </div>
 
@@ -333,38 +269,9 @@
               <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Total</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">30 Sep 14:25</td>
-              <td class="px-5 py-3.5 font-medium">Tesee2</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Offline</span></td>
-              <td class="px-5 py-3.5">Mr David</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">+1</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 850.000</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">30 Sep 13:12</td>
-              <td class="px-5 py-3.5 font-medium">Filter Canister 1000L/h</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#EE4D2D]/15 text-[#EE4D2D]">Shopee</span></td>
-              <td class="px-5 py-3.5">Staff Satu</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">+1</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 1.250.000</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">29 Sep 16:40</td>
-              <td class="px-5 py-3.5 font-medium">Pakan Hikari 100g</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#EE4D2D]/15 text-[#EE4D2D]">Shopee</span></td>
-              <td class="px-5 py-3.5">Staff Satu</td>
-              <td class="px-5 py-3.5 text-right text-[#FF3B30] font-semibold">-5</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 325.000</td>
-            </tr>
+          <tbody id="recent-transactions-tbody">
             <tr class="table-row">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">29 Sep 10:15</td>
-              <td class="px-5 py-3.5 font-medium">Lampu LED Aquascape 60cm</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Offline</span></td>
-              <td class="px-5 py-3.5">Mr David</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">+2</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 900.000</td>
+              <td colspan="6" class="px-5 py-8 text-center text-[#A0A0A5]">Memuat riwayat transaksi...</td>
             </tr>
           </tbody>
         </table>
@@ -427,5 +334,253 @@
 <script src="../assets/js/api.js" defer></script>
 <script src="../assets/js/app.js" defer></script>
 <script src="../assets/js/mock-actions.js" defer></script>
+
+<script>
+  function formatRupiahVal(val) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
+  }
+
+  function formatShortRupiah(val) {
+    if (!val || val === 0) return 'Rp 0';
+    if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1).replace('.0', '') + 'jt';
+    if (val >= 1000) return 'Rp ' + (val / 1000).toFixed(0) + 'rb';
+    return 'Rp ' + val;
+  }
+
+  function formatTxDate(isoStr) {
+    if (!isoStr) return '-';
+    const d = new Date(isoStr);
+    const day = d.getDate();
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const m = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${day} ${m} ${hh}:${mm}`;
+  }
+
+  function getChannelBadge(channel) {
+    const ch = (channel || 'Offline').toLowerCase();
+    if (ch.includes('shopee')) return `<span class="badge bg-[#EE4D2D]/15 text-[#EE4D2D]">Shopee</span>`;
+    if (ch.includes('tokopedia')) return `<span class="badge bg-[#42B549]/15 text-[#42B549]">Tokopedia</span>`;
+    if (ch.includes('tiktok')) return `<span class="badge bg-[#00F2FE]/15 text-[#00F2FE]">TikTok</span>`;
+    if (ch.includes('lazada')) return `<span class="badge bg-[#0F146D]/20 text-[#32ADE6]">Lazada</span>`;
+    if (ch.includes('wa') || ch.includes('whatsapp')) return `<span class="badge bg-[#25D366]/15 text-[#25D366]">WhatsApp</span>`;
+    return `<span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Offline</span>`;
+  }
+
+  async function loadDashboardData() {
+    try {
+      // 1. Fetch Products
+      const prodRes = await Api.items.getAll();
+      const products = prodRes?.ok ? (prodRes.data || []) : [];
+
+      const totalItems = products.length;
+      let totalStock = 0;
+      let stockValue = 0;
+      const criticalProducts = [];
+
+      products.forEach(p => {
+        const s = p.stock || 0;
+        totalStock += s;
+        stockValue += s * (p.sell_price || p.cost_price || 0);
+        if (s <= (p.min_stock || 3)) {
+          criticalProducts.push(p);
+        }
+      });
+
+      const elTotalItems = document.getElementById('dash-total-items');
+      const elTotalStock = document.getElementById('dash-total-stock');
+      const elStockValue = document.getElementById('dash-stock-value');
+      const elCriticalStock = document.getElementById('dash-critical-stock');
+
+      if (elTotalItems) elTotalItems.textContent = totalItems;
+      if (elTotalStock) elTotalStock.textContent = totalStock;
+      if (elStockValue) elStockValue.textContent = formatShortRupiah(stockValue);
+      if (elCriticalStock) elCriticalStock.textContent = criticalProducts.length;
+
+      // Render Restock List
+      const restockContainer = document.getElementById('restock-list');
+      if (restockContainer) {
+        if (criticalProducts.length === 0) {
+          restockContainer.innerHTML = '<p class="text-xs text-[#34C759] py-3 text-center">Semua stok produk aman</p>';
+        } else {
+          restockContainer.innerHTML = criticalProducts.slice(0, 3).map(p => {
+            const isZero = (p.stock || 0) === 0;
+            const badgeClass = isZero ? 'bg-[#FF3B30]/15 text-[#FF3B30]' : 'bg-[#FFCC00]/15 text-[#FFCC00]';
+            const badgeText = isZero ? 'Habis' : 'Kritis';
+            return `
+              <div class="flex items-center justify-between">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium truncate">${p.name}</p>
+                  <p class="text-xs text-[#A0A0A5]">${p.stock || 0} unit</p>
+                </div>
+                <span class="badge ${badgeClass}">${badgeText}</span>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      // 2. Fetch Transactions
+      const txRes = await Api.transactions.getAll({ limit: 100 });
+      const transactions = txRes?.ok ? (txRes.data || []) : [];
+
+      // A. Recent Transactions (Top 5)
+      const recentTbody = document.getElementById('recent-transactions-tbody');
+      if (recentTbody) {
+        if (transactions.length === 0) {
+          recentTbody.innerHTML = `
+            <tr class="table-row">
+              <td colspan="6" class="px-5 py-8 text-center text-[#A0A0A5]">Belum ada transaksi</td>
+            </tr>
+          `;
+        } else {
+          recentTbody.innerHTML = transactions.slice(0, 5).map(tx => {
+            const dateStr = formatTxDate(tx.created_at);
+            const prodName = tx.products?.name || 'Produk #' + tx.product_id;
+            const channelBadge = tx.type === 'in' 
+              ? `<span class="badge bg-[#34C759]/15 text-[#34C759]">Masuk (${tx.suppliers?.name || 'Supplier'})</span>`
+              : getChannelBadge(tx.channel);
+            const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+            const isOut = tx.type === 'out';
+            const qtyStr = isOut ? `-${tx.qty}` : `+${tx.qty}`;
+            const qtyClass = isOut ? 'text-[#FF3B30]' : 'text-[#34C759]';
+            const total = (tx.qty || 0) * (tx.price || 0);
+
+            return `
+              <tr class="table-row border-b border-white/5">
+                <td class="px-5 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+                <td class="px-5 py-3.5 font-medium">${prodName}</td>
+                <td class="px-5 py-3.5">${channelBadge}</td>
+                <td class="px-5 py-3.5 text-[#A0A0A5]">${kasir}</td>
+                <td class="px-5 py-3.5 text-right font-semibold ${qtyClass}">${qtyStr}</td>
+                <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // B. Top 5 Terlaris (from Out transactions)
+      const outTransactions = transactions.filter(t => t.type === 'out');
+      const salesByProduct = {};
+      outTransactions.forEach(t => {
+        const pId = t.product_id;
+        const pName = t.products?.name || 'Produk #' + pId;
+        if (!salesByProduct[pId]) {
+          salesByProduct[pId] = { name: pName, qty: 0 };
+        }
+        salesByProduct[pId].qty += (t.qty || 0);
+      });
+
+      const topList = Object.values(salesByProduct).sort((a, b) => b.qty - a.qty).slice(0, 5);
+      const topContainer = document.getElementById('top-products-list');
+      if (topContainer) {
+        if (topList.length === 0) {
+          topContainer.innerHTML = '<p class="text-xs text-[#A0A0A5] py-4 text-center">Belum ada data penjualan</p>';
+        } else {
+          const maxQty = topList[0].qty || 1;
+          const colors = [
+            'from-[#FFCC00] to-[#FF9500]',
+            'from-[#0088CC] to-[#32ADE6]',
+            'from-[#FF9500] to-[#FFCC00]',
+            'bg-[#A0A0A5]',
+            'bg-[#A0A0A5]'
+          ];
+          topContainer.innerHTML = topList.map((item, idx) => {
+            const pct = Math.min(100, Math.round((item.qty / maxQty) * 100));
+            const barBg = colors[idx] || 'bg-[#A0A0A5]';
+            const colorClass = barBg.startsWith('from') ? `bg-gradient-to-r ${barBg}` : barBg;
+            return `
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-sm font-medium truncate max-w-[200px]">${item.name}</span>
+                  <span class="text-sm font-bold text-white">${item.qty}</span>
+                </div>
+                <div class="w-full bg-white/5 rounded-full h-1.5">
+                  <div class="${colorClass} h-1.5 rounded-full progress-animate" style="width: ${pct}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      // C. Sales Chart (Last 10 Days)
+      const now = new Date();
+      const last10Days = [];
+      for (let i = 9; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        last10Days.push(d);
+      }
+
+      const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      const chartLabels = last10Days.map(d => `${d.getDate()} ${months[d.getMonth()]}`);
+      const salesDaily = new Array(10).fill(0);
+      const profitDaily = new Array(10).fill(0);
+
+      let total30Sales = 0;
+      let total30Profit = 0;
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+      outTransactions.forEach(t => {
+        const tTime = new Date(t.created_at).getTime();
+        const rev = (t.qty || 0) * (t.price || 0);
+        const cost = (t.qty || 0) * (t.products?.cost_price || 0);
+        const pft = Math.max(0, rev - cost);
+
+        if (tTime >= thirtyDaysAgo) {
+          total30Sales += rev;
+          total30Profit += pft;
+        }
+
+        const tDate = new Date(t.created_at);
+        last10Days.forEach((d, idx) => {
+          if (tDate.getDate() === d.getDate() && tDate.getMonth() === d.getMonth() && tDate.getFullYear() === d.getFullYear()) {
+            salesDaily[idx] += Math.round(rev / 1000); // in thousands (rb)
+            profitDaily[idx] += Math.round(pft / 1000);
+          }
+        });
+      });
+
+      // Update Sales Summary header
+      const salesSummaryEl = document.getElementById('dash-sales-summary');
+      if (salesSummaryEl) {
+        salesSummaryEl.textContent = `Total: ${formatRupiahVal(total30Sales)} · Laba: ${formatRupiahVal(total30Profit)}`;
+      }
+
+      // Update sales bar chart if out transactions exist
+      if (typeof window.updateDashboardSalesChart === 'function' && outTransactions.length > 0) {
+        window.updateDashboardSalesChart(chartLabels, salesDaily, profitDaily);
+      }
+
+      // D. Channel Chart
+      const channelCounts = { 'Shopee': 0, 'Tokopedia': 0, 'TikTok': 0, 'Offline': 0 };
+      outTransactions.forEach(t => {
+        const ch = t.channel || 'Offline';
+        if (ch.toLowerCase().includes('shopee')) channelCounts['Shopee'] += (t.qty || 0);
+        else if (ch.toLowerCase().includes('tokopedia')) channelCounts['Tokopedia'] += (t.qty || 0);
+        else if (ch.toLowerCase().includes('tiktok')) channelCounts['TikTok'] += (t.qty || 0);
+        else channelCounts['Offline'] += (t.qty || 0);
+      });
+
+      const totalChannelQty = Object.values(channelCounts).reduce((a, b) => a + b, 0);
+      if (totalChannelQty > 0 && typeof window.updateDashboardChannelChart === 'function') {
+        window.updateDashboardChannelChart(
+          Object.keys(channelCounts),
+          Object.values(channelCounts)
+        );
+      }
+
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadDashboardData();
+  });
+</script>
 </body>
 </html>

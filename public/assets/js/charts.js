@@ -12,61 +12,79 @@
   }
 
   const chartSalesEl = document.getElementById('chartSales');
-if (chartSalesEl) {
-  new Chart(chartSalesEl.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: Array.from({length: 10}, (_, i) => `${21 + i} Sep`),
-      datasets: [
-        { label: 'Penjualan', data: [450, 620, 380, 780, 520, 920, 480, 1100, 850, 1250],
-          backgroundColor: '#0088CC', borderRadius: 4, barPercentage: 0.9 },
-        { label: 'Laba', data: [120, 180, 95, 240, 160, 320, 140, 380, 280, 420],
-          backgroundColor: '#34C759', borderRadius: 4, barPercentage: 0.9 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1C1C1E', borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1, padding: 12, titleColor: '#fff', bodyColor: '#fff',
-          callbacks: { label: (ctx) => `${ctx.dataset.label}: Rp ${ctx.parsed.y}rb` }
-        }
+  if (chartSalesEl) {
+    window.salesChart = new Chart(chartSalesEl.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Array.from({length: 10}, (_, i) => `${21 + i} Sep`),
+        datasets: [
+          { label: 'Penjualan', data: [450, 620, 380, 780, 520, 920, 480, 1100, 850, 1250],
+            backgroundColor: '#0088CC', borderRadius: 4, barPercentage: 0.9 },
+          { label: 'Laba', data: [120, 180, 95, 240, 160, 320, 140, 380, 280, 420],
+            backgroundColor: '#34C759', borderRadius: 4, barPercentage: 0.9 }
+        ]
       },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#A0A0A5', font: { size: 11 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.05)' },
-             ticks: { color: '#A0A0A5', font: { size: 11 }, callback: (v) => `${v}rb` } }
-      }
-    }
-  });
-}
-
-const chartChannelEl = document.getElementById('chartChannel');
-if (chartChannelEl) {
-  new Chart(chartChannelEl.getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Shopee', 'Tokopedia', 'TikTok', 'Offline'],
-      datasets: [{
-        data: [42, 31, 17, 10],
-        backgroundColor: ['#EE4D2D', '#42B549', '#FF0050', '#0088CC'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { color: '#A0A0A5', font: { size: 11 }, padding: 12,
-                    usePointStyle: true, pointStyle: 'circle' }
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1C1C1E', borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1, padding: 12, titleColor: '#fff', bodyColor: '#fff',
+            callbacks: { label: (ctx) => `${ctx.dataset.label}: Rp ${ctx.parsed.y}rb` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#A0A0A5', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' },
+               ticks: { color: '#A0A0A5', font: { size: 11 }, callback: (v) => `${v}rb` } }
         }
       }
+    });
+  }
+
+  const chartChannelEl = document.getElementById('chartChannel');
+  if (chartChannelEl) {
+    window.channelChart = new Chart(chartChannelEl.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Shopee', 'Tokopedia', 'TikTok', 'Offline'],
+        datasets: [{
+          data: [42, 31, 17, 10],
+          backgroundColor: ['#EE4D2D', '#42B549', '#FF0050', '#0088CC'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#A0A0A5', font: { size: 11 }, padding: 12,
+                      usePointStyle: true, pointStyle: 'circle' }
+          }
+        }
+      }
+    });
+  }
+
+  window.updateDashboardSalesChart = function(labels, sales, profit) {
+    if (window.salesChart) {
+      window.salesChart.data.labels = labels;
+      window.salesChart.data.datasets[0].data = sales;
+      window.salesChart.data.datasets[1].data = profit;
+      window.salesChart.update();
     }
-  });
-}
+  };
+
+  window.updateDashboardChannelChart = function(labels, data, colors) {
+    if (window.channelChart) {
+      window.channelChart.data.labels = labels;
+      window.channelChart.data.datasets[0].data = data;
+      if (colors) window.channelChart.data.datasets[0].backgroundColor = colors;
+      window.channelChart.update();
+    }
+  };
 
 const chartReportEl = document.getElementById('chartReport');
 if (chartReportEl) {

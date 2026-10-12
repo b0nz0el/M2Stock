@@ -72,7 +72,7 @@
         <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add" onclick="openAddInModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
@@ -93,7 +93,7 @@
           <button data-action="bulk-input" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="list-plus" class="w-4 h-4" aria-hidden="true"></i> Bulk Input
           </button>
-          <button data-action="add-in" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <button data-action="add-in" onclick="openAddInModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
           </button>
         </div>
@@ -107,8 +107,8 @@
             </div>
             <span class="text-xs text-[#A0A0A5] font-medium">Hari Ini</span>
           </div>
-          <p class="text-2xl font-bold text-[#34C759]">+2</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Rp 2.1jt</p>
+          <p id="stat-in-today-count" class="text-2xl font-bold text-[#34C759]">+0</p>
+          <p id="stat-in-today-amount" class="text-xs text-[#A0A0A5] mt-1">Rp 0</p>
         </div>
         <div class="card p-5">
           <div class="flex items-center gap-3 mb-3">
@@ -117,8 +117,8 @@
             </div>
             <span class="text-xs text-[#A0A0A5] font-medium">7 Hari</span>
           </div>
-          <p class="text-2xl font-bold text-[#34C759]">+15</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Rp 8.4jt</p>
+          <p id="stat-in-7d-count" class="text-2xl font-bold text-[#34C759]">+0</p>
+          <p id="stat-in-7d-amount" class="text-xs text-[#A0A0A5] mt-1">Rp 0</p>
         </div>
         <div class="card p-5">
           <div class="flex items-center gap-3 mb-3">
@@ -127,26 +127,26 @@
             </div>
             <span class="text-xs text-[#A0A0A5] font-medium">30 Hari</span>
           </div>
-          <p class="text-2xl font-bold text-[#34C759]">+42</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Rp 22.6jt</p>
+          <p id="stat-in-30d-count" class="text-2xl font-bold text-[#34C759]">+0</p>
+          <p id="stat-in-30d-amount" class="text-xs text-[#A0A0A5] mt-1">Rp 0</p>
         </div>
         <div class="card p-5">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-9 h-9 rounded-lg bg-[#FFCC00]/15 grid place-items-center">
-              <i data-lucide="clock" class="w-4 h-4 text-[#FFCC00]" aria-hidden="true"></i>
+            <div class="w-9 h-9 rounded-lg bg-[#0088CC]/15 grid place-items-center">
+              <i data-lucide="package-plus" class="w-4 h-4 text-[#0088CC]" aria-hidden="true"></i>
             </div>
-            <span class="text-xs text-[#A0A0A5] font-medium">Pending PO</span>
+            <span class="text-xs text-[#A0A0A5] font-medium">Total Masuk</span>
           </div>
-          <p class="text-2xl font-bold text-[#FFCC00]">3</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Rp 5.8jt</p>
+          <p id="stat-in-total-count" class="text-2xl font-bold text-[#0088CC]">0</p>
+          <p id="stat-in-total-amount" class="text-xs text-[#A0A0A5] mt-1">Rp 0</p>
         </div>
       </div>
 
-      <div class="flex gap-2 flex-wrap">
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium">Hari Ini</button>
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">7 Hari</button>
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">30 Hari</button>
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Semua</button>
+      <div class="flex gap-2 flex-wrap" id="in-filter-buttons">
+        <button type="button" data-period="today" onclick="filterInPeriod('today')" class="in-period-btn px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium text-white transition">Hari Ini</button>
+        <button type="button" data-period="7d" onclick="filterInPeriod('7d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">7 Hari</button>
+        <button type="button" data-period="30d" onclick="filterInPeriod('30d')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">30 Hari</button>
+        <button type="button" data-period="all" onclick="filterInPeriod('all')" class="in-period-btn px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 transition">Semua</button>
       </div>
 
       <div class="card overflow-hidden">
@@ -165,46 +165,8 @@
               <th class="px-4 py-3 w-16"></th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">IN-20260930-001</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">30 Sep 14:25</td>
-              <td class="px-4 py-3.5 font-medium">Tesee2</td>
-              <td class="px-4 py-3.5">CV Aqua Teknik</td>
-              <td class="px-4 py-3.5">Mr David</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+1</td>
-              <td class="px-4 py-3.5 text-right">Rp 850.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 850.000</td>
-              <td class="px-4 py-3.5">
-                <button data-action="detail" aria-label="Lihat detail" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
-              </td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">IN-20260930-002</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">30 Sep 13:12</td>
-              <td class="px-4 py-3.5 font-medium">Filter Canister 1000L/h</td>
-              <td class="px-4 py-3.5">CV Aqua Teknik</td>
-              <td class="px-4 py-3.5">Staff Satu</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+1</td>
-              <td class="px-4 py-3.5 text-right">Rp 850.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 850.000</td>
-              <td class="px-4 py-3.5">
-                <button data-action="detail" aria-label="Lihat detail" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
-              </td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">IN-20260929-003</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">29 Sep 10:15</td>
-              <td class="px-4 py-3.5 font-medium">Lampu LED Aquascape 60cm</td>
-              <td class="px-4 py-3.5">PT Sumber Pakan</td>
-              <td class="px-4 py-3.5">Mr David</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+2</td>
-              <td class="px-4 py-3.5 text-right">Rp 450.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 900.000</td>
-              <td class="px-4 py-3.5">
-                <button data-action="detail" aria-label="Lihat detail" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
-              </td>
-            </tr>
+          <tbody id="in-tbody">
+            <!-- Diisi secara dinamis dari Supabase -->
           </tbody>
         </table>
         </div>
@@ -248,6 +210,112 @@
   <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
 </div>
 
+<!-- ═══════════ MODAL CATAT BARANG MASUK ═══════════ -->
+<div id="modal-in" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-in-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#34C759]/15 grid place-items-center text-[#34C759]">
+          <i data-lucide="arrow-down-circle" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-in-title" class="text-lg font-bold text-white">Catat Barang Masuk</h3>
+          <p class="text-xs text-[#A0A0A5] mt-0.5">Penambahan stok dari supplier atau pembelian</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeInModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <form id="form-in" class="space-y-4" onsubmit="handleInSubmit(event)">
+      <div>
+        <label for="in-product-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Pilih Produk <span class="text-[#FF3B30]">*</span></label>
+        <select id="in-product-id" required onchange="handleInProductChange()"
+                class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+          <option value="">-- Pilih Produk --</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="in-supplier-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Supplier</label>
+          <select id="in-supplier-id"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+            <option value="">Umum / Tanpa Supplier</option>
+          </select>
+        </div>
+        <div>
+          <label for="in-qty" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Jumlah Masuk <span class="text-[#FF3B30]">*</span></label>
+          <input type="number" id="in-qty" min="1" value="1" required oninput="calculateInTotal()"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="in-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Beli Satuan (Rp) <span class="text-[#FF3B30]">*</span></label>
+          <input type="number" id="in-price" min="0" value="0" required oninput="calculateInTotal()"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Total Biaya</label>
+          <div class="w-full bg-black/20 border border-white/5 rounded-xl px-3.5 py-2 text-sm font-semibold text-[#34C759] flex items-center h-[38px]">
+            <span id="in-total-preview">Rp 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label for="in-note" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Catatan (Opsional)</label>
+        <input type="text" id="in-note" placeholder="mis. No. Surat Jalan, kondisi dus bagus..."
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeInModal()"
+                class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+          Batal
+        </button>
+        <button type="submit" id="btn-submit-in"
+                class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Simpan Transaksi</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL KONFIRMASI HAPUS TRANSAKSI MASUK ═══════════ -->
+<div id="modal-delete-in" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-in-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center flex-shrink-0">
+        <i data-lucide="trash-2" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 id="modal-delete-in-title" class="text-base font-bold text-white">Hapus Transaksi</h3>
+        <p class="text-xs text-[#A0A0A5]">Konfirmasi pembatalan transaksi</p>
+      </div>
+    </div>
+    <p class="text-sm text-[#A0A0A5]">
+      Apakah Anda yakin ingin menghapus transaksi ini? Stok produk akan dikurangi kembali secara otomatis oleh sistem.
+    </p>
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <button type="button" onclick="closeDeleteInModal()"
+              class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+        Batal
+      </button>
+      <button type="button" id="btn-confirm-delete-in" onclick="confirmDeleteIn()"
+              class="bg-[#FF3B30] hover:bg-[#D70015] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Hapus</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toast-container" 
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
@@ -262,7 +330,373 @@
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/api.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+
+<script>
+  let allInTransactions = [];
+  let availableProducts = [];
+  let currentFilterPeriod = 'today';
+  let deleteInId = null;
+
+  function formatRupiahVal(val) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
+  }
+
+  function formatShortRupiah(val) {
+    if (!val || val === 0) return 'Rp 0';
+    if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1).replace('.0', '') + 'jt';
+    if (val >= 1000) return 'Rp ' + (val / 1000).toFixed(0) + 'rb';
+    return 'Rp ' + val;
+  }
+
+  function formatTxDate(isoStr) {
+    if (!isoStr) return '-';
+    const d = new Date(isoStr);
+    const day = d.getDate();
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const m = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${day} ${m} ${hh}:${mm}`;
+  }
+
+  async function loadDropdowns() {
+    try {
+      const prodRes = await Api.items.getAll();
+      if (prodRes && prodRes.ok) {
+        availableProducts = prodRes.data || [];
+        const prodSelect = document.getElementById('in-product-id');
+        if (prodSelect) {
+          prodSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
+          availableProducts.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.name} (Stok: ${p.stock ?? 0})`;
+            prodSelect.appendChild(opt);
+          });
+        }
+      }
+
+      const supRes = await Api.suppliers.getAll();
+      if (supRes && supRes.ok) {
+        const supSelect = document.getElementById('in-supplier-id');
+        if (supSelect) {
+          supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
+          (supRes.data || []).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            supSelect.appendChild(opt);
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error loading dropdowns:', err);
+    }
+  }
+
+  function handleInProductChange() {
+    const select = document.getElementById('in-product-id');
+    const pId = select.value;
+    const prod = availableProducts.find(p => Number(p.id) === Number(pId));
+    const priceInput = document.getElementById('in-price');
+    if (prod && priceInput) {
+      priceInput.value = prod.cost_price || 0;
+    }
+    calculateInTotal();
+  }
+
+  function calculateInTotal() {
+    const qty = Number(document.getElementById('in-qty')?.value || 0);
+    const price = Number(document.getElementById('in-price')?.value || 0);
+    const total = qty * price;
+    const preview = document.getElementById('in-total-preview');
+    if (preview) {
+      preview.textContent = formatRupiahVal(total);
+    }
+  }
+
+  function openAddInModal() {
+    const form = document.getElementById('form-in');
+    if (form) form.reset();
+    calculateInTotal();
+    loadDropdowns();
+    const modal = document.getElementById('modal-in');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeInModal() {
+    const modal = document.getElementById('modal-in');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function openDeleteInModal(id) {
+    deleteInId = id;
+    const modal = document.getElementById('modal-delete-in');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeDeleteInModal() {
+    deleteInId = null;
+    const modal = document.getElementById('modal-delete-in');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  async function handleInSubmit(e) {
+    e.preventDefault();
+    const productId = document.getElementById('in-product-id').value;
+    const supplierId = document.getElementById('in-supplier-id').value;
+    const qty = Number(document.getElementById('in-qty').value);
+    const price = Number(document.getElementById('in-price').value);
+    const note = document.getElementById('in-note').value.trim();
+
+    if (!productId) {
+      if (typeof showToast === 'function') showToast('Pilih produk terlebih dahulu', 'error');
+      return;
+    }
+    if (!qty || qty <= 0) {
+      if (typeof showToast === 'function') showToast('Jumlah masuk harus lebih dari 0', 'error');
+      return;
+    }
+
+    const submitBtn = document.getElementById('btn-submit-in');
+    const originalHtml = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Menyimpan...</span>';
+
+    try {
+      let currentUserId = null;
+      if (typeof window.Auth !== 'undefined') {
+        const user = await window.Auth.getCurrentUser();
+        currentUserId = user?.id || null;
+      }
+
+      const res = await Api.transactions.createIn({
+        product_id: Number(productId),
+        supplier_id: supplierId ? Number(supplierId) : null,
+        qty: qty,
+        price: price,
+        note: note || null,
+        created_by: currentUserId
+      });
+
+      if (!res.ok) {
+        throw new Error(res.error?.message || 'Gagal menyimpan barang masuk');
+      }
+
+      if (typeof showToast === 'function') {
+        showToast('Barang masuk berhasil dicatat! Stok diperbarui.', 'success');
+      }
+      closeInModal();
+      await loadInTransactions();
+    } catch (err) {
+      console.error('Submit in error:', err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Terjadi kesalahan saat menyimpan', 'error');
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalHtml;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    }
+  }
+
+  async function confirmDeleteIn() {
+    if (!deleteInId) return;
+    const btn = document.getElementById('btn-confirm-delete-in');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>Menghapus...</span>';
+
+    try {
+      const res = await Api.transactions.delete(deleteInId);
+      if (!res.ok) {
+        throw new Error(res.error?.message || 'Gagal menghapus transaksi');
+      }
+      if (typeof showToast === 'function') {
+        showToast('Transaksi berhasil dihapus & stok disesuaikan', 'success');
+      }
+      closeDeleteInModal();
+      await loadInTransactions();
+    } catch (err) {
+      console.error('Delete error:', err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Gagal menghapus transaksi', 'error');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    }
+  }
+
+  function updateMetrics(list) {
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+    let todayCount = 0, todayAmount = 0;
+    let sevenCount = 0, sevenAmount = 0;
+    let thirtyCount = 0, thirtyAmount = 0;
+    let totalCount = 0, totalAmount = 0;
+
+    list.forEach(tx => {
+      const tTime = new Date(tx.created_at).getTime();
+      const qty = tx.qty || 0;
+      const amount = (tx.qty || 0) * (tx.price || 0);
+
+      totalCount += qty;
+      totalAmount += amount;
+
+      if (tTime >= startToday) {
+        todayCount += qty;
+        todayAmount += amount;
+      }
+      if (tTime >= sevenDaysAgo) {
+        sevenCount += qty;
+        sevenAmount += amount;
+      }
+      if (tTime >= thirtyDaysAgo) {
+        thirtyCount += qty;
+        thirtyAmount += amount;
+      }
+    });
+
+    const elTodayCount = document.getElementById('stat-in-today-count');
+    const elTodayAmount = document.getElementById('stat-in-today-amount');
+    const el7dCount = document.getElementById('stat-in-7d-count');
+    const el7dAmount = document.getElementById('stat-in-7d-amount');
+    const el30dCount = document.getElementById('stat-in-30d-count');
+    const el30dAmount = document.getElementById('stat-in-30d-amount');
+    const elTotalCount = document.getElementById('stat-in-total-count');
+    const elTotalAmount = document.getElementById('stat-in-total-amount');
+
+    if (elTodayCount) elTodayCount.textContent = `+${todayCount}`;
+    if (elTodayAmount) elTodayAmount.textContent = formatShortRupiah(todayAmount);
+    if (el7dCount) el7dCount.textContent = `+${sevenCount}`;
+    if (el7dAmount) el7dAmount.textContent = formatShortRupiah(sevenAmount);
+    if (el30dCount) el30dCount.textContent = `+${thirtyCount}`;
+    if (el30dAmount) el30dAmount.textContent = formatShortRupiah(thirtyAmount);
+    if (elTotalCount) elTotalCount.textContent = `${totalCount}`;
+    if (elTotalAmount) elTotalAmount.textContent = formatShortRupiah(totalAmount);
+  }
+
+  function filterInPeriod(period) {
+    currentFilterPeriod = period;
+    const buttons = document.querySelectorAll('.in-period-btn');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('data-period') === period) {
+        btn.classList.add('bg-[#0088CC]', 'text-white');
+        btn.classList.remove('bg-[#1C1C1E]', 'border', 'border-white/5');
+      } else {
+        btn.classList.remove('bg-[#0088CC]');
+        btn.classList.add('bg-[#1C1C1E]', 'border', 'border-white/5');
+      }
+    });
+    renderInTable();
+  }
+
+  function renderInTable() {
+    const tbody = document.getElementById('in-tbody');
+    if (!tbody) return;
+
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+    const filtered = allInTransactions.filter(tx => {
+      const tTime = new Date(tx.created_at).getTime();
+      if (currentFilterPeriod === 'today') return tTime >= startToday;
+      if (currentFilterPeriod === '7d') return tTime >= sevenDaysAgo;
+      if (currentFilterPeriod === '30d') return tTime >= thirtyDaysAgo;
+      return true; // 'all'
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr class="table-row">
+          <td colspan="9" class="px-4 py-12 text-center text-[#A0A0A5]">
+            <div class="flex flex-col items-center justify-center gap-2">
+              <i data-lucide="package-search" class="w-8 h-8 opacity-40"></i>
+              <p class="text-sm">Belum ada transaksi barang masuk pada periode ini</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(tx => {
+      const code = `IN-${String(tx.id).padStart(6, '0')}`;
+      const dateStr = formatTxDate(tx.created_at);
+      const prodName = tx.products?.name || 'Produk ID #' + tx.product_id;
+      const supName = tx.suppliers?.name || 'Umum';
+      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const qty = tx.qty || 0;
+      const price = tx.price || 0;
+      const total = qty * price;
+
+      return `
+        <tr class="table-row border-b border-white/5">
+          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">${code}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+          <td class="px-4 py-3.5 font-medium">${prodName}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${supName}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]">${kasir}</td>
+          <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+${qty}</td>
+          <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
+          <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
+          <td class="px-4 py-3.5 text-right">
+            <button type="button" onclick="openDeleteInModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
+                    class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
+              <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+  }
+
+  async function loadInTransactions() {
+    try {
+      const res = await Api.transactions.getByType('in');
+      if (res && res.ok) {
+        allInTransactions = res.data || [];
+        updateMetrics(allInTransactions);
+        renderInTable();
+      }
+    } catch (err) {
+      console.error('Error loading in transactions:', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadInTransactions();
+    loadDropdowns();
+  });
+</script>
 </body>
 </html>
