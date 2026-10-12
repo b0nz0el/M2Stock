@@ -158,14 +158,15 @@ class AppSidebar extends HTMLElement {
           <div class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center shadow-lg shadow-[#0088CC]/20">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-hidden="true">
               <defs>
-                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#0088CC"/>
-                  <stop offset="100%" stop-color="#32ADE6"/>
+                <linearGradient id="aq-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#32ADE6"/>
+                  <stop offset="100%" stop-color="#0088CC"/>
                 </linearGradient>
               </defs>
-              <rect x="10" y="10" width="80" height="80" rx="20" fill="url(#logo-gradient)"/>
-              <path d="M30 50 C30 40, 40 32, 55 32 C65 32, 72 38, 75 45 L82 38 L80 50 L82 62 L75 55 C72 62, 65 68, 55 68 C40 68, 30 60, 30 50 Z" fill="#FFFFFF"/>
-              <circle cx="60" cy="46" r="2.5" fill="#1C1C1E"/>
+              <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#aq-gradient)"/>
+              <path d="M50 26 L32 66 L38 66 L42 58 L58 58 L62 66 L68 66 L50 26 Z M45 53 L50 42 L55 53 Z"
+                    fill="#FFFFFF"/>
+              <circle cx="50" cy="72" r="3.5" fill="#FFFFFF"/>
             </svg>
           </div>
           <div class="min-w-0">
