@@ -7,6 +7,7 @@
    ═══════════════════════════════════════════════════ */
 function showToast(msg, type = 'success') {
   const colors = { success: '#34C759', error: '#FF3B30', info: '#0088CC' };
+  const iconNames = { success: 'check', error: 'alert-circle', info: 'info' };
   const container = document.getElementById('toast-container') || document.body;
   const toast = document.createElement('div');
   toast.className = 'toast';
@@ -15,7 +16,7 @@ function showToast(msg, type = 'success') {
   const wrapper = document.createElement('div');
   wrapper.style.display = 'flex';
   wrapper.style.alignItems = 'center';
-  wrapper.style.gap = '10px';
+  wrapper.style.gap = '8px';
 
   const dot = document.createElement('span');
   dot.style.width = '8px';
@@ -24,18 +25,24 @@ function showToast(msg, type = 'success') {
   dot.style.borderRadius = '50%';
   dot.style.flexShrink = '0';
 
+  const iconEl = document.createElement('i');
+  iconEl.setAttribute('data-lucide', iconNames[type] || 'info');
+  iconEl.className = 'w-4 h-4 flex-shrink-0';
+  iconEl.style.color = colors[type] || colors.info;
+
   const textSpan = document.createElement('span');
   textSpan.style.fontSize = '14px';
   textSpan.style.fontWeight = '500';
   textSpan.textContent = msg;
 
   wrapper.appendChild(dot);
+  wrapper.appendChild(iconEl);
   wrapper.appendChild(textSpan);
   toast.appendChild(wrapper);
   container.appendChild(toast);
 
   if (typeof window !== 'undefined' && typeof window.refreshIcons === 'function') {
-    window.refreshIcons();
+    window.refreshIcons(toast);
   } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
     lucide.createIcons();
   }

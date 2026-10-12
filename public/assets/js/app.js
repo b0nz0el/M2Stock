@@ -113,9 +113,87 @@ document.addEventListener('keydown', (e) => {
       showToast('Pencarian aktif — ketik untuk mencari', 'info');
     }
   }
-  // ESC tutup sidebar
-  if (e.key === 'Escape') closeSidebar();
+  // ESC tutup sidebar & notif dropdown
+  if (e.key === 'Escape') {
+    closeSidebar();
+    const panel = document.getElementById('notif-dropdown-panel');
+    if (panel) panel.remove();
+  }
 });
+
+/* ═══════════════════════════════════════════════
+   NOTIFICATION DROPDOWN PANEL
+   ═══════════════════════════════════════════════ */
+function initNotificationDropdown() {
+  document.addEventListener('click', function(e) {
+    const notifBtn = e.target.closest && e.target.closest('[data-action="notif"]');
+    const existingDropdown = document.getElementById('notif-dropdown-panel');
+
+    if (notifBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (existingDropdown) {
+        existingDropdown.remove();
+        return;
+      }
+
+      const rect = notifBtn.getBoundingClientRect();
+      const panel = document.createElement('div');
+      panel.id = 'notif-dropdown-panel';
+      panel.className = 'fixed z-50 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl p-4 w-80 max-w-[calc(100vw-32px)] backdrop-blur-xl';
+      
+      const rightOffset = Math.max(16, window.innerWidth - rect.right);
+      panel.style.top = `${rect.bottom + 8}px`;
+      panel.style.right = `${rightOffset}px`;
+
+      panel.innerHTML = `
+        <div class="flex items-center justify-between pb-3 border-b border-white/5">
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-bold text-white">Notifikasi</h4>
+            <span class="text-[10px] font-semibold bg-[#0088CC]/20 text-[#32ADE6] px-2 py-0.5 rounded-full">0 Baru</span>
+          </div>
+          <button type="button" id="btn-close-notif-panel" aria-label="Tutup notifikasi" class="p-1 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="py-7 text-center space-y-2">
+          <div class="w-11 h-11 rounded-full bg-white/5 grid place-items-center mx-auto text-[#A0A0A5]">
+            <i data-lucide="bell" class="w-5 h-5 opacity-60"></i>
+          </div>
+          <p class="text-sm font-semibold text-white">Belum ada notifikasi</p>
+          <p class="text-xs text-[#A0A0A5] max-w-[220px] mx-auto leading-relaxed">
+            Notifikasi penting seputar transaksi, stok kritis, dan aktivitas akun akan muncul di sini.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-white/5 text-center">
+          <a href="/dashboard/notif/" class="text-xs font-semibold text-[#32ADE6] hover:underline inline-flex items-center gap-1">
+            Lihat Semua Notifikasi <i data-lucide="arrow-right" class="w-3 h-3"></i>
+          </a>
+        </div>
+      `;
+
+      document.body.appendChild(panel);
+      if (typeof window.refreshIcons === 'function') window.refreshIcons(panel);
+
+      const closeBtn = panel.querySelector('#btn-close-notif-panel');
+      if (closeBtn) {
+        closeBtn.onclick = () => panel.remove();
+      }
+      return;
+    }
+
+    if (existingDropdown && !existingDropdown.contains(e.target)) {
+      existingDropdown.remove();
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNotificationDropdown);
+} else {
+  initNotificationDropdown();
+}
 
 /* Card hover lift */
 document.querySelectorAll('.card').forEach(card => card.classList.add('card-hover'));

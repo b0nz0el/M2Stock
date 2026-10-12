@@ -69,9 +69,6 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
-        <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
-          <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
-        </button>
         <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
@@ -99,7 +96,7 @@
         </div>
       </div>
 
-      <section class="grid grid-cols-4 gap-4">
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card card-stat p-5 text-[#0088CC]">
           <div class="flex items-start justify-between mb-4">
             <div class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center">
@@ -153,8 +150,8 @@
         </div>
       </section>
 
-      <section class="grid grid-cols-3 gap-4">
-        <div class="col-span-2 card p-5">
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="col-span-1 lg:col-span-2 card p-5">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="font-semibold flex items-center gap-2">
@@ -190,7 +187,7 @@
         </div>
       </section>
 
-      <section class="grid grid-cols-3 gap-4">
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="card p-5">
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold flex items-center gap-2">
@@ -430,8 +427,8 @@
       if (recentTbody) {
         if (transactions.length === 0) {
           recentTbody.innerHTML = `
-            <tr class="table-row">
-              <td colspan="6" class="px-5 py-8 text-center text-[#A0A0A5]">Belum ada transaksi</td>
+            <tr class="empty-state-row table-row">
+              <td colspan="6" class="empty-state-cell px-5 py-8 text-center text-[#A0A0A5]">Belum ada transaksi</td>
             </tr>
           `;
         } else {
@@ -449,16 +446,17 @@
 
             return `
               <tr class="table-row border-b border-white/5">
-                <td class="px-5 py-3.5 text-[#A0A0A5]">${dateStr}</td>
-                <td class="px-5 py-3.5 font-medium">${prodName}</td>
-                <td class="px-5 py-3.5">${channelBadge}</td>
-                <td class="px-5 py-3.5 text-[#A0A0A5]">${kasir}</td>
-                <td class="px-5 py-3.5 text-right font-semibold ${qtyClass}">${qtyStr}</td>
-                <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
+                <td data-label="TANGGAL" class="px-5 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+                <td data-label="BARANG" class="px-5 py-3.5 font-medium">${prodName}</td>
+                <td data-label="CHANNEL" class="px-5 py-3.5">${channelBadge}</td>
+                <td data-label="KASIR" class="px-5 py-3.5 text-[#A0A0A5]">${kasir}</td>
+                <td data-label="JUMLAH" class="px-5 py-3.5 text-right font-semibold ${qtyClass}">${qtyStr}</td>
+                <td data-label="TOTAL" class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
               </tr>
             `;
           }).join('');
         }
+        if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
       }
 
       // B. Top 5 Terlaris (from Out transactions)

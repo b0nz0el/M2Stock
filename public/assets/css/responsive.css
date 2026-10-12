@@ -68,6 +68,13 @@
     .grid-cols-2 { grid-template-columns: 1fr !important; }
     .col-span-2 { grid-column: span 1 !important; }
 
+    /* Chart container responsive */
+    .chart-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 180px;
+    }
+
     /* Bottom nav muncul */
     .bottom-nav { display: block; }
 

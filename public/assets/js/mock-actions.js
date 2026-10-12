@@ -83,6 +83,7 @@
   /* Whitelist aksi yang sudah di-handle oleh komponen Web/UI (jangan beri mock toast) */
   var SKIP_ACTIONS = [
     'close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu',
+    'notif',
     'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out',
     'refresh', 'refresh-items', 'refresh-in', 'refresh-out', 'refresh-suppliers', 'refresh-customers',
     'export', 'export-items', 'export-pdf', 'export-csv',
@@ -93,6 +94,7 @@
     if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
 
     if (
+      action === 'notif' ||
       action === 'refresh' || action === 'refresh-items' || action === 'refresh-in' ||
       action === 'refresh-out' || action === 'refresh-suppliers' || action === 'refresh-customers'
     ) {
@@ -178,9 +180,9 @@
       return;
     }
 
-    // 4. Whitelist semua tombol refresh (baik di header navbar maupun di dalam halaman)
+    // 4. Whitelist semua tombol refresh & notifikasi (baik di header navbar maupun di dalam halaman)
     if (e.target && e.target.closest && e.target.closest(
-      '[id^="btn-refresh"], [data-action^="refresh"], button[title*="Refresh"], button[aria-label*="Refresh"], button[title*="Muat ulang"]'
+      '[id^="btn-refresh"], [data-action^="refresh"], button[title*="Refresh"], button[aria-label*="Refresh"], button[title*="Muat ulang"], [data-action="notif"]'
     )) {
       return;
     }

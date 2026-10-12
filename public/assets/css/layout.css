@@ -20,3 +20,37 @@
     z-index: 45;
   }
   .bottom-nav-items { display: flex; height: 64px; }
+
+  /* ═══ SIDEBAR SCROLL (Desktop & Mobile) ═══ */
+  @media (min-width: 1025px) {
+    aside {
+      height: 100vh;
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  aside nav {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100vh - 82px - 73px);
+    scrollbar-width: thin;
+  }
+
+  aside nav::-webkit-scrollbar {
+    width: 6px;
+  }
+  aside nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  aside nav::-webkit-scrollbar-thumb {
+    background: #2C2C2E;
+    border-radius: 3px;
+  }
+  aside nav::-webkit-scrollbar-thumb:hover {
+    background: #3C3C3E;
+  }

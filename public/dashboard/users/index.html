@@ -68,9 +68,6 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
-        <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
-          <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
-        </button>
       </div>
     </header>
 
@@ -193,19 +190,24 @@
     <form id="form-user-role" class="space-y-4" onsubmit="handleSaveRole(event)">
       <input type="hidden" id="role-target-user-id">
 
-      <div class="bg-black/30 border border-white/5 rounded-xl p-3.5 space-y-1">
-        <p class="text-xs text-[#A0A0A5]">Pengguna:</p>
-        <p class="text-sm font-semibold text-white" id="role-target-user-name">-</p>
-        <p class="text-xs text-[#A0A0A5]" id="role-target-user-email">-</p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-[#A0A0A5] mb-1">Nama Pengguna</label>
+          <input type="text" id="role-target-user-name" readonly class="w-full bg-black/40 border border-white/5 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-[#A0A0A5] mb-1">Email Pengguna</label>
+          <input type="email" id="role-target-user-email" readonly class="w-full bg-black/40 border border-white/5 rounded-xl px-3.5 py-2.5 text-sm text-[#A0A0A5] focus:outline-none cursor-not-allowed font-mono">
+        </div>
       </div>
 
       <div>
-        <label for="select-user-role" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Pilih Role Baru <span class="text-[#FF3B30]">*</span></label>
+        <label for="select-user-role" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Role Pengguna <span class="text-[#FF3B30]">*</span></label>
         <select id="select-user-role" required
                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
-          <option value="owner">Owner (Akses Penuh & Kelola User)</option>
-          <option value="staff">Staff (Operasional & Transaksi)</option>
-          <option value="viewer">Viewer (Hanya Lihat)</option>
+          <option value="owner">OWNER (Akses Penuh & Kelola User)</option>
+          <option value="staff">STAFF (Operasional & Transaksi)</option>
+          <option value="viewer">VIEWER (Hanya Lihat)</option>
         </select>
       </div>
 
@@ -365,8 +367,8 @@ function renderUsers() {
         </td>
         <td class="px-5 py-3.5 text-[#A0A0A5] text-xs">${lastLoginText}</td>
         <td class="px-5 py-3.5 text-right">
-          <button onclick="openRoleModal('${u.id}')" title="Ubah Role" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
-            <i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i>
+          <button onclick="openRoleModal('${u.id}')" title="Edit Role" aria-label="Edit Role ${escapeHtml(u.email)}" class="btn-edit-role p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+            <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
           </button>
         </td>
       </tr>
@@ -387,8 +389,8 @@ function openRoleModal(userId) {
   if (!user) return;
 
   document.getElementById('role-target-user-id').value = user.id;
-  document.getElementById('role-target-user-name').textContent = user.full_name || user.email.split('@')[0];
-  document.getElementById('role-target-user-email').textContent = user.email;
+  document.getElementById('role-target-user-name').value = user.full_name || user.email.split('@')[0];
+  document.getElementById('role-target-user-email').value = user.email;
   document.getElementById('select-user-role').value = (user.role || 'staff').toLowerCase();
 
   const modal = document.getElementById('modal-user-role');
@@ -406,6 +408,8 @@ async function handleSaveRole(e) {
   e.preventDefault();
   const userId = document.getElementById('role-target-user-id').value;
   const newRole = document.getElementById('select-user-role').value;
+  const user = usersData.find(u => u.id === userId);
+  const email = user ? user.email : 'user';
 
   if (!userId || !newRole) return;
 
@@ -416,14 +420,30 @@ async function handleSaveRole(e) {
   try {
     const res = await Api.users.updateRole(userId, newRole);
     if (!res.ok) {
-      showToast(res.error?.message || 'Gagal mengubah role', 'error');
+      let rawMsg = res.error?.message || '';
+      let errMsg = 'Gagal mengubah role';
+      if (/only owner/i.test(rawMsg) || /hanya owner/i.test(rawMsg)) {
+        errMsg = 'Hanya owner yang bisa ubah role';
+      } else if (/demote the last owner/i.test(rawMsg) || /owner terakhir/i.test(rawMsg)) {
+        errMsg = 'Tidak bisa demote owner terakhir';
+      } else if (rawMsg) {
+        errMsg = rawMsg;
+      }
+      showToast(errMsg, 'error');
       return;
     }
-    showToast(`Role berhasil diubah menjadi ${newRole.toUpperCase()}`, 'success');
+    showToast(`Role ${email} berhasil diubah`, 'success');
     closeRoleModal();
     await loadUsers();
   } catch (err) {
-    showToast('Terjadi kesalahan: ' + err.message, 'error');
+    let rawMsg = err.message || '';
+    let errMsg = 'Terjadi kesalahan: ' + rawMsg;
+    if (/only owner/i.test(rawMsg) || /hanya owner/i.test(rawMsg)) {
+      errMsg = 'Hanya owner yang bisa ubah role';
+    } else if (/demote the last owner/i.test(rawMsg) || /owner terakhir/i.test(rawMsg)) {
+      errMsg = 'Tidak bisa demote owner terakhir';
+    }
+    showToast(errMsg, 'error');
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simpan Role`;
