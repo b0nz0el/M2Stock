@@ -678,19 +678,19 @@
 
       if (currentItems.length === 0) {
         tbody.innerHTML = `
-          <tr>
-            <td colspan="11" class="text-center py-12 text-[#A0A0A5]">
-              <div class="flex flex-col items-center justify-center gap-2">
-                <i data-lucide="package" class="w-8 h-8 text-[#A0A0A5]/40" aria-hidden="true"></i>
-                <p class="text-sm font-medium">Belum ada produk. Klik 'Tambah Barang' untuk mulai.</p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="11" class="text-center py-12 text-[#A0A0A5]">
+            <div class="flex flex-col items-center gap-2">
+              <i data-lucide="package-open" class="w-8 h-8 text-[#A0A0A5]/40"></i>
+              <p class="text-sm">Belum ada produk. Klik 'Tambah Barang' untuk mulai.</p>
+            </div>
+          </td></tr>
         `;
         if (subtitle) {
           subtitle.textContent = '0 barang · 0 total stok · Rp 0 nilai';
         }
-        if (typeof refreshIcons === 'function') refreshIcons();
+        if (typeof window.refreshIcons === 'function') {
+          window.refreshIcons();
+        }
         return;
       }
 
@@ -752,8 +752,12 @@
         subtitle.textContent = currentItems.length + ' barang · ' + totalStock + ' total stok · Rp ' + valStr + ' nilai';
       }
 
-      if (typeof refreshIcons === 'function') {
-        refreshIcons();
+      if (typeof window.syncTableLabels === 'function') {
+        window.syncTableLabels();
+      }
+
+      if (typeof window.refreshIcons === 'function') {
+        window.refreshIcons();
       }
     } catch (err) {
       console.error('Error saat memuat produk:', err);

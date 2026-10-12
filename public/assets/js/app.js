@@ -25,19 +25,36 @@ document.addEventListener('app-sidebar:navigate', function(e) {
    ═══════════════════════════════════════════════ */
 const MOBILE_BREAKPOINT = 1024;
 
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * Sync data-label ke semua <td> dalam tabel .card
+ * Berdasarkan header <thead> yang ada di table tersebut.
+ * Panggil fungsi ini SETIAP KALI render rows baru (dynamic dari Supabase).
+ */
+function syncTableLabels() {
   document.querySelectorAll('.card table').forEach(function(table) {
     const headers = [];
     table.querySelectorAll('thead th').forEach(function(th) {
       headers.push(th.textContent.trim().toUpperCase());
     });
+
     table.querySelectorAll('tbody tr').forEach(function(row) {
       row.querySelectorAll('td').forEach(function(td, index) {
         const label = headers[index] || '';
-        if (label) td.setAttribute('data-label', label);
+        if (label) {
+          td.setAttribute('data-label', label);
+        } else {
+          td.removeAttribute('data-label');
+        }
       });
     });
   });
+}
+
+// Expose ke global supaya bisa dipanggil dari script lain
+window.syncTableLabels = syncTableLabels;
+
+document.addEventListener('DOMContentLoaded', function() {
+  syncTableLabels();
 
   // Pilih semua checkbox
   const selectAll = document.getElementById('select-all-items');
