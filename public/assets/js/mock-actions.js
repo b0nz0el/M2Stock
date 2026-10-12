@@ -86,6 +86,13 @@
   function handle(action, el) {
     if (!action || SKIP_ACTIONS.indexOf(action) !== -1) return;
 
+    // Aksi CRUD produk pada halaman items ditangani langsung oleh live backend CRUD
+    if (el && el.closest && (el.closest('#page-items') || el.closest('#modal-item') || el.closest('#modal-delete'))) {
+      if (action === 'add' || action === 'add-item' || action === 'edit' || action === 'delete') {
+        return;
+      }
+    }
+
     if (action === 'add' || action.indexOf('add-') === 0) {
       give('Fitur Tambah akan hadir setelah backend'); return;
     }

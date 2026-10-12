@@ -67,7 +67,7 @@
         <button data-action="mobile-preview" aria-label="Buka di mobile" class="hidden md:block bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="smartphone" class="w-4 h-4" aria-hidden="true"></i>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
@@ -88,7 +88,7 @@
           <button data-action="export-items" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export
           </button>
-          <button data-action="add-item" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <button data-action="add-item" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Barang
           </button>
         </div>
@@ -307,7 +307,351 @@
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
 
+<!-- ═══════════ MODAL TAMBAH / EDIT BARANG ═══════════ -->
+<div id="modal-item" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-item-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh] p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div>
+        <h3 id="modal-item-title" class="text-lg font-bold text-white">Tambah Barang</h3>
+        <p class="text-xs text-[#A0A0A5] mt-0.5">Lengkapi informasi produk inventori</p>
+      </div>
+      <button type="button" onclick="closeItemModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <form id="item-form" class="space-y-4" onsubmit="handleItemSubmit(event)">
+      <input type="hidden" id="item-id">
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="item-sku" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">SKU / Kode <span class="text-[#FF3B30]">*</span></label>
+          <input type="text" id="item-sku" required placeholder="mis. FILT-002"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label for="item-brand" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Brand / Merk</label>
+          <input type="text" id="item-brand" placeholder="mis. Aquaone"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label for="item-name" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Nama Barang <span class="text-[#FF3B30]">*</span></label>
+        <input type="text" id="item-name" required placeholder="mis. Filter Canister 1000L/h"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="item-category" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Kategori</label>
+          <select id="item-category" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <option value="">Umum (Tanpa Kategori)</option>
+          </select>
+        </div>
+        <div>
+          <label for="item-stock" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Saat Ini <span class="text-[#FF3B30]">*</span></label>
+          <input type="number" id="item-stock" min="0" value="0" required
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label for="item-cost-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Beli (Rp)</label>
+          <input type="number" id="item-cost-price" min="0" value="0"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label for="item-sell-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Jual (Rp) <span class="text-[#FF3B30]">*</span></label>
+          <input type="number" id="item-sell-price" min="0" value="0" required
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label for="item-min-stock" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Min. Stok</label>
+          <input type="number" id="item-min-stock" min="0" value="3"
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeItemModal()"
+                class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+          Batal
+        </button>
+        <button type="submit" id="btn-submit-item"
+                class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Simpan Produk</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL KONFIRMASI HAPUS ═══════════ -->
+<div id="modal-delete" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center flex-shrink-0">
+        <i data-lucide="trash-2" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 id="modal-delete-title" class="text-base font-bold text-white">Hapus Barang</h3>
+        <p class="text-xs text-[#A0A0A5]">Konfirmasi penghapusan data</p>
+      </div>
+    </div>
+    <p class="text-sm text-[#A0A0A5]">
+      Apakah Anda yakin ingin menghapus produk <strong id="delete-item-name" class="text-white"></strong>? Tindakan ini tidak dapat dibatalkan.
+    </p>
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <button type="button" onclick="closeDeleteModal()"
+              class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+        Batal
+      </button>
+      <button type="button" id="btn-confirm-delete" onclick="confirmDeleteItem()"
+              class="bg-[#FF3B30] hover:bg-[#D70015] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Hapus</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
+  let currentItems = [];
+  let itemToDeleteId = null;
+
+  async function loadCategories() {
+    if (typeof window.supabase === 'undefined') return;
+    try {
+      const { data } = await window.supabase.from('categories').select('*').order('name');
+      const select = document.getElementById('item-category');
+      if (!select) return;
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">Umum (Tanpa Kategori)</option>';
+      if (data && data.length > 0) {
+        data.forEach(function (cat) {
+          const opt = document.createElement('option');
+          opt.value = cat.id;
+          opt.textContent = cat.name;
+          select.appendChild(opt);
+        });
+      }
+      if (currentVal) select.value = currentVal;
+    } catch (e) {
+      console.warn('Gagal memuat kategori:', e);
+    }
+  }
+
+  function openAddItemModal() {
+    const form = document.getElementById('item-form');
+    if (form) form.reset();
+    document.getElementById('item-id').value = '';
+    document.getElementById('modal-item-title').textContent = 'Tambah Barang';
+    const submitBtn = document.getElementById('btn-submit-item');
+    if (submitBtn) {
+      const span = submitBtn.querySelector('span');
+      if (span) span.textContent = 'Simpan Produk';
+    }
+    const modal = document.getElementById('modal-item');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    loadCategories();
+    setTimeout(function () {
+      const skuInput = document.getElementById('item-sku');
+      if (skuInput) skuInput.focus();
+    }, 50);
+  }
+
+  function openEditItemModal(id) {
+    const item = currentItems.find(function (i) { return Number(i.id) === Number(id); });
+    if (!item) return;
+
+    document.getElementById('item-id').value = item.id;
+    document.getElementById('item-sku').value = item.sku || '';
+    document.getElementById('item-brand').value = item.brand && item.brand !== '-' ? item.brand : '';
+    document.getElementById('item-name').value = item.name || '';
+    document.getElementById('item-stock').value = item.stock || 0;
+    document.getElementById('item-cost-price').value = item.cost_price || 0;
+    document.getElementById('item-sell-price').value = item.sell_price || 0;
+    document.getElementById('item-min-stock').value = item.min_stock || 3;
+
+    document.getElementById('modal-item-title').textContent = 'Edit Barang';
+    const submitBtn = document.getElementById('btn-submit-item');
+    if (submitBtn) {
+      const span = submitBtn.querySelector('span');
+      if (span) span.textContent = 'Perbarui Produk';
+    }
+
+    loadCategories().then(function () {
+      if (item.category_id) {
+        document.getElementById('item-category').value = item.category_id;
+      }
+    });
+
+    const modal = document.getElementById('modal-item');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    setTimeout(function () {
+      const nameInput = document.getElementById('item-name');
+      if (nameInput) nameInput.focus();
+    }, 50);
+  }
+
+  function closeItemModal() {
+    const modal = document.getElementById('modal-item');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  async function handleItemSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('item-id').value;
+    const sku = document.getElementById('item-sku').value.trim();
+    const name = document.getElementById('item-name').value.trim();
+    const brand = document.getElementById('item-brand').value.trim();
+    const category_id = document.getElementById('item-category').value;
+    const stock = Number(document.getElementById('item-stock').value);
+    const cost_price = Number(document.getElementById('item-cost-price').value);
+    const sell_price = Number(document.getElementById('item-sell-price').value);
+    const min_stock = Number(document.getElementById('item-min-stock').value);
+
+    if (!name) {
+      if (typeof showToast === 'function') showToast('Nama barang tidak boleh kosong', 'error');
+      return;
+    }
+    if (!sku) {
+      if (typeof showToast === 'function') showToast('SKU barang wajib diisi', 'error');
+      return;
+    }
+    if (cost_price < 0 || sell_price < 0) {
+      if (typeof showToast === 'function') showToast('Harga beli dan harga jual harus >= 0', 'error');
+      return;
+    }
+    if (stock < 0) {
+      if (typeof showToast === 'function') showToast('Stok harus >= 0', 'error');
+      return;
+    }
+
+    const duplicate = currentItems.find(function (i) {
+      return i.sku.toLowerCase() === sku.toLowerCase() && (!id || Number(i.id) !== Number(id));
+    });
+    if (duplicate) {
+      if (typeof showToast === 'function') showToast('SKU "' + sku + '" sudah digunakan oleh produk lain', 'error');
+      return;
+    }
+
+    const payload = {
+      sku: sku,
+      name: name,
+      brand: brand || null,
+      category_id: category_id ? Number(category_id) : null,
+      stock: stock,
+      cost_price: cost_price,
+      sell_price: sell_price,
+      min_stock: min_stock
+    };
+
+    const btnSubmit = document.getElementById('btn-submit-item');
+    const originalBtnContent = btnSubmit.innerHTML;
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span>Menyimpan...</span>';
+
+    try {
+      let res;
+      if (id) {
+        res = await Api.items.update(Number(id), payload);
+      } else {
+        res = await Api.items.create(payload);
+      }
+
+      if (!res.ok) {
+        if (typeof showToast === 'function') {
+          showToast(res.error?.message || 'Gagal menyimpan data ke Supabase', 'error');
+        }
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnContent;
+        return;
+      }
+
+      closeItemModal();
+      if (typeof showToast === 'function') {
+        showToast(id ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan', 'success');
+      }
+      await loadItemsFromBackend();
+    } catch (err) {
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Terjadi kesalahan sistem', 'error');
+      }
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = originalBtnContent;
+    }
+  }
+
+  function openDeleteItemModal(id) {
+    const item = currentItems.find(function (i) { return Number(i.id) === Number(id); });
+    if (!item) return;
+
+    itemToDeleteId = item.id;
+    document.getElementById('delete-item-name').textContent = item.name + ' (' + item.sku + ')';
+    const modal = document.getElementById('modal-delete');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  }
+
+  function closeDeleteModal() {
+    itemToDeleteId = null;
+    const modal = document.getElementById('modal-delete');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  async function confirmDeleteItem() {
+    if (!itemToDeleteId) return;
+
+    const btn = document.getElementById('btn-confirm-delete');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>Menghapus...</span>';
+
+    try {
+      const res = await Api.items.delete(itemToDeleteId);
+      if (!res.ok) {
+        if (typeof showToast === 'function') {
+          showToast(res.error?.message || 'Gagal menghapus produk dari Supabase', 'error');
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        return;
+      }
+
+      closeDeleteModal();
+      if (typeof showToast === 'function') {
+        showToast('Produk berhasil dihapus', 'success');
+      }
+      await loadItemsFromBackend();
+    } catch (err) {
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Gagal menghapus produk', 'error');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
+
   async function loadItemsFromBackend() {
     const tbody = document.getElementById('items-tbody');
     const subtitle = document.getElementById('items-subtitle');
@@ -317,13 +661,22 @@
       const res = await Api.items.getAll();
       if (!res.ok) {
         console.error('Gagal mengambil data produk:', res.error);
+        if (typeof showToast === 'function') {
+          showToast(res.error?.message || 'Gagal mengambil data produk dari database', 'error');
+        }
         return;
       }
 
-      const items = res.data || [];
+      currentItems = res.data || [];
       tbody.innerHTML = '';
 
-      if (items.length === 0) {
+      // Update badge di sidebar
+      const badge = document.querySelector('.menu-item[data-page="items"] span');
+      if (badge) {
+        badge.textContent = currentItems.length;
+      }
+
+      if (currentItems.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="11" class="text-center py-12 text-[#A0A0A5]">
@@ -344,7 +697,7 @@
       let totalStock = 0;
       let totalValue = 0;
 
-      items.forEach(function (item) {
+      currentItems.forEach(function (item) {
         const stock = Number(item.stock) || 0;
         const minStock = Number(item.min_stock || item.minStock) || 0;
         const costPrice = Number(item.cost_price || item.costPrice) || 0;
@@ -382,10 +735,10 @@
           <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">${margin}%</td>
           <td class="px-4 py-3.5">
             <div class="flex gap-1 justify-end">
-              <button data-action="edit" data-id="${item.id}" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
+              <button type="button" onclick="openEditItemModal(${item.id})" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
                 <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
               </button>
-              <button data-action="delete" data-id="${item.id}" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
+              <button type="button" onclick="openDeleteItemModal(${item.id})" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
                 <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
               </button>
             </div>
@@ -396,7 +749,7 @@
 
       if (subtitle) {
         const valStr = totalValue >= 1000000 ? (totalValue / 1000000).toFixed(1) + 'jt' : Number(totalValue).toLocaleString('id-ID');
-        subtitle.textContent = items.length + ' barang · ' + totalStock + ' total stok · Rp ' + valStr + ' nilai';
+        subtitle.textContent = currentItems.length + ' barang · ' + totalStock + ' total stok · Rp ' + valStr + ' nilai';
       }
 
       if (typeof refreshIcons === 'function') {
@@ -406,6 +759,16 @@
       console.error('Error saat memuat produk:', err);
     }
   }
+
+  // Ekspos fungsi ke global window
+  window.openAddItemModal = openAddItemModal;
+  window.openEditItemModal = openEditItemModal;
+  window.closeItemModal = closeItemModal;
+  window.handleItemSubmit = handleItemSubmit;
+  window.openDeleteItemModal = openDeleteItemModal;
+  window.closeDeleteModal = closeDeleteModal;
+  window.confirmDeleteItem = confirmDeleteItem;
+  window.loadItemsFromBackend = loadItemsFromBackend;
 
   async function initItems() {
     let retries = 0;

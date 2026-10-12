@@ -491,6 +491,16 @@
             if (row.costPrice !== undefined) { row.cost_price = row.costPrice; delete row.costPrice; }
             if (row.sellPrice !== undefined) { row.sell_price = row.sellPrice; delete row.sellPrice; }
             if (row.unitPrice !== undefined && row.sell_price === undefined) { row.sell_price = row.unitPrice; delete row.unitPrice; }
+            if (row.stock !== undefined) row.stock = Number(row.stock);
+            if (row.min_stock !== undefined) row.min_stock = Number(row.min_stock);
+            if (row.cost_price !== undefined) row.cost_price = Number(row.cost_price);
+            if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
+            if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
+            delete row.id;
+            delete row.categories;
+            delete row.created_at;
+            delete row.updated_at;
+            delete row.category;
 
             let query = window.supabase
               .from('products')
