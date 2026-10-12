@@ -308,7 +308,7 @@
 <script src="../../assets/js/mock-actions.js" defer></script>
 
 <!-- ═══════════ MODAL TAMBAH / EDIT BARANG ═══════════ -->
-<div id="modal-item" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-item-title">
+<div id="modal-item" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-item-title">
   <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh] p-6 space-y-4 my-auto">
     <div class="flex items-center justify-between pb-3 border-b border-white/5">
       <div>
@@ -390,7 +390,7 @@
 </div>
 
 <!-- ═══════════ MODAL KONFIRMASI HAPUS ═══════════ -->
-<div id="modal-delete" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+<div id="modal-delete" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
   <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center flex-shrink-0">
@@ -769,6 +769,20 @@
   window.closeDeleteModal = closeDeleteModal;
   window.confirmDeleteItem = confirmDeleteItem;
   window.loadItemsFromBackend = loadItemsFromBackend;
+
+  // Tutup modal saat klik pada backdrop atau tekan Escape
+  window.addEventListener('click', function (e) {
+    const modalItem = document.getElementById('modal-item');
+    const modalDelete = document.getElementById('modal-delete');
+    if (e.target === modalItem) closeItemModal();
+    if (e.target === modalDelete) closeDeleteModal();
+  });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeItemModal();
+      closeDeleteModal();
+    }
+  });
 
   async function initItems() {
     let retries = 0;
