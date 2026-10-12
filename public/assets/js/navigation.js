@@ -54,7 +54,8 @@ function syncActiveState() {
     const match = m.getAttribute('onclick') && m.getAttribute('onclick').match(/'([a-z]+)'/);
     const isActive = !!match && match[1] === pageId;
     m.classList.toggle('active', isActive);
-    m.setAttribute('aria-current', isActive ? 'page' : 'false');
+    if (isActive) m.setAttribute('aria-current', 'page');
+    else m.removeAttribute('aria-current');
   });
 
   const tabLabels = {
@@ -89,7 +90,7 @@ function pageUrl(pageId) {
 }
 
 /* Navigasi: multi-page clean URL → arahkan ke /dashboard/<slug>/ */
-function showPage(pageId, element) {
+function showPage(pageId) {
   window.location.href = pageUrl(pageId);
 }
 

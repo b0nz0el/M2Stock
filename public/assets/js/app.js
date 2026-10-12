@@ -13,9 +13,6 @@ lucide.createIcons();
 const MOBILE_BREAKPOINT = 1024;
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Field yang disembunyikan di mobile (tersier)
-  const HIDDEN_FIELDS = ['NO. TRANSAKSI', 'NO. RESI', 'NO. PO', 'NO. RETUR'];
-
   document.querySelectorAll('.card table').forEach(function(table) {
     const headers = [];
     table.querySelectorAll('thead th').forEach(function(th) {

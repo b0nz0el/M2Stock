@@ -16,8 +16,8 @@ describe('navigation.js a11y', () => {
       </header>
       <aside aria-label="Menu utama">
         <button onclick="closeSidebar()" class="close-btn" aria-label="Tutup"></button>
-        <button class="menu-item" onclick="showPage('dashboard', this)">Dashboard</button>
-        <button class="menu-item" onclick="showPage('items', this)">Barang</button>
+        <button class="menu-item" onclick="showPage('dashboard')">Dashboard</button>
+        <button class="menu-item" onclick="showPage('items')">Barang</button>
       </aside>
       <nav class="bottom-nav">
         <button type="button" class="bottom-nav-item" data-tab="dashboard"></button>
