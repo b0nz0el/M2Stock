@@ -31,3 +31,6 @@ visual-baseline/
 
 # Visual regression screenshots (generated)
 visual-baseline/
+
+# Supabase CLI local cache
+supabase/.temp/
