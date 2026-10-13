@@ -216,6 +216,99 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function openCreateUserModal() {
+  const modal = document.getElementById('modal-create-user');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+function closeCreateUserModal() {
+  const modal = document.getElementById('modal-create-user');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function loadUsersFromBackend() {
+  return loadUsers();
+}
+
+async function handleCreateUserSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('new-user-email').value.trim();
+  const password = document.getElementById('new-user-password').value;
+  const full_name = document.getElementById('new-user-name').value.trim();
+  const role = document.getElementById('new-user-role').value;
+  
+  if (password.length < 8) {
+    showToast('Password minimal 8 karakter', 'error');
+    return;
+  }
+
+  const submitBtn = document.getElementById('btn-submit-create-user');
+  const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...`;
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  try {
+    const { data: { session } } = await window.supabase.auth.getSession();
+    if (!session) {
+      showToast('Sesi tidak valid', 'error');
+      return;
+    }
+    
+    const res = await fetch(
+      'https://yscswrxgylkryvxmwlza.supabase.co/functions/v1/create-user',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzY3N3cnhneWxrcnl2eG13bHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3OTUwNDksImV4cCI6MjEwNzM3MTA0OX0.1TMiwmF0JhefAwXZZZjA1-382oYEnqdGwzDXeXWeZG0'
+        },
+        body: JSON.stringify({ email, password, role: role.toLowerCase(), full_name })
+      }
+    );
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showToast(data.error || 'Gagal menambah user', 'error');
+      return;
+    }
+    
+    showToast('User ' + email + ' berhasil ditambahkan', 'success');
+    closeCreateUserModal();
+    const form = document.getElementById('create-user-form');
+    if (form) form.reset();
+    await loadUsersFromBackend(); // reload tabel
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml || `<i data-lucide="check" class="w-4 h-4"></i> Simpan`;
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+  }
+}
+
+window.openCreateUserModal = openCreateUserModal;
+window.closeCreateUserModal = closeCreateUserModal;
+window.handleCreateUserSubmit = handleCreateUserSubmit;
+window.loadUsersFromBackend = loadUsersFromBackend;
+
 document.addEventListener('DOMContentLoaded', () => {
   loadUsers();
 });

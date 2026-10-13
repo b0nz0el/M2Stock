@@ -85,6 +85,7 @@
     'close-sidebar', 'toggle-sidebar', 'open-menu', 'close-menu',
     'notif', 'restock', 'mark-read', 'report-type',
     'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out',
+    'create-user', 'add-user',
     'refresh', 'refresh-items', 'refresh-in', 'refresh-out', 'refresh-suppliers', 'refresh-customers',
     'export', 'export-items', 'export-pdf', 'export-csv',
     'print', 'edit-bulk', 'delete-bulk', 'page', 'page-prev', 'page-next', 'bulk-input',

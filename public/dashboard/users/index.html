@@ -68,6 +68,11 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
+        <button type="button" data-action="create-user" onclick="openCreateUserModal()"
+                class="bg-[#0088CC] hover:bg-[#0077BB] px-3.5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition btn">
+          <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i>
+          <span>+ Tambah User</span>
+        </button>
       </div>
     </header>
 
@@ -167,6 +172,65 @@
       </button>
     </div>
   </nav>
+</div>
+
+<!-- ═══════════ MODAL TAMBAH USER ═══════════ -->
+<div id="modal-create-user" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-create-user-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="user-plus" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-create-user-title" class="text-lg font-bold text-white">Tambah User Baru</h3>
+          <p class="text-xs text-[#A0A0A5] mt-0.5">Buat akun pengguna dan tentukan hak akses</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeCreateUserModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <form id="create-user-form" class="space-y-4" onsubmit="handleCreateUserSubmit(event)">
+      <div>
+        <label for="new-user-email" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Email <span class="text-[#FF3B30]">*</span></label>
+        <input type="email" id="new-user-email" required placeholder="nama@email.com" autocomplete="off"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div>
+        <label for="new-user-password" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Password <span class="text-[#FF3B30]">*</span></label>
+        <input type="password" id="new-user-password" required minlength="8" placeholder="Minimal 8 karakter" autocomplete="new-password"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div>
+        <label for="new-user-name" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Nama Lengkap (Opsional)</label>
+        <input type="text" id="new-user-name" placeholder="Nama staf / pengguna" autocomplete="off"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#0088CC] focus:outline-none">
+      </div>
+
+      <div>
+        <label for="new-user-role" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Role <span class="text-[#FF3B30]">*</span></label>
+        <select id="new-user-role" required
+                class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#0088CC] focus:outline-none">
+          <option value="STAFF" selected>STAFF (Operasional & Transaksi)</option>
+          <option value="VIEWER">VIEWER (Hanya Lihat)</option>
+          <option value="OWNER">OWNER (Akses Penuh & Kelola User)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeCreateUserModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+          Batal
+        </button>
+        <button type="submit" id="btn-submit-create-user" class="bg-[#0088CC] hover:bg-[#0077BB] px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Simpan
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- ═══════════ MODAL UBAH ROLE USER ═══════════ -->
