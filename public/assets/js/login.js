@@ -64,31 +64,6 @@
     }, 3500);
   }
 
-  // ═══ TOGGLE REGISTER / LOGIN MODE ═══
-  let isRegisterMode = false;
-  function toggleAuthMode() {
-    isRegisterMode = !isRegisterMode;
-    const formTitle = document.getElementById('form-title');
-    const btnText = document.getElementById('btn-text');
-    const toggleBtn = document.getElementById('toggle-auth-btn');
-    const loginOptions = document.getElementById('login-options');
-    const pwdInput = document.getElementById('password');
-
-    if (isRegisterMode) {
-      if (formTitle) formTitle.textContent = 'Daftar Akun Baru';
-      if (btnText) btnText.textContent = 'Daftar Sekarang';
-      if (toggleBtn) toggleBtn.textContent = 'Sudah punya akun? Masuk';
-      if (loginOptions) loginOptions.classList.add('hidden');
-      if (pwdInput) pwdInput.setAttribute('autocomplete', 'new-password');
-    } else {
-      if (formTitle) formTitle.textContent = 'Masuk';
-      if (btnText) btnText.textContent = 'Masuk';
-      if (toggleBtn) toggleBtn.textContent = 'Belum punya akun? Daftar';
-      if (loginOptions) loginOptions.classList.remove('hidden');
-      if (pwdInput) pwdInput.setAttribute('autocomplete', 'current-password');
-    }
-  }
-
   // ═══ RESET SAAT BACK/FORWARD (bfcache) ═══
   window.addEventListener('pageshow', (e) => {
     if (e.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
@@ -105,7 +80,7 @@
         btn.classList.remove('loading');
         btn.disabled = false;
       }
-      if (btnText) btnText.textContent = isRegisterMode ? 'Daftar Sekarang' : 'Masuk';
+      if (btnText) btnText.textContent = 'Masuk';
       if (card) card.classList.remove('fade-out');
 
       document.querySelectorAll('.progress-bar').forEach(p => p.remove());
@@ -135,7 +110,7 @@
     } catch (_) {}
   });
 
-  // ═══ AUTH HANDLER (LIVE SUPABASE) ═══
+  // ═══ AUTH HANDLER (LIVE SUPABASE LOGIN) ═══
   async function handleAuthSubmit(e) {
     e.preventDefault();
 
@@ -155,15 +130,10 @@
     btn.classList.add('loading');
     btn.disabled = true;
     const originalText = btnText.innerHTML;
-    btnText.innerHTML = '<span class="dot-loader"><span></span><span></span><span></span></span> ' + (isRegisterMode ? 'Mendaftarkan...' : 'Memverifikasi...');
+    btnText.innerHTML = '<span class="dot-loader"><span></span><span></span><span></span></span> Memverifikasi...';
 
     try {
-      let res;
-      if (isRegisterMode) {
-        res = await window.Auth.register(email, password);
-      } else {
-        res = await window.Auth.login(email, password);
-      }
+      const res = await window.Auth.login(email, password);
 
       if (!res.ok) {
         showToast(res.error?.message || 'Gagal memproses permintaan', 'error');
@@ -182,7 +152,7 @@
       // 3. Fade out card + toast
       setTimeout(() => {
         if (card) card.classList.add('fade-out');
-        showToast(isRegisterMode ? 'Pendaftaran berhasil — mengalihkan...' : 'Login berhasil — mengalihkan...');
+        showToast('Login berhasil — mengalihkan...');
 
         // 4. Splash loading overlay
         setTimeout(() => {
@@ -205,6 +175,5 @@
   // Ekspos ke global window
   window.togglePassword = togglePassword;
   window.showToast = showToast;
-  window.toggleAuthMode = toggleAuthMode;
   window.handleAuthSubmit = handleAuthSubmit;
   window.handleLogin = handleAuthSubmit;
