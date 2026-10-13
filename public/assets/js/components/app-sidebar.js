@@ -32,20 +32,110 @@ class AppSidebar extends HTMLElement {
     document.removeEventListener('keydown', this._handleTrapFocus);
   }
 
+  _applyRoleBadge(role) {
+    const roleEl = this.querySelector('#sidebar-user-role');
+    if (!roleEl || !role) return;
+    const r = role.toString().trim().toUpperCase();
+    if (r === 'STAFF') {
+      roleEl.textContent = 'STAFF';
+      roleEl.className = 'badge bg-[#34C759]/20 text-[#34C759]';
+    } else if (r === 'VIEWER') {
+      roleEl.textContent = 'VIEWER';
+      roleEl.className = 'badge bg-[#AF52DE]/20 text-[#AF52DE]';
+    } else if (r === 'OWNER') {
+      roleEl.textContent = 'OWNER';
+      roleEl.className = 'badge bg-[#0088CC]/20 text-[#32ADE6]';
+    }
+  }
+
   async _loadUserProfile() {
+    // 1. Sinkronisasi instan dari cache localStorage (jika tersedia)
+    try {
+      const rawAuth = localStorage.getItem('auth_user');
+      if (rawAuth) {
+        const cached = JSON.parse(rawAuth);
+        const emailEl = this.querySelector('#sidebar-user-email');
+        const avatarEl = this.querySelector('#sidebar-user-avatar');
+        const name = cached.name || cached.email;
+        if (name) {
+          if (emailEl) emailEl.textContent = name;
+          if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+        }
+        if (cached.role) {
+          this._applyRoleBadge(cached.role);
+        }
+      }
+    } catch (_) {}
+
+    // 2. Ambil user & role aktual dari Auth dan Supabase
     try {
       let retries = 0;
-      while ((typeof window === 'undefined' || !window.Auth) && retries < 25) {
+      while ((typeof window === 'undefined' || (!window.Auth && !window.supabase)) && retries < 25) {
+        if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') {
+          break;
+        }
         await new Promise(r => setTimeout(r, 40));
         retries++;
       }
+
+      let user = null;
       if (typeof window !== 'undefined' && window.Auth && typeof window.Auth.getCurrentUser === 'function') {
-        const user = await window.Auth.getCurrentUser();
-        if (user && user.email) {
-          const emailEl = this.querySelector('#sidebar-user-email');
-          const avatarEl = this.querySelector('#sidebar-user-avatar');
-          if (emailEl) emailEl.textContent = user.email;
-          if (avatarEl) avatarEl.textContent = user.email.charAt(0).toUpperCase();
+        user = await window.Auth.getCurrentUser();
+      } else if (typeof window !== 'undefined' && window.supabase && window.supabase.auth) {
+        const { data } = await window.supabase.auth.getUser();
+        user = data?.user || null;
+      }
+
+      if (user) {
+        const emailEl = this.querySelector('#sidebar-user-email');
+        const avatarEl = this.querySelector('#sidebar-user-avatar');
+        let displayName = user.name || user.email || 'Pengguna';
+
+        // Filter valid app roles: abaikan role internal auth seperti 'authenticated' / 'anon'
+        let role = null;
+        const candidateRole = (user.role || '').toUpperCase();
+        if (['OWNER', 'STAFF', 'VIEWER'].includes(candidateRole)) {
+          role = candidateRole;
+        } else if (user.user_metadata?.role) {
+          const metaRole = (user.user_metadata.role).toString().trim().toUpperCase();
+          if (['OWNER', 'STAFF', 'VIEWER'].includes(metaRole)) {
+            role = metaRole;
+          }
+        }
+
+        // Ambil role langsung dari tabel profiles di Supabase jika client tersedia
+        if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.from === 'function' && user.id) {
+          try {
+            const { data: profile, error } = await window.supabase
+              .from('profiles')
+              .select('role, name')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (!error && profile) {
+              if (profile.role) role = profile.role.toString().trim().toUpperCase();
+              if (profile.name) {
+                displayName = profile.name;
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (emailEl) emailEl.textContent = displayName;
+        if (avatarEl && displayName) avatarEl.textContent = displayName.charAt(0).toUpperCase();
+
+        if (role) {
+          this._applyRoleBadge(role);
+          try {
+            const currentCache = JSON.parse(localStorage.getItem('auth_user') || '{}');
+            localStorage.setItem('auth_user', JSON.stringify({
+              ...currentCache,
+              id: user.id || currentCache.id,
+              email: user.email || currentCache.email,
+              name: displayName,
+              role: role
+            }));
+          } catch (_) {}
         }
       }
     } catch (_) {}
@@ -54,6 +144,7 @@ class AppSidebar extends HTMLElement {
   _onClick(e) {
     // 0. Aksi logout
     if (e.target.closest('[data-action="logout"]')) {
+      try { localStorage.removeItem('auth_user'); } catch (_) {}
       if (typeof window !== 'undefined') {
         if (window.Auth && typeof window.Auth.logout === 'function') {
           window.Auth.logout().then(() => {
@@ -292,7 +383,7 @@ class AppSidebar extends HTMLElement {
           <div id="sidebar-user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg flex-shrink-0">D</div>
           <div class="flex-1 min-w-0">
             <p id="sidebar-user-email" class="text-sm font-semibold truncate">Mr David</p>
-            <span class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
+            <span id="sidebar-user-role" class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
           </div>
           <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout"
                   class="p-2 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] transition flex-shrink-0">

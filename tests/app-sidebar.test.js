@@ -148,4 +148,94 @@ describe('<app-sidebar> Component', () => {
     expect(tab.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(first);
   });
+
+  describe('Dynamic Role Badge', () => {
+    afterEach(() => {
+      localStorage.clear();
+      delete window.Auth;
+      delete window.supabase;
+    });
+
+    it('merender badge role default OWNER dengan warna biru', () => {
+      const roleEl = sidebar.querySelector('#sidebar-user-role');
+      expect(roleEl).not.toBeNull();
+      expect(roleEl.textContent).toBe('OWNER');
+      expect(roleEl.className).toBe('badge bg-[#0088CC]/20 text-[#32ADE6]');
+    });
+
+    it('mengubah badge role menjadi STAFF dengan warna hijau melalui _applyRoleBadge', () => {
+      sidebar._applyRoleBadge('STAFF');
+      const roleEl = sidebar.querySelector('#sidebar-user-role');
+      expect(roleEl.textContent).toBe('STAFF');
+      expect(roleEl.className).toBe('badge bg-[#34C759]/20 text-[#34C759]');
+    });
+
+    it('mengubah badge role menjadi VIEWER dengan warna ungu melalui _applyRoleBadge', () => {
+      sidebar._applyRoleBadge('VIEWER');
+      const roleEl = sidebar.querySelector('#sidebar-user-role');
+      expect(roleEl.textContent).toBe('VIEWER');
+      expect(roleEl.className).toBe('badge bg-[#AF52DE]/20 text-[#AF52DE]');
+    });
+
+    it('mengubah badge role menjadi OWNER dengan warna biru melalui _applyRoleBadge', () => {
+      sidebar._applyRoleBadge('STAFF');
+      sidebar._applyRoleBadge('OWNER');
+      const roleEl = sidebar.querySelector('#sidebar-user-role');
+      expect(roleEl.textContent).toBe('OWNER');
+      expect(roleEl.className).toBe('badge bg-[#0088CC]/20 text-[#32ADE6]');
+    });
+
+    it('memuat profil dan role dari localStorage cache secara instan', async () => {
+      localStorage.setItem('auth_user', JSON.stringify({
+        name: 'Staff User',
+        email: 'staff@example.com',
+        role: 'STAFF'
+      }));
+
+      await sidebar._loadUserProfile();
+
+      const roleEl = sidebar.querySelector('#sidebar-user-role');
+      const emailEl = sidebar.querySelector('#sidebar-user-email');
+      const avatarEl = sidebar.querySelector('#sidebar-user-avatar');
+
+      expect(roleEl.textContent).toBe('STAFF');
+      expect(roleEl.className).toBe('badge bg-[#34C759]/20 text-[#34C759]');
+      expect(emailEl.textContent).toBe('Staff User');
+      expect(avatarEl.textContent).toBe('S');
+    });
+
+    it('mengambil role dari supabase profiles dan memperbarui role badge', async () => {
+      window.supabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-staff-123', email: 'test@login.com' } }
+          })
+        },
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { role: 'STAFF', name: 'Test Staff' },
+                error: null
+              })
+            })
+          })
+        })
+      };
+
+      await sidebar._loadUserProfile();
+
+      const roleEl = sidebar.querySelector('#sidebar-user-role');
+      const emailEl = sidebar.querySelector('#sidebar-user-email');
+      expect(roleEl.textContent).toBe('STAFF');
+      expect(roleEl.className).toBe('badge bg-[#34C759]/20 text-[#34C759]');
+      expect(emailEl.textContent).toBe('Test Staff');
+
+      // Pastikan cache diperbarui di localStorage
+      const cached = JSON.parse(localStorage.getItem('auth_user'));
+      expect(cached.role).toBe('STAFF');
+      expect(cached.name).toBe('Test Staff');
+    });
+  });
 });
+
