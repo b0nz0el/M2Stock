@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import Api from '../public/assets/js/api.js';
+import Api from '../public/assets/js/api/index.js';
 
 describe('api.js contract & error handling', () => {
   beforeEach(() => {
@@ -18,12 +18,13 @@ describe('api.js contract & error handling', () => {
       expect(res.meta).toHaveProperty('timestamp');
     });
 
-    it('mengembalikan data auth login mock dengan user dan token', async () => {
-      const res = await Api.auth.login({ username: 'david@jaquris.com', password: '123' });
+    it('mengembalikan envelope mock yang valid untuk operasi read', async () => {
+      const res = await Api.items.getAll();
       expect(res.ok).toBe(true);
-      expect(res.data).toHaveProperty('token');
-      expect(res.data.user).toHaveProperty('name', 'Mr David');
-      expect(res.data.user).toHaveProperty('role', 'OWNER');
+      expect(res).toHaveProperty('data');
+      expect(Array.isArray(res.data)).toBe(true);
+      expect(res).toHaveProperty('error', null);
+      expect(res.meta).toBeDefined();
     });
   });
 
