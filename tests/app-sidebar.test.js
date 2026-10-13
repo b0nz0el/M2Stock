@@ -205,6 +205,15 @@ describe('<app-sidebar> Component', () => {
     });
 
     it('mengambil role dari supabase profiles dan memperbarui role badge', async () => {
+      const selectSpy = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { role: 'STAFF', full_name: 'Test Staff' },
+            error: null
+          })
+        })
+      });
+
       window.supabase = {
         auth: {
           getUser: vi.fn().mockResolvedValue({
@@ -212,19 +221,13 @@ describe('<app-sidebar> Component', () => {
           })
         },
         from: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              maybeSingle: vi.fn().mockResolvedValue({
-                data: { role: 'STAFF', name: 'Test Staff' },
-                error: null
-              })
-            })
-          })
+          select: selectSpy
         })
       };
 
       await sidebar._loadUserProfile();
 
+      expect(selectSpy).toHaveBeenCalledWith('role, full_name');
       const roleEl = sidebar.querySelector('#sidebar-user-role');
       const emailEl = sidebar.querySelector('#sidebar-user-email');
       expect(roleEl.textContent).toBe('STAFF');
@@ -234,6 +237,7 @@ describe('<app-sidebar> Component', () => {
       // Pastikan cache diperbarui di localStorage
       const cached = JSON.parse(localStorage.getItem('auth_user'));
       expect(cached.role).toBe('STAFF');
+      expect(cached.full_name).toBe('Test Staff');
       expect(cached.name).toBe('Test Staff');
     });
   });

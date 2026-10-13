@@ -56,7 +56,7 @@ class AppSidebar extends HTMLElement {
         const cached = JSON.parse(rawAuth);
         const emailEl = this.querySelector('#sidebar-user-email');
         const avatarEl = this.querySelector('#sidebar-user-avatar');
-        const name = cached.name || cached.email;
+        const name = cached.full_name || cached.name || cached.email;
         if (name) {
           if (emailEl) emailEl.textContent = name;
           if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
@@ -89,7 +89,7 @@ class AppSidebar extends HTMLElement {
       if (user) {
         const emailEl = this.querySelector('#sidebar-user-email');
         const avatarEl = this.querySelector('#sidebar-user-avatar');
-        let displayName = user.name || user.email || 'Pengguna';
+        let displayName = user.full_name || user.user_metadata?.full_name || user.name || user.email || 'Pengguna';
 
         // Filter valid app roles: abaikan role internal auth seperti 'authenticated' / 'anon'
         let role = null;
@@ -108,14 +108,14 @@ class AppSidebar extends HTMLElement {
           try {
             const { data: profile, error } = await window.supabase
               .from('profiles')
-              .select('role, name')
+              .select('role, full_name')
               .eq('id', user.id)
               .maybeSingle();
 
             if (!error && profile) {
               if (profile.role) role = profile.role.toString().trim().toUpperCase();
-              if (profile.name) {
-                displayName = profile.name;
+              if (profile.full_name) {
+                displayName = profile.full_name;
               }
             }
           } catch (_) {}
@@ -132,6 +132,7 @@ class AppSidebar extends HTMLElement {
               ...currentCache,
               id: user.id || currentCache.id,
               email: user.email || currentCache.email,
+              full_name: displayName,
               name: displayName,
               role: role
             }));
