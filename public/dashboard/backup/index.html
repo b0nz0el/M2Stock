@@ -69,7 +69,7 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add" disabled title="Fitur Tambah tidak tersedia di Backup" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
@@ -86,7 +86,7 @@
             <i data-lucide="database-backup" class="w-6 h-6 text-[#34C759]" aria-hidden="true"></i>
           </div>
           <h3 class="font-semibold text-lg">Backup Otomatis</h3>
-          <p class="text-sm text-[#A0A0A5] mt-1">Backup otomatis ke Google Drive setiap hari</p>
+          <p class="text-sm text-[#A0A0A5] mt-1">Backup otomatis oleh Supabase (daily)</p>
 
           <div class="mt-5 space-y-1">
             <div class="flex items-center justify-between py-3 border-b border-white/5">
@@ -108,8 +108,8 @@
           </div>
 
           <div class="mt-5 flex gap-2">
-            <button data-action="backup-now" class="flex-1 bg-[#0088CC] hover:bg-[#0077BB] py-2.5 rounded-xl text-sm font-semibold btn">Backup Sekarang</button>
-            <button data-action="history" class="flex-1 bg-white/5 hover:bg-white/10 py-2.5 rounded-xl text-sm font-medium transition">Riwayat</button>
+            <button data-action="backup-now" disabled title="Backup dikelola otomatis oleh Supabase" class="flex-1 bg-[#0088CC] hover:bg-[#0077BB] py-2.5 rounded-xl text-sm font-semibold btn btn-disabled">Backup Sekarang</button>
+            <button data-action="history" disabled title="Backup dikelola otomatis oleh Supabase" class="flex-1 bg-white/5 hover:bg-white/10 py-2.5 rounded-xl text-sm font-medium transition btn-disabled">Riwayat</button>
           </div>
         </div>
 
@@ -124,7 +124,7 @@
             <i data-lucide="file-archive" class="w-8 h-8 mx-auto mb-2 text-[#A0A0A5]" aria-hidden="true"></i>
             <p class="text-sm font-medium">Drag file backup ke sini</p>
             <p class="text-xs text-[#A0A0A5] mt-1">atau</p>
-            <button data-action="import" class="mt-3 bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2 rounded-lg text-sm font-semibold btn">Pilih File</button>
+            <button data-action="import" disabled title="Restore akan segera hadir" class="mt-3 bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2 rounded-lg text-sm font-semibold btn btn-disabled">Pilih File</button>
             <p class="text-xs text-[#A0A0A5] mt-3">Format: .json, .csv, .zip (max 50MB)</p>
           </div>
 
@@ -157,36 +157,36 @@
             <tr class="table-row border-b border-white/5">
               <td class="px-5 py-3.5">01 Okt 2026 02:00</td>
               <td class="px-5 py-3.5">420 KB</td>
-              <td class="px-5 py-3.5">Google Drive</td>
+              <td class="px-5 py-3.5">Supabase Storage</td>
               <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Sukses</span></td>
               <td class="px-5 py-3.5">
                 <div class="flex gap-1 justify-end">
-                  <button data-action="export-download" aria-label="Download" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="restore" aria-label="Restore" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]"><i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i></button>
+                  <button data-action="export-download" disabled title="Download backup akan segera hadir" aria-label="Download" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] btn-disabled"><i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i></button>
+                  <button data-action="restore" disabled title="Restore akan segera hadir" aria-label="Restore" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500] btn-disabled"><i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i></button>
                 </div>
               </td>
             </tr>
             <tr class="table-row border-b border-white/5">
               <td class="px-5 py-3.5">30 Sep 2026 02:00</td>
               <td class="px-5 py-3.5">415 KB</td>
-              <td class="px-5 py-3.5">Google Drive</td>
+              <td class="px-5 py-3.5">Supabase Storage</td>
               <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Sukses</span></td>
               <td class="px-5 py-3.5">
                 <div class="flex gap-1 justify-end">
-                  <button data-action="export-download" aria-label="Download" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="restore" aria-label="Restore" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]"><i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i></button>
+                  <button data-action="export-download" disabled title="Download backup akan segera hadir" aria-label="Download" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] btn-disabled"><i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i></button>
+                  <button data-action="restore" disabled title="Restore akan segera hadir" aria-label="Restore" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500] btn-disabled"><i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i></button>
                 </div>
               </td>
             </tr>
             <tr class="table-row">
               <td class="px-5 py-3.5">29 Sep 2026 02:00</td>
               <td class="px-5 py-3.5">410 KB</td>
-              <td class="px-5 py-3.5">Google Drive</td>
+              <td class="px-5 py-3.5">Supabase Storage</td>
               <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Sukses</span></td>
               <td class="px-5 py-3.5">
                 <div class="flex gap-1 justify-end">
-                  <button data-action="export-download" aria-label="Download" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="restore" aria-label="Restore" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]"><i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i></button>
+                  <button data-action="export-download" disabled title="Download backup akan segera hadir" aria-label="Download" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] btn-disabled"><i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i></button>
+                  <button data-action="restore" disabled title="Restore akan segera hadir" aria-label="Restore" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500] btn-disabled"><i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i></button>
                 </div>
               </td>
             </tr>

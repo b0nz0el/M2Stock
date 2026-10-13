@@ -69,7 +69,7 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add" disabled title="Fitur Tambah tidak tersedia di Settings" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
@@ -87,7 +87,7 @@
               <h3 class="font-semibold flex items-center gap-2">
                 <i data-lucide="tags" class="w-4 h-4 text-[#FF9500]" aria-hidden="true"></i> Kategori
               </h3>
-              <button data-action="add" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium">
+              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
                 <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
               </button>
             </div>
@@ -112,7 +112,7 @@
               <h3 class="font-semibold flex items-center gap-2">
                 <i data-lucide="ruler" class="w-4 h-4 text-[#34C759]" aria-hidden="true"></i> Satuan
               </h3>
-              <button data-action="add" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium">
+              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
                 <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
               </button>
             </div>
@@ -133,7 +133,7 @@
               <h3 class="font-semibold flex items-center gap-2">
                 <i data-lucide="shopping-cart" class="w-4 h-4 text-[#AF52DE]" aria-hidden="true"></i> Channel
               </h3>
-              <button data-action="add" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium">
+              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
                 <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
               </button>
             </div>
@@ -174,7 +174,7 @@
               <h3 class="font-semibold flex items-center gap-2">
                 <i data-lucide="truck" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Kurir
               </h3>
-              <button data-action="add" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium">
+              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
                 <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
               </button>
             </div>
@@ -196,18 +196,18 @@
             </h3>
             <div class="space-y-3 text-sm">
               <div>
-                <label class="text-xs text-[#A0A0A5] font-medium">Nama Toko</label>
-                <input type="text" value="Aquarium David" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm">
+                <label for="setting-shop-name" class="text-xs text-[#A0A0A5] font-medium">Nama Toko</label>
+                <input type="text" id="setting-shop-name" value="Aquarium David" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm">
               </div>
               <div>
-                <label class="text-xs text-[#A0A0A5] font-medium">Alamat</label>
-                <textarea class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm resize-none" rows="2">Jl. Merdeka No. 123, Jakarta</textarea>
+                <label for="setting-shop-address" class="text-xs text-[#A0A0A5] font-medium">Alamat</label>
+                <textarea id="setting-shop-address" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm resize-none" rows="2">Jl. Merdeka No. 123, Jakarta</textarea>
               </div>
               <div>
-                <label class="text-xs text-[#A0A0A5] font-medium">Telepon</label>
-                <input type="text" value="0812-3456-7890" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm">
+                <label for="setting-shop-phone" class="text-xs text-[#A0A0A5] font-medium">Telepon</label>
+                <input type="text" id="setting-shop-phone" value="0812-3456-7890" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm">
               </div>
-              <button data-action="save-settings" class="w-full bg-[#0088CC] hover:bg-[#0077BB] py-2 rounded-lg text-sm font-semibold btn">Simpan</button>
+              <button id="btn-save-settings" data-action="save-settings" class="w-full bg-[#0088CC] hover:bg-[#0077BB] py-2 rounded-lg text-sm font-semibold btn">Simpan</button>
             </div>
           </div>
 
@@ -221,20 +221,18 @@
                   <p class="text-sm font-medium">Two-Factor Auth</p>
                   <p class="text-xs text-[#A0A0A5] mt-0.5">Login dengan 2 langkah</p>
                 </div>
-                <button data-action="toggle-2fa" class="w-11 h-6 rounded-full bg-white/10 relative transition" aria-label="Aktifkan 2FA">
-                  <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition"></span>
-                </button>
+                <span class="badge bg-white/10 text-[#A0A0A5]">Segera Hadir</span>
               </div>
               <div class="flex items-center justify-between py-3 border-b border-white/5">
                 <div>
                   <p class="text-sm font-medium">Session Timeout</p>
                   <p class="text-xs text-[#A0A0A5] mt-0.5">Auto logout 30 menit</p>
                 </div>
-                <button data-action="toggle-session" class="w-11 h-6 rounded-full bg-[#34C759] relative transition" aria-label="Session timeout">
+                <button disabled class="w-11 h-6 rounded-full bg-[#34C759] relative transition opacity-60 cursor-not-allowed" aria-label="Session timeout" title="Default 30 menit">
                   <span class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white transition"></span>
                 </button>
               </div>
-              <button data-action="logout-all" class="w-full text-left py-2.5 text-[#FF3B30] text-sm font-medium flex items-center gap-2">
+              <button data-action="logout-all" disabled title="Segera hadir" class="w-full text-left py-2.5 text-[#FF3B30] text-sm font-medium flex items-center gap-2 opacity-60 cursor-not-allowed btn-disabled">
                 <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i> Logout dari semua device
               </button>
             </div>
@@ -296,5 +294,48 @@
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
+<script>
+  (function () {
+    function initShopProfile() {
+      var nameInput = document.getElementById('setting-shop-name');
+      var addrInput = document.getElementById('setting-shop-address');
+      var phoneInput = document.getElementById('setting-shop-phone');
+      var saveBtn = document.getElementById('btn-save-settings');
+
+      try {
+        var raw = localStorage.getItem('shop_profile');
+        if (raw) {
+          var profile = JSON.parse(raw);
+          if (profile.name && nameInput) nameInput.value = profile.name;
+          if (profile.address && addrInput) addrInput.value = profile.address;
+          if (profile.phone && phoneInput) phoneInput.value = profile.phone;
+        }
+      } catch (e) {}
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          var data = {
+            name: nameInput ? nameInput.value.trim() : '',
+            address: addrInput ? addrInput.value.trim() : '',
+            phone: phoneInput ? phoneInput.value.trim() : ''
+          };
+          try {
+            localStorage.setItem('shop_profile', JSON.stringify(data));
+          } catch (e) {}
+          if (typeof showToast === 'function') {
+            showToast('Profil toko berhasil disimpan', 'success');
+          }
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initShopProfile);
+    } else {
+      initShopProfile();
+    }
+  })();
+</script>
 </body>
 </html>

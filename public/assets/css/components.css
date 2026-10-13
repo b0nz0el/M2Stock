@@ -59,6 +59,19 @@
   .btn { transition: all 0.15s; font-weight: 600; }
   .btn:active { transform: scale(0.97); }
 
+  /* ═══ DISABLED BUTTONS / PLACEHOLDER ═══ */
+  .btn-disabled,
+  button:disabled,
+  button[disabled] {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    pointer-events: auto !important;
+  }
+  .btn-disabled:active,
+  button:disabled:active {
+    transform: none !important;
+  }
+
   /* ═══ SKELETON ═══ */
   .skeleton {
     background: linear-gradient(90deg, #1C1C1E 25%, #2C2C2E 50%, #1C1C1E 75%);

@@ -69,7 +69,7 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add" disabled title="Fitur Tambah tidak tersedia di Laporan" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
@@ -86,10 +86,10 @@
             <option>Minggu Ini</option>
             <option>Tahun Ini</option>
           </select>
-          <button data-action="export-pdf" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+          <button data-action="export-pdf" disabled title="Fitur Export Laporan akan segera hadir" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition btn-disabled">
             <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i> PDF
           </button>
-          <button data-action="export-excel" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+          <button data-action="export-excel" disabled title="Fitur Export Laporan akan segera hadir" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition btn-disabled">
             <i data-lucide="sheet" class="w-4 h-4" aria-hidden="true"></i> Excel
           </button>
         </div>
@@ -215,6 +215,7 @@
           </tbody>
         </table>
         </div>
+        <p class="text-xs text-[#A0A0A5] text-center py-3 border-t border-white/5"><i data-lucide="info" class="w-3.5 h-3.5 inline mr-1"></i>Report detail akan hadir setelah data transaksi terkumpul</p>
       </div>
     </div>
 

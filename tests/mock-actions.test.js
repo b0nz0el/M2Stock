@@ -105,6 +105,20 @@ describe('mock-actions.js whitelist', () => {
     document.getElementById('btn-backup-import').click();
 
     expect(toasts.length).toBe(1);
-    expect(toasts[0].msg).toBe('Import file akan hadir setelah backend');
+    expect(toasts[0].msg).toBe('Import file akan segera hadir');
+  });
+
+  it('tidak memicu mock toast untuk tombol dengan disabled atau .btn-disabled', () => {
+    document.body.innerHTML = `
+      <div id="page-backup">
+        <button id="btn-backup-now" data-action="backup-now" disabled class="btn-disabled">Backup Sekarang</button>
+        <button id="btn-backup-wrap" data-action="history" class="btn-disabled">Riwayat</button>
+      </div>
+    `;
+
+    document.getElementById('btn-backup-now').click();
+    document.getElementById('btn-backup-wrap').click();
+
+    expect(toasts.length).toBe(0);
   });
 });

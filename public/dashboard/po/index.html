@@ -69,7 +69,7 @@
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add" disabled title="Fitur PO akan segera hadir" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
@@ -83,16 +83,16 @@
           <h2 class="text-3xl font-bold tracking-tight">Purchase Order</h2>
           <p class="text-sm text-[#A0A0A5] mt-1">Pesanan pembelian ke supplier</p>
         </div>
-        <button data-action="add-po" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+        <button data-action="add-po" disabled title="Fitur PO akan segera hadir" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Buat PO
         </button>
       </div>
 
       <div class="flex gap-2 flex-wrap">
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium">Semua (5)</button>
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Draft (1)</button>
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Dikirim (2)</button>
-        <button data-action="filter" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5">Diterima (2)</button>
+        <button data-action="filter" disabled title="Filter PO akan segera hadir" class="px-4 py-2 rounded-lg bg-[#0088CC] text-sm font-medium btn-disabled">Semua (5)</button>
+        <button data-action="filter" disabled title="Filter PO akan segera hadir" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 btn-disabled">Draft (1)</button>
+        <button data-action="filter" disabled title="Filter PO akan segera hadir" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 btn-disabled">Dikirim (2)</button>
+        <button data-action="filter" disabled title="Filter PO akan segera hadir" class="px-4 py-2 rounded-lg bg-[#1C1C1E] border border-white/5 text-sm font-medium hover:bg-white/5 btn-disabled">Diterima (2)</button>
       </div>
 
       <div class="card overflow-hidden">
@@ -118,7 +118,7 @@
               <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Dikirim</span></td>
               <td class="px-4 py-3.5 text-right font-semibold">Rp 4.250.000</td>
               <td class="px-4 py-3.5">
-                <button data-action="detail" aria-label="Lihat PO" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
+                <button data-action="detail" disabled title="Detail PO akan segera hadir" aria-label="Lihat PO" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] btn-disabled"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
               </td>
             </tr>
             <tr class="table-row border-b border-white/5">
@@ -129,7 +129,7 @@
               <td class="px-4 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Diterima</span></td>
               <td class="px-4 py-3.5 text-right font-semibold">Rp 2.100.000</td>
               <td class="px-4 py-3.5">
-                <button data-action="detail" aria-label="Lihat PO" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
+                <button data-action="detail" disabled title="Detail PO akan segera hadir" aria-label="Lihat PO" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] btn-disabled"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
               </td>
             </tr>
             <tr class="table-row">
@@ -140,7 +140,7 @@
               <td class="px-4 py-3.5"><span class="badge bg-[#8E8E93]/15 text-[#A0A0A5]">Draft</span></td>
               <td class="px-4 py-3.5 text-right font-semibold">Rp 1.250.000</td>
               <td class="px-4 py-3.5">
-                <button data-action="detail" aria-label="Lihat PO" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
+                <button data-action="detail" disabled title="Detail PO akan segera hadir" aria-label="Lihat PO" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] btn-disabled"><i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i></button>
               </td>
             </tr>
           </tbody>

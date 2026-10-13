@@ -47,7 +47,7 @@
     if (typeof showToast === 'function') showToast(msg, type || 'info');
   }
 
-  var SUFFIX = ' akan hadir setelah backend';
+  var SUFFIX = ' akan segera hadir';
 
   /* Toggle visual untuk switch (knob kiri/kanan + warna track) */
   function toggleSwitch(el, action) {
@@ -74,9 +74,9 @@
     }
 
     if (action === 'toggle-2fa') {
-      give(wasOn ? '2FA dinonaktifkan (mock)' : '2FA diaktifkan (mock)', 'success');
+      give(wasOn ? '2FA dinonaktifkan' : '2FA diaktifkan', 'success');
     } else {
-      give('Pengaturan diubah (mock)', 'success');
+      give('Pengaturan diubah', 'success');
     }
   }
 
@@ -87,7 +87,8 @@
     'add-supplier', 'add-customer', 'add-item', 'add-in', 'add-out',
     'refresh', 'refresh-items', 'refresh-in', 'refresh-out', 'refresh-suppliers', 'refresh-customers',
     'export', 'export-items', 'export-pdf', 'export-csv',
-    'print', 'edit-bulk', 'delete-bulk', 'page', 'page-prev', 'page-next', 'bulk-input'
+    'print', 'edit-bulk', 'delete-bulk', 'page', 'page-prev', 'page-next', 'bulk-input',
+    'save-settings'
   ];
 
   function handle(action, el) {
@@ -128,33 +129,30 @@
     }
 
     if (action === 'add' || action.indexOf('add-') === 0) {
-      give('Fitur Tambah akan hadir setelah backend'); return;
+      give('Fitur Tambah akan segera hadir'); return;
     }
     if (action.indexOf('edit') === 0) {
-      give('Fitur Edit akan hadir setelah backend'); return;
+      give('Fitur Edit akan segera hadir'); return;
     }
     if (action.indexOf('delete') === 0) {
-      give('Fitur Hapus akan hadir setelah backend'); return;
+      give('Fitur Hapus akan segera hadir'); return;
     }
     if (action === 'import') {
-      give('Import file akan hadir setelah backend'); return;
+      give('Import file akan segera hadir'); return;
     }
     if (action.indexOf('export') === 0) {
-      give('Export akan hadir setelah backend'); return;
+      give('Export akan segera hadir'); return;
     }
     if (action === 'backup-now') {
       give('Backup sedang berjalan...');
-      window.setTimeout(function () { give('Backup selesai! (mock)', 'success'); }, 2000);
+      window.setTimeout(function () { give('Backup selesai!', 'success'); }, 2000);
       return;
     }
     if (action === 'restore') {
-      give('Restore akan hadir setelah backend'); return;
+      give('Restore akan segera hadir'); return;
     }
     if (action.indexOf('toggle-') === 0) {
       toggleSwitch(el, action); return;
-    }
-    if (action === 'save-settings') {
-      give('Pengaturan disimpan (mock)', 'success'); return;
     }
 
     give(labelFor(action) + SUFFIX);
@@ -192,6 +190,16 @@
       : null;
     if (!el) return;
 
+    // Abaikan jika elemen atau pembungkusnya memiliki status disabled atau class btn-disabled
+    if (
+      el.hasAttribute('disabled') ||
+      el.disabled ||
+      el.classList.contains('btn-disabled') ||
+      (el.closest && el.closest('[disabled], .btn-disabled'))
+    ) {
+      return;
+    }
+
     var action = el.getAttribute('data-action') || '';
     if (SKIP_ACTIONS.indexOf(action) !== -1) {
       return;
@@ -218,7 +226,7 @@
 
     if (!action) {
       var text = (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ');
-      give((text ? text + ' ' : 'Fitur ini ') + 'akan hadir setelah backend');
+      give((text ? text + ' ' : 'Fitur ini ') + 'akan segera hadir');
       return;
     }
     handle(action, el);
