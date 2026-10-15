@@ -102,40 +102,44 @@
       </div>
 
       <div class="report-tabs" id="report-filter-tabs">
-        <button type="button" data-action="report-type" class="active">Penjualan</button>
-        <button type="button" data-action="report-type">Laba</button>
-        <button type="button" data-action="report-type">Stok</button>
-        <button type="button" data-action="report-type">Kategori</button>
-        <button type="button" data-action="report-type">Channel</button>
-        <button type="button" data-action="report-type">Supplier</button>
-        <button type="button" data-action="report-type">Kasir</button>
+      <!-- TABS LAPORAN -->
+      <div class="report-tabs flex gap-2 overflow-x-auto pb-1" id="report-filter-tabs">
+        <button type="button" data-tab="sales" class="active">Penjualan</button>
+        <button type="button" data-tab="profit">Laba</button>
+        <button type="button" data-tab="stock">Stok</button>
+        <button type="button" data-tab="category">Kategori</button>
+        <button type="button" data-tab="channel">Channel</button>
+        <button type="button" data-tab="supplier">Supplier</button>
+        <button type="button" data-tab="cashier">Kasir</button>
       </div>
 
-      <div class="grid grid-cols-4 gap-4">
+      <!-- METRICS CARDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card p-5">
           <p class="text-xs text-[#A0A0A5] font-medium">Total Penjualan</p>
-          <p class="text-2xl font-bold mt-1">Rp 12.4jt</p>
-          <p class="text-xs text-[#34C759] mt-1 flex items-center gap-1">
-            <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> 12%
+          <p id="kpi-sales" class="text-2xl font-bold mt-1 text-white">Rp 0</p>
+          <p id="kpi-margin" class="text-xs text-[#32ADE6] mt-1 flex items-center gap-1">
+            <i data-lucide="trending-up" class="w-3 h-3" aria-hidden="true"></i> Margin 0%
           </p>
         </div>
         <div class="card p-5">
           <p class="text-xs text-[#A0A0A5] font-medium">Laba Kotor</p>
-          <p class="text-2xl font-bold text-[#34C759] mt-1">Rp 4.2jt</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Margin 34%</p>
+          <p id="kpi-profit" class="text-2xl font-bold text-[#34C759] mt-1">Rp 0</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Pendapatan - HPP Modal</p>
         </div>
         <div class="card p-5">
-          <p class="text-xs text-[#A0A0A5] font-medium">Total Transaksi</p>
-          <p class="text-2xl font-bold mt-1">142</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Rata: 4/hari</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Total Transaksi Keluar</p>
+          <p id="kpi-tx" class="text-2xl font-bold mt-1 text-white">0</p>
+          <p id="kpi-qty" class="text-xs text-[#A0A0A5] mt-1">0 unit terjual</p>
         </div>
         <div class="card p-5">
-          <p class="text-xs text-[#A0A0A5] font-medium">Nilai Stok</p>
-          <p class="text-2xl font-bold mt-1">Rp 11.2jt</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">106 unit</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Valuasi Stok (Modal)</p>
+          <p id="kpi-stock-val" class="text-2xl font-bold mt-1 text-white">Rp 0</p>
+          <p id="kpi-stock-qty" class="text-xs text-[#A0A0A5] mt-1">0 unit total</p>
         </div>
       </div>
 
+      <!-- TREN GRAFIK -->
       <div class="card p-5">
         <h3 class="font-semibold mb-4 flex items-center gap-2">
           <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i>
@@ -146,82 +150,30 @@
         </div>
       </div>
 
+      <!-- TABEL DATA LAPORAN -->
       <div class="card overflow-hidden">
         <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-          <h3 class="font-semibold flex items-center gap-2">
-            <i data-lucide="trophy" class="w-4 h-4 text-[#FFCC00]" aria-hidden="true"></i>
-            Barang Terlaris
+          <h3 id="report-table-title" class="font-semibold flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i>
+            Barang Terlaris (Berdasarkan Omzet)
           </h3>
+          <span id="report-table-subtitle" class="text-xs text-[#A0A0A5]">Data Periode Terpilih</span>
         </div>
-        <div class="card-table-wrap">
-        <table class="w-full text-sm">
-          <thead class="bg-white/[0.02] border-b border-white/5">
-            <tr class="text-left text-[#A0A0A5]">
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider w-12">#</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Barang</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Brand</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Kategori</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Terjual</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Pendapatan</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Laba</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Margin</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-[#FFCC00]/15 text-[#FFCC00] grid place-items-center text-xs font-bold">1</span></td>
-              <td class="px-5 py-3.5 font-medium">Pakan Granule Hikari 100g</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">Hikari</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Pakan</span></td>
-              <td class="px-5 py-3.5 text-right font-semibold">85 pack</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 5.525.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">Rp 2.295.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">41%</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-[#A0A0A5]/15 text-[#A0A0A5] grid place-items-center text-xs font-bold">2</span></td>
-              <td class="px-5 py-3.5 font-medium">Filter Canister 1000L/h</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">Aquaone</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Filter</span></td>
-              <td class="px-5 py-3.5 text-right font-semibold">12 unit</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 15.000.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">Rp 4.800.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">32%</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-[#FF9500]/15 text-[#FF9500] grid place-items-center text-xs font-bold">3</span></td>
-              <td class="px-5 py-3.5 font-medium">Lampu LED Aquascape 60cm</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">Aquascape</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#FF9500]/15 text-[#FF9500]">Lampu</span></td>
-              <td class="px-5 py-3.5 text-right font-semibold">8 unit</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 5.496.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">Rp 1.896.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">34%</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-white/5 text-[#A0A0A5] grid place-items-center text-xs font-bold">4</span></td>
-              <td class="px-5 py-3.5 font-medium">Sponge Filter Bio Foam</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">Generic</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Filter</span></td>
-              <td class="px-5 py-3.5 text-right font-semibold">35 pcs</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 1.575.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">Rp 805.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">51%</td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-white/5 text-[#A0A0A5] grid place-items-center text-xs font-bold">5</span></td>
-              <td class="px-5 py-3.5 font-medium">Thermometer Sticker Digital</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5]">Generic</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#AF52DE]/15 text-[#AF52DE]">Aksesoris</span></td>
-              <td class="px-5 py-3.5 text-right font-semibold">28 pcs</td>
-              <td class="px-5 py-3.5 text-right font-semibold">Rp 700.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">Rp 448.000</td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">64%</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="card-table-wrap" id="report-table-wrap">
+          <table class="w-full text-sm">
+            <thead class="bg-white/[0.02] border-b border-white/5" id="report-table-head">
+              <!-- Dynamically populated by report.js -->
+            </thead>
+            <tbody id="report-table-body">
+              <!-- Dynamically populated by report.js -->
+            </tbody>
+          </table>
         </div>
-        <p class="text-xs text-[#A0A0A5] text-center py-3 border-t border-white/5"><i data-lucide="info" class="w-3.5 h-3.5 inline mr-1"></i>Report detail akan hadir setelah data transaksi terkumpul</p>
+        <div id="report-empty-state" class="hidden text-center py-10 px-4">
+          <i data-lucide="inbox" class="w-8 h-8 mx-auto text-[#A0A0A5]/40 mb-2"></i>
+          <p class="text-sm font-medium text-white">Tidak ada data untuk periode ini</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Coba pilih rentang periode lain atau tambahkan transaksi baru.</p>
+        </div>
       </div>
     </div>
 
@@ -273,10 +225,10 @@
 <script src="../../assets/js/utils.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
 <script src="../../assets/js/vendor/chart.min.js" defer></script>
-<script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script type="module" src="./report.js"></script>
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
 <script>

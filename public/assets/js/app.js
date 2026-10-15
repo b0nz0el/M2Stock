@@ -208,3 +208,29 @@ if (!sessionStorage.getItem('welcomeShown')) {
 }
 
 console.log('%c✨ aQuaStock Pro v3.0 — Fully Responsive', 'color: #32ADE6; font-weight: bold; font-size: 14px;');
+
+/* ═══ Set Welcome Name dari Profile ═══ */
+(async function setWelcomeName() {
+  try {
+    const el = document.getElementById('welcome-name');
+    if (!el) return;
+    
+    const { supabase } = await import('./supabase-client.js');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+    
+    if (profile?.full_name) {
+      el.textContent = profile.full_name;
+    } else if (user.email) {
+      el.textContent = user.email.split('@')[0];
+    }
+  } catch (err) {
+    console.warn('[Welcome] Failed to load name:', err.message);
+  }
+})();
