@@ -24,6 +24,7 @@ import { audit } from './audit.js';
 import { cash } from './cash.js';
 import { debt } from './debt.js';
 import { notif } from './notif.js';
+import { backup } from './backup.js';
 
 export const Api = {
   // Helpers
@@ -49,7 +50,8 @@ export const Api = {
   audit,
   cash,
   debt,
-  notif
+  notif,
+  backup
 };
 
 // Ekspos ke global window browser
