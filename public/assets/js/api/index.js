@@ -12,7 +12,8 @@ import {
   apiRequest
 } from './_client.js';
 import { items } from './items.js';
-import { transactions, po } from './transactions.js';
+import { transactions } from './transactions.js';
+import { po } from './po.js';
 import { returnApi } from './return.js';
 import { suppliers } from './suppliers.js';
 import { customers } from './customers.js';

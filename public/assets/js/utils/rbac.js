@@ -10,7 +10,7 @@ export const MENU_ACCESS = {
   items:      ['OWNER', 'STAFF', 'VIEWER'],
   in:         ['OWNER', 'STAFF', 'VIEWER'],
   out:        ['OWNER', 'STAFF', 'VIEWER'],
-  po:         ['OWNER', 'STAFF', 'VIEWER'],
+  po:         ['OWNER', 'STAFF'],
   return:     ['OWNER', 'STAFF'],
   suppliers:  ['OWNER', 'STAFF'],
   customers:  ['OWNER', 'STAFF'],
