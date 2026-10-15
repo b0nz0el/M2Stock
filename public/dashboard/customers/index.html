@@ -72,32 +72,24 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
-        <button onclick="handleRefreshCustomers()" data-action="refresh-customers" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-customers-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+        <button type="button" onclick="handleRefreshCustomers()" data-action="refresh-customers" title="Muat ulang data" aria-label="Muat ulang data customer" id="btn-refresh-customers-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
         </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
-        </button>
-        <button onclick="openCustomerModal()" data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-          <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah Customer</span>
         </button>
       </div>
     </header>
 
     <!-- ═══════════ CUSTOMER CONTENT ═══════════ -->
     <div id="page-customers" class="page active p-6 space-y-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div class="customers-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="customers-page-intro">
           <h2 class="text-3xl font-bold tracking-tight">Customer</h2>
           <p class="text-sm text-[#A0A0A5] mt-1">Pelanggan tetap & riwayat akumulasi pembelian</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button type="button" id="btn-refresh-customers" onclick="handleRefreshCustomers()" data-action="refresh-customers" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
-            <i data-lucide="rotate-cw" id="icon-refresh-customers" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
-          </button>
-          <button type="button" onclick="handleExportCustomers()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+        <div class="customers-page-actions flex items-center gap-2">
+          <button type="button" onclick="handleExportCustomers()" data-action="export-csv" aria-label="Ekspor data customer ke CSV" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
           <button onclick="openCustomerModal()" data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn self-start sm:self-auto">
@@ -107,7 +99,7 @@
       </div>
 
       <!-- METRICS HEADER -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="customers-metrics grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="card p-5">
           <div class="flex items-center justify-between">
             <p class="text-xs text-[#A0A0A5] font-medium">Total Pelanggan</p>
@@ -141,7 +133,7 @@
       </div>
 
       <!-- FILTER & SEARCH BAR -->
-      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div class="customers-filter-bar flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div class="relative flex-1 max-w-md">
           <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
           <input type="text" id="search-customers" placeholder="Cari nama, nomor telepon, email, atau kota..."
@@ -182,7 +174,7 @@
       </div>
 
       <!-- PAGINATION -->
-      <div class="flex items-center justify-between flex-wrap gap-3" id="customers-pagination-wrap">
+      <div class="customers-pagination-wrap flex items-center justify-between flex-wrap gap-3" id="customers-pagination-wrap">
         <span class="text-sm text-[#A0A0A5]" id="customers-pagination-info">0-0 dari 0 customer</span>
         <div class="flex items-center gap-1" id="customers-pagination-buttons">
           <!-- Dinamis via renderCustomersPagination() -->
@@ -318,8 +310,8 @@
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
 
 <!-- Logika CRUD Live Customer -->
 <script src="./customers.js"></script>

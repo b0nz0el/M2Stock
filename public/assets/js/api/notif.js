@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — api/notif.js
    Layer API untuk Modul Notifikasi (notifications)
-   ANTI-MOCK: Data langsung dari Supabase tanpa sample/mock fallback
+   Data notifikasi langsung dari Supabase
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';

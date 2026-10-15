@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — notif.js
    Controller Modul Notifikasi (notifications)
-   ANTI-MOCK: Data langsung dari Supabase tanpa sample/mock fallback
+   Data notifikasi langsung dari Supabase
    ═══════════════════════════════════════════════════ */
 
 import { notif as notifApi } from '../../assets/js/api/notif.js';
@@ -121,7 +121,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     try {
       const res = await notifApi.getAll({ filter: currentFilter, limit: 100 });
-      // ANTI-MOCK: Kalau error / empty -> return []
+      // Jika gagal atau kosong, tampilkan daftar kosong.
       notificationsList = res.ok && Array.isArray(res.data) ? res.data : [];
 
       renderNotifications();
@@ -222,6 +222,22 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     if (badgeAll) badgeAll.textContent = notificationsList.length;
     if (badgeUnread) badgeUnread.textContent = unreadCount;
+
+    // Sinkronkan badge notifikasi di sidebar
+    try {
+      sessionStorage.setItem('notif_unread_count', unreadCount.toString());
+    } catch (_) {}
+    const sidebarNotifBadge = document.querySelector('#sidebar-notif-badge') || document.querySelector('.menu-item[data-page="notif"] span');
+    if (sidebarNotifBadge) {
+      if (unreadCount > 0) {
+        sidebarNotifBadge.textContent = unreadCount;
+        sidebarNotifBadge.classList.remove('hidden');
+        sidebarNotifBadge.style.display = '';
+      } else {
+        sidebarNotifBadge.classList.add('hidden');
+        sidebarNotifBadge.style.display = 'none';
+      }
+    }
 
     if (headerNotifDot) {
       if (unreadCount > 0) {

@@ -3,11 +3,11 @@
    Domain Transaksi Barang Masuk & Keluar, PO, & Retur
    ═══════════════════════════════════════════════════ */
 
-import { config, isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
 
 export const transactions = {
     getAll: async (params, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           let query = window.supabase
             .from('transactions')
@@ -64,35 +64,35 @@ export const transactions = {
     },
 
     getIn: (params, opts) => {
-      if (!config.mockMode && !isSupabaseAvailable()) {
+      if (!isSupabaseAvailable()) {
         return apiRequest('/transactions/in?' + new URLSearchParams(params || {}).toString(), { ...opts });
       }
       return transactions.getByType('in', params, opts);
     },
 
     createIn: (data, opts) => {
-      if (!config.mockMode && !isSupabaseAvailable()) {
+      if (!isSupabaseAvailable()) {
         return apiRequest('/transactions/in', { method: 'POST', body: data, ...opts });
       }
       return transactions.create({ ...(data || {}), type: 'in' }, opts);
     },
 
     getOut: (params, opts) => {
-      if (!config.mockMode && !isSupabaseAvailable()) {
+      if (!isSupabaseAvailable()) {
         return apiRequest('/transactions/out?' + new URLSearchParams(params || {}).toString(), { ...opts });
       }
       return transactions.getByType('out', params, opts);
     },
 
     createOut: (data, opts) => {
-      if (!config.mockMode && !isSupabaseAvailable()) {
+      if (!isSupabaseAvailable()) {
         return apiRequest('/transactions/out', { method: 'POST', body: data, ...opts });
       }
       return transactions.create({ ...(data || {}), type: 'out' }, opts);
     },
 
     create: async (data, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           let userId = data.created_by || null;
           if (!userId) {
@@ -163,7 +163,7 @@ export const transactions = {
     },
 
     delete: async (id, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const numId = Number(id);
           let query = window.supabase

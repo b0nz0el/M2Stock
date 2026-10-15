@@ -4,16 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError, isMockMode } from './_client.js';
-
-const now = new Date();
-const formatDateOffset = (days) => {
-  const d = new Date(now.getTime() + days * 86400000);
-  return d.toISOString().slice(0, 10);
-};
-
-// Mock data untuk development & offline fallback
-let MOCK_POS = [];
+import { formatResponse, handleError } from './_client.js';
 
 export const po = {
   /**
@@ -29,10 +20,6 @@ export const po = {
    * Mengambil daftar PO lengkap dengan filter
    */
   async getAll({ page = 1, limit = 50, status = null, search = '', startDate = null, endDate = null } = {}) {
-    if (isMockMode()) {
-      return this._getMockData({ page, limit, status, search, startDate, endDate });
-    }
-
     try {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
@@ -63,8 +50,7 @@ export const po = {
         .range(from, to);
 
       if (error) {
-        console.warn('[POApi] Supabase error, fallback to mock:', error.message);
-        return this._getMockData({ page, limit, status, search, startDate, endDate });
+        return formatResponse({ ok: false, error });
       }
 
       return formatResponse({
@@ -78,8 +64,7 @@ export const po = {
         }
       });
     } catch (err) {
-      console.warn('[POApi] Exception, fallback to mock:', err);
-      return this._getMockData({ page, limit, status, search, startDate, endDate });
+      return handleError(err);
     }
   },
 
@@ -93,6 +78,7 @@ export const po = {
         items = inputItems;
       } else {
         const res = await this.getAll({ page: 1, limit: 1000 });
+        if (!res.ok) return res;
         items = res.data || [];
       }
 
@@ -136,11 +122,6 @@ export const po = {
    * Mengambil detail 1 PO beserta seluruh items
    */
   async getById(id) {
-    if (isMockMode()) {
-      const found = MOCK_POS.find(p => p.id === id);
-      return formatResponse({ ok: !!found, data: found });
-    }
-
     try {
       const { data, error } = await supabase
         .from('purchase_orders')
@@ -148,9 +129,14 @@ export const po = {
         .eq('id', id)
         .maybeSingle();
 
-      if (error || !data) {
-        const found = MOCK_POS.find(p => p.id === id);
-        return formatResponse({ ok: !!found, data: found });
+      if (error) {
+        return formatResponse({ ok: false, error });
+      }
+      if (!data) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'NOT_FOUND', message: 'Purchase order tidak ditemukan' }
+        });
       }
 
       return formatResponse({ ok: true, data });
@@ -174,15 +160,14 @@ export const po = {
 
       // Hitung total dari items
       let grandTotal = 0;
-      const formattedItems = (items || []).map((it, idx) => {
+      const formattedItems = (items || []).map(it => {
         const qty = Math.max(1, Number(it.qty) || 1);
         const harga = Math.max(0, Number(it.harga) || 0);
         const subtotal = qty * harga;
         grandTotal += subtotal;
         return {
-          id: `poi-${Date.now()}-${idx}`,
           product_id: it.product_id || null,
-          product_nama: it.product_nama || `Barang #${idx + 1}`,
+          product_nama: it.product_nama || null,
           qty,
           harga,
           subtotal
@@ -200,42 +185,41 @@ export const po = {
         created_at: new Date().toISOString()
       };
 
-      if (!isMockMode()) {
-        const { data: insertedPO, error: poErr } = await supabase
-          .from('purchase_orders')
-          .insert([poPayload])
-          .select()
-          .single();
+      const { data: insertedPO, error: poErr } = await supabase
+        .from('purchase_orders')
+        .insert([poPayload])
+        .select()
+        .single();
 
-        if (!poErr && insertedPO) {
-          if (formattedItems.length > 0) {
-            const itemsPayload = formattedItems.map(it => ({
-              po_id: insertedPO.id,
-              product_id: it.product_id,
-              qty: it.qty,
-              harga: it.harga,
-              subtotal: it.subtotal,
-              created_at: new Date().toISOString()
-            }));
+      if (poErr) {
+        return formatResponse({ ok: false, error: poErr });
+      }
+      if (!insertedPO) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'INSERT_FAILED', message: 'Purchase order tidak berhasil disimpan' }
+        });
+      }
 
-            await supabase.from('purchase_order_items').insert(itemsPayload);
-          }
-
-          return formatResponse({
-            ok: true,
-            data: { ...insertedPO, items: formattedItems, supplier_nama }
-          });
+      if (formattedItems.length > 0) {
+        const itemsPayload = formattedItems.map(it => ({
+          po_id: insertedPO.id,
+          product_id: it.product_id,
+          qty: it.qty,
+          harga: it.harga,
+          subtotal: it.subtotal,
+          created_at: new Date().toISOString()
+        }));
+        const { error: itemsError } = await supabase.from('purchase_order_items').insert(itemsPayload);
+        if (itemsError) {
+          return formatResponse({ ok: false, error: itemsError });
         }
       }
 
-      const mockNew = {
-        id: `po-${Date.now()}`,
-        supplier_nama: supplier_nama || 'Supplier Umum',
-        ...poPayload,
-        items: formattedItems
-      };
-      MOCK_POS.unshift(mockNew);
-      return formatResponse({ ok: true, data: mockNew });
+      return formatResponse({
+        ok: true,
+        data: { ...insertedPO, items: formattedItems, supplier_nama }
+      });
     } catch (err) {
       return handleError(err);
     }
@@ -246,26 +230,23 @@ export const po = {
    */
   async update(id, updates) {
     try {
-      if (!isMockMode()) {
-        const { data, error } = await supabase
-          .from('purchase_orders')
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
+      const { data, error } = await supabase
+        .from('purchase_orders')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
 
-        if (!error && data) {
-          return formatResponse({ ok: true, data });
-        }
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      const idx = MOCK_POS.findIndex(p => p.id === id);
-      if (idx !== -1) {
-        MOCK_POS[idx] = { ...MOCK_POS[idx], ...updates };
-        return formatResponse({ ok: true, data: MOCK_POS[idx] });
+      if (!data) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'NOT_FOUND', message: 'PO tidak ditemukan' }
+        });
       }
-
-      return formatResponse({ ok: false, error: { message: 'PO tidak ditemukan' } });
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }
@@ -283,60 +264,14 @@ export const po = {
    */
   async delete(id) {
     try {
-      if (!isMockMode()) {
-        const { error } = await supabase.from('purchase_orders').delete().eq('id', id);
-        if (!error) {
-          return formatResponse({ ok: true, data: { id } });
-        }
+      const { error } = await supabase.from('purchase_orders').delete().eq('id', id);
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      MOCK_POS = MOCK_POS.filter(p => p.id !== id);
       return formatResponse({ ok: true, data: { id } });
     } catch (err) {
       return handleError(err);
     }
-  },
-
-  /**
-   * Helper internal untuk memfilter mock data
-   */
-  _getMockData({ page = 1, limit = 50, status = null, search = '', startDate = null, endDate = null }) {
-    let list = [...MOCK_POS];
-
-    if (status && status !== 'ALL') {
-      list = list.filter(p => p.status === status.toLowerCase());
-    }
-
-    if (startDate) {
-      list = list.filter(p => (p.tanggal || '') >= startDate);
-    }
-    if (endDate) {
-      list = list.filter(p => (p.tanggal || '') <= endDate);
-    }
-
-    if (search && search.trim() !== '') {
-      const q = search.trim().toLowerCase();
-      list = list.filter(p =>
-        (p.no_po && p.no_po.toLowerCase().includes(q)) ||
-        (p.supplier_nama && p.supplier_nama.toLowerCase().includes(q)) ||
-        (p.catatan && p.catatan.toLowerCase().includes(q))
-      );
-    }
-
-    const total = list.length;
-    const from = (page - 1) * limit;
-    const paginated = list.slice(from, from + limit);
-
-    return formatResponse({
-      ok: true,
-      data: paginated,
-      meta: {
-        page: Number(page),
-        limit: Number(limit),
-        total: total,
-        totalPages: Math.max(1, Math.ceil(total / limit))
-      }
-    });
   }
 };
 

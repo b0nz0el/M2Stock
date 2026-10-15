@@ -106,7 +106,6 @@ aquastock-pro/
 ├── tests/                        # Vitest unit test suite
 │   ├── api.test.js
 │   ├── app-sidebar.test.js
-│   ├── mock-actions.test.js
 │   ├── navigation.test.js
 │   └── utils.test.js
 ├── scripts/                      # Tooling & otomasi developer

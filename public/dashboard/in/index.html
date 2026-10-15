@@ -78,7 +78,6 @@
         </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
         </button>
         <button data-action="add" onclick="openAddInModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
@@ -95,9 +94,6 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat barang masuk dari supplier</p>
         </div>
         <div class="flex gap-2">
-          <button type="button" id="btn-refresh-in" onclick="handleRefreshIn()" data-action="refresh-in" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
-            <i data-lucide="rotate-cw" id="icon-refresh-in" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
-          </button>
           <button type="button" onclick="handleExportIn()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
@@ -354,8 +350,8 @@
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
 <script type="module" src="../../assets/js/api/index.js"></script>
+<script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
 
 <script src="./in.js"></script>
 <script type="module">

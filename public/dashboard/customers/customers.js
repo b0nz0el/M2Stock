@@ -258,11 +258,9 @@ function setupSearchListeners() {
 }
 
 async function handleRefreshCustomers() {
-  const iconToolbar = document.getElementById('icon-refresh-customers');
   const headerBtn = document.getElementById('btn-refresh-customers-header');
   const iconHeader = headerBtn ? headerBtn.querySelector('svg, i') : null;
 
-  if (iconToolbar) iconToolbar.classList.add('animate-spin');
   if (iconHeader) iconHeader.classList.add('animate-spin');
 
   try {
@@ -277,7 +275,6 @@ async function handleRefreshCustomers() {
     }
   } finally {
     setTimeout(() => {
-      if (iconToolbar) iconToolbar.classList.remove('animate-spin');
       if (iconHeader) iconHeader.classList.remove('animate-spin');
     }, 500);
   }

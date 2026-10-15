@@ -241,5 +241,72 @@ describe('<app-sidebar> Component', () => {
       expect(cached.name).toBe('Test Staff');
     });
   });
+
+  describe('Dynamic Badges (Anti-Mock)', () => {
+    afterEach(() => {
+      sessionStorage.clear();
+      delete window.supabase;
+    });
+
+    it('merender badge items dengan id sidebar-items-badge dan default 0 (bukan hardcoded 10)', () => {
+      const itemsBadge = sidebar.querySelector('#sidebar-items-badge');
+      expect(itemsBadge).not.toBeNull();
+      expect(itemsBadge.textContent).toBe('0');
+      expect(itemsBadge.textContent).not.toBe('10');
+    });
+
+    it('merender badge notif dengan id sidebar-notif-badge tersembunyi (bukan hardcoded 3)', () => {
+      const notifBadge = sidebar.querySelector('#sidebar-notif-badge');
+      expect(notifBadge).not.toBeNull();
+      expect(notifBadge.classList.contains('hidden')).toBe(true);
+      expect(notifBadge.textContent).not.toBe('3');
+    });
+
+    it('memuat jumlah produk dari sessionStorage cache secara instan', async () => {
+      sessionStorage.setItem('items_count', '42');
+      await sidebar._loadBadgeCounts();
+      const itemsBadge = sidebar.querySelector('#sidebar-items-badge');
+      expect(itemsBadge.textContent).toBe('42');
+    });
+
+    it('memuat notifikasi unread dari sessionStorage cache dan menampilkan badge jika > 0', async () => {
+      sessionStorage.setItem('notif_unread_count', '5');
+      await sidebar._loadBadgeCounts();
+      const notifBadge = sidebar.querySelector('#sidebar-notif-badge');
+      expect(notifBadge.textContent).toBe('5');
+      expect(notifBadge.classList.contains('hidden')).toBe(false);
+    });
+
+    it('mengambil live count dari Supabase dan memperbarui badge', async () => {
+      window.supabase = {
+        from: vi.fn((table) => {
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockResolvedValue({ count: 18, error: null })
+            };
+          }
+          if (table === 'notifications') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ count: 2, error: null })
+              })
+            };
+          }
+          return { select: vi.fn() };
+        })
+      };
+
+      await sidebar._loadBadgeCounts();
+
+      const itemsBadge = sidebar.querySelector('#sidebar-items-badge');
+      const notifBadge = sidebar.querySelector('#sidebar-notif-badge');
+      expect(itemsBadge.textContent).toBe('18');
+      expect(notifBadge.textContent).toBe('2');
+      expect(notifBadge.classList.contains('hidden')).toBe(false);
+      expect(sessionStorage.getItem('items_count')).toBe('18');
+      expect(sessionStorage.getItem('notif_unread_count')).toBe('2');
+    });
+  });
 });
+
 

@@ -472,11 +472,9 @@
   }
 
   async function handleRefreshIn() {
-    const icon1 = document.getElementById('icon-refresh-in');
     const headerBtn = document.getElementById('btn-refresh-in-header');
-    const icon2 = headerBtn ? headerBtn.querySelector('i') : null;
-    if (icon1) icon1.classList.add('animate-spin');
-    if (icon2) icon2.classList.add('animate-spin');
+    const headerIcon = headerBtn ? headerBtn.querySelector('i') : null;
+    if (headerIcon) headerIcon.classList.add('animate-spin');
 
     try {
       await loadInTransactions();
@@ -491,8 +489,7 @@
       }
     } finally {
       setTimeout(() => {
-        if (icon1) icon1.classList.remove('animate-spin');
-        if (icon2) icon2.classList.remove('animate-spin');
+        if (headerIcon) headerIcon.classList.remove('animate-spin');
         if (typeof window.refreshIcons === 'function') window.refreshIcons();
       }, 400);
     }

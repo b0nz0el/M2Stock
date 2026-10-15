@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — backup.js
    Controller Modul Backup & Restore (/dashboard/backup/)
-   ANTI-MOCK: Data live dari Supabase backup_logs
+   Riwayat backup dari Supabase backup_logs
    ═══════════════════════════════════════════════════ */
 
 import { backup as backupApi, BACKUP_TABLES } from '../../assets/js/api/backup.js';

@@ -107,9 +107,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   async function loadData() {
     const tbody = document.getElementById('po-table-body');
     const emptyState = document.getElementById('po-empty-state');
-    const refreshBtn = document.getElementById('btn-refresh-po');
 
-    if (refreshBtn) refreshBtn.classList.add('opacity-50', 'pointer-events-none');
     if (tbody) {
       tbody.innerHTML = `
         <tr>
@@ -140,8 +138,6 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     } catch (err) {
       console.error('Error loading PO data:', err);
       showToast('Gagal memuat data Purchase Order', 'error');
-    } finally {
-      if (refreshBtn) refreshBtn.classList.remove('opacity-50', 'pointer-events-none');
     }
   }
 
@@ -541,10 +537,6 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
         loadData();
       });
     });
-
-    // Refresh
-    const refreshBtn = document.getElementById('btn-refresh-po');
-    if (refreshBtn) refreshBtn.addEventListener('click', loadData);
 
     // Export CSV
     const exportBtn = document.getElementById('btn-export-po');

@@ -3,11 +3,11 @@
    Domain Supabase Storage (bucket product-images)
    ═══════════════════════════════════════════════════ */
 
-import { config, isSupabaseAvailable, formatResponse, handleError } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError } from './_client.js';
 
 export const storage = {
     uploadImage: async (fileOrBlob, path, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data, error } = await window.supabase.storage
             .from('product-images')
@@ -43,17 +43,16 @@ export const storage = {
       }
 
       return formatResponse({
-        ok: true,
-        data: {
-          path: path,
-          publicUrl: `https://mock.storage/product-images/${path}`
-        },
-        meta: { message: 'Mock upload berhasil' }
+        ok: false,
+        error: {
+          code: 'SUPABASE_UNAVAILABLE',
+          message: 'Klien Supabase tidak tersedia; foto produk tidak dapat diunggah'
+        }
       });
     },
 
     getImageUrl: (path) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data } = window.supabase.storage
             .from('product-images')
@@ -63,11 +62,11 @@ export const storage = {
           return null;
         }
       }
-      return `https://mock.storage/product-images/${path}`;
+      return null;
     },
 
     deleteImage: async (path, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data, error } = await window.supabase.storage
             .from('product-images')
@@ -95,9 +94,11 @@ export const storage = {
       }
 
       return formatResponse({
-        ok: true,
-        data: { path: path },
-        meta: { message: 'Mock delete berhasil' }
+        ok: false,
+        error: {
+          code: 'SUPABASE_UNAVAILABLE',
+          message: 'Klien Supabase tidak tersedia; foto produk tidak dapat dihapus'
+        }
       });
     }
 };

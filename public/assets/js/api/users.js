@@ -3,11 +3,11 @@
    Domain Users Management via Supabase RPC
    ═══════════════════════════════════════════════════ */
 
-import { config, isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
 
 export const users = {
     getAll: async (opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data, error } = await window.supabase.rpc('get_auth_users');
           if (error) {
@@ -29,7 +29,7 @@ export const users = {
       return apiRequest('/system/users', { ...opts });
     },
     updateRole: async (targetUserId, newRole, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data, error } = await window.supabase.rpc('update_user_role', {
             target_user_id: targetUserId,

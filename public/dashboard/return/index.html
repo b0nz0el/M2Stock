@@ -1,377 +1,735 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>aQuaStock Pro — Retur Barang</title>
-<link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>aQuaStock Pro — Retur Barang</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg" />
 
-<!-- Auth guard (redirect jika belum login) -->
-<script>
-(function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
-</script>
+    <!-- Auth guard (redirect jika belum login) -->
+    <script>
+      (function () {
+        try {
+          if (
+            !Object.keys(localStorage).some(function (k) {
+              return k.startsWith("sb-") && k.endsWith("-auth-token");
+            })
+          ) {
+            window.location.replace("/login/");
+          }
+        } catch (e) {}
+      })();
+    </script>
 
-<!-- RBAC Route Guard (Layer 2) & Read-Only UI (Layer 1) -->
-<script type="module">
-  import { guardRoute } from '../../assets/js/utils/rbac.js';
-  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-  await guardRoute('return');
-  applyReadOnlyUI();
-</script>
+    <!-- RBAC Route Guard (Layer 2) & Read-Only UI (Layer 1) -->
+    <script type="module">
+      import { guardRoute } from "../../assets/js/utils/rbac.js";
+      import { applyReadOnlyUI } from "../../assets/js/utils/rbac-ui.js";
+      await guardRoute("return");
+      applyReadOnlyUI();
+    </script>
 
-<!-- Inter font (self-host) -->
-<link rel="preconnect" href="/" crossorigin>
-<link rel="preload" href="../../assets/fonts/InterVariable.woff2"
-      as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../../assets/fonts/inter.css">
+    <!-- Inter font (self-host) -->
+    <link rel="preconnect" href="/" crossorigin />
+    <link
+      rel="preload"
+      href="../../assets/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="../../assets/fonts/inter.css" />
 
-<!-- Styles -->
-<link rel="stylesheet" href="../../assets/css/tailwind.static.css">
-<link rel="stylesheet" href="../../assets/css/main.css">
-<link rel="stylesheet" href="../../assets/css/components.css">
-<link rel="stylesheet" href="../../assets/css/layout.css">
-<link rel="stylesheet" href="../../assets/css/pages.css">
-<link rel="stylesheet" href="../../assets/css/responsive.css">
-</head>
-<body class="bg-black text-white antialiased">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../assets/css/tailwind.static.css" />
+    <link rel="stylesheet" href="../../assets/css/main.css" />
+    <link rel="stylesheet" href="../../assets/css/components.css" />
+    <link rel="stylesheet" href="../../assets/css/layout.css" />
+    <link rel="stylesheet" href="../../assets/css/pages.css" />
+    <link rel="stylesheet" href="../../assets/css/responsive.css" />
+  </head>
+  <body class="bg-black text-white antialiased">
+    <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-<a href="#main-content" class="skip-link">Lewati ke konten utama</a>
+    <div class="flex min-h-screen">
+      <!-- ═══════════ SIDEBAR (Web Component) ═══════════ -->
+      <app-sidebar>
+        <noscript>
+          <aside class="w-64 bg-[#1C1C1E] p-4 border-r border-white/5">
+            <p class="text-sm font-bold text-[#32ADE6]">aQuaStock Pro</p>
+            <p class="text-xs text-[#A0A0A5] mt-1">
+              Aktifkan JavaScript untuk navigasi lengkap
+            </p>
+          </aside>
+        </noscript>
+      </app-sidebar>
 
-<div class="flex min-h-screen">
-
-  <!-- ═══════════ SIDEBAR (Web Component) ═══════════ -->
-  <app-sidebar>
-    <noscript>
-      <aside class="w-64 bg-[#1C1C1E] p-4 border-r border-white/5">
-        <p class="text-sm font-bold text-[#32ADE6]">aQuaStock Pro</p>
-        <p class="text-xs text-[#A0A0A5] mt-1">Aktifkan JavaScript untuk navigasi lengkap</p>
-      </aside>
-    </noscript>
-  </app-sidebar>
-
-  <!-- ═══════════ MAIN ═══════════ -->
-  <main id="main-content" class="flex-1 overflow-y-auto pb-24 md:pb-8">
-
-    <header class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10">
-
-      <button onclick="toggleSidebar()" data-action="toggle-sidebar" aria-expanded="false" aria-label="Buka menu" class="md:hidden text-white p-1">
-        <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
-      </button>
-
-      <div class="hidden md:flex items-center gap-2 text-sm">
-        <span class="text-[#A0A0A5]">aQuaStock</span>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium text-white">Retur Barang</span>
-      </div>
-
-      <div class="flex-1 md:max-w-md md:ml-6 relative">
-        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
-        <input type="text" id="return-search" placeholder="Cari no. retur, alasan, barang..." aria-label="Pencarian data retur"
-               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC] text-white">
-      </div>
-
-      <div class="ml-auto flex items-center gap-2">
-        <button type="button" id="btn-export-return" title="Ekspor data ke CSV" class="bg-[#1C1C1E] hover:bg-white/5 px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 border border-white/5 transition text-[#A0A0A5] hover:text-white">
-          <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Ekspor CSV</span>
-        </button>
-
-        <button type="button" id="btn-add-return-header" data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 text-white transition">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Buat Retur</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- ═══════════ PAGE CONTENT ═══════════ -->
-    <div id="page-return" class="page active p-6 space-y-6 max-w-7xl mx-auto">
-      
-      <!-- Title & Filters -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-            <span class="w-9 h-9 rounded-xl bg-[#FF9500]/10 text-[#FF9500] grid place-items-center">
-              <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-            </span>
-            Retur Barang
-          </h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">Kelola pengembalian barang rusak ke supplier dan klaim garansi dari customer</p>
-        </div>
-
-        <!-- Filter Dropdowns -->
-        <div class="flex items-center gap-2 flex-wrap text-xs">
-          <!-- Filter Periode -->
-          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
-            <select id="return-filter-period" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
-              <option value="month" selected class="bg-[#1C1C1E]">Bulan Ini</option>
-              <option value="30d" class="bg-[#1C1C1E]">30 Hari Terakhir</option>
-              <option value="all" class="bg-[#1C1C1E]">Semua Waktu</option>
-            </select>
-          </div>
-
-          <!-- Filter Tipe -->
-          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
-            <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
-            <select id="return-filter-tipe" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
-              <option value="ALL" selected class="bg-[#1C1C1E]">Semua Tipe</option>
-              <option value="ke_supplier" class="bg-[#1C1C1E]">Ke Supplier</option>
-              <option value="dari_customer" class="bg-[#1C1C1E]">Dari Customer</option>
-            </select>
-          </div>
-
-          <!-- Filter Status -->
-          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
-            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
-            <select id="return-filter-status" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
-              <option value="ALL" selected class="bg-[#1C1C1E]">Semua Status</option>
-              <option value="diproses" class="bg-[#1C1C1E]">Diproses</option>
-              <option value="selesai" class="bg-[#1C1C1E]">Selesai</option>
-              <option value="ditolak" class="bg-[#1C1C1E]">Ditolak</option>
-            </select>
-          </div>
-
-          <button type="button" id="btn-refresh-return" title="Muat ulang data" class="p-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">
-            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+      <!-- ═══════════ MAIN ═══════════ -->
+      <main id="main-content" class="flex-1 overflow-y-auto pb-24 md:pb-8">
+        <header
+          class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10"
+        >
+          <button
+            onclick="toggleSidebar()"
+            data-action="toggle-sidebar"
+            aria-expanded="false"
+            aria-label="Buka menu"
+            class="md:hidden text-white p-1"
+          >
+            <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
           </button>
-        </div>
-      </div>
 
-      <!-- 4 KPI Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- KPI 1: Retur ke Supplier (Bulan Ini) -->
-        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#FF9500]/15 grid place-items-center mb-3">
-            <i data-lucide="undo-2" class="w-5 h-5 text-[#FF9500]" aria-hidden="true"></i>
+          <div class="hidden md:flex items-center gap-2 text-sm">
+            <span class="text-[#A0A0A5]">aQuaStock</span>
+            <i
+              data-lucide="chevron-right"
+              class="w-3.5 h-3.5 text-[#A0A0A5]"
+              aria-hidden="true"
+            ></i>
+            <span id="breadcrumb" class="font-medium text-white"
+              >Retur Barang</span
+            >
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Retur ke Supplier</p>
-          <p id="kpi-retur-supplier" class="text-2xl font-bold text-[#FF9500] tracking-tight">0 Unit</p>
-          <p class="text-xs text-[#A0A0A5]">Bulan ini</p>
-        </div>
 
-        <!-- KPI 2: Retur dari Customer (Bulan Ini) -->
-        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#AF52DE]/15 grid place-items-center mb-3">
-            <i data-lucide="redo-2" class="w-5 h-5 text-[#AF52DE]" aria-hidden="true"></i>
+          <div class="flex-1 md:max-w-md md:ml-6 relative">
+            <i
+              data-lucide="search"
+              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]"
+              aria-hidden="true"
+            ></i>
+            <input
+              type="text"
+              id="return-search"
+              placeholder="Cari no. retur, alasan, barang..."
+              aria-label="Pencarian data retur"
+              class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC] text-white"
+            />
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Retur dari Customer</p>
-          <p id="kpi-retur-customer" class="text-2xl font-bold text-[#AF52DE] tracking-tight">0 Unit</p>
-          <p class="text-xs text-[#A0A0A5]">Bulan ini</p>
-        </div>
 
-        <!-- KPI 3: Nilai Retur (Rp Total Bulan Ini) -->
-        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center mb-3">
-            <i data-lucide="banknote" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
-          </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Nilai Retur</p>
-          <p id="kpi-nilai-retur" class="text-2xl font-bold text-white tracking-tight">Rp 0</p>
-          <p class="text-xs text-[#A0A0A5]">Estimasi nilai barang</p>
-        </div>
+          <div class="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-export-return"
+              title="Ekspor data ke CSV"
+              class="bg-[#1C1C1E] hover:bg-white/5 px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 border border-white/5 transition text-[#A0A0A5] hover:text-white"
+            >
+              <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+              <span class="hidden md:inline">Ekspor CSV</span>
+            </button>
 
-        <!-- KPI 4: Sedang Diproses (Count) -->
-        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#FF9F0A]/15 grid place-items-center mb-3">
-            <i data-lucide="clock" class="w-5 h-5 text-[#FF9F0A]" aria-hidden="true"></i>
-          </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Sedang Diproses</p>
-          <p id="kpi-diproses" class="text-2xl font-bold text-[#FF9F0A] tracking-tight">0 Tiket</p>
-          <p class="text-xs text-[#A0A0A5]">Menunggu penyelesaian</p>
-        </div>
-      </div>
-
-      <!-- Table Section -->
-      <div class="card rounded-2xl bg-[#1C1C1E] border border-white/5 overflow-hidden">
-        <div class="card-table-wrap overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-white/[0.02] border-b border-white/5">
-              <tr class="text-left text-[#A0A0A5]">
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider">No. Retur</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider">Tanggal</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider">Tipe</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider">Barang</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider">Alasan</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider text-right">Jumlah</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider">Status</th>
-                <th class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="return-table-body" class="divide-y divide-white/5">
-              <!-- Content rendered dynamically via return.js -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Empty State -->
-        <div id="return-empty-state" class="hidden py-16 text-center text-[#A0A0A5] p-6">
-          <div class="w-14 h-14 rounded-2xl bg-white/5 text-[#A0A0A5] grid place-items-center mx-auto mb-3">
-            <i data-lucide="package-x" class="w-7 h-7"></i>
-          </div>
-          <p class="font-semibold text-white text-base">Tidak ada catatan retur</p>
-          <p class="text-xs text-[#A0A0A5] mt-1">Belum ada pengembalian barang yang tercatat sesuai filter ini.</p>
-          <div class="mt-4">
-            <button type="button" id="btn-open-return-modal" data-action="add" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#0088CC] text-white hover:bg-[#0077BB] transition">
-              <i data-lucide="plus" class="w-4 h-4"></i> Catat Retur Baru
+            <button
+              type="button"
+              id="btn-add-return-header"
+              data-action="add"
+              class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 text-white transition"
+            >
+              <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+              <span class="hidden md:inline">Buat Retur</span>
             </button>
           </div>
-        </div>
+        </header>
 
-        <!-- Table Footer & Pagination -->
-        <div class="flex items-center justify-between px-6 py-4 border-t border-white/5 text-xs text-[#A0A0A5]">
-          <span id="return-pagination-info">Menampilkan 0 dari 0 retur</span>
-          <div class="flex items-center gap-2">
-            <button type="button" id="btn-prev-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium transition flex items-center gap-1">
-              <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-              <span>Sebelumnya</span>
-            </button>
-            <button type="button" id="btn-next-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium transition flex items-center gap-1">
-              <span>Selanjutnya</span>
-              <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        <!-- ═══════════ PAGE CONTENT ═══════════ -->
+        <div
+          id="page-return"
+          class="page active p-6 space-y-6 max-w-7xl mx-auto"
+        >
+          <!-- Title & Filters -->
+          <div
+            class="return-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div>
+              <h2
+                class="text-3xl font-bold tracking-tight text-white flex items-center gap-3"
+              >
+                <span
+                  class="w-9 h-9 rounded-xl bg-[#FF9500]/10 text-[#FF9500] grid place-items-center"
+                >
+                  <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                </span>
+                Retur Barang
+              </h2>
+              <p class="text-sm text-[#A0A0A5] mt-1">
+                Kelola pengembalian barang rusak ke supplier dan klaim garansi
+                dari customer
+              </p>
+            </div>
+
+            <!-- Filter Dropdowns -->
+            <div
+              class="return-filter-controls flex items-center gap-2 flex-wrap text-xs"
+            >
+              <!-- Filter Periode -->
+              <label
+                class="return-filter-control return-filter-period flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2"
+              >
+                <i
+                  data-lucide="calendar"
+                  class="w-3.5 h-3.5 text-[#A0A0A5]"
+                  aria-hidden="true"
+                ></i>
+                <select
+                  id="return-filter-period"
+                  aria-label="Filter periode retur"
+                  class="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+                >
+                  <option value="month" selected class="bg-[#1C1C1E]">
+                    Bulan Ini
+                  </option>
+                  <option value="30d" class="bg-[#1C1C1E]">
+                    30 Hari Terakhir
+                  </option>
+                  <option value="all" class="bg-[#1C1C1E]">Semua Waktu</option>
+                </select>
+              </label>
+
+              <!-- Filter Tipe -->
+              <label
+                class="return-filter-control flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2"
+              >
+                <i
+                  data-lucide="arrow-left-right"
+                  class="w-3.5 h-3.5 text-[#A0A0A5]"
+                  aria-hidden="true"
+                ></i>
+                <select
+                  id="return-filter-tipe"
+                  aria-label="Filter tipe retur"
+                  class="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL" selected class="bg-[#1C1C1E]">
+                    Semua Tipe
+                  </option>
+                  <option value="ke_supplier" class="bg-[#1C1C1E]">
+                    Ke Supplier
+                  </option>
+                  <option value="dari_customer" class="bg-[#1C1C1E]">
+                    Dari Customer
+                  </option>
+                </select>
+              </label>
+
+              <!-- Filter Status -->
+              <label
+                class="return-filter-control flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2"
+              >
+                <i
+                  data-lucide="check-circle"
+                  class="w-3.5 h-3.5 text-[#A0A0A5]"
+                  aria-hidden="true"
+                ></i>
+                <select
+                  id="return-filter-status"
+                  aria-label="Filter status retur"
+                  class="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL" selected class="bg-[#1C1C1E]">
+                    Semua Status
+                  </option>
+                  <option value="diproses" class="bg-[#1C1C1E]">
+                    Diproses
+                  </option>
+                  <option value="selesai" class="bg-[#1C1C1E]">Selesai</option>
+                  <option value="ditolak" class="bg-[#1C1C1E]">Ditolak</option>
+                </select>
+              </label>
+
+              <button
+                type="button"
+                id="btn-refresh-return"
+                title="Muat ulang data"
+                aria-label="Muat ulang data retur"
+                class="return-refresh-button flex items-center justify-center gap-2 p-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition"
+              >
+                <i
+                  data-lucide="rotate-cw"
+                  class="w-4 h-4"
+                  aria-hidden="true"
+                ></i>
+                <span>Muat Ulang</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 KPI Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- KPI 1: Retur ke Supplier (Bulan Ini) -->
+            <div
+              class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1"
+            >
+              <div
+                class="w-11 h-11 rounded-xl bg-[#FF9500]/15 grid place-items-center mb-3"
+              >
+                <i
+                  data-lucide="undo-2"
+                  class="w-5 h-5 text-[#FF9500]"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <p class="text-xs text-[#A0A0A5] font-medium">
+                Retur ke Supplier
+              </p>
+              <p
+                id="kpi-retur-supplier"
+                class="text-2xl font-bold text-[#FF9500] tracking-tight"
+              >
+                0 Unit
+              </p>
+              <p class="text-xs text-[#A0A0A5]">Bulan ini</p>
+            </div>
+
+            <!-- KPI 2: Retur dari Customer (Bulan Ini) -->
+            <div
+              class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1"
+            >
+              <div
+                class="w-11 h-11 rounded-xl bg-[#AF52DE]/15 grid place-items-center mb-3"
+              >
+                <i
+                  data-lucide="redo-2"
+                  class="w-5 h-5 text-[#AF52DE]"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <p class="text-xs text-[#A0A0A5] font-medium">
+                Retur dari Customer
+              </p>
+              <p
+                id="kpi-retur-customer"
+                class="text-2xl font-bold text-[#AF52DE] tracking-tight"
+              >
+                0 Unit
+              </p>
+              <p class="text-xs text-[#A0A0A5]">Bulan ini</p>
+            </div>
+
+            <!-- KPI 3: Nilai Retur (Rp Total Bulan Ini) -->
+            <div
+              class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1"
+            >
+              <div
+                class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center mb-3"
+              >
+                <i
+                  data-lucide="banknote"
+                  class="w-5 h-5 text-[#32ADE6]"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <p class="text-xs text-[#A0A0A5] font-medium">Nilai Retur</p>
+              <p
+                id="kpi-nilai-retur"
+                class="text-2xl font-bold text-white tracking-tight"
+              >
+                Rp 0
+              </p>
+              <p class="text-xs text-[#A0A0A5]">Estimasi nilai barang</p>
+            </div>
+
+            <!-- KPI 4: Sedang Diproses (Count) -->
+            <div
+              class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1"
+            >
+              <div
+                class="w-11 h-11 rounded-xl bg-[#FF9F0A]/15 grid place-items-center mb-3"
+              >
+                <i
+                  data-lucide="clock"
+                  class="w-5 h-5 text-[#FF9F0A]"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <p class="text-xs text-[#A0A0A5] font-medium">Sedang Diproses</p>
+              <p
+                id="kpi-diproses"
+                class="text-2xl font-bold text-[#FF9F0A] tracking-tight"
+              >
+                0 Tiket
+              </p>
+              <p class="text-xs text-[#A0A0A5]">Menunggu penyelesaian</p>
+            </div>
+          </div>
+
+          <!-- Table Section -->
+          <div
+            class="card rounded-2xl bg-[#1C1C1E] border border-white/5 overflow-hidden"
+          >
+            <div class="card-table-wrap overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-white/[0.02] border-b border-white/5">
+                  <tr class="text-left text-[#A0A0A5]">
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider"
+                    >
+                      No. Retur
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider"
+                    >
+                      Tanggal
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider"
+                    >
+                      Tipe
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider"
+                    >
+                      Barang
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider"
+                    >
+                      Alasan
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider text-right"
+                    >
+                      Jumlah
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="px-4 py-3.5 font-medium text-xs uppercase tracking-wider text-right"
+                    >
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="return-table-body" class="divide-y divide-white/5">
+                  <!-- Content rendered dynamically via return.js -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div
+              id="return-empty-state"
+              class="hidden py-16 text-center text-[#A0A0A5] p-6"
+            >
+              <div
+                class="w-14 h-14 rounded-2xl bg-white/5 text-[#A0A0A5] grid place-items-center mx-auto mb-3"
+              >
+                <i data-lucide="package-x" class="w-7 h-7"></i>
+              </div>
+              <p class="font-semibold text-white text-base">
+                Tidak ada catatan retur
+              </p>
+              <p class="text-xs text-[#A0A0A5] mt-1">
+                Belum ada pengembalian barang yang tercatat sesuai filter ini.
+              </p>
+              <div class="mt-4">
+                <button
+                  type="button"
+                  id="btn-open-return-modal"
+                  data-action="add"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#0088CC] text-white hover:bg-[#0077BB] transition"
+                >
+                  <i data-lucide="plus" class="w-4 h-4"></i> Catat Retur Baru
+                </button>
+              </div>
+            </div>
+
+            <!-- Table Footer & Pagination -->
+            <div
+              class="return-pagination-footer flex items-center justify-between px-6 py-4 border-t border-white/5 text-xs text-[#A0A0A5]"
+            >
+              <span id="return-pagination-info"
+                >Menampilkan 0 dari 0 retur</span
+              >
+              <div class="return-pagination-actions flex items-center gap-2">
+                <button
+                  type="button"
+                  id="btn-prev-page"
+                  class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium transition flex items-center gap-1"
+                >
+                  <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                  <span>Sebelumnya</span>
+                </button>
+                <button
+                  type="button"
+                  id="btn-next-page"
+                  class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium transition flex items-center gap-1"
+                >
+                  <span>Selanjutnya</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ═══════════ MODAL CATAT RETUR ═══════════ -->
+      <div
+        id="modal-return"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+      >
+        <div
+          class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative"
+        >
+          <div
+            class="flex items-center justify-between border-b border-white/10 pb-4"
+          >
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="rotate-ccw" class="w-5 h-5 text-[#0088CC]"></i>
+              Catat Retur Barang Baru
+            </h3>
+            <button
+              type="button"
+              id="btn-close-return-modal"
+              class="text-[#A0A0A5] hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
+            >
+              <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
+
+          <form id="form-return" class="space-y-4">
+            <!-- No Retur & Tipe -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >No. Retur</label
+                >
+                <input
+                  type="text"
+                  id="return-no"
+                  required
+                  placeholder="RET-SUP-202610-001"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC] font-mono"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Tipe Retur</label
+                >
+                <select
+                  id="return-tipe"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                >
+                  <option value="ke_supplier" class="bg-[#1C1C1E]">
+                    Ke Supplier (Pengembalian ke Distributor)
+                  </option>
+                  <option value="dari_customer" class="bg-[#1C1C1E]">
+                    Dari Customer (Klaim Pelanggan)
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tanggal & Nama Barang -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Tanggal</label
+                >
+                <input
+                  type="date"
+                  id="return-tanggal"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Nama Barang</label
+                >
+                <input
+                  type="text"
+                  id="return-produk"
+                  required
+                  placeholder="Contoh: Filter Canister HW-3000"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                />
+              </div>
+            </div>
+
+            <!-- Jumlah & Estimasi Harga Satuan -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Jumlah Unit (Qty)</label
+                >
+                <input
+                  type="number"
+                  id="return-qty"
+                  required
+                  min="1"
+                  step="1"
+                  value="1"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Estimasi Nilai Satuan (Rp)</label
+                >
+                <input
+                  type="number"
+                  id="return-harga"
+                  min="0"
+                  step="1000"
+                  placeholder="0"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                />
+              </div>
+            </div>
+
+            <!-- Alasan & Status -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Alasan Retur</label
+                >
+                <input
+                  type="text"
+                  id="return-alasan"
+                  required
+                  placeholder="Contoh: Barang cacat motor impeller"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                  >Status Awal</label
+                >
+                <select
+                  id="return-status"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+                >
+                  <option value="diproses" class="bg-[#1C1C1E]">
+                    Diproses
+                  </option>
+                  <option value="selesai" class="bg-[#1C1C1E]">Selesai</option>
+                  <option value="ditolak" class="bg-[#1C1C1E]">Ditolak</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Keterangan Tambahan -->
+            <div>
+              <label
+                class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
+                >Keterangan / Nomor Nota (Opsional)</label
+              >
+              <textarea
+                id="return-keterangan"
+                rows="2"
+                placeholder="Nomor faktur pembelian, nama customer, atau catatan ekspedisi..."
+                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
+              ></textarea>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div
+              class="flex items-center justify-end gap-3 pt-4 border-t border-white/10"
+            >
+              <button
+                type="button"
+                id="btn-cancel-return-modal"
+                class="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#A0A0A5] hover:text-white bg-white/5 hover:bg-white/10 transition"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                id="btn-submit-return"
+                class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#0088CC] hover:bg-[#0077BB] text-white shadow-lg shadow-[#0088CC]/20 transition"
+              >
+                Simpan Retur
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
-    </div>
-
-  </main>
-
-  <!-- ═══════════ MODAL CATAT RETUR ═══════════ -->
-  <div id="modal-return" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative">
-      <div class="flex items-center justify-between border-b border-white/10 pb-4">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i data-lucide="rotate-ccw" class="w-5 h-5 text-[#0088CC]"></i>
-          Catat Retur Barang Baru
-        </h3>
-        <button type="button" id="btn-close-return-modal" class="text-[#A0A0A5] hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <form id="form-return" class="space-y-4">
-        <!-- No Retur & Tipe -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">No. Retur</label>
-            <input type="text" id="return-no" required placeholder="RET-SUP-202610-001"
-                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC] font-mono">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Tipe Retur</label>
-            <select id="return-tipe" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-              <option value="ke_supplier" class="bg-[#1C1C1E]">Ke Supplier (Pengembalian ke Distributor)</option>
-              <option value="dari_customer" class="bg-[#1C1C1E]">Dari Customer (Klaim Pelanggan)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Tanggal & Nama Barang -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Tanggal</label>
-            <input type="date" id="return-tanggal" required
-                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Nama Barang</label>
-            <input type="text" id="return-produk" required placeholder="Contoh: Filter Canister HW-3000"
-                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-          </div>
-        </div>
-
-        <!-- Jumlah & Estimasi Harga Satuan -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Jumlah Unit (Qty)</label>
-            <input type="number" id="return-qty" required min="1" step="1" value="1"
-                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Estimasi Nilai Satuan (Rp)</label>
-            <input type="number" id="return-harga" min="0" step="1000" placeholder="0"
-                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-          </div>
-        </div>
-
-        <!-- Alasan & Status -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Alasan Retur</label>
-            <input type="text" id="return-alasan" required placeholder="Contoh: Barang cacat motor impeller"
-                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Status Awal</label>
-            <select id="return-status" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-              <option value="diproses" class="bg-[#1C1C1E]">Diproses</option>
-              <option value="selesai" class="bg-[#1C1C1E]">Selesai</option>
-              <option value="ditolak" class="bg-[#1C1C1E]">Ditolak</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Keterangan Tambahan -->
-        <div>
-          <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Keterangan / Nomor Nota (Opsional)</label>
-          <textarea id="return-keterangan" rows="2" placeholder="Nomor faktur pembelian, nama customer, atau catatan ekspedisi..."
-                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"></textarea>
-        </div>
-
-        <!-- Tombol Aksi -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-          <button type="button" id="btn-cancel-return-modal" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#A0A0A5] hover:text-white bg-white/5 hover:bg-white/10 transition">
-            Batal
+      <!-- ═══════════ BOTTOM TAB BAR (MOBILE) ═══════════ -->
+      <nav class="bottom-nav" aria-label="Navigasi utama">
+        <div class="bottom-nav-items">
+          <button
+            type="button"
+            class="bottom-nav-item"
+            data-tab="dashboard"
+            onclick="bottomNavTap('dashboard', event)"
+          >
+            <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+            <span>Dashboard</span>
           </button>
-          <button type="submit" id="btn-submit-return" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#0088CC] hover:bg-[#0077BB] text-white shadow-lg shadow-[#0088CC]/20 transition">
-            Simpan Retur
+          <button
+            type="button"
+            class="bottom-nav-item"
+            data-tab="items"
+            onclick="bottomNavTap('items', event)"
+          >
+            <i data-lucide="package" aria-hidden="true"></i>
+            <span>Barang</span>
+          </button>
+          <button
+            type="button"
+            class="bottom-nav-item"
+            data-tab="in"
+            onclick="bottomNavTap('in', event)"
+          >
+            <i data-lucide="arrow-down-circle" aria-hidden="true"></i>
+            <span>Masuk</span>
+          </button>
+          <button
+            type="button"
+            class="bottom-nav-item"
+            data-tab="out"
+            onclick="bottomNavTap('out', event)"
+          >
+            <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
+            <span>Keluar</span>
+          </button>
+          <button
+            type="button"
+            class="bottom-nav-item"
+            data-tab="menu"
+            data-action="open-menu"
+            aria-expanded="false"
+            onclick="openMenuDrawer(event)"
+          >
+            <i data-lucide="menu" aria-hidden="true"></i>
+            <span>Menu</span>
           </button>
         </div>
-      </form>
+      </nav>
     </div>
-  </div>
 
-  <!-- ═══════════ BOTTOM TAB BAR (MOBILE) ═══════════ -->
-  <nav class="bottom-nav" aria-label="Navigasi utama">
-    <div class="bottom-nav-items">
-      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="bottomNavTap('dashboard', event)">
-        <i data-lucide="layout-dashboard" aria-hidden="true"></i>
-        <span>Dashboard</span>
-      </button>
-      <button type="button" class="bottom-nav-item" data-tab="items" onclick="bottomNavTap('items', event)">
-        <i data-lucide="package" aria-hidden="true"></i>
-        <span>Barang</span>
-      </button>
-      <button type="button" class="bottom-nav-item" data-tab="in" onclick="bottomNavTap('in', event)">
-        <i data-lucide="arrow-down-circle" aria-hidden="true"></i>
-        <span>Masuk</span>
-      </button>
-      <button type="button" class="bottom-nav-item" data-tab="out" onclick="bottomNavTap('out', event)">
-        <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
-        <span>Keluar</span>
-      </button>
-      <button type="button" class="bottom-nav-item" data-tab="menu" data-action="open-menu" aria-expanded="false" onclick="openMenuDrawer(event)">
-        <i data-lucide="menu" aria-hidden="true"></i>
-        <span>Menu</span>
-      </button>
-    </div>
-  </nav>
-</div>
+    <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+    <div
+      id="toast-container"
+      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
+      role="status"
+      aria-live="polite"
+    ></div>
 
-<!-- ═══════════ TOAST CONTAINER ═══════════ -->
-<div id="toast-container" 
-     class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
-     role="status" aria-live="polite"></div>
-
-<!-- Scripts -->
-<script type="module" src="../../assets/js/supabase-client.js"></script>
-<script src="../../assets/js/auth.js" defer></script>
-<script src="../../assets/js/utils.js" defer></script>
-<script src="../../assets/js/navigation.js" defer></script>
-<script src="../../assets/js/animations.js" defer></script>
-<script src="../../assets/js/components/app-sidebar.js" defer></script>
-<script src="../../assets/js/icons.js" defer></script>
-<script src="../../assets/js/app.js" defer></script>
-<script type="module" src="./return.js"></script>
-</body>
+    <!-- Scripts -->
+    <script type="module" src="../../assets/js/supabase-client.js"></script>
+    <script src="../../assets/js/auth.js" defer></script>
+    <script src="../../assets/js/utils.js" defer></script>
+    <script src="../../assets/js/navigation.js" defer></script>
+    <script src="../../assets/js/animations.js" defer></script>
+    <script src="../../assets/js/components/app-sidebar.js" defer></script>
+    <script src="../../assets/js/icons.js" defer></script>
+    <script src="../../assets/js/components/select-ui.js" defer></script>
+    <script src="../../assets/js/app.js" defer></script>
+    <script type="module" src="./return.js"></script>
+  </body>
 </html>

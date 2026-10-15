@@ -72,31 +72,23 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
-        <button onclick="handleRefreshSuppliers()" data-action="refresh-suppliers" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-suppliers-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
+        <button type="button" onclick="handleRefreshSuppliers()" data-action="refresh-suppliers" title="Muat ulang data" aria-label="Muat ulang data supplier" id="btn-refresh-suppliers-header" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
         </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
-        </button>
-        <button onclick="openSupplierModal()" data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah Supplier</span>
         </button>
       </div>
     </header>
 
     <!-- ═══════════ SUPPLIER CONTENT ═══════════ -->
     <div id="page-suppliers" class="page active p-6 space-y-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div class="suppliers-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="suppliers-page-intro">
           <h2 class="text-3xl font-bold tracking-tight">Supplier</h2>
           <p class="text-sm text-[#A0A0A5] mt-1">Daftar mitra pemasok & status kerjasama</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button type="button" id="btn-refresh-suppliers" onclick="handleRefreshSuppliers()" data-action="refresh-suppliers" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
-            <i data-lucide="rotate-cw" id="icon-refresh-suppliers" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
-          </button>
+        <div class="suppliers-page-actions flex items-center gap-2">
           <button type="button" onclick="handleExportSuppliers()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
@@ -107,7 +99,7 @@
       </div>
 
       <!-- METRICS HEADER -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="suppliers-metrics grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="card p-5">
           <div class="flex items-center justify-between">
             <p class="text-xs text-[#A0A0A5] font-medium">Total Supplier</p>
@@ -141,14 +133,14 @@
       </div>
 
       <!-- FILTER & SEARCH BAR -->
-      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div class="suppliers-filter-bar flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div class="relative flex-1 max-w-md">
           <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
           <input type="text" id="search-suppliers" placeholder="Cari nama, telepon, atau alamat..."
                  oninput="handleSearch(this.value)"
                  class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
         </div>
-        <div class="report-tabs sm:flex sm:flex-wrap sm:gap-2" id="supplier-filter-tabs">
+        <div class="report-tabs sm:flex sm:flex-wrap sm:gap-2" id="supplier-filter-tabs" role="group" aria-label="Filter supplier berdasarkan status">
           <button type="button" onclick="filterByStatus('all')" id="tab-all"
                   class="filter-tab-btn active">
             Semua
@@ -331,8 +323,8 @@
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
 
 <!-- Logika CRUD Live Supplier -->
 <script src="./suppliers.js"></script>

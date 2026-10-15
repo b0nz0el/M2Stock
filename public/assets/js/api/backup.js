@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — api/backup.js
    Layer API untuk Backup, Export/Import & Backup Logs
-   ANTI-MOCK: Strictly Supabase Integration
+   Integrasi backup dengan Supabase
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';

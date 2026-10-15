@@ -4,66 +4,13 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError, isMockMode } from './_client.js';
-
-// Mock audit logs data untuk fallback
-const MOCK_AUDIT_LOGS = [
-  {
-    id: 'log-001',
-    user_id: '00000000-0000-0000-0000-000000000001',
-    user_email: 'owner@aquastock.pro',
-    action: 'CREATE',
-    target: 'Barang "Pipa PVC 1/2 inch"',
-    ip: '192.168.1.5',
-    created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'log-002',
-    user_id: '00000000-0000-0000-0000-000000000003',
-    user_email: 'staff@aquastock.pro',
-    action: 'UPDATE',
-    target: 'Stok Pompa Air Submersible: 10 → 12',
-    ip: '192.168.1.8',
-    created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'log-003',
-    user_id: '00000000-0000-0000-0000-000000000001',
-    user_email: 'owner@aquastock.pro',
-    action: 'LOGIN',
-    target: 'Login berhasil via Desktop Chrome',
-    ip: '192.168.1.5',
-    created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
-  },
-  {
-    id: 'log-004',
-    user_id: '00000000-0000-0000-0000-000000000003',
-    user_email: 'staff@aquastock.pro',
-    action: 'DELETE',
-    target: 'Transaksi draft #TRX-DRAFT-09',
-    ip: '192.168.1.8',
-    created_at: new Date(Date.now() - 5 * 3600 * 1000).toISOString()
-  },
-  {
-    id: 'log-005',
-    user_id: '00000000-0000-0000-0000-000000000003',
-    user_email: 'staff@aquastock.pro',
-    action: 'LOGIN',
-    target: 'Login kasir via Android App PrinterJTM',
-    ip: '192.168.1.12',
-    created_at: new Date(Date.now() - 8 * 3600 * 1000).toISOString()
-  }
-];
+import { formatResponse, handleError } from './_client.js';
 
 export const audit = {
   /**
    * Mengambil daftar log aktivitas dengan pagination & filter
    */
   async getAll({ page = 1, limit = 20, action = null, search = '', startDate = null, endDate = null } = {}) {
-    if (isMockMode()) {
-      return this._getMockData({ page, limit, action, search, startDate, endDate });
-    }
-
     try {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
@@ -94,9 +41,7 @@ export const audit = {
         .range(from, to);
 
       if (error) {
-        // Fallback jika tabel belum termigrasi atau permission denied
-        console.warn('[AuditApi] Supabase query failed, using fallback:', error.message);
-        return this._getMockData({ page, limit, action, search, startDate, endDate });
+        return formatResponse({ ok: false, error });
       }
 
       return formatResponse({
@@ -110,8 +55,7 @@ export const audit = {
         }
       });
     } catch (err) {
-      console.warn('[AuditApi] Exception caught, using fallback:', err);
-      return this._getMockData({ page, limit, action, search, startDate, endDate });
+      return handleError(err);
     }
   },
 
@@ -125,6 +69,7 @@ export const audit = {
         logs = inputItems;
       } else {
         const res = await this.getAll({ page: 1, limit: 1000 });
+        if (!res.ok) return res;
         logs = res.data || [];
       }
 
@@ -161,11 +106,11 @@ export const audit = {
       }
 
       const payload = {
-        action: (action || 'CREATE').toUpperCase(),
-        target: target || '-',
-        ip: ip || '127.0.0.1',
+        action: (action || '').toUpperCase(),
+        target: target || null,
+        ip: ip || null,
         user_id: user_id || null,
-        user_email: user_email || 'system@aquastock.pro',
+        user_email: user_email || null,
         created_at: new Date().toISOString()
       };
 
@@ -180,47 +125,5 @@ export const audit = {
     } catch (err) {
       return handleError(err);
     }
-  },
-
-  /**
-   * Helper internal untuk memfilter mock audit logs
-   */
-  _getMockData({ page = 1, limit = 20, action = null, search = '', startDate = null, endDate = null }) {
-    let list = [...MOCK_AUDIT_LOGS];
-
-    if (action && action !== 'ALL') {
-      list = list.filter(l => l.action === action.toUpperCase());
-    }
-
-    if (search && search.trim() !== '') {
-      const q = search.trim().toLowerCase();
-      list = list.filter(l =>
-        (l.target && l.target.toLowerCase().includes(q)) ||
-        (l.user_email && l.user_email.toLowerCase().includes(q)) ||
-        (l.ip && l.ip.includes(q))
-      );
-    }
-
-    if (startDate) {
-      list = list.filter(l => l.created_at >= startDate);
-    }
-    if (endDate) {
-      list = list.filter(l => l.created_at <= endDate);
-    }
-
-    const total = list.length;
-    const from = (page - 1) * limit;
-    const paginated = list.slice(from, from + limit);
-
-    return formatResponse({
-      ok: true,
-      data: paginated,
-      meta: {
-        page: Number(page),
-        limit: Number(limit),
-        total: total,
-        totalPages: Math.max(1, Math.ceil(total / limit))
-      }
-    });
   }
 };
