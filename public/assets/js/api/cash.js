@@ -7,58 +7,7 @@ import { supabase } from '../supabase-client.js';
 import { formatResponse, handleError, isMockMode } from './_client.js';
 
 // Mock data untuk development & offline fallback
-let MOCK_CASH_FLOW = [
-  {
-    id: 'cf-001',
-    tanggal: new Date().toISOString().slice(0, 10),
-    keterangan: 'Penjualan Offline Tunai (Faktur #TRX-101)',
-    kategori: 'Penjualan',
-    metode: 'Cash',
-    pemasukan: 850000,
-    pengeluaran: 0,
-    created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
-  },
-  {
-    id: 'cf-002',
-    tanggal: new Date().toISOString().slice(0, 10),
-    keterangan: 'Pembelian Pakan Ikan Hikari Granule 20 Pack',
-    kategori: 'Pembelian',
-    metode: 'Transfer',
-    pemasukan: 0,
-    pengeluaran: 600000,
-    created_at: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
-  },
-  {
-    id: 'cf-003',
-    tanggal: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-    keterangan: 'Penjualan Online Shopee Filter Canister',
-    kategori: 'Penjualan',
-    metode: 'QRIS',
-    pemasukan: 1250000,
-    pengeluaran: 0,
-    created_at: new Date(Date.now() - 26 * 3600 * 1000).toISOString()
-  },
-  {
-    id: 'cf-004',
-    tanggal: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10),
-    keterangan: 'Gaji Mingguan Staff Toko',
-    kategori: 'Gaji',
-    metode: 'Transfer',
-    pemasukan: 0,
-    pengeluaran: 1500000,
-    created_at: new Date(Date.now() - 50 * 3600 * 1000).toISOString()
-  },
-  {
-    id: 'cf-005',
-    tanggal: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
-    keterangan: 'Biaya Listrik & Air PDAM Toko',
-    kategori: 'Operasional',
-    metode: 'Transfer',
-    pemasukan: 0,
-    pengeluaran: 450000,
-    created_at: new Date(Date.now() - 75 * 3600 * 1000).toISOString()
-  }
-];
+let MOCK_CASH_FLOW = [];
 
 export const cash = {
   /**
@@ -127,10 +76,15 @@ export const cash = {
   /**
    * Mengambil statistik ringkasan KPI arus kas
    */
-  async getSummary({ month = null, year = null } = {}) {
+  async getSummary({ month = null, year = null, items: inputItems = null } = {}) {
     try {
-      const res = await this.getAll({ page: 1, limit: 1000 });
-      const items = res.data || [];
+      let items;
+      if (inputItems && Array.isArray(inputItems)) {
+        items = inputItems;
+      } else {
+        const res = await this.getAll({ page: 1, limit: 1000 });
+        items = res.data || [];
+      }
 
       const now = new Date();
       const currentYear = year || now.getFullYear();

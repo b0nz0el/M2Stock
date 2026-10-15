@@ -245,6 +245,9 @@ class AppSidebar extends HTMLElement {
         bubbles: true,
         detail: { pageId }
       }));
+      if (typeof window !== 'undefined' && typeof window.showPage === 'function') {
+        window.showPage(pageId);
+      }
       return;
     }
 
@@ -338,14 +341,16 @@ class AppSidebar extends HTMLElement {
 
     document.removeEventListener('keydown', this._handleTrapFocus);
 
-    if (this._lastFocused?.focus) {
-      if (typeof focusProgrammatically === 'function') {
-        focusProgrammatically(this._lastFocused);
-      } else {
-        this._lastFocused.focus();
-      }
-      this._lastFocused = null;
+    if (this._lastFocused && typeof this._lastFocused.focus === 'function' && document.body.contains(this._lastFocused)) {
+      try {
+        if (typeof focusProgrammatically === 'function') {
+          focusProgrammatically(this._lastFocused);
+        } else {
+          this._lastFocused.focus();
+        }
+      } catch (_) {}
     }
+    this._lastFocused = null;
   }
 
   render() {

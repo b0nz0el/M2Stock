@@ -74,10 +74,12 @@ export const debt = {
   /**
    * Mengambil kalkulasi KPI Hutang & Piutang
    */
-  async getSummary() {
+  async getSummary(items) {
     try {
-      const res = await this.getAll({ page: 1, limit: 1000 });
-      const items = res.data || [];
+      // Terima items sebagai parameter (dari loadData), tidak panggil getAll lagi
+      if (!items || !Array.isArray(items)) {
+        items = [];
+      }
 
       const today = new Date().toISOString().slice(0, 10);
       const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);

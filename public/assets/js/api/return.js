@@ -13,78 +13,7 @@ const formatDateOffset = (days) => {
 };
 
 // Mock data untuk development & offline fallback
-let MOCK_RETURNS = [
-  {
-    id: 'ret-001',
-    no_retur: 'RET-SUP-202610-001',
-    tanggal: formatDateOffset(-2),
-    tipe: 'ke_supplier',
-    produk_id: 'prod-001',
-    produk_nama: 'Canister Filter SunSun HW-3000',
-    qty: 2,
-    harga_satuan: 1250000,
-    alasan: 'Motor bocor pada bagian impeller saat dites',
-    status: 'diproses',
-    keterangan: 'Klaim garansi distributor resmi PT Surya Aquatik',
-    created_at: new Date(Date.now() - 2 * 86400000).toISOString()
-  },
-  {
-    id: 'ret-002',
-    no_retur: 'RET-CUST-202610-002',
-    tanggal: formatDateOffset(-3),
-    tipe: 'dari_customer',
-    produk_id: 'prod-002',
-    produk_nama: 'Lampu LED Chihiros WRGB II 60cm',
-    qty: 1,
-    harga_satuan: 2400000,
-    alasan: 'Bluetooth controller tidak bisa pairing ke aplikasi',
-    status: 'diproses',
-    keterangan: 'Pelanggan: Hendra Wijaya (Nota #TRX-9941)',
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString()
-  },
-  {
-    id: 'ret-003',
-    no_retur: 'RET-CUST-202610-003',
-    tanggal: formatDateOffset(-6),
-    tipe: 'dari_customer',
-    produk_id: 'prod-003',
-    produk_nama: 'Pakan Ikan Discus Prima 250g',
-    qty: 4,
-    harga_satuan: 75000,
-    alasan: 'Kemasan sobek / segel rusak saat pengiriman kurir',
-    status: 'selesai',
-    keterangan: 'Sudah diganti unit baru dari stok toko',
-    created_at: new Date(Date.now() - 6 * 86400000).toISOString()
-  },
-  {
-    id: 'ret-004',
-    no_retur: 'RET-SUP-202610-004',
-    tanggal: formatDateOffset(-10),
-    tipe: 'ke_supplier',
-    produk_id: 'prod-004',
-    produk_nama: 'Tabung CO2 Aquascape 3L Fullset',
-    qty: 1,
-    harga_satuan: 850000,
-    alasan: 'Drat regulator longgar / bocor halus',
-    status: 'selesai',
-    keterangan: 'Telah diretur dan dipotong dari tagihan faktur #PO-881',
-    created_at: new Date(Date.now() - 10 * 86400000).toISOString()
-  },
-  {
-    id: 'ret-005',
-    no_retur: 'RET-CUST-202610-005',
-    tanggal: formatDateOffset(-14),
-    tipe: 'dari_customer',
-    produk_id: 'prod-005',
-    produk_nama: 'Aquarium Kaca Optic Clear 60x30x35',
-    qty: 1,
-    harga_satuan: 550000,
-    alasan: 'Kaca retak akibat kelalaian pembawaan customer sendiri',
-    status: 'ditolak',
-    keterangan: 'Ditolak: klaim di luar batas garansi toko & fisik lecet parah',
-    created_at: new Date(Date.now() - 14 * 86400000).toISOString()
-  }
-];
+let MOCK_RETURNS = [];
 
 export const returnApi = {
   /**
@@ -162,10 +91,15 @@ export const returnApi = {
   /**
    * Mengambil kalkulasi KPI Retur
    */
-  async getSummary() {
+  async getSummary(inputItems = null) {
     try {
-      const res = await this.getAll({ page: 1, limit: 1000 });
-      const items = res.data || [];
+      let items;
+      if (inputItems && Array.isArray(inputItems)) {
+        items = inputItems;
+      } else {
+        const res = await this.getAll({ page: 1, limit: 1000 });
+        items = res.data || [];
+      }
 
       const currentMonthPrefix = new Date().toISOString().slice(0, 7);
 

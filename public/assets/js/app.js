@@ -215,11 +215,20 @@ console.log('%c✨ aQuaStock Pro v3.0 — Fully Responsive', 'color: #32ADE6; fo
     const el = document.getElementById('welcome-name');
     if (!el) return;
     
-    const { supabase } = await import('./supabase-client.js');
-    const { data: { user } } = await supabase.auth.getUser();
+    let client = (typeof window !== 'undefined' && window.supabase) ? window.supabase : null;
+    if (!client) {
+      try {
+        const mod = await import('/assets/js/supabase-client.js');
+        client = mod?.supabase || window.supabase;
+      } catch (_) {}
+    }
+    if (!client || !client.auth) return;
+
+    const { data: authData } = await client.auth.getUser();
+    const user = authData?.user;
     if (!user) return;
     
-    const { data: profile } = await supabase
+    const { data: profile } = await client
       .from('profiles')
       .select('full_name')
       .eq('id', user.id)

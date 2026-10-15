@@ -122,20 +122,18 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
 
     try {
-      const [resList, resSummary] = await Promise.all([
-        poApi.getAll({
-          page: currentPage,
-          limit: pageSize,
-          status: currentStatus === 'all' ? null : currentStatus,
-          search: currentSearch
-        }),
-        poApi.getSummary()
-      ]);
+      const resList = await poApi.getAll({
+        page: currentPage,
+        limit: pageSize,
+        status: currentStatus === 'all' ? null : currentStatus,
+        search: currentSearch
+      });
 
       poEntries = resList.data || [];
       totalRecords = resList.meta?.total || poEntries.length;
       totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
 
+      const resSummary = await poApi.getSummary(poEntries);
       renderKPI(resSummary.data || {});
       renderTable(poEntries);
       renderPagination();

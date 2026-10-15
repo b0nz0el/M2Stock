@@ -110,13 +110,10 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (piutangContainer) piutangContainer.innerHTML = loaderHtml;
 
     try {
-      const [resList, resSummary] = await Promise.all([
-        debtApi.getAll({ page: 1, limit: 500, search: currentSearch }),
-        debtApi.getSummary()
-      ]);
-
+      const resList = await debtApi.getAll({ page: 1, limit: 500, search: currentSearch });
       allDebts = resList.data || [];
-      renderKPI(resSummary.data || {});
+      const summary = await debtApi.getSummary(allDebts);
+      renderKPI(summary.data || {});
       renderLists();
     } catch (err) {
       console.error('Error loading debt data:', err);

@@ -118,10 +118,15 @@ export const audit = {
   /**
    * Mengambil statistik ringkasan audit log
    */
-  async getSummary() {
+  async getSummary(inputItems = null) {
     try {
-      const res = await this.getAll({ page: 1, limit: 1000 });
-      const logs = res.data || [];
+      let logs;
+      if (inputItems && Array.isArray(inputItems)) {
+        logs = inputItems;
+      } else {
+        const res = await this.getAll({ page: 1, limit: 1000 });
+        logs = res.data || [];
+      }
 
       const today = new Date().toISOString().slice(0, 10);
       const summary = {

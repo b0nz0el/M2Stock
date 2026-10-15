@@ -114,7 +114,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
       renderTable();
       renderPagination();
-      updateKPI();
+      updateKPI(cashEntries);
     } catch (err) {
       console.error('Error loadCashData:', err);
       if (tbody) {
@@ -220,9 +220,9 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
-  async function updateKPI() {
+  async function updateKPI(items) {
     try {
-      const res = await cashApi.getSummary();
+      const res = await cashApi.getSummary({ items });
       if (!res.ok) return;
 
       const s = res.data || {};

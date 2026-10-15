@@ -305,21 +305,25 @@
   </div>
 
   <!-- ═══════════ BOTTOM TAB BAR (MOBILE) ═══════════ -->
-  <nav class="bottom-nav md:hidden" aria-label="Navigasi utama">
+  <nav class="bottom-nav" aria-label="Navigasi utama">
     <div class="bottom-nav-items">
-      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="window.location.href='/dashboard/'">
+      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="bottomNavTap('dashboard', event)">
         <i data-lucide="layout-dashboard" aria-hidden="true"></i>
         <span>Dashboard</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="items" onclick="window.location.href='/dashboard/items/'">
+      <button type="button" class="bottom-nav-item" data-tab="items" onclick="bottomNavTap('items', event)">
         <i data-lucide="package" aria-hidden="true"></i>
         <span>Barang</span>
       </button>
-      <button type="button" class="bottom-nav-item active" data-tab="po" onclick="window.location.href='/dashboard/po/'">
-        <i data-lucide="file-spreadsheet" aria-hidden="true"></i>
-        <span>PO</span>
+      <button type="button" class="bottom-nav-item" data-tab="in" onclick="bottomNavTap('in', event)">
+        <i data-lucide="arrow-down-circle" aria-hidden="true"></i>
+        <span>Masuk</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="menu" onclick="window.location.href='/dashboard/settings/'">
+      <button type="button" class="bottom-nav-item" data-tab="out" onclick="bottomNavTap('out', event)">
+        <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
+        <span>Keluar</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="menu" data-action="open-menu" aria-expanded="false" onclick="openMenuDrawer(event)">
         <i data-lucide="menu" aria-hidden="true"></i>
         <span>Menu</span>
       </button>
@@ -340,6 +344,7 @@
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/app.js" defer></script>
 <script type="module" src="./po.js"></script>
 </body>
 </html>

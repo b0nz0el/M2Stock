@@ -96,7 +96,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
       renderTable();
       renderPagination();
-      updateKPI();
+      updateKPI(currentLogs);
     } catch (err) {
       console.error('Error loadAuditLogs:', err);
       if (tbody) {
@@ -186,9 +186,9 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
-  async function updateKPI() {
+  async function updateKPI(items) {
     try {
-      const res = await auditApi.getSummary();
+      const res = await auditApi.getSummary(items);
       if (!res.ok) return;
 
       const s = res.data || {};

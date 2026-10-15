@@ -225,9 +225,9 @@ function closeSidebar() {
   } else {
     const aside = document.querySelector('aside');
     if (aside) aside.classList.remove('open');
-    updateSidebarAria(false);
-    document.removeEventListener('keydown', trapSidebarFocus);
   }
+  updateSidebarAria(false);
+  document.removeEventListener('keydown', trapSidebarFocus);
 
   document.querySelectorAll('.bottom-nav-item').forEach(function(b) {
     b.classList.remove('active');
@@ -244,6 +244,27 @@ function closeSidebar() {
     lastFocusedElement.focus();
     lastFocusedElement = null;
   }
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOM EVENT LISTENERS (<app-sidebar>)
+   ═══════════════════════════════════════════════ */
+document.addEventListener('app-sidebar:navigate', function(e) {
+  if (e.detail && e.detail.pageId && typeof showPage === 'function') {
+    showPage(e.detail.pageId);
+  }
+});
+
+/* Expose global functions to window */
+if (typeof window !== 'undefined') {
+  window.pageUrl = pageUrl;
+  window.showPage = showPage;
+  window.bottomNavTap = bottomNavTap;
+  window.openMenuDrawer = openMenuDrawer;
+  window.closeSidebar = closeSidebar;
+  window.toggleSidebar = toggleSidebar;
+  window.currentPageId = currentPageId;
+  window.syncActiveState = syncActiveState;
 }
 
 /* ═══════════════════════════════════════════════

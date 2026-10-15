@@ -86,10 +86,15 @@ export const po = {
   /**
    * Mengambil ringkasan KPI Purchase Order
    */
-  async getSummary() {
+  async getSummary(inputItems = null) {
     try {
-      const res = await this.getAll({ page: 1, limit: 1000 });
-      const items = res.data || [];
+      let items;
+      if (inputItems && Array.isArray(inputItems)) {
+        items = inputItems;
+      } else {
+        const res = await this.getAll({ page: 1, limit: 1000 });
+        items = res.data || [];
+      }
 
       const currentMonthPrefix = new Date().toISOString().slice(0, 7);
 

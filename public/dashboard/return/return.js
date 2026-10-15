@@ -149,8 +149,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     try {
       const { startDate, endDate } = getDateFilterRange(currentPeriod);
-      const [resList, resSummary] = await Promise.all([
-        returnApi.getAll({
+      const resList = await returnApi.getAll({
           page: currentPage,
           limit: pageSize,
           tipe: currentTipe,
@@ -158,14 +157,13 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
           search: currentSearch,
           startDate,
           endDate
-        }),
-        returnApi.getSummary()
-      ]);
+        });
 
       returnEntries = resList.data || [];
       totalRecords = resList.meta?.total || returnEntries.length;
       totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
 
+      const resSummary = await returnApi.getSummary(returnEntries);
       renderKPI(resSummary.data || {});
       renderTable(returnEntries);
       renderPagination();
