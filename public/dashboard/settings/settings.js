@@ -56,16 +56,42 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
     entries.forEach(entry => {
       const row = document.createElement('li');
       row.className = 'flex items-center justify-between gap-3 py-3 text-sm';
+      row.dataset.catalogId = String(entry.id);
 
       const name = document.createElement('span');
       name.className = 'font-medium text-white';
       name.textContent = entry.name;
 
-      const badge = document.createElement('span');
-      badge.className = 'rounded-full bg-white/5 px-2.5 py-1 text-xs text-[#A0A0A5]';
-      badge.textContent = 'Aktif';
+      const actions = document.createElement('div');
+      actions.className = 'flex shrink-0 items-center gap-2';
 
-      row.append(name, badge);
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.dataset.catalogAction = 'edit';
+      editButton.dataset.action = 'edit';
+      editButton.className = 'rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#32ADE6] hover:bg-white/5';
+      editButton.textContent = 'Edit';
+      editButton.setAttribute('aria-label', `Edit ${entry.name}`);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.dataset.catalogAction = 'delete';
+      deleteButton.dataset.action = 'delete';
+      deleteButton.className = 'rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#FF6961] hover:bg-[#FF3B30]/10';
+      deleteButton.textContent = 'Hapus';
+      deleteButton.setAttribute('aria-label', `Hapus ${entry.name}`);
+
+      if (elementId === 'setting-unit-list' && entry.name.trim().toLowerCase() === 'pcs') {
+        editButton.disabled = true;
+        editButton.title = 'Satuan default tidak dapat diubah namanya.';
+        editButton.classList.add('cursor-not-allowed', 'opacity-40');
+        deleteButton.disabled = true;
+        deleteButton.title = 'Satuan default tidak dapat dihapus.';
+        deleteButton.classList.add('cursor-not-allowed', 'opacity-40');
+      }
+
+      actions.append(editButton, deleteButton);
+      row.append(name, actions);
       list.appendChild(row);
     });
   }
@@ -82,6 +108,131 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
     catalogUnits = unitResult.data || [];
     renderCatalogList('setting-category-list', catalogCategories, 'Belum ada kategori.');
     renderCatalogList('setting-unit-list', catalogUnits, 'Belum ada satuan.');
+  }
+
+  function getCatalogEntries(table) {
+    return table === 'categories' ? catalogCategories : catalogUnits;
+  }
+
+  function renderCatalogEntryEdit(row, entry, table, label) {
+    row.replaceChildren();
+    row.className = 'flex items-center gap-2 py-2';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = entry.name;
+    input.maxLength = table === 'categories' ? 80 : 30;
+    input.required = true;
+    input.setAttribute('aria-label', `Nama ${label.toLowerCase()}`);
+    input.className = 'min-w-0 flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-[#0088CC] focus:outline-none';
+
+    const saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.className = 'rounded-lg px-2.5 py-2 text-xs font-semibold text-[#34C759] hover:bg-white/5';
+    saveButton.textContent = 'Simpan';
+
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'rounded-lg px-2.5 py-2 text-xs font-medium text-[#A0A0A5] hover:bg-white/5';
+    cancelButton.textContent = 'Batal';
+
+    const cancel = () => renderCatalogList(
+      table === 'categories' ? 'setting-category-list' : 'setting-unit-list',
+      getCatalogEntries(table),
+      `Belum ada ${label.toLowerCase()}.`
+    );
+    const save = async () => {
+      const name = input.value.trim();
+      if (!name) {
+        if (typeof showToast === 'function') showToast(`Nama ${label.toLowerCase()} wajib diisi.`, 'error');
+        input.focus();
+        return;
+      }
+      if (name.toLocaleLowerCase() !== entry.name.trim().toLocaleLowerCase()
+        && getCatalogEntries(table).some(item =>
+          String(item.id) !== String(entry.id)
+          && item.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())) {
+        if (typeof showToast === 'function') showToast(`${label} "${name}" sudah terdaftar.`, 'error');
+        input.focus();
+        return;
+      }
+      saveButton.disabled = true;
+      cancelButton.disabled = true;
+      try {
+        const { error } = await supabase.from(table).update({ name }).eq('id', entry.id);
+        if (error) {
+          if (error.code === '23505') throw new Error(`${label} "${name}" sudah terdaftar.`);
+          throw error;
+        }
+        await loadCatalogLists();
+        if (typeof showToast === 'function') showToast(`${label} berhasil diperbarui.`, 'success');
+      } catch (error) {
+        console.error(`Gagal mengubah ${label.toLowerCase()}:`, error);
+        if (typeof showToast === 'function') {
+          showToast(error.message || `Gagal mengubah ${label.toLowerCase()}. Periksa hak akses Anda.`, 'error');
+        }
+        saveButton.disabled = false;
+        cancelButton.disabled = false;
+      }
+    };
+
+    saveButton.addEventListener('click', save);
+    cancelButton.addEventListener('click', cancel);
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        save();
+      } else if (event.key === 'Escape') {
+        cancel();
+      }
+    });
+    row.append(input, saveButton, cancelButton);
+    input.focus();
+    input.select();
+  }
+
+  async function handleCatalogAction(event, table, label) {
+    const button = event.target.closest('button[data-catalog-action]');
+    if (!button) return;
+
+    const entries = getCatalogEntries(table);
+    const entry = entries.find(item => String(item.id) === button.closest('li')?.dataset.catalogId);
+    if (!entry) return;
+
+    if (button.dataset.catalogAction === 'edit') {
+      if (table === 'units' && entry.name.trim().toLowerCase() === 'pcs') {
+        if (typeof showToast === 'function') showToast('Satuan default "pcs" tidak dapat diubah namanya.', 'error');
+        return;
+      }
+      renderCatalogEntryEdit(button.closest('li'), entry, table, label);
+      return;
+    }
+
+    const deleteMessage = table === 'categories'
+      ? `Hapus kategori "${entry.name}"? Produk dalam kategori ini akan tetap ada, tetapi menjadi tanpa kategori.`
+      : `Hapus satuan "${entry.name}"? Satuan yang masih dipakai produk tidak dapat dihapus.`;
+    if (!window.confirm(deleteMessage)) return;
+
+    button.disabled = true;
+    try {
+      const { error } = await supabase.from(table).delete().eq('id', entry.id);
+      if (error) {
+        if (error.code === '23503') {
+          throw new Error(table === 'units'
+            ? 'Satuan masih dipakai oleh produk. Ubah satuan produk terlebih dahulu.'
+            : 'Kategori masih digunakan dan tidak dapat dihapus.');
+        }
+        throw error;
+      }
+      await loadCatalogLists();
+      if (typeof showToast === 'function') showToast(`${label} "${entry.name}" berhasil dihapus.`, 'success');
+    } catch (error) {
+      console.error(`Gagal menghapus ${label.toLowerCase()}:`, error);
+      if (typeof showToast === 'function') {
+        showToast(error.message || `Gagal menghapus ${label.toLowerCase()}. Periksa hak akses Anda.`, 'error');
+      }
+      button.disabled = false;
+    }
   }
 
   async function handleAddCatalogEntry(event, { table, inputId, buttonId, label }) {
@@ -435,6 +586,13 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
         label: 'Satuan'
       }));
     }
+
+    document.getElementById('setting-category-list')?.addEventListener('click', event => {
+      handleCatalogAction(event, 'categories', 'Kategori');
+    });
+    document.getElementById('setting-unit-list')?.addEventListener('click', event => {
+      handleCatalogAction(event, 'units', 'Satuan');
+    });
 
     // Initial load
     await loadSettings();
