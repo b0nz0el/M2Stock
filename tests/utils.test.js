@@ -150,7 +150,7 @@ describe('utils.js', () => {
       document.body.innerHTML = '';
     });
 
-    it('membuat elemen toast dengan pesan dan warna success ke dalam #toast-container', () => {
+    it('membuat toast success yang ringkas dengan ikon dan pesan', () => {
       showToast('Data berhasil disimpan', 'success');
 
       const container = document.getElementById('toast-container');
@@ -160,8 +160,12 @@ describe('utils.js', () => {
       expect(toast.getAttribute('aria-live')).toBe('polite');
       expect(toast.textContent).toContain('Data berhasil disimpan');
 
-      const indicator = toast.querySelector('span[style*="background"]');
-      expect(indicator.getAttribute('style')).toContain('#34C759');
+      expect(toast.classList.contains('toast--success')).toBe(true);
+      expect(toast.querySelector('.toast__icon [data-lucide="check"]')).not.toBeNull();
+      expect(toast.querySelector('.toast__message').textContent).toBe('Data berhasil disimpan');
+      expect(toast.querySelector('.toast__close').getAttribute('aria-label')).toBe('Tutup notifikasi');
+      expect(toast.querySelector('.toast__icon + .toast__message')).not.toBeNull();
+      expect(toast.querySelector('[style*="background"]')).toBeNull();
     });
 
     it('mencegah serangan XSS dengan merender teks secara aman (bukan elemen HTML)', () => {
@@ -184,12 +188,10 @@ describe('utils.js', () => {
       const toasts = document.querySelectorAll('.toast');
       expect(toasts.length).toBe(3);
 
-      // error (#FF3B30)
-      expect(toasts[0].querySelector('span[style*="background"]').getAttribute('style')).toContain('#FF3B30');
-      // info (#0088CC)
-      expect(toasts[1].querySelector('span[style*="background"]').getAttribute('style')).toContain('#0088CC');
-      // fallback info (#0088CC)
-      expect(toasts[2].querySelector('span[style*="background"]').getAttribute('style')).toContain('#0088CC');
+      expect(toasts[0].classList.contains('toast--error')).toBe(true);
+      expect(toasts[0].getAttribute('role')).toBe('alert');
+      expect(toasts[1].classList.contains('toast--info')).toBe(true);
+      expect(toasts[2].classList.contains('toast--info')).toBe(true);
     });
 
     it('otomatis fallback ke document.body jika #toast-container tidak ditemukan', () => {
@@ -208,11 +210,16 @@ describe('utils.js', () => {
 
       // Maju 3000ms
       vi.advanceTimersByTime(3000);
-      expect(toast.style.opacity).toBe('0');
-      expect(toast.style.transform).toBe('translateX(100%)');
+      expect(toast.classList.contains('toast--leaving')).toBe(true);
 
       // Maju 300ms lagi (total 3300ms) untuk remove
       vi.advanceTimersByTime(300);
+      expect(document.querySelector('.toast')).toBeNull();
+    });
+
+    it('menutup toast saat tombol tutup ditekan', () => {
+      showToast('Dapat ditutup', 'info');
+      document.querySelector('.toast__close').click();
       expect(document.querySelector('.toast')).toBeNull();
     });
   });
@@ -300,6 +307,17 @@ describe('utils.js', () => {
       expect(global.URL.createObjectURL).toHaveBeenCalled();
       expect(clickSpy).toHaveBeenCalled();
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/test-uuid');
+    });
+
+    it('mengizinkan template CSV tanpa data tetapi tetap menolak ekspor kosong biasa', () => {
+      const headers = ['SKU', 'Nama Barang'];
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click');
+
+      expect(exportToCSV('empty.csv', [], headers)).toBeNull();
+      const template = exportToCSV('template.csv', [], headers, { allowEmpty: true });
+
+      expect(template).toBe('\uFEFF"SKU","Nama Barang"');
+      expect(clickSpy).toHaveBeenCalledOnce();
     });
   });
 });

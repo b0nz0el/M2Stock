@@ -32,6 +32,25 @@
   min-height: 44px;
 }
 
+#page-cash .cash-filter-control {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 10px;
+}
+
+#page-cash .cash-filter-control > .ui-select {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+#page-cash .cash-filter-control .ui-select-trigger {
+  min-height: 44px;
+}
+
 #page-debt .debt-status-tabs > button {
   min-height: 44px;
 }
@@ -761,7 +780,7 @@
     gap: 12px;
     padding: 5px 0 !important;
     border: none !important;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     text-align: right;
     background: transparent !important;
   }
@@ -769,8 +788,8 @@
   .card table tbody td::before {
     content: attr(data-label) !important;
     color: var(--aq-text-muted) !important;
-    font-size: 0.6875rem !important;
-    font-weight: 500 !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px;
     text-align: left !important;
@@ -863,7 +882,7 @@
   .card table tbody td[data-label="NO. RESI"],
   .card table tbody td[data-label="NO. PO"],
   .card table tbody td[data-label="NO. RETUR"] {
-    font-size: 0.625rem !important;
+    font-size: 0.75rem !important;
     color: var(--aq-text-subtle);
     white-space: nowrap !important;
     gap: 6px !important;
@@ -873,7 +892,7 @@
   .card table tbody td[data-label="NO. RESI"]::before,
   .card table tbody td[data-label="NO. PO"]::before,
   .card table tbody td[data-label="NO. RETUR"]::before {
-    font-size: 0.5625rem !important;
+    font-size: 0.6875rem !important;
     letter-spacing: 0.3px !important;
   }
 
@@ -1121,7 +1140,7 @@
     gap: 12px;
     padding: 6px 0 !important;
     border: none !important;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     text-align: right;
     background: transparent !important;
   }
@@ -1129,8 +1148,8 @@
   .card table tbody td::before {
     content: attr(data-label) !important;
     color: var(--aq-text-muted) !important;
-    font-size: 0.6875rem !important;
-    font-weight: 500 !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px;
     text-align: left !important;
@@ -1190,6 +1209,17 @@
 }
 
 @media (max-width: 767px) {
+  #page-cash .cash-filter-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-cash .cash-filter-control:first-child {
+    grid-column: 1 / -1;
+  }
+
   #page-customers .customers-page-actions {
     align-items: stretch;
   }

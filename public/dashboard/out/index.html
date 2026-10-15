@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>aQuaStock Pro — Barang Keluar</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
@@ -115,6 +115,9 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat penjualan & pengeluaran barang</p>
         </div>
         <div class="flex gap-2">
+          <button type="button" id="btn-import-out" data-action="import" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+            <i data-lucide="upload" class="w-4 h-4" aria-hidden="true"></i> Import CSV
+          </button>
           <button type="button" onclick="handleExportOut()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
@@ -477,6 +480,7 @@
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
 <script type="module" src="../../assets/js/api/index.js"></script>
+<script src="../../assets/js/components/csv-import.js" defer></script>
 <script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 

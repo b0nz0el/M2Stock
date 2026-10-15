@@ -24,11 +24,17 @@ export const customers = {
           // Ambil transaksi 'out' untuk menghitung total belanja & jumlah transaksi
           const { data: txList, error: txErr } = await window.supabase
             .from('transactions')
-            .select('id, customer_id, qty, price, created_at')
+            .select('id, customer_id, quantity, unit_price, created_at')
             .eq('type', 'out');
+          if (txErr) {
+            return formatResponse({
+              ok: false,
+              error: { code: txErr.code || 'SUPABASE_ERROR', message: txErr.message || 'Gagal menghitung transaksi customer' }
+            });
+          }
 
           const txByCust = {};
-          if (!txErr && txList) {
+          if (txList) {
             for (const tx of txList) {
               if (!tx.customer_id) continue;
               if (!txByCust[tx.customer_id]) {
@@ -38,7 +44,7 @@ export const customers = {
                   lastOrderAt: null
                 };
               }
-              const sub = (Number(tx.qty) || 0) * (Number(tx.price) || 0);
+              const sub = (Number(tx.quantity) || 0) * (Number(tx.unit_price) || 0);
               txByCust[tx.customer_id].totalSpent += sub;
               txByCust[tx.customer_id].totalOrders += 1;
               if (!txByCust[tx.customer_id].lastOrderAt || new Date(tx.created_at) > new Date(txByCust[tx.customer_id].lastOrderAt)) {

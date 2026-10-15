@@ -28,10 +28,13 @@ const MOBILE_BREAKPOINT = 1024;
 /**
  * Sync data-label ke semua <td> dalam tabel .card
  * Berdasarkan header <thead> yang ada di table tersebut.
- * Panggil fungsi ini SETIAP KALI render rows baru (dynamic dari Supabase).
+ * Sinkronkan saat inisialisasi dan saat baris dinamis ditambahkan.
  */
-function syncTableLabels() {
-  document.querySelectorAll('.card table').forEach(function(table) {
+function syncTableLabels(table = null) {
+  const tables = table ? [table] : document.querySelectorAll('.card table');
+  tables.forEach(function(table) {
+    if (!table.matches('.card table')) return;
+
     const headers = [];
     table.querySelectorAll('thead th').forEach(function(th) {
       headers.push(th.textContent.trim().toUpperCase());
@@ -60,6 +63,19 @@ window.syncTableLabels = syncTableLabels;
 
 document.addEventListener('DOMContentLoaded', function() {
   syncTableLabels();
+
+  const tableObserver = new MutationObserver(function(mutations) {
+    const changedTables = new Set();
+    mutations.forEach(function(mutation) {
+      const table = mutation.target.closest('table');
+      if (table) changedTables.add(table);
+    });
+    changedTables.forEach(syncTableLabels);
+  });
+
+  document.querySelectorAll('.card table tbody').forEach(function(tbody) {
+    tableObserver.observe(tbody, { childList: true });
+  });
 
   // Pilih semua checkbox
   const selectAll = document.getElementById('select-all-items');

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>aQuaStock Pro — Barang Masuk</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
@@ -94,6 +94,9 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Riwayat barang masuk dari supplier</p>
         </div>
         <div class="flex gap-2">
+          <button type="button" id="btn-import-in" data-action="import" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+            <i data-lucide="upload" class="w-4 h-4" aria-hidden="true"></i> Import CSV
+          </button>
           <button type="button" onclick="handleExportIn()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
@@ -249,6 +252,22 @@
 
     <form id="form-in" class="space-y-4" onsubmit="handleInSubmit(event)">
       <div>
+        <label for="in-barcode" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Barcode Produk</label>
+        <div class="flex gap-2">
+          <input type="text" id="in-barcode" inputmode="text" autocomplete="off"
+                 placeholder="Pindai atau masukkan barcode"
+                 onchange="handleInBarcodeLookup()"
+                 onkeydown="if (event.key === 'Enter') { event.preventDefault(); handleInBarcodeLookup(); }"
+                 class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:border-[#0088CC] focus:outline-none">
+          <button type="button" id="btn-scan-in-barcode" aria-label="Pindai barcode untuk memilih produk" title="Pindai barcode produk"
+                  class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#32ADE6] transition hover:bg-white/10">
+            <i data-lucide="scan-line" class="h-5 w-5" aria-hidden="true"></i>
+          </button>
+        </div>
+        <p id="in-barcode-status" class="mt-1.5 min-h-4 text-xs text-[#A0A0A5]" aria-live="polite"></p>
+      </div>
+
+      <div>
         <label for="in-product-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Pilih Produk <span class="text-[#FF3B30]">*</span></label>
         <select id="in-product-id" required onchange="handleInProductChange()"
                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
@@ -350,6 +369,8 @@
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
 <script type="module" src="../../assets/js/api/index.js"></script>
+<script src="../../assets/js/components/barcode-scanner.js" defer></script>
+<script src="../../assets/js/components/csv-import.js" defer></script>
 <script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 

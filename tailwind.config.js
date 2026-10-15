@@ -34,7 +34,7 @@ module.exports = {
         muted: '#A0A0A5'
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', 'Inter', 'sans-serif']
+        sans: ['InterVariable', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', 'Segoe UI', 'Roboto', 'sans-serif']
       }
     }
   },

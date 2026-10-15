@@ -200,6 +200,7 @@ Katalog induk inventaris barang dagangan.
 create table public.products (
   id uuid primary key default gen_random_uuid(),
   sku text not null unique,
+  barcode text,
   name text not null,
   brand text default '-',
   category_id integer references public.categories(id) on delete set null,
@@ -226,6 +227,7 @@ create table public.transactions (
   reference_no text,
   supplier_id uuid references public.suppliers(id) on delete set null,
   customer_id uuid references public.customers(id) on delete set null,
+  channel text not null default 'Offline',
   notes text,
   user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()

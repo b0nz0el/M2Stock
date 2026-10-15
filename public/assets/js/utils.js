@@ -6,39 +6,39 @@
    TOAST
    ═══════════════════════════════════════════════════ */
 function showToast(msg, type = 'success') {
-  const colors = { success: '#34C759', error: '#FF3B30', info: '#0088CC', warning: '#FF9500' };
-  const iconNames = { success: 'check', error: 'alert-circle', info: 'info', warning: 'alert-triangle' };
+  const variants = {
+    success: { icon: 'check', role: 'status' },
+    error: { icon: 'alert-circle', role: 'alert' },
+    info: { icon: 'info', role: 'status' },
+    warning: { icon: 'alert-triangle', role: 'status' }
+  };
+  const variant = variants[type] || variants.info;
   const container = document.getElementById('toast-container') || document.body;
   const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.setAttribute('role', 'status');
-  toast.setAttribute('aria-live', 'polite');
-  const wrapper = document.createElement('div');
-  wrapper.style.display = 'flex';
-  wrapper.style.alignItems = 'center';
-  wrapper.style.gap = '8px';
+  toast.className = `toast toast--${variants[type] ? type : 'info'}`;
+  toast.setAttribute('role', variant.role);
+  toast.setAttribute('aria-live', variant.role === 'alert' ? 'assertive' : 'polite');
 
-  const dot = document.createElement('span');
-  dot.style.width = '8px';
-  dot.style.height = '8px';
-  dot.style.background = colors[type] || colors.info;
-  dot.style.borderRadius = '50%';
-  dot.style.flexShrink = '0';
-
+  const iconWrap = document.createElement('span');
+  iconWrap.className = 'toast__icon';
+  iconWrap.setAttribute('aria-hidden', 'true');
   const iconEl = document.createElement('i');
-  iconEl.setAttribute('data-lucide', iconNames[type] || 'info');
-  iconEl.className = 'w-4 h-4 flex-shrink-0';
-  iconEl.style.color = colors[type] || colors.info;
+  iconEl.setAttribute('data-lucide', variant.icon);
+  iconEl.className = 'w-4 h-4';
+  iconWrap.appendChild(iconEl);
 
   const textSpan = document.createElement('span');
-  textSpan.style.fontSize = '14px';
-  textSpan.style.fontWeight = '500';
+  textSpan.className = 'toast__message';
   textSpan.textContent = msg;
 
-  wrapper.appendChild(dot);
-  wrapper.appendChild(iconEl);
-  wrapper.appendChild(textSpan);
-  toast.appendChild(wrapper);
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'toast__close';
+  closeButton.setAttribute('aria-label', 'Tutup notifikasi');
+  closeButton.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>';
+  closeButton.addEventListener('click', () => toast.remove());
+
+  toast.append(iconWrap, textSpan, closeButton);
   container.appendChild(toast);
 
   if (typeof window !== 'undefined' && typeof window.refreshIcons === 'function') {
@@ -48,9 +48,7 @@ function showToast(msg, type = 'success') {
   }
 
   setTimeout(() => {
-    toast.style.transition = 'opacity 0.3s, transform 0.3s';
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
+    toast.classList.add('toast--leaving');
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
@@ -110,8 +108,8 @@ function focusProgrammatically(el) {
 /* ═══════════════════════════════════════════════
    EXPORT CSV
    ═══════════════════════════════════════════════ */
-function exportToCSV(filename, rows, headers) {
-  if (!rows || !rows.length) {
+function exportToCSV(filename, rows, headers, options = {}) {
+  if ((!rows || !rows.length) && !(options.allowEmpty && headers && headers.length)) {
     if (typeof showToast === 'function') showToast('Tidak ada data untuk diekspor', 'info');
     return null;
   }
@@ -127,6 +125,7 @@ function exportToCSV(filename, rows, headers) {
     lines.push(headers.map(escapeCell).join(','));
   }
 
+  rows = rows || [];
   for (var i = 0; i < rows.length; i++) {
     var row = rows[i];
     var cells = Array.isArray(row) ? row : Object.values(row);
@@ -149,7 +148,10 @@ function exportToCSV(filename, rows, headers) {
   }
 
   if (typeof showToast === 'function') {
-    showToast('Berhasil mengekspor ' + rows.length + ' baris data ke CSV', 'success');
+    showToast(rows.length
+      ? 'Berhasil mengekspor ' + rows.length + ' baris data ke CSV'
+      : 'Template CSV berhasil diunduh',
+    'success');
   }
   return csvString;
 }

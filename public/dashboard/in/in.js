@@ -1,5 +1,6 @@
   let allInTransactions = [];
   let availableProducts = [];
+  let productsLoaded = false;
   let currentFilterPeriod = 'today';
   let searchQuery = '';
   let currentPage = 1;
@@ -33,6 +34,7 @@
       const prodRes = await Api.items.getAll();
       if (prodRes && prodRes.ok) {
         availableProducts = prodRes.data || [];
+        productsLoaded = true;
         const prodSelect = document.getElementById('in-product-id');
         if (prodSelect) {
           prodSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
@@ -66,12 +68,49 @@
   function handleInProductChange() {
     const select = document.getElementById('in-product-id');
     const pId = select.value;
-    const prod = availableProducts.find(p => Number(p.id) === Number(pId));
+    const prod = availableProducts.find(p => String(p.id) === String(pId));
     const priceInput = document.getElementById('in-price');
     if (prod && priceInput) {
       priceInput.value = prod.cost_price || 0;
     }
     calculateInTotal();
+  }
+
+  async function handleInBarcodeLookup(scannedBarcode) {
+    const input = document.getElementById('in-barcode');
+    const status = document.getElementById('in-barcode-status');
+    const select = document.getElementById('in-product-id');
+    const barcode = String(scannedBarcode ?? input?.value ?? '').trim();
+    if (!input || !select) return;
+    if (!barcode) {
+      if (status) status.textContent = '';
+      return;
+    }
+
+    input.value = barcode;
+    if (!productsLoaded) await loadDropdowns();
+    if (!productsLoaded) {
+      if (status) status.textContent = 'Daftar produk belum berhasil dimuat. Periksa koneksi lalu coba lagi.';
+      if (typeof showToast === 'function') showToast('Daftar produk belum berhasil dimuat', 'error');
+      return;
+    }
+
+    const product = availableProducts.find(p => String(p.barcode || '').trim() === barcode);
+    if (!product) {
+      select.value = '';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      document.getElementById('in-price').value = '0';
+      calculateInTotal();
+      if (status) status.textContent = 'Barcode tidak ditemukan. Pastikan produk dan barcode sudah terdaftar.';
+      if (typeof showToast === 'function') showToast('Produk dengan barcode tersebut tidak ditemukan', 'error');
+      return;
+    }
+
+    select.value = String(product.id);
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    if (status) status.textContent = `Produk dipilih: ${product.name}`;
+    if (typeof showToast === 'function') showToast(`Produk "${product.name}" berhasil dipilih`, 'success');
+    document.getElementById('in-qty')?.focus();
   }
 
   function calculateInTotal() {
@@ -159,8 +198,8 @@
       }
 
       const res = await Api.transactions.createIn({
-        product_id: Number(productId),
-        supplier_id: supplierId ? Number(supplierId) : null,
+        product_id: productId,
+        supplier_id: supplierId || null,
         qty: qty,
         price: price,
         note: note || null,
@@ -458,7 +497,7 @@
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
           <td class="px-4 py-3.5 text-right">
-            <button type="button" data-action="delete" onclick="openDeleteInModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
+            <button type="button" data-action="delete" data-transaction-id="${tx.id}" title="Hapus transaksi" aria-label="Hapus transaksi"
                     class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
@@ -557,4 +596,101 @@
     setupSearchListeners();
     loadInTransactions();
     loadDropdowns();
+
+    document.getElementById('in-tbody')?.addEventListener('click', function (event) {
+      const button = event.target.closest('[data-transaction-id]');
+      if (button) openDeleteInModal(button.dataset.transactionId);
+    });
+
+    const scanButton = document.getElementById('btn-scan-in-barcode');
+    scanButton?.addEventListener('click', function () {
+      if (typeof window.openItemBarcodeScanner !== 'function') {
+        showToast('Pemindai barcode belum siap. Muat ulang halaman dan coba lagi.', 'error');
+        return;
+      }
+
+      window.openItemBarcodeScanner(handleInBarcodeLookup);
+    });
+
+    document.getElementById('btn-import-in')?.addEventListener('click', function () {
+      if (typeof window.startCsvImport !== 'function') {
+        showToast('Fitur import belum siap. Muat ulang halaman dan coba lagi.', 'error');
+        return;
+      }
+
+      const headers = ['SKU', 'Barcode', 'Jumlah', 'Harga Satuan (Rp)', 'Supplier', 'Tanggal (YYYY-MM-DD)', 'Catatan'];
+      window.startCsvImport({
+        title: 'Barang Masuk',
+        templateName: 'template-barang-masuk.csv',
+        headers,
+        requiredHeaders: headers,
+        templateRows: [],
+        preventReimport: true,
+        validate: async function (records) {
+          const [productsResult, suppliersResult] = await Promise.all([
+            Api.items.getAll(),
+            Api.suppliers.getAll()
+          ]);
+          if (!productsResult?.ok) throw new Error(productsResult?.error?.message || 'Gagal memuat produk.');
+          if (!suppliersResult?.ok) throw new Error(suppliersResult?.error?.message || 'Gagal memuat supplier.');
+
+          const products = productsResult.data || [];
+          const suppliers = new Set((suppliersResult.data || []).map(supplier => String(supplier.name).trim().toLowerCase()));
+          const rows = [];
+          const errors = [];
+          records.forEach((record, index) => {
+            const rowNumber = index + 2;
+            const sku = record['SKU'].trim();
+            const barcode = record['Barcode'].trim();
+            const quantityText = record['Jumlah'].trim();
+            const priceText = record['Harga Satuan (Rp)'].trim();
+            const supplier = record['Supplier'].trim();
+            const date = record['Tanggal (YYYY-MM-DD)'].trim();
+            const rowErrorsBefore = errors.length;
+
+            if (!sku && !barcode) errors.push({ row: rowNumber, message: 'SKU atau barcode wajib diisi.' });
+            const matches = products.filter(product =>
+              (sku && String(product.sku || '').trim() === sku)
+              || (barcode && String(product.barcode || '').trim() === barcode));
+            if (matches.length !== 1) {
+              errors.push({ row: rowNumber, message: 'Produk tidak ditemukan atau SKU dan barcode menunjuk ke produk berbeda.' });
+            }
+            if (!/^\d+$/.test(quantityText) || Number(quantityText) <= 0) {
+              errors.push({ row: rowNumber, message: 'Jumlah harus bilangan bulat lebih dari nol.' });
+            }
+            if (!/^\d+(\.\d+)?$/.test(priceText)) {
+              errors.push({ row: rowNumber, message: 'Harga satuan harus berupa angka nol atau lebih.' });
+            }
+            if (supplier && !suppliers.has(supplier.toLowerCase())) {
+              errors.push({ row: rowNumber, message: `Supplier "${supplier}" tidak ditemukan.` });
+            }
+            if (date && !window.isValidCsvImportDate(date)) {
+              errors.push({ row: rowNumber, message: 'Tanggal harus berformat YYYY-MM-DD.' });
+            }
+            if (errors.length !== rowErrorsBefore) return;
+            rows.push({
+              sku,
+              barcode,
+              quantity: Number(quantityText),
+              unit_price: Number(priceText),
+              supplier,
+              customer: '',
+              channel: 'Offline',
+              date,
+              notes: record['Catatan'].trim()
+            });
+          });
+          return { rows, errors };
+        },
+        commit: async function (rows, fileHash) {
+          const { data, error } = await window.supabase.rpc('import_inventory_transactions', {
+            p_type: 'in',
+            p_rows: rows,
+            p_file_hash: fileHash
+          });
+          return error ? { ok: false, error } : { ok: true, data };
+        },
+        onComplete: loadInTransactions
+      });
+    });
   });

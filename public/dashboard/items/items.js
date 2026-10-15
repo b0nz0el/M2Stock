@@ -67,6 +67,18 @@
     if (compInfo) compInfo.classList.add('hidden');
   }
 
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (character) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character];
+    });
+  }
+
   async function handleImageSelection(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -128,6 +140,9 @@
     if (form) form.reset();
     resetImageForm();
     document.getElementById('item-id').value = '';
+    document.getElementById('item-stock').disabled = false;
+    document.getElementById('item-stock-label').innerHTML = 'Stok Awal <span class="text-[#FF3B30]">*</span>';
+    document.getElementById('item-stock-help').textContent = 'Untuk mengubah stok setelah produk dibuat, gunakan transaksi barang masuk atau barang keluar.';
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
     if (submitBtn) {
@@ -150,15 +165,19 @@
   }
 
   function openEditItemModal(id) {
-    const item = currentItems.find(function (i) { return Number(i.id) === Number(id); });
+    const item = currentItems.find(function (i) { return String(i.id) === String(id); });
     if (!item) return;
 
     resetImageForm();
     document.getElementById('item-id').value = item.id;
     document.getElementById('item-sku').value = item.sku || '';
+    document.getElementById('item-barcode').value = item.barcode || '';
     document.getElementById('item-brand').value = item.brand && item.brand !== '-' ? item.brand : '';
     document.getElementById('item-name').value = item.name || '';
     document.getElementById('item-stock').value = item.stock || 0;
+    document.getElementById('item-stock').disabled = true;
+    document.getElementById('item-stock-label').textContent = 'Stok Saat Ini';
+    document.getElementById('item-stock-help').textContent = 'Stok hanya berubah melalui transaksi barang masuk atau barang keluar.';
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
@@ -222,6 +241,7 @@
 
     const id = document.getElementById('item-id').value;
     const sku = document.getElementById('item-sku').value.trim();
+    const barcode = document.getElementById('item-barcode').value.trim();
     const name = document.getElementById('item-name').value.trim();
     const brand = document.getElementById('item-brand').value.trim();
     const category_id = document.getElementById('item-category').value;
@@ -242,16 +262,24 @@
       if (typeof showToast === 'function') showToast('Harga beli dan harga jual harus >= 0', 'error');
       return;
     }
-    if (stock < 0) {
+    if (!id && stock < 0) {
       if (typeof showToast === 'function') showToast('Stok harus >= 0', 'error');
       return;
     }
 
     const duplicate = currentItems.find(function (i) {
-      return i.sku.toLowerCase() === sku.toLowerCase() && (!id || Number(i.id) !== Number(id));
+      return String(i.sku || '').toLowerCase() === sku.toLowerCase() && (!id || String(i.id) !== String(id));
     });
     if (duplicate) {
       if (typeof showToast === 'function') showToast('SKU "' + sku + '" sudah digunakan oleh produk lain', 'error');
+      return;
+    }
+
+    const duplicateBarcode = barcode && currentItems.find(function (i) {
+      return (i.barcode || '').trim() === barcode && (!id || String(i.id) !== String(id));
+    });
+    if (duplicateBarcode) {
+      if (typeof showToast === 'function') showToast('Barcode "' + barcode + '" sudah digunakan oleh produk lain', 'error');
       return;
     }
 
@@ -286,19 +314,20 @@
 
       const payload = {
         sku: sku,
+        barcode: barcode || null,
         name: name,
         brand: brand || null,
         category_id: category_id ? Number(category_id) : null,
-        stock: stock,
         cost_price: cost_price,
         sell_price: sell_price,
         min_stock: min_stock,
         image_url: finalImageUrl
       };
+      if (!id) payload.stock = stock;
 
       let res;
       if (id) {
-        res = await Api.items.update(Number(id), payload);
+        res = await Api.items.update(id, payload);
       } else {
         res = await Api.items.create(payload);
       }
@@ -328,7 +357,7 @@
   }
 
   function openDeleteItemModal(id) {
-    const item = currentItems.find(function (i) { return Number(i.id) === Number(id); });
+    const item = currentItems.find(function (i) { return String(i.id) === String(id); });
     if (!item) return;
 
     itemToDeleteId = item.id;
@@ -399,14 +428,15 @@
 
   function filterItems() {
     return currentItems.filter(function (item) {
-      // 1. Search text (name, sku, brand, category)
+      // 1. Search text (name, SKU, barcode, brand, category)
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matchName = (item.name || '').toLowerCase().includes(q);
         const matchSku = (item.sku || '').toLowerCase().includes(q);
+        const matchBarcode = (item.barcode || '').toLowerCase().includes(q);
         const matchBrand = (item.brand || '').toLowerCase().includes(q);
         const matchCat = (item.category || '').toLowerCase().includes(q);
-        if (!matchName && !matchSku && !matchBrand && !matchCat) return false;
+        if (!matchName && !matchSku && !matchBarcode && !matchBrand && !matchCat) return false;
       }
       // 2. Kategori filter
       if (selectedCategory && selectedCategory !== 'all') {
@@ -519,7 +549,7 @@
     // 1. Kondisi jika database memang kosong
     if (currentItems.length === 0) {
       tbody.innerHTML = `
-        <tr class="empty-state-row"><td colspan="11" class="empty-state-cell text-center py-12 text-[#A0A0A5]">
+        <tr class="empty-state-row"><td colspan="12" class="empty-state-cell text-center py-12 text-[#A0A0A5]">
           <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
             <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
               <i data-lucide="package-open" class="w-6 h-6 text-[#A0A0A5]/40" aria-hidden="true"></i>
@@ -543,7 +573,7 @@
     // 2. Kondisi jika search / filter menghasilkan 0 baris (Empty State)
     if (totalFiltered === 0) {
       tbody.innerHTML = `
-        <tr class="empty-state-row"><td colspan="11" class="empty-state-cell text-center py-12 text-[#A0A0A5] w-full">
+        <tr class="empty-state-row"><td colspan="12" class="empty-state-cell text-center py-12 text-[#A0A0A5] w-full">
           <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
             <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
               <i data-lucide="search-x" class="w-6 h-6 text-[#A0A0A5]/60" aria-hidden="true"></i>
@@ -584,7 +614,7 @@
       const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const margin = sellPrice > 0 ? Math.round(((sellPrice - costPrice) / sellPrice) * 100) : 0;
       const isLow = stock <= minStock;
-      const isChecked = selectedItemIds.has(item.id);
+      const isChecked = selectedItemIds.has(String(item.id));
 
       const stockDisplay = isLow
         ? `<span class="font-semibold text-[#FF3B30] flex items-center justify-end gap-1">${stock} unit <i data-lucide="alert-triangle" class="w-3.5 h-3.5" aria-hidden="true"></i></span>`
@@ -598,16 +628,16 @@
       tr.className = `table-row border-b border-white/5 transition ${isChecked ? 'bg-[#0088CC]/5' : ''}`;
       tr.innerHTML = `
         <td class="px-4 py-3.5">
-          <input type="checkbox" aria-label="Pilih ${item.name}"
+          <input type="checkbox" aria-label="Pilih ${escapeHtml(item.name)}"
                  data-select-row
-                 onchange="toggleItemSelect(${item.id}, this.checked)"
+                 data-item-select-id="${escapeHtml(String(item.id))}"
                  ${isChecked ? 'checked' : ''}
                  class="item-checkbox accent-[#0088CC] w-4 h-4 cursor-pointer">
         </td>
         <td class="px-4 py-3.5">
           ${item.image_url ? `
             <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0">
-              <img src="${item.image_url}" alt="${item.name}" class="w-full h-full object-cover" loading="lazy">
+              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover" loading="lazy">
             </div>
           ` : `
             <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg bg-[#0088CC]/15 grid place-items-center flex-shrink-0">
@@ -615,20 +645,21 @@
             </div>
           `}
         </td>
-        <td class="px-4 py-3.5 font-medium">${item.name}</td>
-        <td class="px-4 py-3.5 text-[#A0A0A5]">${item.brand || '-'}</td>
-        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${item.sku || '-'}</td>
-        <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${item.category || 'Umum'}</span></td>
+        <td class="px-4 py-3.5 font-medium">${escapeHtml(item.name)}</td>
+        <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
+        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.sku || '-')}</td>
+        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.barcode || '-')}</td>
+        <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${escapeHtml(item.category || 'Umum')}</span></td>
         <td class="px-4 py-3.5 text-right">${stockDisplay}</td>
         <td class="px-4 py-3.5 text-right">${formatRupiah(costPrice)}</td>
         <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
         <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">${margin}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
-            <button type="button" data-action="edit" onclick="openEditItemModal(${item.id})" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
+            <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button type="button" data-action="delete" onclick="openDeleteItemModal(${item.id})" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
+            <button type="button" data-action="delete" data-item-action="delete" data-item-id="${escapeHtml(String(item.id))}" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
           </div>
@@ -697,11 +728,11 @@
   // BULK SELECTION (PERSIST ACROSS PAGES)
   // ═══════════════════════════════════════════════
   function toggleItemSelect(id, checked) {
-    const numId = Number(id);
+    const itemId = String(id);
     if (checked) {
-      selectedItemIds.add(numId);
+      selectedItemIds.add(itemId);
     } else {
-      selectedItemIds.delete(numId);
+      selectedItemIds.delete(itemId);
     }
     updateBulkBarUI();
   }
@@ -713,9 +744,9 @@
 
     pagedItems.forEach(item => {
       if (checked) {
-        selectedItemIds.add(item.id);
+        selectedItemIds.add(String(item.id));
       } else {
-        selectedItemIds.delete(item.id);
+        selectedItemIds.delete(String(item.id));
       }
     });
     renderItemsTable();
@@ -756,7 +787,7 @@
     // Periksa status centang select-all di halaman aktif
     const startIdx = (currentPage - 1) * pageSize;
     const pagedItems = filtered.slice(startIdx, startIdx + pageSize);
-    const allPageSelected = pagedItems.length > 0 && pagedItems.every(i => selectedItemIds.has(i.id));
+    const allPageSelected = pagedItems.length > 0 && pagedItems.every(i => selectedItemIds.has(String(i.id)));
 
     const headerCb = document.getElementById('select-all-header');
     if (headerCb) headerCb.checked = allPageSelected;
@@ -788,7 +819,7 @@
       const { deletableIds, skippedIds } = checkRes.data || { deletableIds: [], skippedIds: [] };
 
       // Ambil nama barang yang dilewati
-      const skippedItems = currentItems.filter(i => skippedIds.includes(i.id));
+      const skippedItems = currentItems.filter(i => skippedIds.includes(String(i.id)));
 
       let html = '';
       if (deletableIds.length > 0) {
@@ -933,7 +964,7 @@
     const tbody = document.getElementById('bulk-price-preview-body');
     if (!tbody) return;
 
-    const selectedItems = currentItems.filter(i => selectedItemIds.has(i.id));
+    const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
     const nominalVal = Number(document.getElementById('bulk-price-nominal-input')?.value);
     const percentVal = Number(document.getElementById('bulk-price-percent-input')?.value);
 
@@ -974,7 +1005,7 @@
       return;
     }
 
-    const selectedItems = currentItems.filter(i => selectedItemIds.has(i.id));
+    const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
     if (selectedItems.length === 0) return;
 
     const nominalVal = Number(document.getElementById('bulk-price-nominal-input')?.value);
@@ -1015,6 +1046,11 @@
     try {
       const res = await Api.items.bulkUpdatePrice(updates);
       if (!res.ok) {
+        if (res.error?.code === 'PARTIAL_UPDATE') {
+          closeBulkPriceModal();
+          clearSelection();
+          await loadItemsFromBackend();
+        }
         if (typeof showToast === 'function') showToast(res.error?.message || 'Gagal memperbarui harga massal', 'error');
         return;
       }
@@ -1064,14 +1100,14 @@
       return;
     }
 
-    const headers = ['ID', 'SKU', 'Nama Barang', 'Brand', 'Kategori', 'Stok', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)', 'Margin (%)'];
+    const headers = ['ID', 'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori', 'Stok', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)', 'Margin (%)'];
     const rows = filtered.map(item => {
       const s = Number(item.stock) || 0;
       const min = Number(item.min_stock || item.minStock) || 0;
       const c = Number(item.cost_price || item.costPrice) || 0;
       const p = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const m = p > 0 ? Math.round(((p - c) / p) * 100) : 0;
-      return [item.id, item.sku || '-', item.name, item.brand || '-', item.category || 'Umum', s, min, c, p, m];
+      return [item.id, item.sku || '-', item.barcode || '-', item.name, item.brand || '-', item.category || 'Umum', s, min, c, p, m];
     });
 
     const filename = `items-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -1108,7 +1144,7 @@
       }
 
       // Bersihkan ID terpilih yang sudah tidak ada di data
-      const existingIdSet = new Set(currentItems.map(i => i.id));
+      const existingIdSet = new Set(currentItems.map(i => String(i.id)));
       selectedItemIds.forEach(id => {
         if (!existingIdSet.has(id)) selectedItemIds.delete(id);
       });
@@ -1153,6 +1189,13 @@
 
   // Tutup modal saat klik pada backdrop atau tekan Escape
   window.addEventListener('click', function (e) {
+    const itemAction = e.target.closest('[data-item-action]');
+    if (itemAction) {
+      const itemId = itemAction.dataset.itemId;
+      if (itemAction.dataset.itemAction === 'edit') openEditItemModal(itemId);
+      if (itemAction.dataset.itemAction === 'delete') openDeleteItemModal(itemId);
+    }
+
     const modalItem = document.getElementById('modal-item');
     const modalDelete = document.getElementById('modal-delete');
     const modalBulkDel = document.getElementById('modal-bulk-delete');
@@ -1162,6 +1205,10 @@
     if (e.target === modalBulkDel) closeBulkDeleteModal();
     if (e.target === modalBulkPrice) closeBulkPriceModal();
   });
+  document.getElementById('items-tbody')?.addEventListener('change', function (event) {
+    const checkbox = event.target.closest('[data-item-select-id]');
+    if (checkbox) toggleItemSelect(checkbox.dataset.itemSelectId, checkbox.checked);
+  });
   window.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       closeItemModal();
@@ -1169,6 +1216,116 @@
       closeBulkDeleteModal();
       closeBulkPriceModal();
     }
+  });
+
+  const scanItemBarcodeButton = document.getElementById('btn-scan-item-barcode');
+  if (scanItemBarcodeButton) {
+    scanItemBarcodeButton.addEventListener('click', function () {
+      if (typeof window.openItemBarcodeScanner !== 'function') {
+        showToast('Pemindai barcode belum siap. Muat ulang halaman dan coba lagi.', 'error');
+        return;
+      }
+
+      window.openItemBarcodeScanner(function (barcode) {
+        const input = document.getElementById('item-barcode');
+        if (!input) return;
+        input.value = barcode;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.focus();
+        if (typeof showToast === 'function') showToast('Barcode berhasil dipindai', 'success');
+      });
+    });
+  }
+
+  document.getElementById('btn-import-items')?.addEventListener('click', function () {
+    if (typeof window.startCsvImport !== 'function') {
+      showToast('Fitur import belum siap. Muat ulang halaman dan coba lagi.', 'error');
+      return;
+    }
+
+    const headers = [
+      'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori',
+      'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)'
+    ];
+    window.startCsvImport({
+      title: 'Barang',
+      templateName: 'template-barang.csv',
+      headers,
+      requiredHeaders: ['SKU', 'Nama Barang', 'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)'],
+      templateRows: [],
+      validate: async function (records) {
+        const [productsResult, categoriesResult] = await Promise.all([
+          Api.items.getAll(),
+          window.supabase.from('categories').select('name')
+        ]);
+        if (!productsResult?.ok) throw new Error(productsResult?.error?.message || 'Gagal memeriksa SKU dan barcode yang terdaftar.');
+        if (categoriesResult.error) throw new Error(categoriesResult.error.message || 'Gagal memeriksa kategori.');
+
+        const existingSkus = new Set((productsResult.data || []).map(item => String(item.sku || '').trim().toLowerCase()));
+        const existingBarcodes = new Set((productsResult.data || []).map(item => String(item.barcode || '').trim()).filter(Boolean));
+        const categoryNames = new Set((categoriesResult.data || []).map(category => String(category.name).trim().toLowerCase()));
+        const seenSkus = new Set();
+        const seenBarcodes = new Set();
+        const rows = [];
+        const errors = [];
+        const parseNumber = (value, label, rowNumber, integer = false) => {
+          const valid = integer ? /^\d+$/.test(value) : /^\d+(\.\d+)?$/.test(value);
+          if (!valid) {
+            errors.push({ row: rowNumber, message: `${label} harus berupa ${integer ? 'bilangan bulat' : 'angka'} nol atau lebih.` });
+            return null;
+          }
+          return Number(value);
+        };
+
+        records.forEach((record, index) => {
+          const rowNumber = index + 2;
+          const sku = record['SKU'].trim();
+          const barcode = record['Barcode'].trim();
+          const name = record['Nama Barang'].trim();
+          const category = record['Kategori'].trim();
+          const rowErrorsBefore = errors.length;
+          if (!sku) errors.push({ row: rowNumber, message: 'SKU wajib diisi.' });
+          if (!name) errors.push({ row: rowNumber, message: 'Nama barang wajib diisi.' });
+          const skuKey = sku.toLowerCase();
+          if (sku && (existingSkus.has(skuKey) || seenSkus.has(skuKey))) {
+            errors.push({ row: rowNumber, message: `SKU "${sku}" sudah terdaftar atau duplikat di file.` });
+          }
+          if (barcode && (existingBarcodes.has(barcode) || seenBarcodes.has(barcode))) {
+            errors.push({ row: rowNumber, message: `Barcode "${barcode}" sudah terdaftar atau duplikat di file.` });
+          }
+          if (category && !categoryNames.has(category.toLowerCase())) {
+            errors.push({ row: rowNumber, message: `Kategori "${category}" tidak ditemukan.` });
+          }
+          const initialStock = parseNumber(record['Stok Awal'], 'Stok awal', rowNumber, true);
+          const minStock = parseNumber(record['Min Stok'], 'Min stok', rowNumber, true);
+          const costPrice = parseNumber(record['Harga Beli (Rp)'], 'Harga beli', rowNumber);
+          const sellPrice = parseNumber(record['Harga Jual (Rp)'], 'Harga jual', rowNumber);
+          if ([initialStock, minStock, costPrice, sellPrice].some(value => value === null)) return;
+          if (errors.length !== rowErrorsBefore) return;
+          seenSkus.add(skuKey);
+          if (barcode) seenBarcodes.add(barcode);
+          rows.push({
+            sku,
+            barcode,
+            name,
+            brand: record['Brand'].trim(),
+            category,
+            initial_stock: initialStock,
+            min_stock: minStock,
+            cost_price: costPrice,
+            sell_price: sellPrice
+          });
+        });
+        return { rows, errors };
+      },
+      commit: async function (rows) {
+        const { data, error } = await window.supabase.rpc('import_products_csv', { p_rows: rows });
+        return error
+          ? { ok: false, error }
+          : { ok: true, data };
+      },
+      onComplete: loadItemsFromBackend
+    });
   });
 
   function setupSearchListeners() {

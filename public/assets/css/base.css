@@ -16,6 +16,9 @@ html, body {
 body {
   font-family: 'InterVariable', -apple-system, BlinkMacSystemFont,
                'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  font-optical-sizing: auto;
   overflow-x: hidden;
 }
 

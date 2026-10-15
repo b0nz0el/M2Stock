@@ -5,6 +5,17 @@
 
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
 
+function mapTransaction(row) {
+  return {
+    ...row,
+    qty: Number(row.quantity ?? row.qty) || 0,
+    price: Number(row.unit_price ?? row.price) || 0,
+    note: row.notes ?? row.note ?? null,
+    created_by: row.user_id ?? row.created_by ?? null,
+    channel: row.channel || 'Offline'
+  };
+}
+
 export const transactions = {
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
@@ -45,7 +56,7 @@ export const transactions = {
 
           return formatResponse({
             ok: true,
-            data: data || [],
+            data: (data || []).map(mapTransaction),
             meta: { total: (data || []).length }
           });
         } catch (err) {
@@ -94,39 +105,44 @@ export const transactions = {
     create: async (data, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          let userId = data.created_by || null;
+          let userId = data.created_by || data.user_id || null;
           if (!userId) {
             try {
               const userRes = await window.supabase.auth.getUser();
               userId = userRes?.data?.user?.id || null;
-            } catch (_) {}
+            } catch (error) {
+              console.warn('Pengguna transaksi tidak dapat diverifikasi:', error);
+            }
           }
 
-          // Validasi foreign key profiles(id) agar tidak melanggar constraint jika tabel profiles kosong
-          if (userId) {
-            try {
-              const { data: pData } = await window.supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
-              if (!pData) {
-                const upRes = await window.supabase.from('profiles').insert([{ id: userId }]).select();
-                if (upRes.error) {
-                  userId = null;
-                }
+          const quantity = Number(data.qty ?? data.quantity);
+          const unitPrice = Number(data.price ?? data.unit_price);
+          if (!['in', 'out'].includes(data.type)
+            || !data.product_id
+            || !Number.isInteger(quantity)
+            || quantity <= 0
+            || !Number.isFinite(unitPrice)
+            || unitPrice < 0) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: 'VALIDATION_ERROR',
+                message: 'Produk, jumlah bulat positif, dan harga satuan valid wajib diisi.'
               }
-            } catch (_) {
-              userId = null;
-            }
+            });
           }
 
           const row = {
             type: data.type,
-            product_id: Number(data.product_id),
-            qty: Number(data.qty),
-            price: Number(data.price),
-            customer_id: data.customer_id ? Number(data.customer_id) : null,
-            supplier_id: data.supplier_id ? Number(data.supplier_id) : null,
+            product_id: data.product_id,
+            quantity,
+            unit_price: unitPrice,
+            total_price: quantity * unitPrice,
+            customer_id: data.customer_id || null,
+            supplier_id: data.supplier_id || null,
             channel: data.channel || 'Offline',
-            note: data.note || null,
-            created_by: userId
+            notes: data.note ?? data.notes ?? null,
+            user_id: userId
           };
 
           let query = window.supabase
@@ -152,7 +168,7 @@ export const transactions = {
 
           return formatResponse({
             ok: true,
-            data: inserted && inserted[0] ? inserted[0] : null,
+            data: inserted && inserted[0] ? mapTransaction(inserted[0]) : null,
             meta: { message: 'Transaksi berhasil dicatat' }
           });
         } catch (err) {
@@ -165,11 +181,10 @@ export const transactions = {
     delete: async (id, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          const numId = Number(id);
           let query = window.supabase
             .from('transactions')
             .delete()
-            .eq('id', numId);
+            .eq('id', id);
 
           if (opts && opts.signal) {
             query = query.abortSignal(opts.signal);

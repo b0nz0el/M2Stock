@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>aQuaStock Pro — Kas & Keuangan</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
@@ -99,8 +99,8 @@
         </div>
 
         <!-- Filter Dropdowns -->
-        <div class="flex items-center gap-2 flex-wrap text-xs">
-          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
+        <div class="cash-filter-controls flex items-center gap-2 flex-wrap text-xs">
+          <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
             <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
             <select id="cash-filter-period" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
               <option value="month" selected class="bg-[#1C1C1E]">Bulan Ini</option>
@@ -109,7 +109,7 @@
             </select>
           </div>
 
-          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
+          <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
             <i data-lucide="tag" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
             <select id="cash-filter-kategori" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
               <option value="ALL" selected class="bg-[#1C1C1E]">Semua Kategori</option>
@@ -121,7 +121,7 @@
             </select>
           </div>
 
-          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
+          <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
             <i data-lucide="credit-card" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
             <select id="cash-filter-metode" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
               <option value="ALL" selected class="bg-[#1C1C1E]">Semua Metode</option>

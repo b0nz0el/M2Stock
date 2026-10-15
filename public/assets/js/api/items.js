@@ -18,7 +18,7 @@ export const items = {
             query = query.eq('category_id', Number(params.category_id));
           }
           if (params && params.search) {
-            query = query.or('name.ilike.%' + params.search + '%,sku.ilike.%' + params.search + '%');
+            query = query.or('name.ilike.%' + params.search + '%,sku.ilike.%' + params.search + '%,barcode.ilike.%' + params.search + '%');
           }
           if (opts && opts.signal) {
             query = query.abortSignal(opts.signal);
@@ -40,6 +40,7 @@ export const items = {
             return {
               id: item.id,
               sku: item.sku || '',
+              barcode: item.barcode || '',
               name: item.name || '',
               brand: item.brand || '-',
               category_id: item.category_id,
@@ -73,15 +74,17 @@ export const items = {
     getById: async (id, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          const numId = Number(id);
+          const idValue = String(id).trim();
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idValue);
+          const isNumericId = /^\d+$/.test(idValue);
           let query = window.supabase
             .from('products')
             .select('*, categories(name)');
 
-          if (!isNaN(numId) && Number.isInteger(numId) && String(numId) === String(id).trim()) {
-            query = query.eq('id', numId);
+          if (isUuid || isNumericId) {
+            query = query.eq('id', idValue);
           } else {
-            query = query.eq('sku', String(id).trim());
+            query = query.eq('sku', idValue);
           }
 
           if (opts && opts.signal) {
@@ -103,6 +106,7 @@ export const items = {
           const mapped = {
             id: data.id,
             sku: data.sku || '',
+            barcode: data.barcode || '',
             name: data.name || '',
             brand: data.brand || '-',
             category_id: data.category_id,
@@ -138,6 +142,7 @@ export const items = {
           const row = {
             name: data.name,
             sku: data.sku || data.code || null,
+            barcode: data.barcode == null ? null : (String(data.barcode).trim() || null),
             category_id: data.category_id ? Number(data.category_id) : null,
             brand: data.brand || null,
             stock: data.stock !== undefined ? Number(data.stock) : 0,
@@ -183,8 +188,8 @@ export const items = {
     update: async (id, data, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          const numId = Number(id);
           const row = { ...data };
+          delete row.stock;
           if (row.minStock !== undefined) { row.min_stock = row.minStock; delete row.minStock; }
           if (row.costPrice !== undefined) { row.cost_price = row.costPrice; delete row.costPrice; }
           if (row.sellPrice !== undefined) { row.sell_price = row.sellPrice; delete row.sellPrice; }
@@ -203,7 +208,7 @@ export const items = {
           let query = window.supabase
             .from('products')
             .update(row)
-            .eq('id', numId)
+            .eq('id', id)
             .select();
 
           if (opts && opts.signal) {
@@ -237,11 +242,10 @@ export const items = {
     delete: async (id, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          const numId = Number(id);
           let query = window.supabase
             .from('products')
             .delete()
-            .eq('id', numId);
+            .eq('id', id);
 
           if (opts && opts.signal) {
             query = query.abortSignal(opts.signal);
@@ -274,26 +278,26 @@ export const items = {
     checkDeletable: async (ids, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          const numIds = (ids || []).map(Number).filter(n => !isNaN(n));
-          if (!numIds.length) {
+          const productIds = (ids || []).map(id => String(id)).filter(Boolean);
+          if (!productIds.length) {
             return formatResponse({ ok: true, data: { deletableIds: [], skippedIds: [] } });
           }
           let query = window.supabase
             .from('transactions')
             .select('product_id')
-            .in('product_id', numIds);
+            .in('product_id', productIds);
 
           if (opts && opts.signal) query = query.abortSignal(opts.signal);
           const { data: txData, error } = await query;
           if (error) {
             return formatResponse({ ok: false, error: { message: error.message || 'Gagal memeriksa riwayat transaksi produk' } });
           }
-          const usedSet = new Set((txData || []).map(t => Number(t.product_id)));
-          const deletableIds = numIds.filter(id => !usedSet.has(id));
-          const skippedIds = numIds.filter(id => usedSet.has(id));
+          const usedSet = new Set((txData || []).map(t => String(t.product_id)));
+          const deletableIds = productIds.filter(id => !usedSet.has(id));
+          const skippedIds = productIds.filter(id => usedSet.has(id));
           return formatResponse({
             ok: true,
-            data: { deletableIds, skippedIds, totalRequested: numIds.length }
+            data: { deletableIds, skippedIds, totalRequested: productIds.length }
           });
         } catch (err) {
           return handleError(err);
@@ -305,12 +309,12 @@ export const items = {
     bulkDelete: async (ids, opts) => {
       if (isSupabaseAvailable()) {
         try {
-          const numIds = (ids || []).map(Number).filter(n => !isNaN(n));
-          if (!numIds.length) {
+          const productIds = (ids || []).map(id => String(id)).filter(Boolean);
+          if (!productIds.length) {
             return formatResponse({ ok: false, error: { message: 'Tidak ada produk yang dipilih untuk dihapus' } });
           }
 
-          const checkRes = await items.checkDeletable(numIds, opts);
+          const checkRes = await items.checkDeletable(productIds, opts);
           if (!checkRes.ok) return checkRes;
 
           const { deletableIds, skippedIds } = checkRes.data;
@@ -372,23 +376,37 @@ export const items = {
           }
 
           const results = [];
+          const failures = [];
           for (let i = 0; i < updates.length; i++) {
             const u = updates[i];
-            const numId = Number(u.id);
+            const productId = String(u.id);
             const newPrice = Math.max(0, Math.round(Number(u.sell_price) || 0));
 
             let query = window.supabase
               .from('products')
               .update({ sell_price: newPrice })
-              .eq('id', numId);
+              .eq('id', productId);
 
             if (opts && opts.signal) query = query.abortSignal(opts.signal);
             const { error } = await query;
             if (error) {
-              console.error(`Gagal update harga produk ID ${numId}:`, error);
+              console.error(`Gagal update harga produk ID ${productId}:`, error);
+              failures.push({ id: productId, code: error.code || 'SUPABASE_ERROR', message: error.message || 'Gagal memperbarui harga' });
             } else {
-              results.push(numId);
+              results.push(productId);
             }
+          }
+
+          if (failures.length) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: 'PARTIAL_UPDATE',
+                message: `${results.length} produk berhasil diperbarui, ${failures.length} gagal.`,
+                details: failures
+              },
+              data: { updatedIds: results, failedIds: failures.map(failure => failure.id), updatedCount: results.length }
+            });
           }
 
           return formatResponse({

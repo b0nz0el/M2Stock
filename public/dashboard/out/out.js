@@ -76,7 +76,7 @@
   function handleOutProductChange() {
     const select = document.getElementById('out-product-id');
     const pId = select.value;
-    const prod = availableProducts.find(p => Number(p.id) === Number(pId));
+    const prod = availableProducts.find(p => String(p.id) === String(pId));
     const priceInput = document.getElementById('out-price');
     const stockInfo = document.getElementById('out-stock-info');
     const qtyInput = document.getElementById('out-qty');
@@ -185,7 +185,7 @@
       return;
     }
 
-    const prod = availableProducts.find(p => Number(p.id) === Number(productId));
+    const prod = availableProducts.find(p => String(p.id) === String(productId));
     if (prod && qty > (prod.stock ?? 0)) {
       if (typeof showToast === 'function') {
         showToast(`Stok tidak mencukupi! Tersedia hanya ${prod.stock ?? 0} unit`, 'error');
@@ -206,8 +206,8 @@
       }
 
       const res = await Api.transactions.createOut({
-        product_id: Number(productId),
-        customer_id: customerId ? Number(customerId) : null,
+        product_id: productId,
+        customer_id: customerId || null,
         channel: channel,
         qty: qty,
         price: price,
@@ -519,7 +519,7 @@
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
           <td class="px-4 py-3.5 text-right">
-            <button type="button" data-action="delete" onclick="openDeleteOutModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
+            <button type="button" data-action="delete" data-transaction-id="${tx.id}" title="Hapus transaksi" aria-label="Hapus transaksi"
                     class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
@@ -728,6 +728,103 @@
     setupSearchListeners();
     loadOutTransactions();
     loadDropdowns();
+    document.getElementById('out-tbody')?.addEventListener('click', function (event) {
+      const button = event.target.closest('[data-transaction-id]');
+      if (button) openDeleteOutModal(button.dataset.transactionId);
+    });
+
+    document.getElementById('btn-import-out')?.addEventListener('click', function () {
+      if (typeof window.startCsvImport !== 'function') {
+        showToast('Fitur import belum siap. Muat ulang halaman dan coba lagi.', 'error');
+        return;
+      }
+
+      const headers = ['SKU', 'Barcode', 'Jumlah', 'Harga Satuan (Rp)', 'Customer', 'Channel', 'Tanggal (YYYY-MM-DD)', 'Catatan'];
+      window.startCsvImport({
+        title: 'Barang Keluar',
+        templateName: 'template-barang-keluar.csv',
+        headers,
+        requiredHeaders: headers,
+        templateRows: [],
+        preventReimport: true,
+        validate: async function (records) {
+          const [productsResult, customersResult] = await Promise.all([
+            Api.items.getAll(),
+            Api.customers.getAll()
+          ]);
+          if (!productsResult?.ok) throw new Error(productsResult?.error?.message || 'Gagal memuat produk.');
+          if (!customersResult?.ok) throw new Error(customersResult?.error?.message || 'Gagal memuat customer.');
+
+          const products = productsResult.data || [];
+          const customers = new Set((customersResult.data || []).map(customer => String(customer.name).trim().toLowerCase()));
+          const remainingStock = new Map(products.map(product => [String(product.id), Number(product.stock) || 0]));
+          const rows = [];
+          const errors = [];
+          records.forEach((record, index) => {
+            const rowNumber = index + 2;
+            const sku = record['SKU'].trim();
+            const barcode = record['Barcode'].trim();
+            const quantityText = record['Jumlah'].trim();
+            const priceText = record['Harga Satuan (Rp)'].trim();
+            const customer = record['Customer'].trim();
+            const channel = record['Channel'].trim() || 'Offline';
+            const date = record['Tanggal (YYYY-MM-DD)'].trim();
+            const rowErrorsBefore = errors.length;
+
+            if (!sku && !barcode) errors.push({ row: rowNumber, message: 'SKU atau barcode wajib diisi.' });
+            const matches = products.filter(product =>
+              (sku && String(product.sku || '').trim() === sku)
+              || (barcode && String(product.barcode || '').trim() === barcode));
+            const product = matches.length === 1 ? matches[0] : null;
+            if (!product) {
+              errors.push({ row: rowNumber, message: 'Produk tidak ditemukan atau SKU dan barcode menunjuk ke produk berbeda.' });
+            }
+            if (!/^\d+$/.test(quantityText) || Number(quantityText) <= 0) {
+              errors.push({ row: rowNumber, message: 'Jumlah harus bilangan bulat lebih dari nol.' });
+            }
+            if (!/^\d+(\.\d+)?$/.test(priceText)) {
+              errors.push({ row: rowNumber, message: 'Harga satuan harus berupa angka nol atau lebih.' });
+            }
+            if (customer && !customers.has(customer.toLowerCase())) {
+              errors.push({ row: rowNumber, message: `Customer "${customer}" tidak ditemukan.` });
+            }
+            if (date && !window.isValidCsvImportDate(date)) {
+              errors.push({ row: rowNumber, message: 'Tanggal harus berformat YYYY-MM-DD.' });
+            }
+            if (errors.length === rowErrorsBefore && product && /^\d+$/.test(quantityText)) {
+              const available = remainingStock.get(String(product.id)) || 0;
+              if (Number(quantityText) > available) {
+                errors.push({ row: rowNumber, message: `Stok ${product.name} tidak cukup pada baris ini (tersedia ${available}).` });
+              } else {
+                remainingStock.set(String(product.id), available - Number(quantityText));
+              }
+            }
+            if (errors.length !== rowErrorsBefore) return;
+            rows.push({
+              sku,
+              barcode,
+              quantity: Number(quantityText),
+              unit_price: Number(priceText),
+              supplier: '',
+              customer,
+              channel,
+              date,
+              notes: record['Catatan'].trim()
+            });
+          });
+          return { rows, errors };
+        },
+        commit: async function (rows, fileHash) {
+          const { data, error } = await window.supabase.rpc('import_inventory_transactions', {
+            p_type: 'out',
+            p_rows: rows,
+            p_file_hash: fileHash
+          });
+          return error ? { ok: false, error } : { ok: true, data };
+        },
+        onComplete: loadOutTransactions
+      });
+    });
   });
 
 /* ==========================================================

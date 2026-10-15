@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>aQuaStock Pro — Barang</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
@@ -90,6 +90,9 @@
           <p id="items-subtitle" class="text-sm text-[#A0A0A5] mt-1">0 barang · 0 total stok · Rp 0 nilai</p>
         </div>
         <div class="items-toolbar-actions flex gap-2">
+          <button type="button" data-action="import" id="btn-import-items" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+            <i data-lucide="upload" class="w-4 h-4" aria-hidden="true"></i> Import CSV
+          </button>
           <button onclick="handleExportItems()" data-action="export" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
@@ -102,7 +105,7 @@
       <div class="flex items-center gap-3 flex-wrap">
         <div class="flex-1 min-w-[200px] relative">
           <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
-          <input type="text" id="search-items" placeholder="Cari nama, SKU, brand, kategori..." aria-label="Cari barang"
+          <input type="text" id="search-items" placeholder="Cari nama, SKU, barcode, brand, kategori..." aria-label="Cari barang"
                  oninput="handleSearchItems(this.value)"
                  class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
         </div>
@@ -128,6 +131,7 @@
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Nama</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Brand</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">SKU</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Barcode</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Kategori</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Stok</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Hrg Beli</th>
@@ -138,7 +142,7 @@
           </thead>
           <tbody id="items-tbody">
             <tr>
-              <td colspan="11" class="px-4 py-8 text-center text-[#A0A0A5]">
+              <td colspan="12" class="px-4 py-8 text-center text-[#A0A0A5]">
                 <div class="flex items-center justify-center gap-2">
                   <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-[#0088CC]" aria-hidden="true"></i>
                   <span>Memuat data barang...</span>
@@ -333,6 +337,8 @@
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
 <script type="module" src="../../assets/js/api/index.js"></script>
+<script src="../../assets/js/components/barcode-scanner.js" defer></script>
+<script src="../../assets/js/components/csv-import.js" defer></script>
 <script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 
@@ -399,10 +405,22 @@
                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
         </div>
         <div>
-          <label for="item-brand" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Brand / Merk</label>
-          <input type="text" id="item-brand" placeholder="mis. Aquaone"
-                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <label for="item-barcode" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Barcode Produk</label>
+          <div class="flex gap-2">
+            <input type="text" id="item-barcode" inputmode="text" autocomplete="off" placeholder="Scan atau masukkan barcode"
+                   class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm font-mono focus:border-[#0088CC] focus:outline-none">
+            <button type="button" id="btn-scan-item-barcode" aria-label="Pindai barcode produk" title="Pindai barcode"
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#32ADE6] transition hover:bg-white/10">
+              <i data-lucide="scan-line" class="h-5 w-5" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div>
+        <label for="item-brand" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Brand / Merk</label>
+        <input type="text" id="item-brand" placeholder="mis. Aquaone"
+               class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
       </div>
 
       <div>
@@ -419,9 +437,10 @@
           </select>
         </div>
         <div>
-          <label for="item-stock" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Saat Ini <span class="text-[#FF3B30]">*</span></label>
+          <label for="item-stock" id="item-stock-label" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Awal <span class="text-[#FF3B30]">*</span></label>
           <input type="number" id="item-stock" min="0" value="0" required
                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Untuk mengubah stok setelah produk dibuat, gunakan transaksi barang masuk atau barang keluar.</p>
         </div>
       </div>
 

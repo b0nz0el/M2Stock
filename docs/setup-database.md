@@ -11,6 +11,8 @@ Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yan
 3. Klik tombol **New Query**, salin seluruh blok SQL di bawah ini, dan klik tombol **Run**.
 4. Masuk ke menu **Storage**, pastikan bucket bernama `product-images` telah dibuat dan berstatus **Public Bucket**.
 5. Buka menu **Authentication → Providers → Email**, pastikan statusnya **Enabled**. Nonaktifkan opsi *Confirm email* jika Anda berada dalam lingkungan pengembangan/pengujian lokal.
+6. Untuk menambahkan dukungan barcode pada tabel produk, jalankan migrasi `supabase/migrations/20261016_product_barcodes.sql` melalui **SQL Editor**.
+7. Untuk mencatat kanal transaksi dan mencegah stok menjadi negatif, jalankan migrasi `supabase/migrations/20261016_inventory_stock_safety.sql` melalui **SQL Editor**.
 
 ---
 
@@ -75,6 +77,7 @@ create table if not exists public.customers (
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   sku text not null unique,
+  barcode text,
   name text not null,
   brand text default '-',
   category_id integer references public.categories(id) on delete set null,
@@ -87,6 +90,10 @@ create table if not exists public.products (
   updated_at timestamptz not null default now()
 );
 
+create unique index if not exists products_barcode_unique_idx
+  on public.products (barcode)
+  where barcode is not null and barcode <> '';
+
 -- 2.6 Transaksi Barang Masuk & Keluar
 create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),
@@ -98,6 +105,7 @@ create table if not exists public.transactions (
   reference_no text,
   supplier_id uuid references public.suppliers(id) on delete set null,
   customer_id uuid references public.customers(id) on delete set null,
+  channel text not null default 'Offline',
   notes text,
   user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
@@ -172,34 +180,49 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  updated_rows integer;
 begin
-  if (TG_OP = 'INSERT') then
-    if (new.type = 'in') then
+  if TG_OP = 'INSERT' then
+    if new.type = 'in' then
       update public.products
       set stock = stock + new.quantity,
           updated_at = now()
       where id = new.product_id;
-    elsif (new.type = 'out') then
+    else
       update public.products
       set stock = stock - new.quantity,
           updated_at = now()
-      where id = new.product_id;
+      where id = new.product_id
+        and stock >= new.quantity;
+      get diagnostics updated_rows = row_count;
+      if updated_rows = 0 then
+        raise exception 'Stok tidak mencukupi untuk transaksi keluar'
+          using errcode = '23514';
+      end if;
     end if;
-  elsif (TG_OP = 'DELETE') then
-    -- Rollback mutasi stok jika transaksi dibatalkan
-    if (old.type = 'in') then
+    return new;
+  elsif TG_OP = 'DELETE' then
+    if old.type = 'in' then
       update public.products
       set stock = stock - old.quantity,
           updated_at = now()
-      where id = old.product_id;
-    elsif (old.type = 'out') then
+      where id = old.product_id
+        and stock >= old.quantity;
+      get diagnostics updated_rows = row_count;
+      if updated_rows = 0 then
+        raise exception 'Transaksi masuk tidak dapat dibatalkan karena stok sudah terpakai'
+          using errcode = '23514';
+      end if;
+    else
       update public.products
       set stock = stock + old.quantity,
           updated_at = now()
       where id = old.product_id;
     end if;
+    return old;
   end if;
-  return coalesce(new, old);
+  return null;
 end;
 $$;
 
