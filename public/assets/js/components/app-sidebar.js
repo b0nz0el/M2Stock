@@ -451,7 +451,7 @@ class AppSidebar extends HTMLElement {
         <div class="p-4 border-t border-white/5 flex items-center gap-3">
           <div id="sidebar-user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg flex-shrink-0">D</div>
           <div class="flex-1 min-w-0">
-            <p id="sidebar-user-email" class="text-sm font-semibold truncate">Mr David</p>
+            <p id="sidebar-user-email" class="text-sm font-semibold truncate">User</p>
             <span id="sidebar-user-role" class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
           </div>
           <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout"

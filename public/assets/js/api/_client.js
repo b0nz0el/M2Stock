@@ -80,21 +80,7 @@ export function handleError(err, defaultCode = 'NETWORK_ERROR') {
 /**
  * Mock Data Store untuk sistem aQuaStock Pro (Jaquris)
  */
-export const MOCK_DATA = {
-  items: [
-    { id: 'ITM-001', name: 'Filter Hang-on 501', category: 'Filter', stock: 18, minStock: 5, unitPrice: 85000 },
-    { id: 'ITM-002', name: 'Lampu LED Aquascape 60cm', category: 'Lampu', stock: 12, minStock: 4, unitPrice: 450000 },
-    { id: 'ITM-003', name: 'Pompa Udara 2 Lubang AC/DC', category: 'Aerator', stock: 9, minStock: 3, unitPrice: 135000 },
-    { id: 'ITM-004', name: 'Pasir Silika Hitam 1kg', category: 'Substrat', stock: 54, minStock: 10, unitPrice: 12000 },
-    { id: 'ITM-005', name: 'Batu Seiryu Stone', category: 'Hardscape', stock: 25, minStock: 5, unitPrice: 35000 }
-  ],
-  user: {
-    id: 'USR-01',
-    name: 'Mr David',
-    username: 'david@jaquris.com',
-    role: 'OWNER'
-  }
-};
+export const MOCK_DATA = { items: [], user: null };
 
 /**
  * Eksekusi request API via fetch

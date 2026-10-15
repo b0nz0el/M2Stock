@@ -13,68 +13,7 @@ const formatDateOffset = (days) => {
 };
 
 // Mock data untuk development & offline fallback
-let MOCK_DEBTS = [
-  {
-    id: 'debt-001',
-    tipe: 'hutang',
-    pihak: 'CV Aqua Teknik',
-    nominal: 2100000,
-    jatuh_tempo: formatDateOffset(3),
-    status: 'belum_bayar',
-    catatan: 'Pembelian 5 unit Filter Canister 1000L/h (Faktur #PO-2026-004)',
-    created_at: new Date(Date.now() - 5 * 86400000).toISOString()
-  },
-  {
-    id: 'debt-002',
-    tipe: 'hutang',
-    pihak: 'PT Sumber Pakan',
-    nominal: 1100000,
-    jatuh_tempo: formatDateOffset(12),
-    status: 'belum_bayar',
-    catatan: 'Pengadaan Pakan Ikan Hikari 50 pack',
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString()
-  },
-  {
-    id: 'debt-003',
-    tipe: 'piutang',
-    pihak: 'Budi Santoso',
-    nominal: 1200000,
-    jatuh_tempo: formatDateOffset(2),
-    status: 'belum_bayar',
-    catatan: 'Order Lampu LED Aquascape & Setting Custom Aquarium',
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString()
-  },
-  {
-    id: 'debt-004',
-    tipe: 'piutang',
-    pihak: 'Siti Nurhaliza',
-    nominal: 600000,
-    jatuh_tempo: formatDateOffset(5),
-    status: 'belum_bayar',
-    catatan: 'Peralatan fitting pipa & bio foam filter',
-    created_at: new Date(Date.now() - 6 * 86400000).toISOString()
-  },
-  {
-    id: 'debt-005',
-    tipe: 'hutang',
-    pihak: 'Mitra Surya Logistik',
-    nominal: 450000,
-    jatuh_tempo: formatDateOffset(-2),
-    status: 'jatuh_tempo',
-    catatan: 'Ongkos ekspedisi kargo pengiriman luar kota',
-    created_at: new Date(Date.now() - 14 * 86400000).toISOString()
-  },
-  {
-    id: 'debt-006',
-    tipe: 'piutang',
-    pihak: 'Aquascape Corner',
-    nominal: 850000,
-    jatuh_tempo: formatDateOffset(-4),
-    status: 'lunas',
-    catatan: 'Pelunasan invoice #INV-0012 via transfer bank',
-    created_at: new Date(Date.now() - 20 * 86400000).toISOString()
-  }
-];
+let MOCK_DEBTS = [];
 
 export const debt = {
   /**
