@@ -11,6 +11,12 @@
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
 </script>
 
+<!-- RBAC Route Guard (Layer 2) -->
+<script type="module">
+  import { guardRoute } from '../../assets/js/utils/rbac.js';
+  await guardRoute('suppliers');
+</script>
+
 <!-- Inter font (self-host) -->
 <link rel="preconnect" href="/" crossorigin>
 <link rel="preload" href="../../assets/fonts/InterVariable.woff2"

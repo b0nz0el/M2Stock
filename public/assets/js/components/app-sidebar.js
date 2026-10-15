@@ -14,6 +14,22 @@ class AppSidebar extends HTMLElement {
   connectedCallback() {
     this.render();
 
+    // 0. Terapkan role & filter menu instan dari cache untuk mencegah flash menu
+    let initialRole = 'VIEWER';
+    try {
+      const rawRbac = sessionStorage.getItem('rbac_user_role');
+      if (rawRbac) {
+        initialRole = JSON.parse(rawRbac)?.role || initialRole;
+      } else {
+        const rawAuth = localStorage.getItem('auth_user');
+        if (rawAuth) {
+          initialRole = JSON.parse(rawAuth)?.role || initialRole;
+        }
+      }
+    } catch (_) {}
+    this._applyRoleBadge(initialRole);
+    this._applyMenuAccess(initialRole);
+
     // Inisialisasi ikon Lucide
     if (typeof window.refreshIcons === 'function') {
       window.refreshIcons(this);
@@ -46,6 +62,57 @@ class AppSidebar extends HTMLElement {
       roleEl.textContent = 'OWNER';
       roleEl.className = 'badge bg-[#0088CC]/20 text-[#32ADE6]';
     }
+    this._applyMenuAccess(r);
+  }
+
+  _applyMenuAccess(role) {
+    const r = (role || 'VIEWER').toString().trim().toUpperCase();
+    const accessMatrix = (typeof window !== 'undefined' && window.RBAC?.MENU_ACCESS)
+      ? window.RBAC.MENU_ACCESS
+      : {
+          dashboard:  ['OWNER', 'STAFF', 'VIEWER'],
+          items:      ['OWNER', 'STAFF', 'VIEWER'],
+          in:         ['OWNER', 'STAFF', 'VIEWER'],
+          out:        ['OWNER', 'STAFF', 'VIEWER'],
+          po:         ['OWNER', 'STAFF', 'VIEWER'],
+          return:     ['OWNER', 'STAFF', 'VIEWER'],
+          suppliers:  ['OWNER', 'STAFF', 'VIEWER'],
+          customers:  ['OWNER', 'STAFF', 'VIEWER'],
+          cash:       ['OWNER', 'STAFF', 'VIEWER'],
+          debt:       ['OWNER', 'STAFF', 'VIEWER'],
+          report:     ['OWNER', 'STAFF'],
+          users:      ['OWNER'],
+          audit:      ['OWNER'],
+          backup:     ['OWNER'],
+          settings:   ['OWNER'],
+          notif:      ['OWNER', 'STAFF', 'VIEWER'],
+        };
+
+    const menuItems = this.querySelectorAll('.menu-item[data-page]');
+    menuItems.forEach(item => {
+      const page = item.getAttribute('data-page');
+      const allowed = accessMatrix[page];
+      if (allowed && allowed.includes(r)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    // Sembunyikan group separator jika semua item di dalam group hidden
+    const sectionTitles = this.querySelectorAll('.section-title');
+    sectionTitles.forEach(title => {
+      let next = title.nextElementSibling;
+      let hasVisibleItem = false;
+      while (next && !next.classList.contains('section-title')) {
+        if (next.classList.contains('menu-item') && next.style.display !== 'none') {
+          hasVisibleItem = true;
+          break;
+        }
+        next = next.nextElementSibling;
+      }
+      title.style.display = hasVisibleItem ? '' : 'none';
+    });
   }
 
   async _loadUserProfile() {
@@ -146,6 +213,7 @@ class AppSidebar extends HTMLElement {
     // 0. Aksi logout
     if (e.target.closest('[data-action="logout"]')) {
       try { localStorage.removeItem('auth_user'); } catch (_) {}
+      try { sessionStorage.removeItem('rbac_user_role'); } catch (_) {}
       if (typeof window !== 'undefined') {
         if (window.Auth && typeof window.Auth.logout === 'function') {
           window.Auth.logout().then(() => {
