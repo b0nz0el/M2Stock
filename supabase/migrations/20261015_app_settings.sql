@@ -1,4 +1,4 @@
--- Migration: Create app_settings table with RLS
+-- Migration: Create app_settings table with RLS and default seed
 -- Date: 2026-10-15
 -- Author: aQuaStock Pro Engineering Team
 
@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_app_settings_updated_at ON public.app_settings(up
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
+-- Helper check: User is OWNER either via profiles table or JWT metadata (case-insensitive)
 -- Policy 1: SELECT - Semua authenticated user bisa membaca pengaturan aplikasi
 DROP POLICY IF EXISTS "app_settings_select_authenticated" ON public.app_settings;
 CREATE POLICY "app_settings_select_authenticated"
@@ -42,8 +43,10 @@ WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.profiles
         WHERE profiles.id = auth.uid()
-          AND profiles.role = 'OWNER'
+          AND UPPER(profiles.role) = 'OWNER'
     )
+    OR UPPER(COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '')) = 'OWNER'
+    OR UPPER(COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '')) = 'OWNER'
 );
 
 -- Policy 3: UPDATE - Hanya OWNER yang dapat mengubah nilai pengaturan
@@ -56,13 +59,17 @@ USING (
     EXISTS (
         SELECT 1 FROM public.profiles
         WHERE profiles.id = auth.uid()
-          AND profiles.role = 'OWNER'
+          AND UPPER(profiles.role) = 'OWNER'
     )
+    OR UPPER(COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '')) = 'OWNER'
+    OR UPPER(COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '')) = 'OWNER'
 )
 WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.profiles
         WHERE profiles.id = auth.uid()
-          AND profiles.role = 'OWNER'
+          AND UPPER(profiles.role) = 'OWNER'
     )
+    OR UPPER(COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '')) = 'OWNER'
+    OR UPPER(COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '')) = 'OWNER'
 );
