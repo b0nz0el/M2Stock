@@ -212,8 +212,8 @@
         salesSummaryEl.textContent = `Total: ${formatRupiahVal(total30Sales)} · Laba: ${formatRupiahVal(total30Profit)}`;
       }
 
-      // Update sales bar chart if out transactions exist
-      if (typeof window.updateDashboardSalesChart === 'function' && outTransactions.length > 0) {
+      // Update sales bar chart ALWAYS (zero filled when no out transactions)
+      if (typeof window.updateDashboardSalesChart === 'function') {
         window.updateDashboardSalesChart(chartLabels, salesDaily, profitDaily);
       }
 
@@ -228,11 +228,20 @@
       });
 
       const totalChannelQty = Object.values(channelCounts).reduce((a, b) => a + b, 0);
-      if (totalChannelQty > 0 && typeof window.updateDashboardChannelChart === 'function') {
-        window.updateDashboardChannelChart(
-          Object.keys(channelCounts),
-          Object.values(channelCounts)
-        );
+      if (typeof window.updateDashboardChannelChart === 'function') {
+        if (totalChannelQty > 0) {
+          window.updateDashboardChannelChart(
+            Object.keys(channelCounts),
+            Object.values(channelCounts),
+            ['#EE4D2D', '#42B549', '#00F2FE', '#0088CC']
+          );
+        } else {
+          window.updateDashboardChannelChart(
+            ['Belum ada penjualan'],
+            [1],
+            ['rgba(255,255,255,0.08)']
+          );
+        }
       }
 
       if (typeof window.refreshIcons === 'function') window.refreshIcons();

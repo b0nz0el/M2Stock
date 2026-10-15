@@ -13,14 +13,21 @@
 
   const chartSalesEl = document.getElementById('chartSales');
   if (chartSalesEl) {
+    const now = new Date();
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const defaultLabels = Array.from({length: 10}, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (9 - i));
+      return `${d.getDate()} ${months[d.getMonth()]}`;
+    });
+
     window.salesChart = new Chart(chartSalesEl.getContext('2d'), {
       type: 'bar',
       data: {
-        labels: Array.from({length: 10}, (_, i) => `${21 + i} Sep`),
+        labels: defaultLabels,
         datasets: [
-          { label: 'Penjualan', data: [450, 620, 380, 780, 520, 920, 480, 1100, 850, 1250],
+          { label: 'Penjualan', data: new Array(10).fill(0),
             backgroundColor: '#0088CC', borderRadius: 4, barPercentage: 0.9 },
-          { label: 'Laba', data: [120, 180, 95, 240, 160, 320, 140, 380, 280, 420],
+          { label: 'Laba', data: new Array(10).fill(0),
             backgroundColor: '#34C759', borderRadius: 4, barPercentage: 0.9 }
         ]
       },
@@ -37,7 +44,8 @@
         scales: {
           x: { grid: { display: false }, ticks: { color: '#A0A0A5', font: { size: 11 } } },
           y: { grid: { color: 'rgba(255,255,255,0.05)' },
-               ticks: { color: '#A0A0A5', font: { size: 11 }, callback: (v) => `${v}rb` } }
+               ticks: { color: '#A0A0A5', font: { size: 11 }, callback: (v) => `${v}rb` },
+               suggestedMax: 10 }
         }
       }
     });
@@ -48,10 +56,10 @@
     window.channelChart = new Chart(chartChannelEl.getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: ['Shopee', 'Tokopedia', 'TikTok', 'Offline'],
+        labels: ['Belum ada penjualan'],
         datasets: [{
-          data: [42, 31, 17, 10],
-          backgroundColor: ['#EE4D2D', '#42B549', '#FF0050', '#0088CC'],
+          data: [1],
+          backgroundColor: ['rgba(255,255,255,0.08)'],
           borderWidth: 0
         }]
       },
@@ -62,6 +70,11 @@
             position: 'bottom',
             labels: { color: '#A0A0A5', font: { size: 11 }, padding: 12,
                       usePointStyle: true, pointStyle: 'circle' }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ctx.label === 'Belum ada penjualan' ? 'Belum ada data transaksi' : `${ctx.label}: ${ctx.parsed} unit`
+            }
           }
         }
       }
@@ -94,7 +107,7 @@ if (chartReportEl) {
       labels: Array.from({length: 30}, (_, i) => `${i + 1}`),
       datasets: [{
         label: 'Penjualan Harian',
-        data: [280, 340, 220, 450, 380, 520, 310, 490, 620, 410, 550, 380, 470, 590, 420, 660, 510, 380, 550, 680, 490, 720, 630, 580, 760, 690, 820, 740, 890, 950],
+        data: new Array(30).fill(0),
         borderColor: '#0088CC',
         backgroundColor: 'rgba(0, 136, 204, 0.1)',
         borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0,
