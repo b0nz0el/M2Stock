@@ -212,7 +212,7 @@ if (!sessionStorage.getItem('welcomeShown')) {
   setTimeout(() => showToast('Selamat datang di aQuaStock Pro 3.0', 'success'), 500);
 }
 
-console.log('%c✨ aQuaStock Pro v3.0 — Fully Responsive', 'color: #32ADE6; font-weight: bold; font-size: 14px;');
+console.info('aQuaStock Pro v3.0 — Fully Responsive');
 
 /* ═══ Set Welcome Name dari Profile ═══ */
 (async function setWelcomeName() {

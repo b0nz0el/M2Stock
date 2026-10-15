@@ -136,41 +136,45 @@
       <!-- 4 KPI Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center mb-3">
-            <i data-lucide="wallet" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Saldo Kas Total</p>
+            <span class="w-8 h-8 rounded-lg bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center shrink-0">
+              <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Saldo Kas Total</p>
           <p id="kpi-saldo-kas" class="text-2xl font-bold text-white tracking-tight">Rp 0</p>
           <p class="text-xs text-[#A0A0A5]">Pemasukan - Pengeluaran</p>
         </div>
 
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#34C759]/15 grid place-items-center mb-3">
-            <i data-lucide="trending-up" class="w-5 h-5 text-[#34C759]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Pemasukan Bulan Ini</p>
+            <span class="w-8 h-8 rounded-lg bg-[#34C759]/10 text-[#34C759] grid place-items-center shrink-0">
+              <i data-lucide="arrow-down-left" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Pemasukan Bulan Ini</p>
           <p id="kpi-pemasukan-bulan" class="text-2xl font-bold text-[#34C759] tracking-tight">Rp 0</p>
-          <p class="text-xs text-[#34C759] flex items-center gap-1">
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Arus Kas Masuk
-          </p>
+          <p class="text-xs text-[#34C759]">Arus Kas Masuk</p>
         </div>
 
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#FF3B30]/15 grid place-items-center mb-3">
-            <i data-lucide="trending-down" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Pengeluaran Bulan Ini</p>
+            <span class="w-8 h-8 rounded-lg bg-[#FF3B30]/10 text-[#FF3B30] grid place-items-center shrink-0">
+              <i data-lucide="arrow-up-right" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Pengeluaran Bulan Ini</p>
           <p id="kpi-pengeluaran-bulan" class="text-2xl font-bold text-[#FF3B30] tracking-tight">Rp 0</p>
-          <p class="text-xs text-[#FF3B30] flex items-center gap-1">
-            <i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i> Biaya & Pembelian
-          </p>
+          <p class="text-xs text-[#FF3B30]">Biaya & Pembelian</p>
         </div>
 
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#AF52DE]/15 grid place-items-center mb-3">
-            <i data-lucide="piggy-bank" class="w-5 h-5 text-[#AF52DE]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Laba Bersih Bulan Ini</p>
+            <span class="w-8 h-8 rounded-lg bg-[#AF52DE]/10 text-[#AF52DE] grid place-items-center shrink-0">
+              <i data-lucide="line-chart" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Laba Bersih Bulan Ini</p>
           <p id="kpi-laba-bersih" class="text-2xl font-bold text-[#34C759] tracking-tight">Rp 0</p>
           <p class="text-xs text-[#A0A0A5]">Pemasukan - Pengeluaran</p>
         </div>

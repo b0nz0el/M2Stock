@@ -966,7 +966,7 @@ function handleScanSuccess(decodedText) {
     input.value = decodedText;
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  showToast(`✅ Barcode terbaca: ${decodedText.slice(0, 30)}...`, 'success');
+  showToast(`Barcode terbaca: ${decodedText.slice(0, 30)}...`, 'success');
   setTimeout(closeWebBarcodeScan, 300);
 }
 
@@ -1105,7 +1105,7 @@ async function takePhotoCapture() {
       if (previewContainer) previewContainer.classList.remove('hidden');
 
       cleanup();
-      showToast('✅ Foto tersimpan', 'success');
+      showToast('Foto tersimpan', 'success');
     };
   } catch (err) {
     if (_photoEscHandler) {
