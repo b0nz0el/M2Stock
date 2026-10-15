@@ -14,7 +14,7 @@ export const MENU_ACCESS = {
   return:     ['OWNER', 'STAFF', 'VIEWER'],
   suppliers:  ['OWNER', 'STAFF'],
   customers:  ['OWNER', 'STAFF'],
-  cash:       ['OWNER', 'STAFF', 'VIEWER'],
+  cash:       ['OWNER', 'STAFF'],
   debt:       ['OWNER', 'STAFF', 'VIEWER'],
   report:     ['OWNER', 'STAFF'],
   users:      ['OWNER'],

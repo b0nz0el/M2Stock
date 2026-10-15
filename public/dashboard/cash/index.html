@@ -6,7 +6,6 @@
 <title>aQuaStock Pro — Kas & Keuangan</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
-
 <!-- Auth guard (redirect jika belum login) -->
 <script>
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
@@ -54,7 +53,6 @@
   <main id="main-content" class="flex-1 overflow-y-auto">
 
     <header class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10">
-
       <button onclick="toggleSidebar()" data-action="toggle-sidebar" aria-expanded="false" aria-label="Buka menu" class="md:hidden text-white p-1">
         <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
       </button>
@@ -62,145 +60,282 @@
       <div class="hidden md:flex items-center gap-2 text-sm">
         <span class="text-[#A0A0A5]">aQuaStock</span>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium"></span>
+        <span id="breadcrumb" class="font-medium text-white">Kas & Keuangan</span>
       </div>
 
       <div class="flex-1 md:max-w-md md:ml-6 relative">
         <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
-        <input type="text" id="global-search" placeholder="Cari apa saja..." aria-label="Pencarian global"
-               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        <input type="text" id="cash-search-input" placeholder="Cari keterangan transaksi..." aria-label="Pencarian kas"
+               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC] placeholder-[#A0A0A5]">
         <kbd class="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#A0A0A5] bg-white/5 px-1.5 py-0.5 rounded border border-white/10">⌘K</kbd>
       </div>
 
       <div class="ml-auto flex items-center gap-2">
-        <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
-          <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
+        <button type="button" id="btn-refresh-cash" title="Muat Ulang" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+          <i data-lucide="rotate-cw" class="w-4 h-4 text-[#A0A0A5]"></i>
         </button>
-        <button data-action="add" disabled title="Fitur Kas akan segera hadir" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
+        <button type="button" id="btn-export-cash" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition text-white">
+          <i data-lucide="download" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Export CSV
+        </button>
+        <button type="button" id="btn-open-cash-modal" data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 text-white transition">
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
+          <span class="hidden md:inline">Catat Kas</span>
         </button>
       </div>
     </header>
 
-    <!-- ═══════════ KAS & KEUANGAN ═══════════ -->
-    <div id="page-cash" class="page active p-6 space-y-5">
-      <div class="flex items-center justify-between">
+    <!-- ═══════════ PAGE CONTENT ═══════════ -->
+    <div id="page-cash" class="page active p-6 space-y-6 max-w-7xl mx-auto">
+      <!-- Title & Filters -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="text-3xl font-bold tracking-tight">Kas & Keuangan</h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">Ringkasan keuangan toko</p>
+          <h2 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
+              <i data-lucide="wallet" class="w-5 h-5"></i>
+            </span>
+            Kas & Keuangan
+          </h2>
+          <p class="text-sm text-[#A0A0A5] mt-1">Kelola arus kas masuk, pengeluaran operasional, dan mutasi saldo toko</p>
         </div>
-        <div class="flex gap-2">
-          <button data-action="export-cash" disabled title="Fitur Export Kas akan segera hadir" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition btn-disabled">
-            <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i> Export
-          </button>
-          <button data-action="add" disabled title="Fitur Catat Kas akan segera hadir" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
-            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Catat Transaksi
-          </button>
+
+        <!-- Filter Dropdowns -->
+        <div class="flex items-center gap-2 flex-wrap text-xs">
+          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
+            <select id="cash-filter-period" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+              <option value="month" selected class="bg-[#1C1C1E]">Bulan Ini</option>
+              <option value="30d" class="bg-[#1C1C1E]">30 Hari Terakhir</option>
+              <option value="all" class="bg-[#1C1C1E]">Semua Waktu</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
+            <i data-lucide="tag" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
+            <select id="cash-filter-kategori" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+              <option value="ALL" selected class="bg-[#1C1C1E]">Semua Kategori</option>
+              <option value="Penjualan" class="bg-[#1C1C1E]">Penjualan</option>
+              <option value="Pembelian" class="bg-[#1C1C1E]">Pembelian</option>
+              <option value="Gaji" class="bg-[#1C1C1E]">Gaji</option>
+              <option value="Operasional" class="bg-[#1C1C1E]">Operasional</option>
+              <option value="Lainnya" class="bg-[#1C1C1E]">Lainnya</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2">
+            <i data-lucide="credit-card" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
+            <select id="cash-filter-metode" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+              <option value="ALL" selected class="bg-[#1C1C1E]">Semua Metode</option>
+              <option value="Cash" class="bg-[#1C1C1E]">Cash / Tunai</option>
+              <option value="Transfer" class="bg-[#1C1C1E]">Transfer Bank</option>
+              <option value="QRIS" class="bg-[#1C1C1E]">QRIS</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-4">
-        <div class="card card-stat p-5 text-[#0088CC]">
-          <div class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center mb-4">
+      <!-- 4 KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <div class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center mb-3">
             <i data-lucide="wallet" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Saldo Kas</p>
-          <p class="text-2xl font-bold text-white mt-1">Rp 8.5jt</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Saldo Kas Total</p>
+          <p id="kpi-saldo-kas" class="text-2xl font-bold text-white tracking-tight">Rp 0</p>
+          <p class="text-xs text-[#A0A0A5]">Pemasukan - Pengeluaran</p>
         </div>
-        <div class="card card-stat p-5 text-[#34C759]">
-          <div class="w-11 h-11 rounded-xl bg-[#34C759]/15 grid place-items-center mb-4">
+
+        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <div class="w-11 h-11 rounded-xl bg-[#34C759]/15 grid place-items-center mb-3">
             <i data-lucide="trending-up" class="w-5 h-5 text-[#34C759]" aria-hidden="true"></i>
           </div>
           <p class="text-xs text-[#A0A0A5] font-medium">Pemasukan Bulan Ini</p>
-          <p class="text-2xl font-bold text-[#34C759] mt-1">Rp 12.4jt</p>
+          <p id="kpi-pemasukan-bulan" class="text-2xl font-bold text-[#34C759] tracking-tight">Rp 0</p>
+          <p class="text-xs text-[#34C759] flex items-center gap-1">
+            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Arus Kas Masuk
+          </p>
         </div>
-        <div class="card card-stat p-5 text-[#FF3B30]">
-          <div class="w-11 h-11 rounded-xl bg-[#FF3B30]/15 grid place-items-center mb-4">
+
+        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <div class="w-11 h-11 rounded-xl bg-[#FF3B30]/15 grid place-items-center mb-3">
             <i data-lucide="trending-down" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
           </div>
           <p class="text-xs text-[#A0A0A5] font-medium">Pengeluaran Bulan Ini</p>
-          <p class="text-2xl font-bold text-[#FF3B30] mt-1">Rp 8.2jt</p>
+          <p id="kpi-pengeluaran-bulan" class="text-2xl font-bold text-[#FF3B30] tracking-tight">Rp 0</p>
+          <p class="text-xs text-[#FF3B30] flex items-center gap-1">
+            <i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i> Biaya & Pembelian
+          </p>
         </div>
-        <div class="card card-stat p-5 text-[#AF52DE]">
-          <div class="w-11 h-11 rounded-xl bg-[#AF52DE]/15 grid place-items-center mb-4">
+
+        <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <div class="w-11 h-11 rounded-xl bg-[#AF52DE]/15 grid place-items-center mb-3">
             <i data-lucide="piggy-bank" class="w-5 h-5 text-[#AF52DE]" aria-hidden="true"></i>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Laba Bersih</p>
-          <p class="text-2xl font-bold text-[#34C759] mt-1">Rp 4.2jt</p>
+          <p class="text-xs text-[#A0A0A5] font-medium">Laba Bersih Bulan Ini</p>
+          <p id="kpi-laba-bersih" class="text-2xl font-bold text-[#34C759] tracking-tight">Rp 0</p>
+          <p class="text-xs text-[#A0A0A5]">Pemasukan - Pengeluaran</p>
         </div>
       </div>
 
-      <div class="card overflow-hidden">
-        <div class="px-5 py-4 border-b border-white/5">
-          <h3 class="font-semibold">Riwayat Transaksi Kas</h3>
+      <!-- Main Cash Table -->
+      <div class="card overflow-hidden rounded-2xl bg-[#1C1C1E] border border-white/5">
+        <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+          <h3 class="font-semibold text-white flex items-center gap-2">
+            <i data-lucide="receipt" class="w-4 h-4 text-[#32ADE6]"></i>
+            Riwayat Transaksi Arus Kas
+          </h3>
+          <span class="text-xs text-[#A0A0A5]">Data Transaksi Terkini</span>
         </div>
-        <div class="card-table-wrap">
-        <table class="w-full text-sm">
-          <thead class="bg-white/[0.02] border-b border-white/5">
-            <tr class="text-left text-[#A0A0A5]">
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Tanggal</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Keterangan</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Kategori</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Metode</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Pemasukan</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right">Pengeluaran</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">30 Sep 2026</td>
-              <td class="px-5 py-3.5 font-medium">Penjualan Tesee2</td>
-              <td class="px-5 py-3.5">Penjualan</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Transfer</span></td>
-              <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">+Rp 850.000</td>
-              <td class="px-5 py-3.5 text-right text-[#A0A0A5]">—</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">30 Sep 2026</td>
-              <td class="px-5 py-3.5 font-medium">Beli pakan Hikari</td>
-              <td class="px-5 py-3.5">Pembelian</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Cash</span></td>
-              <td class="px-5 py-3.5 text-right text-[#A0A0A5]">—</td>
-              <td class="px-5 py-3.5 text-right text-[#FF3B30] font-semibold">-Rp 456.000</td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-5 py-3.5 text-[#A0A0A5]">29 Sep 2026</td>
-              <td class="px-5 py-3.5 font-medium">Gaji Staff Satu</td>
-              <td class="px-5 py-3.5">Gaji</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Transfer</span></td>
-              <td class="px-5 py-3.5 text-right text-[#A0A0A5]">—</td>
-              <td class="px-5 py-3.5 text-right text-[#FF3B30] font-semibold">-Rp 1.500.000</td>
-            </tr>
-          </tbody>
-        </table>
+
+        <div class="card-table-wrap overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/[0.02] border-b border-white/5 text-[11px] font-semibold text-[#A0A0A5] uppercase tracking-wider">
+              <tr>
+                <th class="px-5 py-3.5 w-36">Tanggal</th>
+                <th class="px-5 py-3.5">Keterangan</th>
+                <th class="px-5 py-3.5 w-32">Kategori</th>
+                <th class="px-5 py-3.5 w-28">Metode</th>
+                <th class="px-5 py-3.5 text-right w-36">Pemasukan</th>
+                <th class="px-5 py-3.5 text-right w-36">Pengeluaran</th>
+                <th class="px-5 py-3.5 text-right w-16">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="cash-table-body" class="divide-y divide-white/5">
+              <!-- Dynamically populated by cash.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="cash-empty-state" class="hidden text-center py-14 px-4">
+          <div class="w-12 h-12 rounded-2xl bg-white/5 grid place-items-center mx-auto mb-3 text-[#A0A0A5]">
+            <i data-lucide="wallet" class="w-6 h-6"></i>
+          </div>
+          <p class="text-sm font-semibold text-white">Belum ada transaksi kas</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Klik tombol "Catat Kas" di atas untuk menambah transaksi baru.</p>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="px-5 py-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#A0A0A5]">
+          <span id="cash-page-info">Memuat data transaksi...</span>
+          <div class="flex items-center gap-2">
+            <button type="button" id="cash-prev-page" class="px-3.5 py-1.5 rounded-lg bg-[#121214] border border-white/10 hover:bg-white/5 transition flex items-center gap-1.5 text-white disabled:opacity-40">
+              <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Sebelumnya
+            </button>
+            <button type="button" id="cash-next-page" class="px-3.5 py-1.5 rounded-lg bg-[#121214] border border-white/10 hover:bg-white/5 transition flex items-center gap-1.5 text-white disabled:opacity-40">
+              Berikutnya <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-
   </main>
 
+  <!-- ═══════════ MODAL CATAT TRANSAKSI KAS ═══════════ -->
+  <div id="modal-cash" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-white flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-[#0088CC]"></i>
+          Catat Transaksi Kas
+        </h3>
+        <button type="button" id="btn-close-cash-modal" class="text-[#A0A0A5] hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-cash" class="p-6 space-y-4">
+        <!-- Jenis Transaksi -->
+        <div>
+          <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Jenis Arus Kas</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="cash_type" value="IN" checked class="peer sr-only" onchange="document.getElementById('cash-form-type').value = 'IN'">
+              <div class="p-3 text-center rounded-xl border border-white/10 bg-[#121214] text-sm font-semibold peer-checked:border-[#34C759] peer-checked:bg-[#34C759]/10 peer-checked:text-[#34C759] transition">
+                + Pemasukan (In)
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="cash_type" value="OUT" class="peer sr-only" onchange="document.getElementById('cash-form-type').value = 'OUT'">
+              <div class="p-3 text-center rounded-xl border border-white/10 bg-[#121214] text-sm font-semibold peer-checked:border-[#FF3B30] peer-checked:bg-[#FF3B30]/10 peer-checked:text-[#FF3B30] transition">
+                - Pengeluaran (Out)
+              </div>
+            </label>
+          </div>
+          <input type="hidden" id="cash-form-type" value="IN">
+        </div>
+
+        <!-- Tanggal -->
+        <div>
+          <label for="cash-form-date" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1.5">Tanggal</label>
+          <input type="date" id="cash-form-date" required
+                 class="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+        </div>
+
+        <!-- Nominal -->
+        <div>
+          <label for="cash-form-amount" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1.5">Nominal (Rp)</label>
+          <input type="number" id="cash-form-amount" min="1" step="1000" placeholder="0" required
+                 class="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+        </div>
+
+        <!-- Kategori & Metode -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="cash-form-kategori" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1.5">Kategori</label>
+            <select id="cash-form-kategori" class="w-full bg-[#121214] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              <option value="Penjualan">Penjualan</option>
+              <option value="Pembelian">Pembelian</option>
+              <option value="Gaji">Gaji</option>
+              <option value="Operasional">Operasional</option>
+              <option value="Lainnya" selected>Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label for="cash-form-metode" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1.5">Metode Bayar</label>
+            <select id="cash-form-metode" class="w-full bg-[#121214] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              <option value="Cash" selected>Cash / Tunai</option>
+              <option value="Transfer">Transfer Bank</option>
+              <option value="QRIS">QRIS</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Keterangan -->
+        <div>
+          <label for="cash-form-desc" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1.5">Keterangan / Deskripsi</label>
+          <textarea id="cash-form-desc" rows="2" placeholder="Catatan transaksi..." required
+                    class="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"></textarea>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+          <button type="button" id="btn-cancel-cash-modal" class="px-4 py-2.5 rounded-xl border border-white/10 text-sm font-medium text-[#A0A0A5] hover:text-white hover:bg-white/5 transition">
+            Batal
+          </button>
+          <button type="submit" id="btn-submit-cash" class="px-5 py-2.5 rounded-xl bg-[#0088CC] hover:bg-[#0077BB] text-sm font-semibold text-white shadow-lg shadow-[#0088CC]/20 transition flex items-center gap-2">
+            <i data-lucide="check" class="w-4 h-4"></i> Simpan Catatan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ═══════════ BOTTOM TAB BAR (MOBILE) ═══════════ -->
-  <nav class="bottom-nav" aria-label="Navigasi utama">
+  <nav class="bottom-nav md:hidden" aria-label="Navigasi utama">
     <div class="bottom-nav-items">
-      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="bottomNavTap('dashboard', event)">
+      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="window.location.href='/dashboard/'">
         <i data-lucide="layout-dashboard" aria-hidden="true"></i>
         <span>Dashboard</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="items" onclick="bottomNavTap('items', event)">
+      <button type="button" class="bottom-nav-item" data-tab="items" onclick="window.location.href='/dashboard/items/'">
         <i data-lucide="package" aria-hidden="true"></i>
         <span>Barang</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="in" onclick="bottomNavTap('in', event)">
-        <i data-lucide="arrow-down-circle" aria-hidden="true"></i>
-        <span>Masuk</span>
+      <button type="button" class="bottom-nav-item active" data-tab="cash" onclick="window.location.href='/dashboard/cash/'">
+        <i data-lucide="wallet" aria-hidden="true"></i>
+        <span>Kas</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="out" onclick="bottomNavTap('out', event)">
-        <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
-        <span>Keluar</span>
-      </button>
-      <button type="button" class="bottom-nav-item" data-tab="menu" data-action="open-menu" aria-expanded="false" onclick="openMenuDrawer(event)">
+      <button type="button" class="bottom-nav-item" data-tab="menu" onclick="window.location.href='/dashboard/settings/'">
         <i data-lucide="menu" aria-hidden="true"></i>
         <span>Menu</span>
       </button>
@@ -208,33 +343,19 @@
   </nav>
 </div>
 
-<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
-  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
-  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
-  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
-</div>
-
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toast-container" 
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
      role="status" aria-live="polite"></div>
 
-<!-- Scripts (defer agar DOM siap lebih dulu) -->
+<!-- Scripts -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/auth.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
-<script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
-<script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
-<script type="module">
-  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-  await applyReadOnlyUI();
-</script>
+<script type="module" src="./cash.js"></script>
 </body>
 </html>
