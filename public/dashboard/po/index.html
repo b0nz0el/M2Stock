@@ -112,40 +112,48 @@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- KPI 1: Total PO Bulan Ini -->
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#0088CC]/15 grid place-items-center mb-3">
-            <i data-lucide="clipboard-list" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Total PO Bulan Ini</p>
+            <span class="w-8 h-8 rounded-lg bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center shrink-0">
+              <i data-lucide="clipboard-list" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Total PO Bulan Ini</p>
           <p id="kpi-total-po" class="text-2xl font-bold text-white tracking-tight">0 PO</p>
           <p class="text-xs text-[#A0A0A5]">Pesanan aktif</p>
         </div>
 
         <!-- KPI 2: Draft PO -->
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#8E8E93]/15 grid place-items-center mb-3">
-            <i data-lucide="file-edit" class="w-5 h-5 text-[#A0A0A5]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Draft PO</p>
+            <span class="w-8 h-8 rounded-lg bg-white/5 text-[#A0A0A5] grid place-items-center shrink-0">
+              <i data-lucide="file-edit" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Draft PO</p>
           <p id="kpi-draft-po" class="text-2xl font-bold text-[#A0A0A5] tracking-tight">0 Draft</p>
           <p class="text-xs text-[#A0A0A5]">Belum dikirim</p>
         </div>
 
         <!-- KPI 3: Dikirim -->
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#FF9F0A]/15 grid place-items-center mb-3">
-            <i data-lucide="truck" class="w-5 h-5 text-[#FF9F0A]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Dalam Pengiriman</p>
+            <span class="w-8 h-8 rounded-lg bg-[#FF9F0A]/10 text-[#FF9F0A] grid place-items-center shrink-0">
+              <i data-lucide="truck" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Dalam Pengiriman</p>
           <p id="kpi-dikirim-po" class="text-2xl font-bold text-[#FF9F0A] tracking-tight">0 Dikirim</p>
           <p class="text-xs text-[#A0A0A5]">Menunggu tiba</p>
         </div>
 
         <!-- KPI 4: Total Nilai PO Bulan Ini (Rp) -->
         <div class="card card-stat p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
-          <div class="w-11 h-11 rounded-xl bg-[#34C759]/15 grid place-items-center mb-3">
-            <i data-lucide="banknote" class="w-5 h-5 text-[#34C759]" aria-hidden="true"></i>
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 text-xs text-[#A0A0A5] font-medium">Total Nilai PO</p>
+            <span class="w-8 h-8 rounded-lg bg-[#34C759]/10 text-[#34C759] grid place-items-center shrink-0">
+              <i data-lucide="banknote" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
           </div>
-          <p class="text-xs text-[#A0A0A5] font-medium">Total Nilai PO</p>
           <p id="kpi-nilai-po" class="text-2xl font-bold text-[#34C759] tracking-tight">Rp 0</p>
           <p class="text-xs text-[#A0A0A5]">Bulan ini</p>
         </div>

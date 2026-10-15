@@ -327,7 +327,7 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
     }
 
     const confirmed = confirm(
-      '⚠️ PERINGATAN KONFIRMASI RESTORE:\n\n' +
+      'PERINGATAN KONFIRMASI RESTORE:\n\n' +
       'Data dari file backup akan digabungkan/di-restore ke database Supabase.\n' +
       'Apakah Anda yakin ingin melanjutkan proses restore?'
     );
