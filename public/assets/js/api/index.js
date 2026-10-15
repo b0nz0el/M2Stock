@@ -23,6 +23,7 @@ import { report } from './report.js';
 import { audit } from './audit.js';
 import { cash } from './cash.js';
 import { debt } from './debt.js';
+import { notif } from './notif.js';
 
 export const Api = {
   // Helpers
@@ -47,7 +48,8 @@ export const Api = {
   report,
   audit,
   cash,
-  debt
+  debt,
+  notif
 };
 
 // Ekspos ke global window browser
