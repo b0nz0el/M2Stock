@@ -20,6 +20,7 @@ import { storage } from './storage.js';
 import { report } from './report.js';
 import { audit } from './audit.js';
 import { cash } from './cash.js';
+import { debt } from './debt.js';
 
 export const Api = {
   // Helpers
@@ -43,7 +44,8 @@ export const Api = {
   storage,
   report,
   audit,
-  cash
+  cash,
+  debt
 };
 
 // Ekspos ke global window browser

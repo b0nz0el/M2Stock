@@ -15,7 +15,7 @@ export const MENU_ACCESS = {
   suppliers:  ['OWNER', 'STAFF'],
   customers:  ['OWNER', 'STAFF'],
   cash:       ['OWNER', 'STAFF'],
-  debt:       ['OWNER', 'STAFF', 'VIEWER'],
+  debt:       ['OWNER', 'STAFF'],
   report:     ['OWNER', 'STAFF'],
   users:      ['OWNER'],
   audit:      ['OWNER'],
