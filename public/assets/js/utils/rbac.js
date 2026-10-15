@@ -13,7 +13,7 @@ export const MENU_ACCESS = {
   po:         ['OWNER', 'STAFF', 'VIEWER'],
   return:     ['OWNER', 'STAFF', 'VIEWER'],
   suppliers:  ['OWNER', 'STAFF', 'VIEWER'],
-  customers:  ['OWNER', 'STAFF', 'VIEWER'],
+  customers:  ['OWNER', 'STAFF'],
   cash:       ['OWNER', 'STAFF', 'VIEWER'],
   debt:       ['OWNER', 'STAFF', 'VIEWER'],
   report:     ['OWNER', 'STAFF'],
