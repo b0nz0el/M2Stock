@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — charts.js
    Konfigurasi Chart.js (sales bar, channel doughnut, report line)
-   ANTI-MOCK: Default state adalah 0 / empty, data diupdate live oleh dashboard.js
+   Grafik menampilkan data aktual yang diberikan oleh dashboard.js
    ═══════════════════════════════════════════════════ */
 
 (function() {

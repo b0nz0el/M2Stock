@@ -72,35 +72,24 @@
         <kbd class="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#A0A0A5] bg-white/5 px-1.5 py-0.5 rounded border border-white/10">⌘K</kbd>
       </div>
 
-      <div class="ml-auto flex items-center gap-2">
+      <div class="items-header-actions ml-auto flex items-center gap-2">
         <button onclick="handleRefreshItems()" data-action="refresh-items" title="Muat ulang data" aria-label="Refresh data" id="btn-refresh-items" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition">
           <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
         </button>
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
-        </button>
-        <button data-action="add" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
         </button>
       </div>
     </header>
 
     <!-- ═══════════ ITEMS ═══════════ -->
     <div id="page-items" class="page active p-6 space-y-5">
-      <div class="flex items-center justify-between">
+      <div class="items-page-header flex items-center justify-between">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Barang</h2>
           <p id="items-subtitle" class="text-sm text-[#A0A0A5] mt-1">0 barang · 0 total stok · Rp 0 nilai</p>
         </div>
-        <div class="flex gap-2">
-          <button type="button" id="btn-refresh-items-toolbar" onclick="handleRefreshItems()" data-action="refresh-items" title="Refresh Data" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
-            <i data-lucide="rotate-cw" class="w-4 h-4 text-[#A0A0A5]" aria-hidden="true"></i>
-          </button>
-          <button data-action="import" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
-            <i data-lucide="upload" class="w-4 h-4" aria-hidden="true"></i> Import
-          </button>
+        <div class="items-toolbar-actions flex gap-2">
           <button onclick="handleExportItems()" data-action="export" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
@@ -148,97 +137,11 @@
             </tr>
           </thead>
           <tbody id="items-tbody">
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih Filter Canister" class="accent-[#0088CC] w-4 h-4"></td>
-              <td class="px-4 py-3.5"><div class="w-10 h-10 rounded-lg bg-[#0088CC]/15 grid place-items-center"><i data-lucide="package" class="w-5 h-5 text-[#32ADE6]" aria-hidden="true"></i></div></td>
-              <td class="px-4 py-3.5 font-medium">Filter Canister 1000L/h</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">Aquaone</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">FILT-CA101</td>
-              <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Filter</span></td>
-              <td class="px-4 py-3.5 text-right font-medium">5 unit</td>
-              <td class="px-4 py-3.5 text-right">Rp 850.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 1.250.000</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">32%</td>
-              <td class="px-4 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih Pakan Hikari" class="accent-[#0088CC] w-4 h-4"></td>
-              <td class="px-4 py-3.5"><div class="w-10 h-10 rounded-lg bg-[#34C759]/15 grid place-items-center"><i data-lucide="package" class="w-5 h-5 text-[#34C759]" aria-hidden="true"></i></div></td>
-              <td class="px-4 py-3.5 font-medium">Pakan Granule Hikari 100g</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">Hikari</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">PAKA-HIK003</td>
-              <td class="px-4 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">Pakan</span></td>
-              <td class="px-4 py-3.5 text-right font-medium">24 pack</td>
-              <td class="px-4 py-3.5 text-right">Rp 38.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 65.000</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">41%</td>
-              <td class="px-4 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih Lampu LED" class="accent-[#0088CC] w-4 h-4"></td>
-              <td class="px-4 py-3.5"><div class="w-10 h-10 rounded-lg bg-[#FF9500]/15 grid place-items-center"><i data-lucide="lightbulb" class="w-5 h-5 text-[#FF9500]" aria-hidden="true"></i></div></td>
-              <td class="px-4 py-3.5 font-medium">Lampu LED Aquascape 60cm</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">Aquascape</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">LAMP-LED011</td>
-              <td class="px-4 py-3.5"><span class="badge bg-[#FF9500]/15 text-[#FF9500]">Lampu</span></td>
-              <td class="px-4 py-3.5 text-right">
-                <span class="font-semibold text-[#FF3B30] flex items-center justify-end gap-1">
-                  2 unit <i data-lucide="alert-triangle" class="w-3.5 h-3.5" aria-hidden="true"></i>
-                </span>
-              </td>
-              <td class="px-4 py-3.5 text-right">Rp 450.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 687.000</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">34%</td>
-              <td class="px-4 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih Obat Anti Jamur" class="accent-[#0088CC] w-4 h-4"></td>
-              <td class="px-4 py-3.5"><div class="w-10 h-10 rounded-lg bg-[#FF3B30]/15 grid place-items-center"><i data-lucide="pill" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i></div></td>
-              <td class="px-4 py-3.5 font-medium">Obat Anti Jamur 50ml</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">API</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">OBAT-AJ004</td>
-              <td class="px-4 py-3.5"><span class="badge bg-[#FF3B30]/15 text-[#FF3B30]">Obat</span></td>
-              <td class="px-4 py-3.5 text-right font-medium">9 botol</td>
-              <td class="px-4 py-3.5 text-right">Rp 15.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 32.000</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">53%</td>
-              <td class="px-4 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-4 py-3.5"><input type="checkbox" aria-label="Pilih Thermometer" class="accent-[#0088CC] w-4 h-4"></td>
-              <td class="px-4 py-3.5"><div class="w-10 h-10 rounded-lg bg-[#AF52DE]/15 grid place-items-center"><i data-lucide="thermometer" class="w-5 h-5 text-[#AF52DE]" aria-hidden="true"></i></div></td>
-              <td class="px-4 py-3.5 font-medium">Thermometer Sticker Digital</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5]">Generic</td>
-              <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">AKSE-TH005</td>
-              <td class="px-4 py-3.5"><span class="badge bg-[#AF52DE]/15 text-[#AF52DE]">Aksesoris</span></td>
-              <td class="px-4 py-3.5 text-right font-medium">12 pcs</td>
-              <td class="px-4 py-3.5 text-right">Rp 9.000</td>
-              <td class="px-4 py-3.5 text-right font-semibold">Rp 25.000</td>
-              <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">64%</td>
-              <td class="px-4 py-3.5">
-                <div class="flex gap-1 justify-end">
-                  <button data-action="edit" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]"><i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i></button>
-                  <button data-action="delete" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]"><i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i></button>
+            <tr>
+              <td colspan="11" class="px-4 py-8 text-center text-[#A0A0A5]">
+                <div class="flex items-center justify-center gap-2">
+                  <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-[#0088CC]" aria-hidden="true"></i>
+                  <span>Memuat data barang...</span>
                 </div>
               </td>
             </tr>
@@ -430,8 +333,8 @@
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
 <script type="module" src="../../assets/js/api/index.js"></script>
+<script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
 
 <!-- ═══════════ MODAL TAMBAH / EDIT BARANG ═══════════ -->
 <div id="modal-item" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-item-title">

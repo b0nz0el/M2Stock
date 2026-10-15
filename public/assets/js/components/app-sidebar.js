@@ -15,7 +15,7 @@ class AppSidebar extends HTMLElement {
     this.render();
 
     // 0. Terapkan role & filter menu instan dari cache untuk mencegah flash menu
-    let initialRole = 'VIEWER';
+    let initialRole = 'OWNER';
     try {
       const rawRbac = sessionStorage.getItem('rbac_user_role');
       if (rawRbac) {
@@ -41,6 +41,7 @@ class AppSidebar extends HTMLElement {
     this.addEventListener('click', this._handleClick);
     this._highlightActiveMenu();
     this._loadUserProfile();
+    this._loadBadgeCounts();
   }
 
   disconnectedCallback() {
@@ -207,6 +208,79 @@ class AppSidebar extends HTMLElement {
         }
       }
     } catch (_) {}
+  }
+
+  async _loadBadgeCounts() {
+    const itemsBadge = this.querySelector('#sidebar-items-badge') || this.querySelector('.menu-item[data-page="items"] span');
+    const notifBadge = this.querySelector('#sidebar-notif-badge') || this.querySelector('.menu-item[data-page="notif"] span');
+
+    // 1. Tampilkan dari cache instan (sessionStorage)
+    try {
+      const cachedItems = sessionStorage.getItem('items_count');
+      if (cachedItems !== null && itemsBadge) {
+        itemsBadge.textContent = cachedItems;
+      }
+      const cachedNotif = sessionStorage.getItem('notif_unread_count');
+      if (cachedNotif !== null && notifBadge) {
+        const count = parseInt(cachedNotif, 10) || 0;
+        if (count > 0) {
+          notifBadge.textContent = count;
+          notifBadge.classList.remove('hidden');
+          notifBadge.style.display = '';
+        } else {
+          notifBadge.classList.add('hidden');
+          notifBadge.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+
+    // 2. Sinkronkan dengan Supabase jika client tersedia
+    try {
+      let retries = 0;
+      while ((typeof window === 'undefined' || !window.supabase) && retries < 25) {
+        if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') {
+          break;
+        }
+        await new Promise(r => setTimeout(r, 40));
+        retries++;
+      }
+
+      if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
+        // Ambil jumlah produk aktual dari database
+        const { count: itemsCount, error: itemsError } = await window.supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true });
+
+        if (!itemsError && itemsCount !== null && itemsCount !== undefined) {
+          try { sessionStorage.setItem('items_count', itemsCount.toString()); } catch (_) {}
+          if (itemsBadge) {
+            itemsBadge.textContent = itemsCount;
+          }
+        }
+
+        // Ambil jumlah notifikasi belum dibaca
+        const { count: unreadCount, error: notifError } = await window.supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_read', false);
+
+        if (!notifError && unreadCount !== null && unreadCount !== undefined) {
+          try { sessionStorage.setItem('notif_unread_count', unreadCount.toString()); } catch (_) {}
+          if (notifBadge) {
+            if (unreadCount > 0) {
+              notifBadge.textContent = unreadCount;
+              notifBadge.classList.remove('hidden');
+              notifBadge.style.display = '';
+            } else {
+              notifBadge.classList.add('hidden');
+              notifBadge.style.display = 'none';
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Abaikan jika network belum siap
+    }
   }
 
   _onClick(e) {
@@ -397,7 +471,7 @@ class AppSidebar extends HTMLElement {
           <div class="section-title">Inventori</div>
           <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="items">
             <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Barang
-            <span class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">10</span>
+            <span id="sidebar-items-badge" class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">0</span>
           </button>
           <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="in">
             <i data-lucide="arrow-down-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Masuk
@@ -442,7 +516,7 @@ class AppSidebar extends HTMLElement {
           </button>
           <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="notif">
             <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i> Notifikasi
-            <span class="ml-auto text-xs bg-[#FF3B30] px-2 py-0.5 rounded-full font-semibold">3</span>
+            <span id="sidebar-notif-badge" class="ml-auto text-xs bg-[#FF3B30] px-2 py-0.5 rounded-full font-semibold hidden">0</span>
           </button>
           <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="backup">
             <i data-lucide="database-backup" class="w-4 h-4" aria-hidden="true"></i> Backup

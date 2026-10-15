@@ -87,8 +87,8 @@
     <div id="page-debt" class="page active p-6 space-y-6 max-w-7xl mx-auto">
       
       <!-- Title & Description -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div class="debt-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="debt-page-intro">
           <h2 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
             <span class="w-9 h-9 rounded-xl bg-[#FF9500]/10 text-[#FF9500] grid place-items-center">
               <i data-lucide="scale" class="w-5 h-5"></i>
@@ -99,15 +99,12 @@
         </div>
 
         <!-- Filter Tabs -->
-        <div class="flex items-center gap-1.5 flex-wrap text-xs">
-          <button type="button" data-debt-tab="all" class="px-3 py-2 rounded-xl font-medium bg-[#0088CC] text-white transition">Semua</button>
-          <button type="button" data-debt-tab="hutang" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Hutang</button>
-          <button type="button" data-debt-tab="piutang" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Piutang</button>
-          <button type="button" data-debt-tab="jatuh_tempo" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Jatuh Tempo Segera</button>
-          <button type="button" data-debt-tab="lunas" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Lunas</button>
-          <button type="button" id="btn-refresh-debt" title="Muat ulang data" class="p-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">
-            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-          </button>
+        <div class="debt-status-tabs flex items-center gap-1.5 flex-wrap text-xs" role="group" aria-label="Filter status hutang dan piutang">
+          <button type="button" data-debt-tab="all" aria-pressed="true" class="px-3 py-2 rounded-xl font-medium bg-[#0088CC] text-white transition">Semua</button>
+          <button type="button" data-debt-tab="hutang" aria-pressed="false" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Hutang</button>
+          <button type="button" data-debt-tab="piutang" aria-pressed="false" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Piutang</button>
+          <button type="button" data-debt-tab="jatuh_tempo" aria-pressed="false" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Jatuh Tempo Segera</button>
+          <button type="button" data-debt-tab="lunas" aria-pressed="false" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Lunas</button>
         </div>
       </div>
 
@@ -332,6 +329,7 @@
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script type="module" src="./debt.js"></script>
 </body>

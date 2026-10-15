@@ -240,11 +240,9 @@ function setupSearchListeners() {
 }
 
 async function handleRefreshSuppliers() {
-  const iconToolbar = document.getElementById('icon-refresh-suppliers');
   const headerBtn = document.getElementById('btn-refresh-suppliers-header');
   const iconHeader = headerBtn ? headerBtn.querySelector('svg, i') : null;
 
-  if (iconToolbar) iconToolbar.classList.add('animate-spin');
   if (iconHeader) iconHeader.classList.add('animate-spin');
 
   try {
@@ -259,7 +257,6 @@ async function handleRefreshSuppliers() {
     }
   } finally {
     setTimeout(() => {
-      if (iconToolbar) iconToolbar.classList.remove('animate-spin');
       if (iconHeader) iconHeader.classList.remove('animate-spin');
     }, 500);
   }

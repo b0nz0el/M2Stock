@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — settings.js (API Layer)
    Koneksi langsung ke Supabase 'app_settings'
-   ANTI-MOCK: Data live dari database
+   Pengaturan toko dari database
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';

@@ -1098,8 +1098,11 @@
 
       currentItems = res.data || [];
 
-      // Update badge di sidebar
-      const badge = document.querySelector('.menu-item[data-page="items"] span');
+      // Update badge di sidebar & simpan di session cache
+      try {
+        sessionStorage.setItem('items_count', currentItems.length.toString());
+      } catch (_) {}
+      const badge = document.querySelector('#sidebar-items-badge') || document.querySelector('.menu-item[data-page="items"] span');
       if (badge) {
         badge.textContent = currentItems.length;
       }

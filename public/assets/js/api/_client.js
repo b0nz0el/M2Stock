@@ -7,17 +7,8 @@ export const API_BASE = '/api';
 
 /* Konfigurasi state API */
 export const config = {
-  mockMode: false, // false: gunakan backend Supabase jika tersedia
   defaultTimeout: 15000 // 15 detik timeout default
 };
-
-export function setMockMode(val) {
-  config.mockMode = Boolean(val);
-}
-
-export function isMockMode() {
-  return config.mockMode;
-}
 
 /**
  * Helper pemeriksaan ketersediaan klien Supabase global
@@ -78,20 +69,10 @@ export function handleError(err, defaultCode = 'NETWORK_ERROR') {
 }
 
 /**
- * Mock Data Store untuk sistem aQuaStock Pro (Jaquris)
- */
-export const MOCK_DATA = { items: [], user: null };
-
-/**
  * Eksekusi request API via fetch
  */
 export async function apiRequest(path, options = {}) {
-  // 1. Handle Mock Mode jika aktif
-  if (config.mockMode) {
-    return executeMockRequest(path, options);
-  }
-
-  // 2. Setup sinyal pembatalan & timeout
+  // Setup sinyal pembatalan & timeout
   const controller = options.signal ? null : new AbortController();
   const signal = options.signal || controller.signal;
   const timeoutId = controller
@@ -172,35 +153,4 @@ export function mapHttpStatusToCode(status) {
     case 503: return 'SERVICE_UNAVAILABLE';
     default: return 'HTTP_ERROR_' + status;
   }
-}
-
-/**
- * Router Mock Request internal
- */
-export async function executeMockRequest(path, options = {}) {
-  // Delay simulasi latensi jaringan
-  await new Promise(resolve => setTimeout(resolve, options.mockDelay || 150));
-
-  // Periksa sinyal abort
-  if (options.signal && options.signal.aborted) {
-    return handleError({ name: 'AbortError' });
-  }
-
-  const cleanPath = path.split('?')[0];
-
-  // Items
-  if (cleanPath === '/items') {
-    return formatResponse({
-      ok: true,
-      data: MOCK_DATA.items,
-      meta: { total: MOCK_DATA.items.length }
-    });
-  }
-
-  // Generic fallback mock untuk modul lain
-  return formatResponse({
-    ok: true,
-    data: { message: `Endpoint ${cleanPath} siap terhubung backend` },
-    meta: { mock: true, path: cleanPath }
-  });
 }

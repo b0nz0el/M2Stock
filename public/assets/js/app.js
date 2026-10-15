@@ -39,6 +39,11 @@ function syncTableLabels() {
 
     table.querySelectorAll('tbody tr').forEach(function(row) {
       row.querySelectorAll('td').forEach(function(td, index) {
+        if (td.colSpan > 1 || td.classList.contains('empty-state-cell')) {
+          td.removeAttribute('data-label');
+          return;
+        }
+
         const label = headers[index] || '';
         if (label) {
           td.setAttribute('data-label', label);

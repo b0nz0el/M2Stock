@@ -87,7 +87,7 @@
     <div id="page-po" class="page active p-6 space-y-6 max-w-7xl mx-auto">
       
       <!-- Title & Tabs -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="po-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
             <span class="w-9 h-9 rounded-xl bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
@@ -99,15 +99,12 @@
         </div>
 
         <!-- Filter Tabs -->
-        <div class="flex items-center gap-1.5 flex-wrap text-xs">
+        <div class="po-status-tabs flex items-center gap-1.5 flex-wrap text-xs">
           <button type="button" data-po-tab="all" class="px-3 py-2 rounded-xl font-medium bg-[#0088CC] text-white transition">Semua</button>
           <button type="button" data-po-tab="draft" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Draft</button>
           <button type="button" data-po-tab="dikirim" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Dikirim</button>
           <button type="button" data-po-tab="diterima" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Diterima</button>
           <button type="button" data-po-tab="dibatalkan" class="px-3 py-2 rounded-xl font-medium bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">Dibatalkan</button>
-          <button type="button" id="btn-refresh-po" title="Muat ulang data" class="p-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">
-            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-          </button>
         </div>
       </div>
 
@@ -190,9 +187,9 @@
         </div>
 
         <!-- Table Footer & Pagination -->
-        <div class="flex items-center justify-between px-6 py-4 border-t border-white/5 text-xs text-[#A0A0A5]">
+        <div class="po-pagination-footer flex items-center justify-between px-6 py-4 border-t border-white/5 text-xs text-[#A0A0A5]">
           <span id="po-pagination-info">Menampilkan 0 dari 0 PO</span>
-          <div class="flex items-center gap-2">
+          <div class="po-pagination-actions flex items-center gap-2">
             <button type="button" id="btn-prev-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium transition flex items-center gap-1">
               <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
               <span>Sebelumnya</span>
@@ -344,6 +341,7 @@
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
+<script src="../../assets/js/components/select-ui.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
 <script type="module" src="./po.js"></script>
 </body>

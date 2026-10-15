@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — settings.js
    Controller Modul Pengaturan (/dashboard/settings/)
-   ANTI-MOCK: Data live dari Supabase app_settings & profiles
+   Pengaturan dari Supabase app_settings & profiles
    ═══════════════════════════════════════════════════ */
 
 import { settings as settingsApi } from '../../assets/js/api/settings.js';

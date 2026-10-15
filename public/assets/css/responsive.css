@@ -1,269 +1,1253 @@
+:root {
+  --aq-mobile-drawer-width: 280px;
+  --aq-mobile-overlay: rgba(0, 0, 0, 0.5);
+  --aq-surface-soft: rgba(255, 255, 255, 0.02);
+  --aq-border-soft: rgba(255, 255, 255, 0.06);
+  --aq-text-muted: #a0a0a5;
+  --aq-text-subtle: #8e8e93;
+}
+
+.items-toolbar-actions > button {
+  box-sizing: border-box;
+  min-height: 48px;
+  height: 48px;
+  align-items: center;
+}
+
+#page-suppliers .suppliers-page-actions > button {
+  min-height: 44px;
+}
+
+#page-return .return-filter-control {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding-block: 0;
+}
+
+#page-return .return-filter-control select {
+  height: 42px;
+}
+
+#page-return .return-refresh-button {
+  min-height: 44px;
+}
+
+#page-debt .debt-status-tabs > button {
+  min-height: 44px;
+}
+
+@media (max-width: 1279px) {
+  #page-debt .debt-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  #page-debt .debt-page-intro {
+    min-width: 0;
+  }
+
+  #page-debt .debt-page-header h2 {
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #page-debt .debt-page-header p {
+    max-width: 48rem;
+    line-height: 1.5;
+  }
+
+  #page-debt .debt-status-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-debt .debt-status-tabs > button {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  #page-customers .customers-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  #page-customers .customers-page-intro {
+    min-width: 0;
+  }
+
+  #page-customers .customers-page-header h2 {
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #page-customers .customers-page-header p {
+    max-width: 48rem;
+    line-height: 1.5;
+  }
+
+  #page-customers .customers-page-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-customers .customers-page-actions > button {
+    box-sizing: border-box;
+    gap: 6px;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  #page-suppliers .suppliers-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  #page-suppliers .suppliers-page-intro {
+    min-width: 0;
+  }
+
+  #page-suppliers .suppliers-page-header h2 {
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #page-suppliers .suppliers-page-header p {
+    max-width: 48rem;
+    line-height: 1.5;
+  }
+
+  #page-suppliers .suppliers-page-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-suppliers .suppliers-page-actions > button {
+    box-sizing: border-box;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  #page-suppliers #supplier-filter-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-suppliers #supplier-filter-tabs > button {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px 6px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  #page-return .return-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+    gap: 16px;
+  }
+
+  #page-return .return-page-header > div:first-child {
+    min-width: 0;
+  }
+
+  #page-return .return-page-header h2 {
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #page-return .return-page-header p {
+    max-width: 48rem;
+    line-height: 1.5;
+  }
+
+  #page-return .return-filter-controls {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-return .return-filter-control {
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    margin: 0 !important;
+    padding: 0 12px;
+  }
+
+  #page-return .return-filter-control:focus-within {
+    border-color: rgba(0, 136, 204, 0.7);
+    box-shadow: 0 0 0 2px rgba(0, 136, 204, 0.18);
+  }
+
+  #page-return .return-filter-control::after {
+    content: none;
+  }
+
+  #page-return .return-filter-control > .ui-select {
+    flex: 1 1 0%;
+    width: 0;
+    min-width: 0;
+  }
+
+  #page-return .return-filter-control .ui-select-trigger {
+    font-size: 0.8125rem;
+  }
+
+  #page-return .return-filter-control:not(.return-filter-period) > i {
+    display: none;
+  }
+
+  #page-return .return-filter-control select {
+    appearance: none;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    padding: 0 18px 0 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 0.8125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #page-return .return-filter-control option {
+    color: #fff;
+    background: #1c1c1e;
+  }
+
+  #page-return .return-filter-period {
+    grid-column: 1 / -1;
+    width: calc(100% - 56px);
+  }
+
+  #page-return .return-refresh-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 48px;
+    min-height: 48px;
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  #page-return .return-refresh-button span {
+    display: none;
+  }
+
+  #page-po .po-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+    gap: 16px;
+  }
+
+  #page-po .po-page-header > div:first-child {
+    min-width: 0;
+  }
+
+  #page-po .po-page-header h2 {
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #page-po .po-page-header p {
+    max-width: 48rem;
+    line-height: 1.5;
+  }
+
+  #page-po .po-status-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-po .po-status-tabs > button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+}
+
 /* ═══════════════════════════════════════════════════
    aQuaStock Pro — responsive.css
-   Semua @media (max-width:1024px), @supports fallback, prefers-reduced-motion
+   Mobile/tablet layout rules, fallback support, and motion-safe behavior
    ═══════════════════════════════════════════════════ */
-  /* ═══════════════════════════════════════════════════
-     TABLET & MOBILE — max-width: 1024px
+/* ═══════════════════════════════════════════════════
+     MOBILE — max-width: 767px
      ═══════════════════════════════════════════════════ */
-  @media (max-width: 1024px) {
-    /* Sidebar jadi drawer */
-    aside {
-      position: fixed;
-      left: -280px;
-      z-index: 60;
-      transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      height: 100vh;
-      width: 280px;
-      display: flex;
-      flex-direction: column;
-    }
-    aside.open {
-      left: 0;
-      box-shadow: 0 0 40px rgba(0,0,0,0.5);
-    }
-    aside::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s;
-      z-index: -1;
-    }
-    aside.open::before { opacity: 1; visibility: visible; }
+#page-customers .customers-page-actions > button {
+  min-height: 44px;
+}
 
-    /* Main full width */
-    main {
-      width: 100%;
-      margin-left: 0 !important;
-      padding-left: 0 !important;
-      max-width: 100vw !important;
-      overflow-x: hidden;
-    }
-    body > div.flex { display: block !important; }
+@media (max-width: 767px) {
+  #page-debt .debt-status-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-    /* Page padding + ruang untuk bottom nav */
-    .page {
-      padding: 16px !important;
-      padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
-    }
+  #page-debt .debt-status-tabs > button {
+    min-height: 48px;
+    padding: 8px;
+    white-space: normal;
+  }
 
-    /* Header sticky & compact */
-    header {
-      padding: 12px 16px !important;
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 40 !important;
-      background: rgba(0,0,0,0.85) !important;
-      backdrop-filter: blur(20px) !important;
-    }
-    header > div:first-child > span:first-child,
-    header > div:first-child > svg:first-child { display: none; }
-    #breadcrumb { display: none; }
-    header .max-w-md { max-width: 100%; margin-left: 0; }
-    header .ml-6 { margin-left: 0; }
+  #page-debt .debt-status-tabs > button:last-child {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 4px));
+    justify-self: center;
+  }
 
-    /* Grid collapse */
-    .grid-cols-4 { grid-template-columns: 1fr !important; }
-    .grid-cols-3 { grid-template-columns: 1fr !important; }
-    .grid-cols-2 { grid-template-columns: 1fr !important; }
-    .col-span-2 { grid-column: span 1 !important; }
+  #page-customers .customers-page-actions > button {
+    padding: 6px !important;
+    font-size: 0.75rem;
+  }
 
-    /* Chart container responsive */
-    .chart-container {
-      width: 100% !important;
-      max-width: 100% !important;
-      min-height: 180px;
-    }
+  #page-customers .customers-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 
-    /* Bottom nav muncul */
-    .bottom-nav { display: block; }
+  #page-customers .customers-metrics > .card:last-child {
+    grid-column: 1 / -1;
+  }
 
-    /* Tap target 44px */
-    button:not(.bottom-nav-item):not(.menu-item):not(.card table button) {
-      min-height: 44px;
-    }
-    .menu-item { min-height: 44px; }
+  #page-customers .customers-filter-bar {
+    align-items: stretch;
+  }
 
-    /* Tombol header wrap */
-    .page > div:first-child { flex-wrap: wrap; }
-    .page > div:first-child .flex.gap-2 {
-      flex-wrap: wrap;
-      width: 100%;
-      margin-top: 12px;
-    }
-    .page > div:first-child .flex.gap-2 > button,
-    .page > div:first-child .flex.gap-2 > a {
-      flex: 1;
-      min-width: 0;
-      font-size: 0.8125rem;
-      padding: 12px;
-    }
-    header button span:not(.ml-auto) { display: none; }
+  #page-customers .customers-filter-bar > div {
+    width: 100%;
+    max-width: none;
+  }
 
-    /* ═══ TABLE → CARD ═══ */
-    .card-table-wrap { overflow: visible; }
-    .card table { min-width: unset !important; }
-    .card:has(table) { overflow: visible !important; }
+  #page-customers #customers-count-info {
+    align-self: flex-start;
+    line-height: 1.4;
+  }
 
-    .card table thead { display: none !important; }
+  #page-customers .customers-pagination-wrap {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-    .card table tbody tr {
-      display: block !important;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 10px;
-      position: relative;
-      animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
+  #page-customers #customers-pagination-buttons {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
 
-    /* tr tanpa padding ekstra */
-    .card table tbody tr:has(td:last-child button) {
-      padding-right: 14px;
-    }
+  #page-customers #customers-pagination-buttons > button {
+    min-width: 40px;
+    min-height: 44px;
+  }
 
-    /* HANYA baris pertama (yang bertemu tombol) punya padding ekstra */
-    .card table tbody tr:has(td:last-child button) td:first-child {
-        padding-right: 130px !important;
-    }
-    .card table tbody td {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      gap: 12px;
-      padding: 5px 0 !important;
-      border: none !important;
-      font-size: 0.8125rem;
-      text-align: right;
-      background: transparent !important;
-    }
+  #page-suppliers .suppliers-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 
-    .card table tbody td::before {
-      content: attr(data-label) !important;
-      color: #A0A0A5 !important;
-      font-size: 0.6875rem !important;
-      font-weight: 500 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.5px;
-      text-align: left !important;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    /* Sembunyikan kolom placeholder di mobile */
-    .card table tbody td.hide-on-mobile {
-        display: none !important;
-        }
+  #page-suppliers .suppliers-metrics > .card:last-child {
+    grid-column: 1 / -1;
+  }
 
-    /* Checkbox cell: tanpa label */
-    .card table tbody td:first-child:has(input[type="checkbox"])::before {
-      display: none !important;
-    }
+  /* Sidebar jadi drawer */
+  aside {
+    position: fixed;
+    left: calc(var(--aq-mobile-drawer-width) * -1);
+    z-index: 60;
+    transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    height: 100vh;
+    width: var(--aq-mobile-drawer-width);
+    display: flex;
+    flex-direction: column;
+  }
+  aside.open {
+    left: 0;
+    box-shadow: 0 0 40px var(--aq-mobile-overlay);
+  }
+  aside::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: var(--aq-mobile-overlay);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    z-index: -1;
+  }
+  aside.open::before {
+    opacity: 1;
+    visibility: visible;
+  }
 
-    /* Aksi cell (tombol): pojok kanan atas — HANYA jika berisi tombol */
-    .card table tbody td:last-child:has(button) {
-      position: absolute !important;
-      top: 14px;
-      right: 14px;
-      padding: 0 !important;
-      border: none !important;
-      margin: 0 !important;
-      width: auto;
-      justify-content: flex-end !important;
-      display: flex !important;
-    }
-    .card table tbody td:last-child:has(button)::before { display: none !important; }
+  /* Main full width */
+  main {
+    width: 100%;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    max-width: 100vw !important;
+    overflow-x: hidden;
+  }
+  body > div.flex {
+    display: block !important;
+  }
 
-    /* Empty State row override: full width, center, no card styling, no absolute action button */
-    .card table tbody tr.empty-state-row,
-    .card table tbody tr:has(.empty-state-cell) {
-      display: block !important;
-      background: transparent !important;
-      border: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      position: static !important;
-      width: 100% !important;
-      box-shadow: none !important;
-    }
+  /* Page padding + ruang untuk bottom nav */
+  .page {
+    padding: 16px !important;
+    padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
+  }
 
-    .card table tbody tr.empty-state-row td,
-    .card table tbody tr td.empty-state-cell {
-      display: block !important;
-      position: static !important;
-      width: 100% !important;
-      padding: 48px 16px !important;
-      text-align: center !important;
-      background: transparent !important;
-      border: none !important;
-      margin: 0 !important;
-    }
+  /* Header sticky & compact */
+  header {
+    padding: 12px 16px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 40 !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  header > div:first-child > span:first-child,
+  header > div:first-child > svg:first-child {
+    display: none;
+  }
+  #breadcrumb {
+    display: none;
+  }
+  header .max-w-md {
+    max-width: 100%;
+    margin-left: 0;
+  }
+  header .ml-6 {
+    margin-left: 0;
+  }
 
-    .card table tbody tr.empty-state-row td::before,
-    .card table tbody tr td.empty-state-cell::before {
-      display: none !important;
-      content: none !important;
-    }
+  /* Grid collapse */
+  .grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+  .grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .col-span-2 {
+    grid-column: span 1 !important;
+  }
 
-    .card table tbody tr.empty-state-row td:first-child,
-    .card table tbody tr td.empty-state-cell:first-child {
-      padding-right: 16px !important;
-    }
+  /* Chart container responsive */
+  .chart-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 180px;
+  }
 
-    .card table tbody tr.empty-state-row td:last-child:has(button),
-    .card table tbody tr td.empty-state-cell:last-child:has(button) {
-      position: static !important;
-      width: 100% !important;
-      display: block !important;
-      padding: 48px 16px !important;
-      margin: 0 !important;
-    }
+  .settings-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    overflow: visible;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
 
-    /* Field sekunder — kecil & redup */
-    .card table tbody td[data-label="BRAND"],
-    .card table tbody td[data-label="SKU"],
-    .card table tbody td[data-label="KATEGORI"],
-    .card table tbody td[data-label="KASIR"],
-    .card table tbody td[data-label="CHANNEL"] {
-      font-size: 0.75rem !important;
-      color: #A0A0A5;
-    }
+  .settings-tabs .settings-tab-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    justify-content: flex-start;
+    padding: 10px 12px !important;
+    white-space: normal !important;
+    text-align: left;
+  }
 
-    /* Field tersier - cegah wrap & kecilkan */
-    .card table tbody td[data-label="NO. TRANSAKSI"],
-    .card table tbody td[data-label="NO. RESI"],
-    .card table tbody td[data-label="NO. PO"],
-    .card table tbody td[data-label="NO. RETUR"] {
-      font-size: 0.625rem !important;
-      color: #8E8E93;
-       white-space: nowrap !important;
-       gap: 6px !important
-    }
-    /* Label lebih kecil untuk field ini */
-    .card table tbody td[data-label="NO. TRANSAKSI"]::before,
-    .card table tbody td[data-label="NO. RESI"]::before,
-    .card table tbody td[data-label="NO. PO"]::before,
-    .card table tbody td[data-label="NO. RETUR"]::before {
-      font-size: 0.5625rem !important;
-      letter-spacing: 0.3px !important;
+  #page-settings .settings-tabs .settings-tab-btn {
+    min-height: 48px;
+  }
+
+  .settings-tabs .settings-tab-btn span {
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .settings-tabs .settings-tab-btn:last-child {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 4px));
+    justify-self: center;
+  }
+
+  #page-settings > div:first-child h2 {
+    gap: 10px;
+    font-size: clamp(1.5rem, 6vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #page-settings > div:first-child p {
+    max-width: 42rem;
+    line-height: 1.5;
+  }
+
+  .report-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .report-page-header h2 {
+    font-size: clamp(1.5rem, 6vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  .report-period-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .report-period-actions select {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+  }
+
+  .report-period-actions button {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+  }
+
+  #page-report #report-filter-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  #page-report #report-filter-tabs > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px 12px;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  #page-report #report-filter-tabs > button:last-child {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 4px));
+    justify-self: center;
+  }
+
+  #page-return .return-filter-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #page-return .return-filter-period,
+  #page-return .return-refresh-button {
+    grid-column: auto;
+  }
+
+  #page-return .return-filter-period {
+    grid-column: 1 / -1;
+  }
+
+  #page-return .return-pagination-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  #page-return .return-pagination-actions {
+    width: 100%;
+  }
+
+  #page-return .return-pagination-actions > button {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  #page-po .po-pagination-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  #page-po .po-pagination-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  #page-po .po-pagination-actions > button {
+    box-sizing: border-box;
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  #page-po .po-status-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #page-po .po-status-tabs > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px 8px;
+    white-space: normal;
+  }
+
+  #page-po .po-status-tabs > button:last-child {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 4px));
+    justify-self: center;
+  }
+
+  .items-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .items-page-header h2 {
+    font-size: clamp(1.5rem, 6vw, 1.875rem);
+    line-height: 1.2;
+  }
+
+  #items-subtitle {
+    line-height: 1.5;
+  }
+
+  .items-toolbar-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+    margin-top: 0 !important;
+  }
+
+  #page-items .items-page-header .items-toolbar-actions > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap;
+  }
+
+  /* Bottom nav muncul */
+  .bottom-nav {
+    display: block;
+  }
+
+  /* Tap target 44px */
+  button:not(.bottom-nav-item):not(.menu-item):not(.card table button) {
+    min-height: 44px;
+  }
+  .menu-item {
+    min-height: 44px;
+  }
+
+  /* Tombol header wrap */
+  .page > div:first-child {
+    flex-wrap: wrap;
+  }
+  .page > div:first-child .flex.gap-2 {
+    flex-wrap: wrap;
+    width: 100%;
+    margin-top: 12px;
+  }
+  .page > div:first-child .flex.gap-2 > button,
+  .page > div:first-child .flex.gap-2 > a {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.8125rem;
+    padding: 12px;
+  }
+  header button span:not(.ml-auto) {
+    display: none;
+  }
+
+  /* ═══ TABLE → CARD ═══ */
+  .card-table-wrap {
+    overflow: visible;
+  }
+  .card table {
+    min-width: unset !important;
+  }
+  .card:has(table) {
+    overflow: visible !important;
+  }
+
+  .card table thead {
+    display: none !important;
+  }
+
+  .card table tbody tr {
+    display: block !important;
+    background: var(--aq-surface-soft);
+    border: 1px solid var(--aq-border-soft);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* tr tanpa padding ekstra */
+  .card table tbody tr:has(td:last-child button) {
+    padding-right: 14px;
+  }
+
+  /* HANYA baris pertama (yang bertemu tombol) punya padding ekstra */
+  .card table tbody tr:has(td:last-child button) td:first-child {
+    padding-right: 130px !important;
+  }
+  .card table tbody td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px;
+    padding: 5px 0 !important;
+    border: none !important;
+    font-size: 0.8125rem;
+    text-align: right;
+    background: transparent !important;
+  }
+
+  .card table tbody td::before {
+    content: attr(data-label) !important;
+    color: var(--aq-text-muted) !important;
+    font-size: 0.6875rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px;
+    text-align: left !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  /* Sembunyikan kolom placeholder di mobile */
+  .card table tbody td.hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Checkbox cell: tanpa label */
+  .card table tbody td:first-child:has(input[type="checkbox"])::before {
+    display: none !important;
+  }
+
+  /* Aksi cell (tombol): pojok kanan atas — HANYA jika berisi tombol */
+  .card table tbody td:last-child:has(button) {
+    position: absolute !important;
+    top: 14px;
+    right: 14px;
+    padding: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    width: auto;
+    justify-content: flex-end !important;
+    display: flex !important;
+  }
+  .card table tbody td:last-child:has(button)::before {
+    display: none !important;
+  }
+
+  /* Empty State row override: full width, center, no card styling, no absolute action button */
+  .card table tbody tr.empty-state-row,
+  .card table tbody tr:has(.empty-state-cell) {
+    display: block !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+
+  .card table tbody tr.empty-state-row td,
+  .card table tbody tr td.empty-state-cell {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    padding: 48px 16px !important;
+    text-align: center !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  .card table tbody tr.empty-state-row td::before,
+  .card table tbody tr td.empty-state-cell::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .card table tbody tr.empty-state-row td:first-child,
+  .card table tbody tr td.empty-state-cell:first-child {
+    padding-right: 16px !important;
+  }
+
+  .card table tbody tr.empty-state-row td:last-child:has(button),
+  .card table tbody tr td.empty-state-cell:last-child:has(button) {
+    position: static !important;
+    width: 100% !important;
+    display: block !important;
+    padding: 48px 16px !important;
+    margin: 0 !important;
+  }
+
+  /* Field sekunder — kecil & redup */
+  .card table tbody td[data-label="BRAND"],
+  .card table tbody td[data-label="SKU"],
+  .card table tbody td[data-label="KATEGORI"],
+  .card table tbody td[data-label="KASIR"],
+  .card table tbody td[data-label="CHANNEL"] {
+    font-size: 0.75rem !important;
+    color: var(--aq-text-muted);
+  }
+
+  /* Field tersier — cegah wrap & kecilkan */
+  .card table tbody td[data-label="NO. TRANSAKSI"],
+  .card table tbody td[data-label="NO. RESI"],
+  .card table tbody td[data-label="NO. PO"],
+  .card table tbody td[data-label="NO. RETUR"] {
+    font-size: 0.625rem !important;
+    color: var(--aq-text-subtle);
+    white-space: nowrap !important;
+    gap: 6px !important;
+  }
+  /* Label lebih kecil untuk field ini */
+  .card table tbody td[data-label="NO. TRANSAKSI"]::before,
+  .card table tbody td[data-label="NO. RESI"]::before,
+  .card table tbody td[data-label="NO. PO"]::before,
+  .card table tbody td[data-label="NO. RETUR"]::before {
+    font-size: 0.5625rem !important;
+    letter-spacing: 0.3px !important;
   }
 
   /* ═══ iOS < 15 fallback untuk :has() ═══ */
   @supports not (selector(:has(*))) {
-    .card table tbody td:first-child::before { content: none !important; }
+    .card table tbody td:first-child::before {
+      content: none !important;
+    }
   }
 
   /* ═══ REDUCED MOTION ═══ */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
-    .ticker-glow, .animate-pulse-badge, .skeleton, .skeleton-line {
+    .ticker-glow,
+    .animate-pulse-badge,
+    .skeleton,
+    .skeleton-line {
       animation: none !important;
     }
   }
+}
+
+@media (max-width: 359px) {
+  #page-customers .customers-page-actions > button {
+    padding: 4px !important;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+  }
+
+  #page-suppliers .suppliers-page-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #page-suppliers #supplier-filter-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #page-suppliers #supplier-filter-tabs > button:last-child {
+    grid-column: 1 / -1;
+    width: min(100%, calc(50% - 4px));
+    justify-self: center;
+  }
+
+  #page-return .return-filter-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #page-return .return-filter-period,
+  #page-return .return-refresh-button {
+    grid-column: auto;
+  }
+
+  #page-return .return-filter-period {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+     TABLET — 768px to 1023px
+     ═══════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  #page-customers .customers-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #page-customers .customers-metrics > .card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  #page-suppliers .suppliers-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #page-suppliers .suppliers-metrics > .card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .page {
+    padding: 20px 24px !important;
+  }
+
+  main {
+    width: 100%;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .grid-cols-4,
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .chart-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 220px;
+  }
+
+  .settings-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    overflow: visible;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .settings-tabs .settings-tab-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    justify-content: flex-start;
+    padding: 10px 12px !important;
+    white-space: normal !important;
+    text-align: left;
+  }
+
+  .settings-tabs .settings-tab-btn span {
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  #page-return .return-filter-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #page-return .return-filter-period,
+  #page-return .return-refresh-button {
+    grid-column: 1 / -1;
+  }
+
+  .report-page-header {
+    align-items: stretch !important;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .report-period-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .report-period-actions select,
+  .report-period-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px 12px;
+    justify-content: center;
+  }
+
+  .items-page-header {
+    align-items: stretch !important;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .items-toolbar-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  #page-items .items-page-header .items-toolbar-actions > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    justify-content: center;
+    padding: 8px 12px !important;
+    white-space: nowrap;
+  }
+
+  #page-report #report-filter-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  #page-report #report-filter-tabs > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px 8px;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  #page-po .po-status-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #page-po .po-status-tabs > button:last-child {
+    grid-column: auto;
+    width: auto;
+  }
+
+  .card-table-wrap {
+    overflow: visible;
+  }
+
+  .card:has(table) {
+    overflow: visible !important;
+  }
+
+  .card table {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .card table thead {
+    display: none !important;
+  }
+
+  .card table tbody tr {
+    display: block !important;
+    background: var(--aq-surface-soft);
+    border: 1px solid var(--aq-border-soft);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .card table tbody td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px;
+    padding: 6px 0 !important;
+    border: none !important;
+    font-size: 0.8125rem;
+    text-align: right;
+    background: transparent !important;
+  }
+
+  .card table tbody td::before {
+    content: attr(data-label) !important;
+    color: var(--aq-text-muted) !important;
+    font-size: 0.6875rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px;
+    text-align: left !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card table tbody td:last-child:has(button) {
+    position: static !important;
+    width: auto !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding: 0 !important;
+    margin-top: 12px !important;
+  }
+
+  .card table tbody tr.empty-state-row,
+  .card table tbody tr:has(.empty-state-cell) {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .card table tbody td.empty-state-cell {
+    display: block !important;
+    width: 100% !important;
+    padding: 40px 20px !important;
+    position: static !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  .card table tbody td.empty-state-cell::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .card table tbody td.empty-state-cell > div {
+    width: 100%;
+    max-width: 24rem;
+  }
+
+  .page > div:first-child .flex.gap-2 > button,
+  .page > div:first-child .flex.gap-2 > a {
+    min-width: 0;
+    font-size: 0.8125rem;
+    padding: 11px 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  #page-customers .customers-page-actions {
+    align-items: stretch;
+  }
+
+  #page-customers .customers-page-actions > button {
+    align-self: stretch;
+    margin: 0 !important;
+    min-height: 48px;
+    padding: 8px 10px !important;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 380px) {
+  #page-customers .customers-page-actions {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  #page-customers .customers-page-actions > button:first-child {
+    justify-content: center;
+    padding: 8px !important;
+    font-size: 0;
+  }
+
+  #page-customers .customers-page-actions > button:first-child svg {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+  }
+
+  #page-customers .customers-page-actions > button:last-child {
+    justify-content: center;
+    padding: 8px 12px !important;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 359px) {
+  #page-return .return-filter-control:not(.return-filter-period) > i {
+    display: none;
+  }
+
+  #page-return .return-filter-control:not(.return-filter-period) {
+    padding-inline: 8px;
+  }
+
+  #page-return .return-filter-control .ui-select-trigger {
+    gap: 4px;
+    padding-right: 14px;
+    font-size: 0.75rem;
+  }
+
+  #page-return .return-filter-control .ui-select-arrow {
+    width: 14px;
+    height: 14px;
+  }
+
+  #page-return .return-filter-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

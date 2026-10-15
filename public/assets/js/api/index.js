@@ -7,8 +7,6 @@ import {
   createAbortController,
   formatResponse,
   handleError,
-  setMockMode,
-  isMockMode,
   apiRequest
 } from './_client.js';
 import { items } from './items.js';
@@ -32,8 +30,6 @@ export const Api = {
   createAbortController,
   formatResponse,
   handleError,
-  setMockMode,
-  isMockMode,
 
   // Raw Request
   request: apiRequest,

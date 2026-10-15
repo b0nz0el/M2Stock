@@ -639,11 +639,9 @@
   }
 
   async function handleRefreshOut() {
-    const iconToolbar = document.getElementById('icon-refresh-out');
     const headerBtn = document.getElementById('btn-refresh-out-header');
     const iconHeader = headerBtn ? headerBtn.querySelector('svg, i') : null;
 
-    if (iconToolbar) iconToolbar.classList.add('animate-spin');
     if (iconHeader) iconHeader.classList.add('animate-spin');
 
     try {
@@ -659,7 +657,6 @@
       }
     } finally {
       setTimeout(() => {
-        if (iconToolbar) iconToolbar.classList.remove('animate-spin');
         if (iconHeader) iconHeader.classList.remove('animate-spin');
       }, 500);
     }
@@ -1158,4 +1155,3 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ==========================================================
  * END OF WEB BARCODE SCANNER MODULE
  * ========================================================== */
-

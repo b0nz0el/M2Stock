@@ -3,11 +3,11 @@
    Domain Items / Master Barang
    ═══════════════════════════════════════════════════ */
 
-import { config, isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
 
 export const items = {
     getAll: async (params, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           let query = window.supabase
             .from('products')
@@ -71,7 +71,7 @@ export const items = {
     },
 
     getById: async (id, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const numId = Number(id);
           let query = window.supabase
@@ -133,7 +133,7 @@ export const items = {
     },
 
     create: async (data, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const row = {
             name: data.name,
@@ -181,7 +181,7 @@ export const items = {
     },
 
     update: async (id, data, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const numId = Number(id);
           const row = { ...data };
@@ -235,7 +235,7 @@ export const items = {
     },
 
     delete: async (id, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const numId = Number(id);
           let query = window.supabase
@@ -272,7 +272,7 @@ export const items = {
     },
 
     checkDeletable: async (ids, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const numIds = (ids || []).map(Number).filter(n => !isNaN(n));
           if (!numIds.length) {
@@ -303,7 +303,7 @@ export const items = {
     },
 
     bulkDelete: async (ids, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const numIds = (ids || []).map(Number).filter(n => !isNaN(n));
           if (!numIds.length) {
@@ -365,7 +365,7 @@ export const items = {
     },
 
     bulkUpdatePrice: async (updates, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           if (!updates || !updates.length) {
             return formatResponse({ ok: false, error: { message: 'Tidak ada data harga untuk diperbarui' } });

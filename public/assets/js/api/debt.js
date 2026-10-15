@@ -4,26 +4,13 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError, isMockMode } from './_client.js';
-
-const now = new Date();
-const formatDateOffset = (days) => {
-  const d = new Date(now.getTime() + days * 86400000);
-  return d.toISOString().slice(0, 10);
-};
-
-// Mock data untuk development & offline fallback
-let MOCK_DEBTS = [];
+import { formatResponse, handleError } from './_client.js';
 
 export const debt = {
   /**
    * Mengambil daftar hutang & piutang dengan filter
    */
   async getAll({ page = 1, limit = 50, tipe = null, status = null, search = '' } = {}) {
-    if (isMockMode()) {
-      return this._getMockData({ page, limit, tipe, status, search });
-    }
-
     try {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
@@ -51,8 +38,7 @@ export const debt = {
         .range(from, to);
 
       if (error) {
-        console.warn('[DebtApi] Supabase error, fallback to mock:', error.message);
-        return this._getMockData({ page, limit, tipe, status, search });
+        return formatResponse({ ok: false, error });
       }
 
       return formatResponse({
@@ -66,8 +52,7 @@ export const debt = {
         }
       });
     } catch (err) {
-      console.warn('[DebtApi] Exception, fallback to mock:', err);
-      return this._getMockData({ page, limit, tipe, status, search });
+      return handleError(err);
     }
   },
 
@@ -81,7 +66,6 @@ export const debt = {
         items = [];
       }
 
-      const today = new Date().toISOString().slice(0, 10);
       const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
       const currentMonthPrefix = new Date().toISOString().slice(0, 7);
 
@@ -150,16 +134,11 @@ export const debt = {
         created_at: new Date().toISOString()
       };
 
-      if (!isMockMode()) {
-        const { data, error } = await supabase.from('debts').insert([payload]).select().single();
-        if (!error && data) {
-          return formatResponse({ ok: true, data });
-        }
+      const { data, error } = await supabase.from('debts').insert([payload]).select().single();
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      const mockNew = { id: `debt-${Date.now()}`, ...payload };
-      MOCK_DEBTS.unshift(mockNew);
-      return formatResponse({ ok: true, data: mockNew });
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }
@@ -177,20 +156,17 @@ export const debt = {
    */
   async update(id, updates) {
     try {
-      if (!isMockMode()) {
-        const { data, error } = await supabase.from('debts').update(updates).eq('id', id).select().single();
-        if (!error && data) {
-          return formatResponse({ ok: true, data });
-        }
+      const { data, error } = await supabase.from('debts').update(updates).eq('id', id).select().single();
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      const idx = MOCK_DEBTS.findIndex(d => d.id === id);
-      if (idx !== -1) {
-        MOCK_DEBTS[idx] = { ...MOCK_DEBTS[idx], ...updates };
-        return formatResponse({ ok: true, data: MOCK_DEBTS[idx] });
+      if (!data) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'NOT_FOUND', message: 'Data hutang/piutang tidak ditemukan' }
+        });
       }
-
-      return formatResponse({ ok: false, error: { message: 'Data hutang/piutang tidak ditemukan' } });
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }
@@ -201,55 +177,13 @@ export const debt = {
    */
   async delete(id) {
     try {
-      if (!isMockMode()) {
-        const { error } = await supabase.from('debts').delete().eq('id', id);
-        if (!error) {
-          return formatResponse({ ok: true, data: { id } });
-        }
+      const { error } = await supabase.from('debts').delete().eq('id', id);
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      MOCK_DEBTS = MOCK_DEBTS.filter(d => d.id !== id);
       return formatResponse({ ok: true, data: { id } });
     } catch (err) {
       return handleError(err);
     }
-  },
-
-  /**
-   * Helper internal untuk memfilter mock data
-   */
-  _getMockData({ page = 1, limit = 50, tipe = null, status = null, search = '' }) {
-    let list = [...MOCK_DEBTS];
-
-    if (tipe && tipe !== 'ALL') {
-      list = list.filter(d => d.tipe === tipe.toLowerCase());
-    }
-
-    if (status && status !== 'ALL') {
-      list = list.filter(d => d.status === status.toLowerCase());
-    }
-
-    if (search && search.trim() !== '') {
-      const q = search.trim().toLowerCase();
-      list = list.filter(d =>
-        (d.pihak && d.pihak.toLowerCase().includes(q)) ||
-        (d.catatan && d.catatan.toLowerCase().includes(q))
-      );
-    }
-
-    const total = list.length;
-    const from = (page - 1) * limit;
-    const paginated = list.slice(from, from + limit);
-
-    return formatResponse({
-      ok: true,
-      data: paginated,
-      meta: {
-        page: Number(page),
-        limit: Number(limit),
-        total: total,
-        totalPages: Math.max(1, Math.ceil(total / limit))
-      }
-    });
   }
 };

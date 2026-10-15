@@ -3,11 +3,11 @@
    Domain Customers / Master Customer
    ═══════════════════════════════════════════════════ */
 
-import { config, isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
 
 export const customers = {
     getAll: async (params, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           let query = window.supabase.from('customers').select('*').order('name');
           if (params?.search && params.search.trim()) {
@@ -65,7 +65,7 @@ export const customers = {
       return apiRequest('/customers?' + new URLSearchParams(params || {}).toString(), { ...opts });
     },
     getById: async (id, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data, error } = await window.supabase.from('customers').select('*').eq('id', id).single();
           if (error) {
@@ -82,7 +82,7 @@ export const customers = {
       return apiRequest('/customers/' + id, { ...opts });
     },
     create: async (data, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const payload = {
             name: data.name ? data.name.trim() : '',
@@ -111,7 +111,7 @@ export const customers = {
       return apiRequest('/customers', { method: 'POST', body: data, ...opts });
     },
     update: async (id, data, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const payload = {};
           if (data.name !== undefined) payload.name = data.name.trim();
@@ -134,7 +134,7 @@ export const customers = {
       return apiRequest('/customers/' + id, { method: 'PUT', body: data, ...opts });
     },
     delete: async (id, opts) => {
-      if (!config.mockMode && isSupabaseAvailable()) {
+      if (isSupabaseAvailable()) {
         try {
           const { data: relatedTx, error: checkErr } = await window.supabase
             .from('transactions')

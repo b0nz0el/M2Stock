@@ -4,20 +4,13 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError, isMockMode } from './_client.js';
-
-// Mock data untuk development & offline fallback
-let MOCK_CASH_FLOW = [];
+import { formatResponse, handleError } from './_client.js';
 
 export const cash = {
   /**
    * Mengambil data arus kas dengan pagination dan filter
    */
   async getAll({ page = 1, limit = 20, kategori = null, metode = null, startDate = null, endDate = null, search = '' } = {}) {
-    if (isMockMode()) {
-      return this._getMockData({ page, limit, kategori, metode, startDate, endDate, search });
-    }
-
     try {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
@@ -53,8 +46,7 @@ export const cash = {
         .range(from, to);
 
       if (error) {
-        console.warn('[CashApi] Supabase query error, fallback to mock:', error.message);
-        return this._getMockData({ page, limit, kategori, metode, startDate, endDate, search });
+        return formatResponse({ ok: false, error });
       }
 
       return formatResponse({
@@ -68,8 +60,7 @@ export const cash = {
         }
       });
     } catch (err) {
-      console.warn('[CashApi] Exception, fallback to mock:', err);
-      return this._getMockData({ page, limit, kategori, metode, startDate, endDate, search });
+      return handleError(err);
     }
   },
 
@@ -83,6 +74,7 @@ export const cash = {
         items = inputItems;
       } else {
         const res = await this.getAll({ page: 1, limit: 1000 });
+        if (!res.ok) return res;
         items = res.data || [];
       }
 
@@ -153,17 +145,11 @@ export const cash = {
         created_at: new Date().toISOString()
       };
 
-      if (!isMockMode()) {
-        const { data, error } = await supabase.from('cash_flow').insert([payload]).select().single();
-        if (!error && data) {
-          return formatResponse({ ok: true, data });
-        }
+      const { data, error } = await supabase.from('cash_flow').insert([payload]).select().single();
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      // Mock fallback
-      const mockNew = { id: `cf-${Date.now()}`, ...payload };
-      MOCK_CASH_FLOW.unshift(mockNew);
-      return formatResponse({ ok: true, data: mockNew });
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }
@@ -174,20 +160,17 @@ export const cash = {
    */
   async update(id, updates) {
     try {
-      if (!isMockMode()) {
-        const { data, error } = await supabase.from('cash_flow').update(updates).eq('id', id).select().single();
-        if (!error && data) {
-          return formatResponse({ ok: true, data });
-        }
+      const { data, error } = await supabase.from('cash_flow').update(updates).eq('id', id).select().single();
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      const idx = MOCK_CASH_FLOW.findIndex(c => c.id === id);
-      if (idx !== -1) {
-        MOCK_CASH_FLOW[idx] = { ...MOCK_CASH_FLOW[idx], ...updates };
-        return formatResponse({ ok: true, data: MOCK_CASH_FLOW[idx] });
+      if (!data) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'NOT_FOUND', message: 'Transaksi kas tidak ditemukan' }
+        });
       }
-
-      return formatResponse({ ok: false, error: { message: 'Transaksi kas tidak ditemukan' } });
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }
@@ -198,60 +181,13 @@ export const cash = {
    */
   async delete(id) {
     try {
-      if (!isMockMode()) {
-        const { error } = await supabase.from('cash_flow').delete().eq('id', id);
-        if (!error) {
-          return formatResponse({ ok: true, data: { id } });
-        }
+      const { error } = await supabase.from('cash_flow').delete().eq('id', id);
+      if (error) {
+        return formatResponse({ ok: false, error });
       }
-
-      MOCK_CASH_FLOW = MOCK_CASH_FLOW.filter(c => c.id !== id);
       return formatResponse({ ok: true, data: { id } });
     } catch (err) {
       return handleError(err);
     }
-  },
-
-  /**
-   * Helper internal untuk memfilter mock data
-   */
-  _getMockData({ page = 1, limit = 20, kategori = null, metode = null, startDate = null, endDate = null, search = '' }) {
-    let list = [...MOCK_CASH_FLOW];
-
-    if (kategori && kategori !== 'ALL') {
-      list = list.filter(c => c.kategori === kategori);
-    }
-
-    if (metode && metode !== 'ALL') {
-      list = list.filter(c => c.metode === metode);
-    }
-
-    if (startDate) {
-      list = list.filter(c => c.tanggal >= startDate);
-    }
-
-    if (endDate) {
-      list = list.filter(c => c.tanggal <= endDate);
-    }
-
-    if (search && search.trim() !== '') {
-      const q = search.trim().toLowerCase();
-      list = list.filter(c => c.keterangan && c.keterangan.toLowerCase().includes(q));
-    }
-
-    const total = list.length;
-    const from = (page - 1) * limit;
-    const paginated = list.slice(from, from + limit);
-
-    return formatResponse({
-      ok: true,
-      data: paginated,
-      meta: {
-        page: Number(page),
-        limit: Number(limit),
-        total: total,
-        totalPages: Math.max(1, Math.ceil(total / limit))
-      }
-    });
   }
 };

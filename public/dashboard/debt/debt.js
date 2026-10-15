@@ -95,10 +95,6 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   async function loadData() {
     const hutangContainer = document.getElementById('debt-list-hutang');
     const piutangContainer = document.getElementById('debt-list-piutang');
-    const refreshBtn = document.getElementById('btn-refresh-debt');
-
-    if (refreshBtn) refreshBtn.classList.add('opacity-50', 'pointer-events-none');
-
     const loaderHtml = `
       <div class="py-12 text-center text-[#A0A0A5]">
         <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-[#0088CC] border-t-transparent mb-2"></div>
@@ -118,8 +114,6 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     } catch (err) {
       console.error('Error loading debt data:', err);
       showToast('Gagal memuat data hutang & piutang', 'error');
-    } finally {
-      if (refreshBtn) refreshBtn.classList.remove('opacity-50', 'pointer-events-none');
     }
   }
 
@@ -448,20 +442,16 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
         tabButtons.forEach(b => {
           b.classList.remove('bg-[#0088CC]', 'text-white', 'border-transparent');
           b.classList.add('bg-[#1C1C1E]', 'text-[#A0A0A5]', 'border-white/10');
+          b.setAttribute('aria-pressed', 'false');
         });
         btn.classList.add('bg-[#0088CC]', 'text-white', 'border-transparent');
         btn.classList.remove('bg-[#1C1C1E]', 'text-[#A0A0A5]', 'border-white/10');
+        btn.setAttribute('aria-pressed', 'true');
 
         currentTab = btn.getAttribute('data-debt-tab') || 'all';
         renderLists();
       });
     });
-
-    // Refresh button
-    const refreshBtn = document.getElementById('btn-refresh-debt');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', loadData);
-    }
 
     // Export CSV button
     const exportBtn = document.getElementById('btn-export-debt');
