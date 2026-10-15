@@ -429,11 +429,17 @@
                class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label for="item-category" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Kategori</label>
           <select id="item-category" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
             <option value="">Umum (Tanpa Kategori)</option>
+          </select>
+        </div>
+        <div>
+          <label for="item-unit" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Satuan Stok</label>
+          <select id="item-unit" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <option value="">Memuat satuan...</option>
           </select>
         </div>
         <div>

@@ -37,6 +37,89 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
   };
 
   let currentUserProfile = null;
+  let catalogCategories = [];
+  let catalogUnits = [];
+
+  function renderCatalogList(elementId, entries, emptyMessage) {
+    const list = document.getElementById(elementId);
+    if (!list) return;
+    list.replaceChildren();
+
+    if (!entries.length) {
+      const empty = document.createElement('li');
+      empty.className = 'py-3 text-sm text-[#A0A0A5]';
+      empty.textContent = emptyMessage;
+      list.appendChild(empty);
+      return;
+    }
+
+    entries.forEach(entry => {
+      const row = document.createElement('li');
+      row.className = 'flex items-center justify-between gap-3 py-3 text-sm';
+
+      const name = document.createElement('span');
+      name.className = 'font-medium text-white';
+      name.textContent = entry.name;
+
+      const badge = document.createElement('span');
+      badge.className = 'rounded-full bg-white/5 px-2.5 py-1 text-xs text-[#A0A0A5]';
+      badge.textContent = 'Aktif';
+
+      row.append(name, badge);
+      list.appendChild(row);
+    });
+  }
+
+  async function loadCatalogLists() {
+    const [categoryResult, unitResult] = await Promise.all([
+      supabase.from('categories').select('id, name').order('name'),
+      supabase.from('units').select('id, name').order('name')
+    ]);
+    if (categoryResult.error) throw categoryResult.error;
+    if (unitResult.error) throw unitResult.error;
+
+    catalogCategories = categoryResult.data || [];
+    catalogUnits = unitResult.data || [];
+    renderCatalogList('setting-category-list', catalogCategories, 'Belum ada kategori.');
+    renderCatalogList('setting-unit-list', catalogUnits, 'Belum ada satuan.');
+  }
+
+  async function handleAddCatalogEntry(event, { table, inputId, buttonId, label }) {
+    event.preventDefault();
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    const name = input?.value.trim();
+    if (!name) {
+      if (typeof showToast === 'function') showToast(`Nama ${label.toLowerCase()} wajib diisi.`, 'error');
+      return;
+    }
+
+    const entries = table === 'categories' ? catalogCategories : catalogUnits;
+    if (entries.some(entry => entry.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())) {
+      if (typeof showToast === 'function') showToast(`${label} "${name}" sudah terdaftar.`, 'error');
+      return;
+    }
+
+    if (button) button.disabled = true;
+    try {
+      const { error } = await supabase.from(table).insert({ name });
+      if (error) {
+        if (error.code === '23505') throw new Error(`${label} "${name}" sudah terdaftar.`);
+        throw error;
+      }
+
+      if (input) input.value = '';
+      await loadCatalogLists();
+      if (typeof showToast === 'function') showToast(`${label} "${name}" berhasil ditambahkan.`, 'success');
+    } catch (error) {
+      console.error(`Gagal menambahkan ${label.toLowerCase()}:`, error);
+      if (typeof showToast === 'function') {
+        showToast(error.message || `Gagal menambahkan ${label.toLowerCase()}. Periksa koneksi dan hak akses Anda.`, 'error');
+      }
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
 
   function switchTab(tabId) {
     const tabButtons = document.querySelectorAll('.settings-tab-btn');
@@ -333,7 +416,37 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
     const formAccount = document.getElementById('form-setting-account');
     if (formAccount) formAccount.addEventListener('submit', handleSaveAccount);
 
+    const formCategory = document.getElementById('form-add-category');
+    if (formCategory) {
+      formCategory.addEventListener('submit', event => handleAddCatalogEntry(event, {
+        table: 'categories',
+        inputId: 'setting-category-name',
+        buttonId: 'btn-add-category',
+        label: 'Kategori'
+      }));
+    }
+
+    const formUnit = document.getElementById('form-add-unit');
+    if (formUnit) {
+      formUnit.addEventListener('submit', event => handleAddCatalogEntry(event, {
+        table: 'units',
+        inputId: 'setting-unit-name',
+        buttonId: 'btn-add-unit',
+        label: 'Satuan'
+      }));
+    }
+
     // Initial load
     await loadSettings();
+    try {
+      await loadCatalogLists();
+    } catch (error) {
+      console.error('Gagal memuat kategori dan satuan:', error);
+      if (typeof showToast === 'function') {
+        showToast('Kategori atau satuan gagal dimuat. Pastikan migrasi master satuan sudah diterapkan.', 'error');
+      }
+      renderCatalogList('setting-category-list', [], 'Kategori gagal dimuat.');
+      renderCatalogList('setting-unit-list', [], 'Satuan gagal dimuat.');
+    }
   });
 })();

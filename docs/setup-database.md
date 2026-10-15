@@ -13,6 +13,7 @@ Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yan
 5. Buka menu **Authentication → Providers → Email**, pastikan statusnya **Enabled**. Nonaktifkan opsi *Confirm email* jika Anda berada dalam lingkungan pengembangan/pengujian lokal.
 6. Untuk menambahkan dukungan barcode pada tabel produk, jalankan migrasi `supabase/migrations/20261016_product_barcodes.sql` melalui **SQL Editor**.
 7. Untuk mencatat kanal transaksi dan mencegah stok menjadi negatif, jalankan migrasi `supabase/migrations/20261016_inventory_stock_safety.sql` melalui **SQL Editor**.
+8. Untuk mengelola kategori dan satuan stok dari menu Pengaturan, jalankan migrasi `supabase/migrations/20261016_product_units.sql` melalui **SQL Editor**.
 
 ---
 
@@ -29,7 +30,7 @@ create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
 -- ═══════════════════════════════════════════════════════════════════
--- 2. TABEL-TABEL UTAMA (7 TABEL)
+-- 2. TABEL-TABEL UTAMA (8 TABEL)
 -- ═══════════════════════════════════════════════════════════════════
 
 -- 2.1 Profiles (Terikat ke auth.users)
@@ -47,6 +48,19 @@ create table if not exists public.categories (
   name text not null unique,
   created_at timestamptz not null default now()
 );
+
+-- 2.2a Satuan Stok Produk
+create table if not exists public.units (
+  id serial primary key,
+  name text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists units_name_case_insensitive_unique_idx
+  on public.units (lower(name));
+
+insert into public.units (name) values ('pcs')
+on conflict do nothing;
 
 -- 2.3 Master Data Supplier
 create table if not exists public.suppliers (
@@ -81,6 +95,7 @@ create table if not exists public.products (
   name text not null,
   brand text default '-',
   category_id integer references public.categories(id) on delete set null,
+  unit_id integer not null default 1 references public.units(id) on delete restrict,
   stock integer not null default 0,
   min_stock integer not null default 5,
   cost_price numeric(15, 2) not null default 0,
@@ -324,6 +339,17 @@ create policy "categories_select_auth" on public.categories
 
 create policy "categories_modify_owner" on public.categories
   for all to authenticated using (public.is_owner());
+
+-- 4.2a Units
+alter table public.units enable row level security;
+
+create policy "units_select_auth" on public.units
+  for select to authenticated using (true);
+
+create policy "units_modify_owner" on public.units
+  for all to authenticated
+  using (public.is_owner())
+  with check (public.is_owner());
 
 -- 4.3 Products
 create policy "products_select_auth" on public.products

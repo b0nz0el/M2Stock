@@ -9,6 +9,7 @@ Kolom template:
 `SKU, Barcode, Nama Barang, Brand, Kategori, Stok Awal, Min Stok, Harga Beli (Rp), Harga Jual (Rp)`
 
 SKU, nama, stok awal, minimum stok, dan harga wajib diisi. Barcode dan brand boleh kosong. Kategori, jika diisi, harus sudah terdaftar. SKU atau barcode duplikat—di file maupun katalog—membatalkan seluruh import. Barang baru dibuat dengan stok nol; jika stok awal lebih dari nol, sistem membuat transaksi Barang Masuk bertanda **Stok awal dari import produk** agar perubahan stok tetap memiliki riwayat.
+Produk yang diimpor memakai satuan default **pcs**; satuan dapat dipilih saat menambah atau mengedit produk dari menu Barang.
 
 ## Barang Masuk
 

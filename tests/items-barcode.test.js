@@ -23,7 +23,8 @@ describe('product barcode API mapping', () => {
     const row = {
       sku: 'FILT-002',
       barcode: '0123456789012',
-      name: 'Filter Aquarium'
+      name: 'Filter Aquarium',
+      unit_id: 3
     };
     const select = vi.fn().mockResolvedValue({ data: [row], error: null });
     const insert = vi.fn(() => ({ select }));
@@ -44,7 +45,9 @@ describe('product barcode API mapping', () => {
       stock: 1,
       min_stock: 1,
       cost_price: 100,
-      sell_price: 200
+      sell_price: 200,
+      unit_id: 2,
+      units: { name: 'botol' }
     };
     const query = {
       select: vi.fn(),
@@ -58,6 +61,8 @@ describe('product barcode API mapping', () => {
 
     expect(result.ok).toBe(true);
     expect(result.data[0].barcode).toBe('0123456789012');
+    expect(result.data[0].unit_id).toBe(2);
+    expect(result.data[0].unit).toBe('botol');
   });
 
   it('normalizes empty barcode values to null before saving', async () => {
@@ -110,5 +115,21 @@ describe('product barcode API mapping', () => {
     expect(eq).toHaveBeenCalledWith('id', productId);
     expect(update).toHaveBeenCalledWith({ barcode: '0123456789012' });
     expect(result.ok).toBe(true);
+  });
+
+  it('stores the selected stock unit on product create and update', async () => {
+    const insertSelect = vi.fn().mockResolvedValue({ data: [{ id: 'new-product' }], error: null });
+    const insert = vi.fn(() => ({ select: insertSelect }));
+    const updateSelect = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
+    const eq = vi.fn(() => ({ select: updateSelect }));
+    const update = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ insert, update }));
+    window.supabase = { from };
+
+    await items.create({ sku: 'BOT-1', name: 'Pakan', unit_id: '4' });
+    await items.update('product-id', { unit_id: '4' });
+
+    expect(insert.mock.calls[0][0][0].unit_id).toBe(4);
+    expect(update).toHaveBeenCalledWith({ unit_id: 4 });
   });
 });

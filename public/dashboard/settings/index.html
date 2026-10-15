@@ -107,6 +107,11 @@
           <span>Stok & Notifikasi</span>
         </button>
 
+        <button type="button" data-tab="catalog" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
+          <i data-lucide="tags" class="w-4 h-4 text-[#32ADE6]"></i>
+          <span>Kategori & Satuan</span>
+        </button>
+
         <button type="button" data-tab="appearance" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
           <i data-lucide="palette" class="w-4 h-4 text-[#AF52DE]"></i>
           <span>Tampilan</span>
@@ -278,7 +283,63 @@
         </div>
       </div>
 
-      <!-- TAB 4: TAMPILAN -->
+      <!-- TAB 4: KATEGORI & SATUAN -->
+      <div id="tab-content-catalog" class="settings-tab-content space-y-6 hidden">
+        <div>
+          <h3 class="text-lg font-semibold text-white">Master Barang</h3>
+          <p class="mt-1 text-sm text-[#A0A0A5]">Kelola kategori dan satuan untuk digunakan pada form tambah atau edit barang.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
+              <div class="w-10 h-10 rounded-xl bg-[#32ADE6]/10 text-[#32ADE6] grid place-items-center">
+                <i data-lucide="tag" class="w-5 h-5" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-white">Kategori Barang</h4>
+                <p class="text-xs text-[#A0A0A5]">Kelompokkan barang agar lebih mudah dicari.</p>
+              </div>
+            </div>
+            <form id="form-add-category" class="flex flex-col sm:flex-row gap-2">
+              <label for="setting-category-name" class="sr-only">Nama kategori baru</label>
+              <input type="text" id="setting-category-name" maxlength="80" required placeholder="Contoh: Filter Aquarium"
+                     class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              <button type="submit" data-action="add" id="btn-add-category" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition">
+                <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
+              </button>
+            </form>
+            <ul id="setting-category-list" class="mt-4 divide-y divide-white/5" aria-live="polite">
+              <li class="py-3 text-sm text-[#A0A0A5]">Memuat kategori...</li>
+            </ul>
+          </section>
+
+          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
+              <div class="w-10 h-10 rounded-xl bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+                <i data-lucide="package" class="w-5 h-5" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-white">Satuan Stok</h4>
+                <p class="text-xs text-[#A0A0A5]">Contoh: pcs, botol, kg, meter, atau pak.</p>
+              </div>
+            </div>
+            <form id="form-add-unit" class="flex flex-col sm:flex-row gap-2">
+              <label for="setting-unit-name" class="sr-only">Nama satuan baru</label>
+              <input type="text" id="setting-unit-name" maxlength="30" required placeholder="Contoh: botol"
+                     class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              <button type="submit" data-action="add" id="btn-add-unit" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition">
+                <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
+              </button>
+            </form>
+            <ul id="setting-unit-list" class="mt-4 divide-y divide-white/5" aria-live="polite">
+              <li class="py-3 text-sm text-[#A0A0A5]">Memuat satuan...</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <!-- TAB 5: TAMPILAN -->
       <div id="tab-content-appearance" class="settings-tab-content space-y-6 hidden">
         <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
           <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
@@ -333,7 +394,7 @@
         </div>
       </div>
 
-      <!-- TAB 5: AKUN SAYA -->
+      <!-- TAB 6: AKUN SAYA -->
       <div id="tab-content-account" class="settings-tab-content space-y-6 hidden">
         <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
           <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">

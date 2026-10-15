@@ -11,7 +11,7 @@ export const items = {
         try {
           let query = window.supabase
             .from('products')
-            .select('*, categories(name)')
+            .select('*, categories(name), units(name)')
             .order('created_at', { ascending: false });
 
           if (params && params.category_id) {
@@ -45,6 +45,8 @@ export const items = {
               brand: item.brand || '-',
               category_id: item.category_id,
               category: (item.categories && item.categories.name) || 'Umum',
+              unit_id: item.unit_id,
+              unit: (item.units && item.units.name) || 'pcs',
               stock: Number(item.stock) || 0,
               minStock: Number(item.min_stock) || 0,
               min_stock: Number(item.min_stock) || 0,
@@ -79,7 +81,7 @@ export const items = {
           const isNumericId = /^\d+$/.test(idValue);
           let query = window.supabase
             .from('products')
-            .select('*, categories(name)');
+            .select('*, categories(name), units(name)');
 
           if (isUuid || isNumericId) {
             query = query.eq('id', idValue);
@@ -111,6 +113,8 @@ export const items = {
             brand: data.brand || '-',
             category_id: data.category_id,
             category: (data.categories && data.categories.name) || 'Umum',
+            unit_id: data.unit_id,
+            unit: (data.units && data.units.name) || 'pcs',
             stock: Number(data.stock) || 0,
             minStock: Number(data.min_stock) || 0,
             min_stock: Number(data.min_stock) || 0,
@@ -144,6 +148,7 @@ export const items = {
             sku: data.sku || data.code || null,
             barcode: data.barcode == null ? null : (String(data.barcode).trim() || null),
             category_id: data.category_id ? Number(data.category_id) : null,
+            unit_id: data.unit_id ? Number(data.unit_id) : 1,
             brand: data.brand || null,
             stock: data.stock !== undefined ? Number(data.stock) : 0,
             min_stock: (data.min_stock !== undefined ? data.min_stock : data.minStock) !== undefined ? Number(data.min_stock || data.minStock) : 0,
@@ -199,8 +204,11 @@ export const items = {
           if (row.cost_price !== undefined) row.cost_price = Number(row.cost_price);
           if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
           if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
+          if (row.unit_id !== undefined) row.unit_id = Number(row.unit_id);
           delete row.id;
           delete row.categories;
+          delete row.units;
+          delete row.unit;
           delete row.created_at;
           delete row.updated_at;
           delete row.category;

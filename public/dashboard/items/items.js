@@ -1,11 +1,19 @@
   let currentItems = [];
   let itemToDeleteId = null;
+  let categoriesData = [];
+  let unitsData = [];
 
   async function loadCategories() {
     if (typeof window.supabase === 'undefined') return;
     try {
-      const { data } = await window.supabase.from('categories').select('*').order('name');
-      categoriesData = data || [];
+      const [categoryResult, unitResult] = await Promise.all([
+        window.supabase.from('categories').select('id, name').order('name'),
+        window.supabase.from('units').select('id, name').order('name')
+      ]);
+      if (categoryResult.error) throw categoryResult.error;
+      if (unitResult.error) throw unitResult.error;
+      categoriesData = categoryResult.data || [];
+      unitsData = unitResult.data || [];
 
       // 1. Dropdown Form Tambah/Edit
       const select = document.getElementById('item-category');
@@ -21,6 +29,24 @@
           });
         }
         if (currentVal) select.value = currentVal;
+      }
+
+      const unitSelect = document.getElementById('item-unit');
+      if (unitSelect) {
+        const currentUnit = unitSelect.value;
+        unitSelect.innerHTML = '';
+        unitsData.forEach(function (unit) {
+          const option = document.createElement('option');
+          option.value = unit.id;
+          option.textContent = unit.name;
+          unitSelect.appendChild(option);
+        });
+        if (currentUnit && unitsData.some(unit => String(unit.id) === currentUnit)) {
+          unitSelect.value = currentUnit;
+        } else {
+          const defaultUnit = unitsData.find(unit => unit.name.toLowerCase() === 'pcs') || unitsData[0];
+          if (defaultUnit) unitSelect.value = String(defaultUnit.id);
+        }
       }
 
       // 2. Dropdown Filter Toolbar
@@ -39,7 +65,10 @@
         if (filterVal) filterSelect.value = filterVal;
       }
     } catch (e) {
-      console.warn('Gagal memuat kategori:', e);
+      console.error('Gagal memuat kategori dan satuan:', e);
+      if (typeof showToast === 'function') {
+        showToast('Kategori atau satuan gagal dimuat. Periksa koneksi dan migrasi database.', 'error');
+      }
     }
   }
 
@@ -138,6 +167,9 @@
   function openAddItemModal() {
     const form = document.getElementById('item-form');
     if (form) form.reset();
+    const unitSelect = document.getElementById('item-unit');
+    const defaultUnit = unitsData.find(unit => unit.name.toLowerCase() === 'pcs') || unitsData[0];
+    if (unitSelect && defaultUnit) unitSelect.value = String(defaultUnit.id);
     resetImageForm();
     document.getElementById('item-id').value = '';
     document.getElementById('item-stock').disabled = false;
@@ -207,6 +239,9 @@
       if (item.category_id) {
         document.getElementById('item-category').value = item.category_id;
       }
+      if (item.unit_id) {
+        document.getElementById('item-unit').value = item.unit_id;
+      }
     });
 
     const modal = document.getElementById('modal-item');
@@ -245,6 +280,7 @@
     const name = document.getElementById('item-name').value.trim();
     const brand = document.getElementById('item-brand').value.trim();
     const category_id = document.getElementById('item-category').value;
+    const unit_id = document.getElementById('item-unit').value;
     const stock = Number(document.getElementById('item-stock').value);
     const cost_price = Number(document.getElementById('item-cost-price').value);
     const sell_price = Number(document.getElementById('item-sell-price').value);
@@ -318,6 +354,7 @@
         name: name,
         brand: brand || null,
         category_id: category_id ? Number(category_id) : null,
+        unit_id: Number(unit_id),
         cost_price: cost_price,
         sell_price: sell_price,
         min_stock: min_stock,
@@ -617,8 +654,8 @@
       const isChecked = selectedItemIds.has(String(item.id));
 
       const stockDisplay = isLow
-        ? `<span class="font-semibold text-[#FF3B30] flex items-center justify-end gap-1">${stock} unit <i data-lucide="alert-triangle" class="w-3.5 h-3.5" aria-hidden="true"></i></span>`
-        : `<span class="font-medium">${stock} unit</span>`;
+        ? `<span class="font-semibold text-[#FF3B30] flex items-center justify-end gap-1">${stock} ${escapeHtml(item.unit || 'pcs')} <i data-lucide="alert-triangle" class="w-3.5 h-3.5" aria-hidden="true"></i></span>`
+        : `<span class="font-medium">${stock} ${escapeHtml(item.unit || 'pcs')}</span>`;
 
       const formatRupiah = function (num) {
         return 'Rp ' + Number(num).toLocaleString('id-ID');
