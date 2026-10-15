@@ -98,8 +98,7 @@ export const settings = {
       const { data, error } = await supabase
         .from('profiles')
         .update({
-          full_name: fullName,
-          updated_at: new Date().toISOString()
+          full_name: fullName
         })
         .eq('id', user.id)
         .select()
