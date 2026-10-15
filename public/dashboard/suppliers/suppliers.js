@@ -181,10 +181,10 @@ function renderSuppliers() {
         <td class="px-5 py-3.5">${statusBadge}</td>
         <td class="px-5 py-3.5 text-right">
           <div class="flex items-center justify-end gap-1.5">
-            <button onclick="editSupplier(${s.id})" title="Edit" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+            <button data-action="edit" onclick="editSupplier(${s.id})" title="Edit" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button onclick="confirmDeleteSupplier(${s.id}, '${escapeHtml(s.name)}')" title="Hapus" class="p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
+            <button data-action="delete" onclick="confirmDeleteSupplier(${s.id}, '${escapeHtml(s.name)}')" title="Hapus" class="p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
           </div>
@@ -321,6 +321,11 @@ function editSupplier(id) {
 
 async function handleSupplierSubmit(e) {
   e.preventDefault();
+  const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+  if (role === 'VIEWER') {
+    alert('Anda tidak punya akses untuk mengubah data.');
+    return;
+  }
   const id = document.getElementById('supplier-id').value;
   const name = document.getElementById('supplier-name').value.trim();
   const phone = document.getElementById('supplier-phone').value.trim();
@@ -378,6 +383,11 @@ function closeDeleteSupplierModal() {
 
 async function executeDeleteSupplier() {
   if (!targetDeleteId) return;
+  const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+  if (role === 'VIEWER') {
+    alert('Anda tidak punya akses untuk mengubah data.');
+    return;
+  }
   const btn = document.getElementById('btn-confirm-delete-supplier');
   btn.disabled = true;
   btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menghapus...`;

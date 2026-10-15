@@ -214,6 +214,12 @@
 
   async function handleItemSubmit(e) {
     e.preventDefault();
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
+
     const id = document.getElementById('item-id').value;
     const sku = document.getElementById('item-sku').value.trim();
     const name = document.getElementById('item-name').value.trim();
@@ -345,6 +351,12 @@
 
   async function confirmDeleteItem() {
     if (!itemToDeleteId) return;
+
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
 
     const btn = document.getElementById('btn-confirm-delete');
     const originalContent = btn.innerHTML;
@@ -587,6 +599,7 @@
       tr.innerHTML = `
         <td class="px-4 py-3.5">
           <input type="checkbox" aria-label="Pilih ${item.name}"
+                 data-select-row
                  onchange="toggleItemSelect(${item.id}, this.checked)"
                  ${isChecked ? 'checked' : ''}
                  class="item-checkbox accent-[#0088CC] w-4 h-4 cursor-pointer">
@@ -612,10 +625,10 @@
         <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">${margin}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
-            <button type="button" onclick="openEditItemModal(${item.id})" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
+            <button type="button" data-action="edit" onclick="openEditItemModal(${item.id})" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button type="button" onclick="openDeleteItemModal(${item.id})" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
+            <button type="button" data-action="delete" onclick="openDeleteItemModal(${item.id})" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
           </div>
@@ -821,6 +834,12 @@
   }
 
   async function executeBulkDelete() {
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
+
     const btn = document.getElementById('btn-confirm-bulk-delete');
     const originalContent = btn.innerHTML;
     btn.disabled = true;
@@ -949,6 +968,12 @@
   }
 
   async function executeBulkPriceUpdate() {
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
+
     const selectedItems = currentItems.filter(i => selectedItemIds.has(i.id));
     if (selectedItems.length === 0) return;
 

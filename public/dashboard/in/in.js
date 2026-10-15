@@ -126,6 +126,11 @@
 
   async function handleInSubmit(e) {
     e.preventDefault();
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
     const productId = document.getElementById('in-product-id').value;
     const supplierId = document.getElementById('in-supplier-id').value;
     const qty = Number(document.getElementById('in-qty').value);
@@ -185,6 +190,11 @@
 
   async function confirmDeleteIn() {
     if (!deleteInId) return;
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
     const btn = document.getElementById('btn-confirm-delete-in');
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
@@ -448,7 +458,7 @@
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
           <td class="px-4 py-3.5 text-right">
-            <button type="button" onclick="openDeleteInModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
+            <button type="button" data-action="delete" onclick="openDeleteInModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
                     class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>

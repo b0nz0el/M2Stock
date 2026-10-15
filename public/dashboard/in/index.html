@@ -12,10 +12,12 @@
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
 </script>
 
-<!-- RBAC Route Guard (Layer 2) -->
+<!-- RBAC Route Guard (Layer 2) & Read-Only UI (Layer 1) -->
 <script type="module">
   import { guardRoute } from '../../assets/js/utils/rbac.js';
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
   await guardRoute('in');
+  applyReadOnlyUI();
 </script>
 
 <!-- Inter font (self-host) -->
@@ -99,7 +101,7 @@
           <button type="button" onclick="handleExportIn()" data-action="export-csv" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
-          <button data-action="add-in" onclick="openAddInModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <button data-action="add" onclick="openAddInModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
           </button>
         </div>
@@ -356,5 +358,9 @@
 <script src="../../assets/js/mock-actions.js" defer></script>
 
 <script src="./in.js"></script>
+<script type="module">
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
+  await applyReadOnlyUI();
+</script>
 </body>
 </html>

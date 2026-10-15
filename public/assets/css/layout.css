@@ -71,3 +71,35 @@
   aside nav::-webkit-scrollbar-thumb:hover {
     background: #3C3C3E;
   }
+
+  /* ═══ RBAC READ-ONLY UI ENFORCEMENT (VIEWER) ═══ */
+  .rbac-hidden button[data-action="add"],
+  .rbac-hidden button[data-action="create"],
+  .rbac-hidden button[data-action="edit"],
+  .rbac-hidden button[data-action="delete"],
+  .rbac-hidden button[data-action="import"],
+  .rbac-hidden button[data-action="bulk-edit"],
+  .rbac-hidden button[data-action="bulk-delete"],
+  .rbac-hidden button[data-action*="add-"],
+  .rbac-hidden [data-action="add"],
+  .rbac-hidden [data-action="create"],
+  .rbac-hidden [data-action="edit"],
+  .rbac-hidden [data-action="delete"],
+  .rbac-hidden [data-action="import"],
+  .rbac-hidden [data-action="bulk-edit"],
+  .rbac-hidden [data-action="bulk-delete"],
+  .rbac-hidden a[href*="/new"],
+  .rbac-hidden a[href*="/create"],
+  .rbac-hidden a[href*="/edit"],
+  .rbac-hidden [data-requires-role="OWNER,STAFF"],
+  .rbac-hidden .btn-add,
+  .rbac-hidden .btn-create,
+  .rbac-hidden .btn-edit,
+  .rbac-hidden .btn-delete,
+  .rbac-hidden input[type="checkbox"][data-select-row],
+  .rbac-hidden input[type="checkbox"][data-select-all],
+  .rbac-hidden #select-all-header,
+  .rbac-hidden #bulk-bar {
+    display: none !important;
+  }
+

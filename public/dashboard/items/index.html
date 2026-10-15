@@ -12,10 +12,12 @@
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
 </script>
 
-<!-- RBAC Route Guard (Layer 2) -->
+<!-- RBAC Route Guard (Layer 2) & Read-Only UI -->
 <script type="module">
   import { guardRoute } from '../../assets/js/utils/rbac.js';
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
   await guardRoute('items');
+  await applyReadOnlyUI();
 </script>
 
 <!-- Inter font (self-host) -->
@@ -99,10 +101,10 @@
           <button data-action="import" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="upload" class="w-4 h-4" aria-hidden="true"></i> Import
           </button>
-          <button onclick="handleExportItems()" data-action="export-items" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
+          <button onclick="handleExportItems()" data-action="export" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export CSV
           </button>
-          <button data-action="add-item" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
+          <button data-action="add" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah Barang
           </button>
         </div>
@@ -132,7 +134,7 @@
         <table class="w-full text-sm">
           <thead class="bg-white/[0.02] border-b border-white/5">
             <tr class="text-left text-[#A0A0A5]">
-              <th class="px-4 py-3 w-10"><input type="checkbox" id="select-all-header" onchange="toggleSelectAllPage(this.checked)" aria-label="Pilih semua barang di halaman ini" class="accent-[#0088CC] w-4 h-4 cursor-pointer"></th>
+              <th class="px-4 py-3 w-10"><input type="checkbox" id="select-all-header" data-select-all onchange="toggleSelectAllPage(this.checked)" aria-label="Pilih semua barang di halaman ini" class="accent-[#0088CC] w-4 h-4 cursor-pointer"></th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Foto</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Nama</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Brand</th>
@@ -301,10 +303,10 @@
   <span class="text-xs sm:text-sm font-semibold text-white truncate shrink-0 mr-2" id="bulk-count">0 dipilih</span>
   <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
     <button type="button" onclick="clearSelection()" class="text-xs text-[#A0A0A5] hover:text-white px-2.5 sm:px-3 py-2 min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/5 transition">Batal</button>
-    <button type="button" onclick="openBulkPriceModal()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition justify-center">
+    <button type="button" data-action="bulk-edit" onclick="openBulkPriceModal()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition justify-center">
       <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit<span class="hidden sm:inline"> Harga</span>
     </button>
-    <button type="button" onclick="openBulkDeleteModal()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#FF3B30]/20 transition justify-center">
+    <button type="button" data-action="bulk-delete" onclick="openBulkDeleteModal()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#FF3B30]/20 transition justify-center">
       <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i> Hapus
     </button>
   </div>
@@ -583,5 +585,9 @@
 </div>
 
 <script src="./items.js"></script>
+<script type="module">
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
+  await applyReadOnlyUI();
+</script>
 </body>
 </html>

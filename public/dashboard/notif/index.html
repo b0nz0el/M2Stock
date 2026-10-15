@@ -12,10 +12,12 @@
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
 </script>
 
-<!-- RBAC Route Guard (Layer 2) -->
+<!-- RBAC Route Guard (Layer 2) & Read-Only UI (Layer 1) -->
 <script type="module">
   import { guardRoute } from '../../assets/js/utils/rbac.js';
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
   await guardRoute('notif');
+  applyReadOnlyUI();
 </script>
 
 <!-- Inter font (self-host) -->
@@ -86,7 +88,7 @@
     <div id="page-notif" class="page active p-6 space-y-5">
       <div class="flex items-center justify-between">
         <h2 class="text-3xl font-bold tracking-tight">Notifikasi</h2>
-        <button id="btn-mark-all-read" onclick="handleMarkAllRead()" class="text-sm text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium transition">
+        <button id="btn-mark-all-read" data-action="edit" onclick="handleMarkAllRead()" class="text-sm text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium transition">
           <i data-lucide="check-check" class="w-4 h-4" aria-hidden="true"></i> Tandai semua dibaca
         </button>
       </div>
@@ -209,7 +211,12 @@
 <script src="../../assets/js/app.js" defer></script>
 <script src="../../assets/js/mock-actions.js" defer></script>
 <script>
-function handleMarkAllRead() {
+async function handleMarkAllRead() {
+  const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+  if (role === 'VIEWER') {
+    alert('Anda tidak punya akses untuk mengubah data.');
+    return;
+  }
   const cards = document.querySelectorAll('#page-notif .card');
   cards.forEach(card => {
     card.classList.remove('border-l-[#FF3B30]', 'border-l-[#FFCC00]', 'border-l-[#34C759]', 'border-l-[#0088CC]');
@@ -222,6 +229,10 @@ function handleMarkAllRead() {
     showToast('Semua notifikasi telah ditandai dibaca', 'success');
   }
 }
+</script>
+<script type="module">
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
+  await applyReadOnlyUI();
 </script>
 </body>
 </html>

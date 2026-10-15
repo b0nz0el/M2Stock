@@ -164,6 +164,11 @@
 
   async function handleOutSubmit(e) {
     e.preventDefault();
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
     const productId = document.getElementById('out-product-id').value;
     const customerId = document.getElementById('out-customer-id').value;
     const channel = document.getElementById('out-channel').value;
@@ -233,6 +238,11 @@
 
   async function confirmDeleteOut() {
     if (!deleteOutId) return;
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
     const btn = document.getElementById('btn-confirm-delete-out');
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
@@ -509,7 +519,7 @@
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
           <td class="px-4 py-3.5 text-right">
-            <button type="button" onclick="openDeleteOutModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
+            <button type="button" data-action="delete" onclick="openDeleteOutModal(${tx.id})" title="Hapus transaksi" aria-label="Hapus transaksi"
                     class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
