@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>aQuaStock Pro — Settings</title>
+<title>aQuaStock Pro — Pengaturan</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
-
 
 <!-- Auth guard (redirect jika belum login) -->
 <script>
@@ -60,191 +59,327 @@
       <div class="hidden md:flex items-center gap-2 text-sm">
         <span class="text-[#A0A0A5]">aQuaStock</span>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium"></span>
+        <span id="breadcrumb" class="font-medium text-white">Pengaturan</span>
       </div>
 
       <div class="flex-1 md:max-w-md md:ml-6 relative">
         <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
         <input type="text" id="global-search" placeholder="Cari apa saja..." aria-label="Pencarian global"
-               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC] text-white">
         <kbd class="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#A0A0A5] bg-white/5 px-1.5 py-0.5 rounded border border-white/10">⌘K</kbd>
       </div>
 
       <div class="ml-auto flex items-center gap-2">
         <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
-        </button>
-        <button data-action="add" disabled title="Fitur Tambah tidak tersedia di Settings" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn btn-disabled">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
         </button>
       </div>
     </header>
 
-    <!-- ═══════════ SETTINGS ═══════════ -->
-    <div id="page-settings" class="page active p-6 space-y-5">
-      <h2 class="text-3xl font-bold tracking-tight">Settings</h2>
+    <!-- ═══════════ SETTINGS CONTENT ═══════════ -->
+    <div id="page-settings" class="page active p-6 space-y-6 max-w-5xl mx-auto">
+      
+      <!-- Title -->
+      <div>
+        <h2 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+          <span class="w-9 h-9 rounded-xl bg-[#0088CC]/10 text-[#0088CC] grid place-items-center">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+          </span>
+          Pengaturan Sistem
+        </h2>
+        <p class="text-sm text-[#A0A0A5] mt-1">Konfigurasi profil toko, transaksi kasir, batas stok, dan preferensi tampilan</p>
+      </div>
 
-      <div class="grid grid-cols-3 gap-4">
-        <div class="space-y-4">
-          <div class="card p-5">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold flex items-center gap-2">
-                <i data-lucide="tags" class="w-4 h-4 text-[#FF9500]" aria-hidden="true"></i> Kategori
-              </h3>
-              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
-                <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
-              </button>
+      <!-- Settings Navigation Tabs -->
+      <div class="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
+        <button type="button" data-tab="toko" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border bg-white/10 text-white border-white/20 transition whitespace-nowrap">
+          <i data-lucide="store" class="w-4 h-4 text-[#32ADE6]"></i>
+          <span>Profil Toko</span>
+        </button>
+
+        <button type="button" data-tab="pos" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
+          <i data-lucide="receipt" class="w-4 h-4 text-[#34C759]"></i>
+          <span>POS & Kasir</span>
+        </button>
+
+        <button type="button" data-tab="stock" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
+          <i data-lucide="bell-ring" class="w-4 h-4 text-[#FF9500]"></i>
+          <span>Stok & Notifikasi</span>
+        </button>
+
+        <button type="button" data-tab="appearance" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
+          <i data-lucide="palette" class="w-4 h-4 text-[#AF52DE]"></i>
+          <span>Tampilan</span>
+        </button>
+
+        <button type="button" data-tab="account" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
+          <i data-lucide="user-check" class="w-4 h-4 text-[#5856D6]"></i>
+          <span>Akun Saya</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: PROFIL TOKO -->
+      <div id="tab-content-toko" class="settings-tab-content space-y-6">
+        <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-[#32ADE6]/10 text-[#32ADE6] grid place-items-center">
+              <i data-lucide="store" class="w-5 h-5"></i>
             </div>
-            <div class="space-y-1 text-sm">
-              <div class="flex justify-between items-center py-2.5 border-b border-white/5">
-                <span>Filter</span><span class="text-[#A0A0A5] text-xs">3 barang</span>
-              </div>
-              <div class="flex justify-between items-center py-2.5 border-b border-white/5">
-                <span>Lampu</span><span class="text-[#A0A0A5] text-xs">2 barang</span>
-              </div>
-              <div class="flex justify-between items-center py-2.5 border-b border-white/5">
-                <span>Pakan</span><span class="text-[#A0A0A5] text-xs">3 barang</span>
-              </div>
-              <div class="flex justify-between items-center py-2.5">
-                <span>Obat</span><span class="text-[#A0A0A5] text-xs">1 barang</span>
-              </div>
+            <div>
+              <h3 class="font-semibold text-lg text-white">Informasi Profil Toko</h3>
+              <p class="text-xs text-[#A0A0A5]">Data ini akan tercetak pada faktur penjualan, struk kasir, dan purchase order</p>
             </div>
           </div>
 
-          <div class="card p-5">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold flex items-center gap-2">
-                <i data-lucide="ruler" class="w-4 h-4 text-[#34C759]" aria-hidden="true"></i> Satuan
-              </h3>
-              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
-                <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
-              </button>
-            </div>
-            <div class="flex flex-wrap gap-2 text-xs">
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">pcs</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">pack</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">unit</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">botol</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">box</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">pot</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div class="card p-5">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold flex items-center gap-2">
-                <i data-lucide="shopping-cart" class="w-4 h-4 text-[#AF52DE]" aria-hidden="true"></i> Channel
-              </h3>
-              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
-                <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
-              </button>
-            </div>
-            <div class="space-y-1 text-sm">
-              <div class="flex items-center justify-between py-2.5 border-b border-white/5">
-                <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-md bg-[#EE4D2D]"></div>
-                  <span>Shopee</span>
-                </div>
-                <span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>
-              </div>
-              <div class="flex items-center justify-between py-2.5 border-b border-white/5">
-                <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-md bg-[#42B549]"></div>
-                  <span>Tokopedia</span>
-                </div>
-                <span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>
-              </div>
-              <div class="flex items-center justify-between py-2.5 border-b border-white/5">
-                <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-md bg-[#FF0050]"></div>
-                  <span>TikTok Shop</span>
-                </div>
-                <span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>
-              </div>
-              <div class="flex items-center justify-between py-2.5">
-                <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-md bg-[#0088CC]"></div>
-                  <span>Offline</span>
-                </div>
-                <span class="badge bg-[#34C759]/15 text-[#34C759]">Aktif</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card p-5">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold flex items-center gap-2">
-                <i data-lucide="truck" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Kurir
-              </h3>
-              <button data-action="add" disabled title="Segera hadir" class="text-xs text-[#32ADE6] hover:underline flex items-center gap-1 font-medium btn-disabled">
-                <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i> Tambah
-              </button>
-            </div>
-            <div class="flex flex-wrap gap-2 text-xs">
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">JNE</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">J&T</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">SiCepat</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">SPX</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">GoSend</span>
-              <span class="px-2.5 py-1.5 bg-white/5 rounded-lg">Grab</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div class="card p-5">
-            <h3 class="font-semibold mb-4 flex items-center gap-2">
-              <i data-lucide="store" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Profil Toko
-            </h3>
-            <div class="space-y-3 text-sm">
+          <form id="form-setting-store" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="setting-shop-name" class="text-xs text-[#A0A0A5] font-medium">Nama Toko</label>
-                <input type="text" id="setting-shop-name" value="Aquarium David" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm">
+                <label for="setting-shop-name" class="block text-xs text-[#A0A0A5] font-medium mb-1">Nama Usaha / Toko</label>
+                <input type="text" id="setting-shop-name" required placeholder="Contoh: Aquarium David"
+                       class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
               </div>
-              <div>
-                <label for="setting-shop-address" class="text-xs text-[#A0A0A5] font-medium">Alamat</label>
-                <textarea id="setting-shop-address" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm resize-none" rows="2">Jl. Merdeka No. 123, Jakarta</textarea>
-              </div>
-              <div>
-                <label for="setting-shop-phone" class="text-xs text-[#A0A0A5] font-medium">Telepon</label>
-                <input type="text" id="setting-shop-phone" value="0812-3456-7890" class="w-full bg-black border border-white/5 rounded-lg px-3 py-2 mt-1.5 text-sm">
-              </div>
-              <button id="btn-save-settings" data-action="save-settings" class="w-full bg-[#0088CC] hover:bg-[#0077BB] py-2 rounded-lg text-sm font-semibold btn">Simpan</button>
-            </div>
-          </div>
 
-          <div class="card p-5">
-            <h3 class="font-semibold mb-4 flex items-center gap-2">
-              <i data-lucide="shield-check" class="w-4 h-4 text-[#34C759]" aria-hidden="true"></i> Keamanan
-            </h3>
-            <div class="space-y-1">
-              <div class="flex items-center justify-between py-3 border-b border-white/5">
-                <div>
-                  <p class="text-sm font-medium">Two-Factor Auth</p>
-                  <p class="text-xs text-[#A0A0A5] mt-0.5">Login dengan 2 langkah</p>
-                </div>
-                <span class="badge bg-white/10 text-[#A0A0A5]">Segera Hadir</span>
+              <div>
+                <label for="setting-shop-slogan" class="block text-xs text-[#A0A0A5] font-medium mb-1">Slogan / Tagline</label>
+                <input type="text" id="setting-shop-slogan" placeholder="Contoh: Solusi Lengkap Akuarium & Ikan Hias"
+                       class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
               </div>
-              <div class="flex items-center justify-between py-3 border-b border-white/5">
-                <div>
-                  <p class="text-sm font-medium">Session Timeout</p>
-                  <p class="text-xs text-[#A0A0A5] mt-0.5">Auto logout 30 menit</p>
-                </div>
-                <button disabled class="w-11 h-6 rounded-full bg-[#34C759] relative transition opacity-60 cursor-not-allowed" aria-label="Session timeout" title="Default 30 menit">
-                  <span class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white transition"></span>
-                </button>
+
+              <div>
+                <label for="setting-shop-email" class="block text-xs text-[#A0A0A5] font-medium mb-1">Email Toko</label>
+                <input type="email" id="setting-shop-email" placeholder="Contoh: info@aquastock.pro"
+                       class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
               </div>
-              <button data-action="logout-all" disabled title="Segera hadir" class="w-full text-left py-2.5 text-[#FF3B30] text-sm font-medium flex items-center gap-2 opacity-60 cursor-not-allowed btn-disabled">
-                <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i> Logout dari semua device
+
+              <div>
+                <label for="setting-shop-phone" class="block text-xs text-[#A0A0A5] font-medium mb-1">Nomor Telepon / WhatsApp</label>
+                <input type="text" id="setting-shop-phone" placeholder="Contoh: 0812-3456-7890"
+                       class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              </div>
+            </div>
+
+            <div>
+              <label for="setting-shop-address" class="block text-xs text-[#A0A0A5] font-medium mb-1">Alamat Lengkap Toko</label>
+              <textarea id="setting-shop-address" rows="3" placeholder="Jl. Merdeka No. 123, Jakarta"
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC] resize-none"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-white/5 flex justify-end">
+              <button type="submit" id="btn-save-store" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Simpan Profil Toko</span>
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
+
+      <!-- TAB 2: POS & KASIR -->
+      <div id="tab-content-pos" class="settings-tab-content space-y-6 hidden">
+        <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+              <i data-lucide="receipt" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-white">Konfigurasi Transaksi & Kasir</h3>
+              <p class="text-xs text-[#A0A0A5]">Atur persentase pajak (PPN), biaya layanan, dan format struk cetak</p>
+            </div>
+          </div>
+
+          <form id="form-setting-pos" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label for="setting-pos-tax" class="block text-xs text-[#A0A0A5] font-medium mb-1">Pajak Pertambahan Nilai / PPN (%)</label>
+                <div class="relative">
+                  <input type="number" id="setting-pos-tax" min="0" max="100" step="0.5" value="11"
+                         class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#A0A0A5] font-bold">%</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="setting-pos-service" class="block text-xs text-[#A0A0A5] font-medium mb-1">Biaya Layanan Kasir (%)</label>
+                <div class="relative">
+                  <input type="number" id="setting-pos-service" min="0" max="100" step="0.5" value="0"
+                         class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#A0A0A5] font-bold">%</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="setting-pos-default-payment" class="block text-xs text-[#A0A0A5] font-medium mb-1">Metode Pembayaran Default</label>
+                <select id="setting-pos-default-payment" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                  <option value="Cash" class="bg-[#1C1C1E]">Tunai (Cash)</option>
+                  <option value="Transfer" class="bg-[#1C1C1E]">Transfer Bank</option>
+                  <option value="QRIS" class="bg-[#1C1C1E]">QRIS</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="setting-pos-receipt-footer" class="block text-xs text-[#A0A0A5] font-medium mb-1">Pesan Penutup / Footer Struk</label>
+              <textarea id="setting-pos-receipt-footer" rows="2" placeholder="Terima kasih telah berbelanja di toko kami!"
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC] resize-none"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-white/5 flex justify-end">
+              <button type="submit" id="btn-save-pos" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Simpan Pengaturan POS</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 3: STOK & NOTIFIKASI -->
+      <div id="tab-content-stock" class="settings-tab-content space-y-6 hidden">
+        <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-[#FF9500]/10 text-[#FF9500] grid place-items-center">
+              <i data-lucide="bell-ring" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-white">Batas Stok & Otomatisasi Notifikasi</h3>
+              <p class="text-xs text-[#A0A0A5]">Konfigurasi ambang batas stok minimum dan pembuatan pesanan restock otomatis</p>
+            </div>
+          </div>
+
+          <form id="form-setting-stock" class="space-y-5">
+            <div>
+              <label for="setting-stock-min-alert" class="block text-xs text-[#A0A0A5] font-medium mb-1">Batas Minimum Peringatan Stok (Unit)</label>
+              <div class="max-w-xs relative">
+                <input type="number" id="setting-stock-min-alert" min="1" max="999" value="5"
+                       class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#A0A0A5]">Unit</span>
+              </div>
+              <p class="text-xs text-[#A0A0A5] mt-1.5">Sistem akan otomatis mengirim notifikasi peringatan jika sisa stok berada di bawah angka ini.</p>
+            </div>
+
+            <div class="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-medium text-white">Buat Draft Purchase Order (PO) Otomatis</h4>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Otomatis membuat draft PO ke supplier terdaftar saat barang berstatus stok kritis.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setting-stock-auto-po" class="sr-only peer">
+                <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0088CC]"></div>
+              </label>
+            </div>
+
+            <div class="pt-4 border-t border-white/5 flex justify-end">
+              <button type="submit" id="btn-save-stock" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Simpan Konfigurasi Stok</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 4: TAMPILAN -->
+      <div id="tab-content-appearance" class="settings-tab-content space-y-6 hidden">
+        <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-[#AF52DE]/10 text-[#AF52DE] grid place-items-center">
+              <i data-lucide="palette" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-white">Preferensi Tema & Antarmuka</h3>
+              <p class="text-xs text-[#A0A0A5]">Sesuaikan warna aksen dan kepadatan tata letak antarmuka aplikasi</p>
+            </div>
+          </div>
+
+          <form id="form-setting-appearance" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="setting-theme" class="block text-xs text-[#A0A0A5] font-medium mb-1">Tema Aplikasi</label>
+                <select id="setting-theme" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                  <option value="dark" selected class="bg-[#1C1C1E]">Mode Gelap (Dark Mode - Default)</option>
+                  <option value="system" class="bg-[#1C1C1E]">Ikuti Sistem Operasi</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="setting-primary-color" class="block text-xs text-[#A0A0A5] font-medium mb-1">Warna Aksen Utama</label>
+                <select id="setting-primary-color" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                  <option value="#0088CC" selected class="bg-[#1C1C1E]">Cyan Aqua (#0088CC)</option>
+                  <option value="#34C759" class="bg-[#1C1C1E]">Emerald Green (#34C759)</option>
+                  <option value="#FF9500" class="bg-[#1C1C1E]">Amber Orange (#FF9500)</option>
+                  <option value="#5856D6" class="bg-[#1C1C1E]">Royal Purple (#5856D6)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-medium text-white">Mode Tabel Ringkas (Compact Table)</h4>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Mengurangi padding tabel data agar lebih banyak baris barang/transaksi yang muat di layar.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setting-compact-mode" class="sr-only peer">
+                <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0088CC]"></div>
+              </label>
+            </div>
+
+            <div class="pt-4 border-t border-white/5 flex justify-end">
+              <button type="submit" id="btn-save-appearance" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Simpan Preferensi Tampilan</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 5: AKUN SAYA -->
+      <div id="tab-content-account" class="settings-tab-content space-y-6 hidden">
+        <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-[#5856D6]/10 text-[#5856D6] grid place-items-center">
+              <i data-lucide="user-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-white">Profil Pengguna Saat Ini</h3>
+              <p class="text-xs text-[#A0A0A5]">Informasi akun otentikasi Supabase dan hak akses role aktif</p>
+            </div>
+          </div>
+
+          <form id="form-setting-account" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="setting-account-email" class="block text-xs text-[#A0A0A5] font-medium mb-1">Alamat Email Terdaftar</label>
+                <input type="text" id="setting-account-email" readonly
+                       class="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-[#A0A0A5] cursor-not-allowed font-mono">
+              </div>
+
+              <div>
+                <span class="block text-xs text-[#A0A0A5] font-medium mb-1">Role Akun</span>
+                <div class="py-2.5">
+                  <span id="setting-account-role" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#0088CC]/20 text-[#32ADE6] border border-[#0088CC]/30">
+                    OWNER
+                  </span>
+                </div>
+              </div>
+
+              <div class="md:col-span-2">
+                <label for="setting-account-name" class="block text-xs text-[#A0A0A5] font-medium mb-1">Nama Lengkap</label>
+                <input type="text" id="setting-account-name" required placeholder="Nama Anda"
+                       class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-white/5 flex justify-end">
+              <button type="submit" id="btn-save-account" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Perbarui Profil Akun</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
 
   </main>
@@ -276,14 +411,6 @@
   </nav>
 </div>
 
-<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
-  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
-  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
-  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
-</div>
-
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toast-container" 
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
@@ -299,49 +426,6 @@
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
 <script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
-<script>
-  (function () {
-    function initShopProfile() {
-      var nameInput = document.getElementById('setting-shop-name');
-      var addrInput = document.getElementById('setting-shop-address');
-      var phoneInput = document.getElementById('setting-shop-phone');
-      var saveBtn = document.getElementById('btn-save-settings');
-
-      try {
-        var raw = localStorage.getItem('shop_profile');
-        if (raw) {
-          var profile = JSON.parse(raw);
-          if (profile.name && nameInput) nameInput.value = profile.name;
-          if (profile.address && addrInput) addrInput.value = profile.address;
-          if (profile.phone && phoneInput) phoneInput.value = profile.phone;
-        }
-      } catch (e) {}
-
-      if (saveBtn) {
-        saveBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          var data = {
-            name: nameInput ? nameInput.value.trim() : '',
-            address: addrInput ? addrInput.value.trim() : '',
-            phone: phoneInput ? phoneInput.value.trim() : ''
-          };
-          try {
-            localStorage.setItem('shop_profile', JSON.stringify(data));
-          } catch (e) {}
-          if (typeof showToast === 'function') {
-            showToast('Profil toko berhasil disimpan', 'success');
-          }
-        });
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initShopProfile);
-    } else {
-      initShopProfile();
-    }
-  })();
-</script>
+<script type="module" src="./settings.js"></script>
 </body>
 </html>
