@@ -34,3 +34,4 @@ visual-baseline/
 
 # Supabase CLI local cache
 supabase/.temp/
+verify_module*.png
