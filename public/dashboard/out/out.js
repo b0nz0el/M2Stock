@@ -111,6 +111,12 @@
   function openAddOutModal() {
     const form = document.getElementById('form-out');
     if (form) form.reset();
+    const photoData = document.getElementById('out-photo-data');
+    if (photoData) photoData.value = '';
+    const photoPreview = document.getElementById('photo-preview');
+    if (photoPreview) photoPreview.classList.add('hidden');
+    const photoImg = document.getElementById('photo-preview-img');
+    if (photoImg) photoImg.src = '';
     const stockInfo = document.getElementById('out-stock-info');
     if (stockInfo) stockInfo.classList.add('hidden');
     calculateOutTotal();
@@ -124,6 +130,12 @@
   }
 
   function closeOutModal() {
+    const photoData = document.getElementById('out-photo-data');
+    if (photoData) photoData.value = '';
+    const photoPreview = document.getElementById('photo-preview');
+    if (photoPreview) photoPreview.classList.add('hidden');
+    const photoImg = document.getElementById('photo-preview-img');
+    if (photoImg) photoImg.src = '';
     const modal = document.getElementById('modal-out');
     if (modal) {
       modal.classList.add('hidden');
@@ -710,3 +722,430 @@
     loadOutTransactions();
     loadDropdowns();
   });
+
+/* ==========================================================
+ * WEB BARCODE SCANNER + PHOTO CAPTURE
+ * Hybrid: BarcodeDetector native → fallback html5-qrcode
+ * Hardened: Race-condition free, memory leak-free, zero-resurrection RAF
+ * ========================================================== */
+
+let _scanStream = null;
+let _scanRAF = null;
+let _scanDetector = null;
+let _scanDebounce = false;
+let _html5Scanner = null;
+let _isStartingScan = false;
+let _scannerEscHandler = null;
+
+let _photoStream = null;
+let _isStartingPhoto = false;
+let _photoEscHandler = null;
+
+const SCAN_FORMATS = ['code_128', 'qr_code', 'ean_13', 'code_39', 'code_93'];
+
+function isSecureContext() {
+  return window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+}
+
+function hasNativeBarcodeDetector() {
+  return typeof window.BarcodeDetector === 'function';
+}
+
+function triggerScanFeedback() {
+  try {
+    if (typeof navigator.vibrate === 'function') {
+      navigator.vibrate([80]);
+    }
+  } catch (_) {}
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    }
+  } catch (_) {}
+}
+
+async function startWebBarcodeScan() {
+  if (_isStartingScan || _scanStream || _html5Scanner) return;
+  if (!isSecureContext()) {
+    showToast('Fitur kamera butuh HTTPS. Hubungi admin.', 'error');
+    return;
+  }
+  _isStartingScan = true;
+
+  if (hasNativeBarcodeDetector()) {
+    await startNativeScanner();
+    return;
+  }
+  await startFallbackScanner();
+}
+
+async function startNativeScanner() {
+  try {
+    const supported = typeof BarcodeDetector.getSupportedFormats === 'function'
+      ? await BarcodeDetector.getSupportedFormats()
+      : [];
+    const formats = SCAN_FORMATS.filter((f) => supported.includes(f));
+    if (formats.length === 0) {
+      // BarcodeDetector exists but does not support our formats, use fallback
+      await startFallbackScanner();
+      return;
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
+      audio: false,
+    });
+    _scanStream = stream;
+
+    const modal = createScannerModal();
+    const video = modal.querySelector('#scanner-video');
+    video.srcObject = stream;
+    await video.play();
+
+    _scanDetector = new BarcodeDetector({ formats });
+
+    let lastScan = 0;
+    const tick = async (now) => {
+      if (!_scanStream || !_scanDetector) return;
+      if (now - lastScan > 100) {
+        lastScan = now;
+        try {
+          const codes = await _scanDetector.detect(video);
+          if (!_scanStream || !_scanDetector) return; // guard against in-flight teardown
+          if (codes.length > 0 && !_scanDebounce) {
+            _scanDebounce = true;
+            handleScanSuccess(codes[0].rawValue);
+            return;
+          }
+        } catch (_) {}
+      }
+      if (_scanStream && _scanDetector) {
+        _scanRAF = requestAnimationFrame(tick);
+      }
+    };
+    _scanRAF = requestAnimationFrame(tick);
+
+    bindScannerControls(modal);
+    window.refreshIcons?.();
+  } catch (err) {
+    handleScannerError(err);
+  } finally {
+    _isStartingScan = false;
+  }
+}
+
+async function startFallbackScanner() {
+  const modal = createScannerModal({ hideVideo: true });
+  const container = modal.querySelector('#scanner-fallback-container');
+
+  try {
+    if (typeof Html5Qrcode === 'undefined') {
+      throw new Error('Library html5-qrcode belum selesai dimuat. Coba lagi beberapa saat.');
+    }
+    _html5Scanner = new Html5Qrcode(container.id, { verbose: false });
+    await _html5Scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        if (_scanDebounce) return;
+        _scanDebounce = true;
+        handleScanSuccess(decodedText);
+      },
+      () => {}
+    );
+    bindScannerControls(modal);
+    window.refreshIcons?.();
+  } catch (err) {
+    handleScannerError(err);
+  } finally {
+    _isStartingScan = false;
+  }
+}
+
+function createScannerModal({ hideVideo = false } = {}) {
+  document.getElementById('scanner-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'scanner-modal';
+  modal.className = 'fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="relative w-full max-w-md bg-[#1C1C1E] rounded-2xl border border-white/10 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <h3 class="text-sm font-semibold text-white">Scan Barcode</h3>
+        <div class="flex gap-2">
+          <button id="btn-toggle-torch" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 flex items-center justify-center transition" title="Flash">
+            <i data-lucide="flashlight" class="w-4 h-4"></i>
+          </button>
+          <button id="btn-close-scanner" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 flex items-center justify-center transition" title="Tutup">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+      <div class="relative bg-black aspect-square overflow-hidden">
+        <video id="scanner-video" autoplay playsinline muted class="w-full h-full object-cover ${hideVideo ? 'hidden' : ''}"></video>
+        <div id="scanner-fallback-container" class="w-full h-full"></div>
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div class="w-64 h-64 border-2 border-[#0088CC] rounded-lg relative">
+            <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#0088CC] rounded-tl"></div>
+            <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#0088CC] rounded-tr"></div>
+            <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#0088CC] rounded-bl"></div>
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#0088CC] rounded-br"></div>
+          </div>
+        </div>
+      </div>
+      <div class="px-4 py-3 text-center">
+        <p class="text-xs text-white/50">Arahkan kamera ke barcode resi</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeWebBarcodeScan();
+  });
+  return modal;
+}
+
+function bindScannerControls(modal) {
+  modal.querySelector('#btn-close-scanner')?.addEventListener('click', closeWebBarcodeScan);
+
+  const torchBtn = modal.querySelector('#btn-toggle-torch');
+  if (torchBtn && _scanStream) {
+    const track = _scanStream.getVideoTracks()[0];
+    const caps = track?.getCapabilities?.() || {};
+    if (!caps.torch) {
+      torchBtn.style.display = 'none';
+    } else {
+      let torchOn = false;
+      torchBtn.addEventListener('click', async () => {
+        try {
+          torchOn = !torchOn;
+          await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+          torchBtn.classList.toggle('bg-[#0088CC]/30', torchOn);
+          torchBtn.classList.toggle('text-[#0088CC]', torchOn);
+        } catch (_) {}
+      });
+    }
+  } else if (torchBtn) {
+    torchBtn.style.display = 'none';
+  }
+
+  if (_scannerEscHandler) {
+    document.removeEventListener('keydown', _scannerEscHandler);
+  }
+  _scannerEscHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeWebBarcodeScan();
+    }
+  };
+  document.addEventListener('keydown', _scannerEscHandler);
+}
+
+function handleScanSuccess(decodedText) {
+  triggerScanFeedback();
+  const input = document.getElementById('out-note');
+  if (input) {
+    input.value = decodedText;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  showToast(`✅ Barcode terbaca: ${decodedText.slice(0, 30)}...`, 'success');
+  setTimeout(closeWebBarcodeScan, 300);
+}
+
+function closeWebBarcodeScan() {
+  if (_scannerEscHandler) {
+    document.removeEventListener('keydown', _scannerEscHandler);
+    _scannerEscHandler = null;
+  }
+  if (_scanRAF) {
+    cancelAnimationFrame(_scanRAF);
+    _scanRAF = null;
+  }
+  if (_html5Scanner) {
+    const scanner = _html5Scanner;
+    _html5Scanner = null;
+    try {
+      scanner.stop().catch(() => {}).finally(() => {
+        try { scanner.clear(); } catch (_) {}
+      });
+    } catch (_) {}
+  }
+  const video = document.getElementById('scanner-video');
+  if (video) {
+    video.srcObject = null;
+  }
+  if (_scanStream) {
+    _scanStream.getTracks().forEach((t) => t.stop());
+    _scanStream = null;
+  }
+  _scanDetector = null;
+  _scanDebounce = false;
+  _isStartingScan = false;
+  document.getElementById('scanner-modal')?.remove();
+}
+
+function handleScannerError(err) {
+  closeWebBarcodeScan();
+  const name = err?.name || '';
+  const map = {
+    NotAllowedError: 'Izin kamera ditolak. Aktifkan di pengaturan browser.',
+    NotFoundError: 'Tidak ada kamera terdeteksi di perangkat ini.',
+    NotReadableError: 'Kamera sedang dipakai aplikasi lain.',
+    OverconstrainedError: 'Kamera tidak mendukung mode ini.',
+    SecurityError: 'Kamera butuh HTTPS.',
+  };
+  showToast(map[name] || `Gagal buka kamera: ${err?.message || 'unknown'}`, 'error');
+}
+
+async function takePhotoCapture() {
+  if (_isStartingPhoto || _photoStream) return;
+  if (!isSecureContext()) {
+    showToast('Fitur kamera butuh HTTPS.', 'error');
+    return;
+  }
+  _isStartingPhoto = true;
+
+  let stream = null;
+  let modal = null;
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } },
+      audio: false,
+    });
+    _photoStream = stream;
+
+    document.getElementById('photo-modal')?.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'photo-modal';
+    modal.className = 'fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4';
+    modal.innerHTML = `
+      <div class="relative w-full max-w-md bg-[#1C1C1E] rounded-2xl border border-white/10 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-white/5">
+          <h3 class="text-sm font-semibold text-white">Ambil Foto Bukti</h3>
+          <button id="photo-close" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 flex items-center justify-center transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <video id="photo-video" autoplay playsinline muted class="w-full aspect-square object-cover bg-black"></video>
+        <div class="p-4 flex gap-2">
+          <button id="photo-cancel" class="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 text-sm font-medium transition">Batal</button>
+          <button id="photo-capture" class="flex-1 py-2 rounded-lg bg-[#0088CC] hover:bg-[#0088CC]/80 text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+            <i data-lucide="camera" class="w-4 h-4"></i> Ambil
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    window.refreshIcons?.();
+
+    const video = modal.querySelector('#photo-video');
+    video.srcObject = stream;
+    await video.play();
+
+    const cleanup = () => {
+      if (_photoEscHandler) {
+        document.removeEventListener('keydown', _photoEscHandler);
+        _photoEscHandler = null;
+      }
+      if (video) video.srcObject = null;
+      if (_photoStream) {
+        _photoStream.getTracks().forEach((t) => t.stop());
+        _photoStream = null;
+      }
+      modal?.remove();
+      _isStartingPhoto = false;
+    };
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) cleanup();
+    });
+
+    _photoEscHandler = (e) => {
+      if (e.key === 'Escape') cleanup();
+    };
+    document.addEventListener('keydown', _photoEscHandler);
+
+    modal.querySelector('#photo-close').onclick = cleanup;
+    modal.querySelector('#photo-cancel').onclick = cleanup;
+    modal.querySelector('#photo-capture').onclick = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      const photoInput = document.getElementById('out-photo-data');
+      if (photoInput) photoInput.value = dataUrl;
+
+      const previewImg = document.getElementById('photo-preview-img');
+      if (previewImg) previewImg.src = dataUrl;
+
+      const previewContainer = document.getElementById('photo-preview');
+      if (previewContainer) previewContainer.classList.remove('hidden');
+
+      cleanup();
+      showToast('✅ Foto tersimpan', 'success');
+    };
+  } catch (err) {
+    if (_photoEscHandler) {
+      document.removeEventListener('keydown', _photoEscHandler);
+      _photoEscHandler = null;
+    }
+    if (_photoStream) {
+      _photoStream.getTracks().forEach((t) => t.stop());
+      _photoStream = null;
+    }
+    modal?.remove();
+    _isStartingPhoto = false;
+    handleScannerError(err);
+  }
+}
+
+// Auto close camera streams when tab is hidden to save battery & release device hardware
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    closeWebBarcodeScan();
+    if (_photoStream) {
+      if (_photoEscHandler) {
+        document.removeEventListener('keydown', _photoEscHandler);
+        _photoEscHandler = null;
+      }
+      _photoStream.getTracks().forEach((t) => t.stop());
+      _photoStream = null;
+      _isStartingPhoto = false;
+      document.getElementById('photo-modal')?.remove();
+    }
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-scan-barcode')?.addEventListener('click', startWebBarcodeScan);
+  document.getElementById('btn-take-photo')?.addEventListener('click', takePhotoCapture);
+  document.getElementById('btn-remove-photo')?.addEventListener('click', () => {
+    const photoInput = document.getElementById('out-photo-data');
+    if (photoInput) photoInput.value = '';
+    const previewImg = document.getElementById('photo-preview-img');
+    if (previewImg) previewImg.src = '';
+    document.getElementById('photo-preview')?.classList.add('hidden');
+  });
+  window.refreshIcons?.();
+});
+
+/* ==========================================================
+ * END OF WEB BARCODE SCANNER MODULE
+ * ========================================================== */
+

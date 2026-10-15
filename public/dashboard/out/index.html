@@ -45,6 +45,7 @@
   }
 }
 </style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-black text-white antialiased">
 
@@ -319,10 +320,31 @@
             <span id="out-total-preview">Rp 0</span>
           </div>
         </div>
-        <div>
-          <label for="out-note" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">No. Resi / Catatan</label>
-          <input type="text" id="out-note" placeholder="mis. SPX-001234, JNE-987..."
-                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        <div class="space-y-2">
+          <label class="block text-xs font-medium text-white/60">No. Resi / Catatan</label>
+          <div class="flex gap-2">
+            <input
+              id="out-note"
+              type="text"
+              placeholder="Scan atau ketik no. resi..."
+              class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#0088CC] transition"
+            />
+            <button type="button" id="btn-scan-barcode" title="Scan Barcode"
+              class="flex items-center justify-center w-10 h-10 bg-white/5 hover:bg-[#0088CC]/20 border border-white/10 hover:border-[#0088CC]/50 rounded-lg text-white/70 hover:text-[#0088CC] transition">
+              <i data-lucide="scan-line" class="w-5 h-5"></i>
+            </button>
+            <button type="button" id="btn-take-photo" title="Ambil Foto"
+              class="flex items-center justify-center w-10 h-10 bg-white/5 hover:bg-[#0088CC]/20 border border-white/10 hover:border-[#0088CC]/50 rounded-lg text-white/70 hover:text-[#0088CC] transition">
+              <i data-lucide="camera" class="w-5 h-5"></i>
+            </button>
+          </div>
+          <div id="photo-preview" class="hidden mt-2">
+            <img id="photo-preview-img" class="w-full max-h-40 object-contain rounded-lg border border-white/10" />
+            <button type="button" id="btn-remove-photo" class="text-xs text-red-400 hover:text-red-300 mt-1">
+              Hapus Foto
+            </button>
+          </div>
+          <input type="hidden" id="out-photo-data" />
         </div>
       </div>
 
