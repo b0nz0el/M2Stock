@@ -6,16 +6,17 @@
 <title>aQuaStock Pro — Audit Log</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
 
-
 <!-- Auth guard (redirect jika belum login) -->
 <script>
 (function(){try{if(!Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.endsWith('-auth-token');})){window.location.replace('/login/');}}catch(e){}})();
 </script>
 
-<!-- RBAC Route Guard (Layer 2) -->
+<!-- RBAC Route Guard (Layer 2) & Read-Only UI (Layer 1) -->
 <script type="module">
   import { guardRoute } from '../../assets/js/utils/rbac.js';
+  import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
   await guardRoute('audit');
+  applyReadOnlyUI();
 </script>
 
 <!-- Inter font (self-host) -->
@@ -52,7 +53,6 @@
   <main id="main-content" class="flex-1 overflow-y-auto">
 
     <header class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10">
-
       <button onclick="toggleSidebar()" data-action="toggle-sidebar" aria-expanded="false" aria-label="Buka menu" class="md:hidden text-white p-1">
         <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
       </button>
@@ -60,116 +60,155 @@
       <div class="hidden md:flex items-center gap-2 text-sm">
         <span class="text-[#A0A0A5]">aQuaStock</span>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#A0A0A5]" aria-hidden="true"></i>
-        <span id="breadcrumb" class="font-medium"></span>
+        <span id="breadcrumb" class="font-medium text-white">Audit Log</span>
       </div>
 
       <div class="flex-1 md:max-w-md md:ml-6 relative">
         <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
-        <input type="text" id="global-search" placeholder="Cari apa saja..." aria-label="Pencarian global"
-               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
+        <input type="text" id="audit-search-input" placeholder="Cari aktivitas, user, IP..." aria-label="Pencarian audit log"
+               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-16 py-2.5 text-sm focus:outline-none focus:border-[#0088CC] placeholder-[#A0A0A5]">
         <kbd class="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#A0A0A5] bg-white/5 px-1.5 py-0.5 rounded border border-white/10">⌘K</kbd>
       </div>
 
       <div class="ml-auto flex items-center gap-2">
-        <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
-          <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF3B30] rounded-full"></span>
+        <button type="button" id="btn-refresh-audit" title="Muat Ulang" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+          <i data-lucide="rotate-cw" class="w-4 h-4 text-[#A0A0A5]"></i>
         </button>
-        <button data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 btn">
-          <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-          <span class="hidden md:inline">Tambah</span>
+        <button type="button" id="btn-export-audit" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition text-white">
+          <i data-lucide="download" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Export CSV
         </button>
       </div>
     </header>
 
-    <!-- ═══════════ AUDIT LOG ═══════════ -->
-    <div id="page-audit" class="page active p-6 space-y-5">
-      <div class="flex items-center justify-between">
+    <!-- ═══════════ AUDIT LOG PAGE ═══════════ -->
+    <div id="page-audit" class="page active p-6 space-y-6 max-w-7xl mx-auto">
+      <!-- Title & Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="text-3xl font-bold tracking-tight">Audit Log</h2>
-          <p class="text-sm text-[#A0A0A5] mt-1">Riwayat semua aktivitas user di sistem</p>
+          <h2 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
+              <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </span>
+            Audit Log Sistem
+          </h2>
+          <p class="text-sm text-[#A0A0A5] mt-1">Rekap jejak audit keamanan, mutasi data, dan aktivitas autentikasi user</p>
         </div>
-        <button data-action="export-audit" class="bg-[#1C1C1E] hover:bg-white/5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-2 transition">
-          <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Export
-        </button>
+
+        <!-- Filter Action Tabs -->
+        <div class="flex items-center gap-1.5 bg-[#1C1C1E] border border-white/10 rounded-xl p-1 text-xs overflow-x-auto scrollbar-none">
+          <button type="button" data-action-filter="ALL" class="px-3.5 py-1.5 rounded-lg font-semibold bg-[#0088CC] text-white transition-all">
+            Semua
+          </button>
+          <button type="button" data-action-filter="CREATE" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
+            CREATE
+          </button>
+          <button type="button" data-action-filter="UPDATE" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
+            UPDATE
+          </button>
+          <button type="button" data-action-filter="DELETE" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
+            DELETE
+          </button>
+          <button type="button" data-action-filter="LOGIN" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
+            LOGIN
+          </button>
+        </div>
       </div>
 
-      <div class="card overflow-hidden">
-        <div class="card-table-wrap">
-        <table class="w-full text-sm">
-          <thead class="bg-white/[0.02] border-b border-white/5">
-            <tr class="text-left text-[#A0A0A5]">
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Waktu</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">User</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Aksi</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">Target</th>
-              <th class="px-5 py-3 font-medium text-xs uppercase tracking-wider">IP</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5]">30 Sep 14:25:03</td>
-              <td class="px-5 py-3.5">Mr David</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#34C759]/15 text-[#34C759]">CREATE</span></td>
-              <td class="px-5 py-3.5">Barang "Tesee2"</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs">192.168.1.5</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5]">30 Sep 13:12:47</td>
-              <td class="px-5 py-3.5">Staff Satu</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">UPDATE</span></td>
-              <td class="px-5 py-3.5">Stok Filter Canister: 4 → 5</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs">192.168.1.8</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5]">30 Sep 12:45:22</td>
-              <td class="px-5 py-3.5">Mr David</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#FF9500]/15 text-[#FF9500]">LOGIN</span></td>
-              <td class="px-5 py-3.5">Device baru (Safari MacBook)</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs">192.168.1.5</td>
-            </tr>
-            <tr class="table-row border-b border-white/5">
-              <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5]">30 Sep 11:20:15</td>
-              <td class="px-5 py-3.5">Staff Satu</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#FF3B30]/15 text-[#FF3B30]">DELETE</span></td>
-              <td class="px-5 py-3.5">Transaksi #TRX-0032 (dibatalkan)</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs">192.168.1.8</td>
-            </tr>
-            <tr class="table-row">
-              <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5]">30 Sep 09:15:33</td>
-              <td class="px-5 py-3.5">Follikein</td>
-              <td class="px-5 py-3.5"><span class="badge bg-[#FF9500]/15 text-[#FF9500]">LOGIN</span></td>
-              <td class="px-5 py-3.5">Login berhasil</td>
-              <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs">192.168.1.12</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <p class="text-xs text-[#A0A0A5] font-medium">Total Aktivitas</p>
+          <p id="kpi-total-logs" class="text-2xl font-bold text-white tracking-tight">0</p>
+          <p class="text-xs text-[#A0A0A5] flex items-center gap-1">
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-[#32ADE6]"></i> Semua Jejak Sistem
+          </p>
+        </div>
+
+        <div class="card p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <p class="text-xs text-[#A0A0A5] font-medium">Log Hari Ini</p>
+          <p id="kpi-today-logs" class="text-2xl font-bold text-[#34C759] tracking-tight">0</p>
+          <p class="text-xs text-[#A0A0A5] flex items-center gap-1">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-[#34C759]"></i> 24 Jam Terakhir
+          </p>
+        </div>
+
+        <div class="card p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <p class="text-xs text-[#A0A0A5] font-medium">Mutasi Data</p>
+          <p id="kpi-mutations" class="text-2xl font-bold text-[#32ADE6] tracking-tight">0</p>
+          <p class="text-xs text-[#A0A0A5] flex items-center gap-1">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5 text-[#32ADE6]"></i> CREATE + UPDATE
+          </p>
+        </div>
+
+        <div class="card p-5 rounded-2xl bg-[#1C1C1E] border border-white/5 space-y-1">
+          <p class="text-xs text-[#A0A0A5] font-medium">Aksi Kritis / Hapus</p>
+          <p id="kpi-delete-logs" class="text-2xl font-bold text-[#FF3B30] tracking-tight">0</p>
+          <p class="text-xs text-[#A0A0A5] flex items-center gap-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-[#FF3B30]"></i> Operasi DELETE
+          </p>
+        </div>
+      </div>
+
+      <!-- Main Log Table -->
+      <div class="card overflow-hidden rounded-2xl bg-[#1C1C1E] border border-white/5">
+        <div class="card-table-wrap overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/[0.02] border-b border-white/5 text-[11px] font-semibold text-[#A0A0A5] uppercase tracking-wider">
+              <tr class="text-left">
+                <th class="px-5 py-3.5 w-44">Waktu</th>
+                <th class="px-5 py-3.5 w-52">User</th>
+                <th class="px-5 py-3.5 w-32">Aksi</th>
+                <th class="px-5 py-3.5">Target / Detail Aktivitas</th>
+                <th class="px-5 py-3.5 w-36">IP Address</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body" class="divide-y divide-white/5">
+              <!-- Dynamically populated by audit.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="audit-empty-state" class="hidden text-center py-14 px-4">
+          <div class="w-12 h-12 rounded-2xl bg-white/5 grid place-items-center mx-auto mb-3 text-[#A0A0A5]">
+            <i data-lucide="file-text" class="w-6 h-6"></i>
+          </div>
+          <p class="text-sm font-semibold text-white">Tidak ada log aktivitas ditemukan</p>
+          <p class="text-xs text-[#A0A0A5] mt-1">Coba sesuaikan kata kunci pencarian atau ubah filter aksi.</p>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="px-5 py-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#A0A0A5]">
+          <span id="audit-page-info">Memuat data halaman...</span>
+          <div class="flex items-center gap-2">
+            <button type="button" id="audit-prev-page" class="px-3.5 py-1.5 rounded-lg bg-[#121214] border border-white/10 hover:bg-white/5 transition flex items-center gap-1.5 text-white disabled:opacity-40">
+              <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Sebelumnya
+            </button>
+            <button type="button" id="audit-next-page" class="px-3.5 py-1.5 rounded-lg bg-[#121214] border border-white/10 hover:bg-white/5 transition flex items-center gap-1.5 text-white disabled:opacity-40">
+              Berikutnya <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-
   </main>
 
   <!-- ═══════════ BOTTOM TAB BAR (MOBILE) ═══════════ -->
-  <nav class="bottom-nav" aria-label="Navigasi utama">
+  <nav class="bottom-nav md:hidden" aria-label="Navigasi utama">
     <div class="bottom-nav-items">
-      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="bottomNavTap('dashboard', event)">
+      <button type="button" class="bottom-nav-item" data-tab="dashboard" onclick="window.location.href='/dashboard/'">
         <i data-lucide="layout-dashboard" aria-hidden="true"></i>
         <span>Dashboard</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="items" onclick="bottomNavTap('items', event)">
+      <button type="button" class="bottom-nav-item" data-tab="items" onclick="window.location.href='/dashboard/items/'">
         <i data-lucide="package" aria-hidden="true"></i>
         <span>Barang</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="in" onclick="bottomNavTap('in', event)">
-        <i data-lucide="arrow-down-circle" aria-hidden="true"></i>
-        <span>Masuk</span>
+      <button type="button" class="bottom-nav-item" data-tab="report" onclick="window.location.href='/dashboard/report/'">
+        <i data-lucide="bar-chart-2" aria-hidden="true"></i>
+        <span>Laporan</span>
       </button>
-      <button type="button" class="bottom-nav-item" data-tab="out" onclick="bottomNavTap('out', event)">
-        <i data-lucide="arrow-up-circle" aria-hidden="true"></i>
-        <span>Keluar</span>
-      </button>
-      <button type="button" class="bottom-nav-item" data-tab="menu" data-action="open-menu" aria-expanded="false" onclick="openMenuDrawer(event)">
+      <button type="button" class="bottom-nav-item" data-tab="menu" onclick="window.location.href='/dashboard/settings/'">
         <i data-lucide="menu" aria-hidden="true"></i>
         <span>Menu</span>
       </button>
@@ -177,29 +216,19 @@
   </nav>
 </div>
 
-<!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
-  <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
-  <button onclick="clearSelection()" class="text-xs text-[#A0A0A5] px-3 py-2">Batal</button>
-  <button data-action="edit" class="bg-[#0088CC] text-white text-xs font-semibold px-4 py-2 rounded-lg">Edit</button>
-  <button data-action="delete" class="bg-[#FF3B30] text-white text-xs font-semibold px-4 py-2 rounded-lg">Hapus</button>
-</div>
-
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toast-container" 
      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
      role="status" aria-live="polite"></div>
 
-<!-- Scripts (defer agar DOM siap lebih dulu) -->
+<!-- Scripts -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>
 <script src="../../assets/js/auth.js" defer></script>
 <script src="../../assets/js/utils.js" defer></script>
 <script src="../../assets/js/navigation.js" defer></script>
-<script src="../../assets/js/charts.js" defer></script>
 <script src="../../assets/js/animations.js" defer></script>
 <script src="../../assets/js/components/app-sidebar.js" defer></script>
 <script src="../../assets/js/icons.js" defer></script>
-<script src="../../assets/js/app.js" defer></script>
-<script src="../../assets/js/mock-actions.js" defer></script>
+<script type="module" src="./audit.js"></script>
 </body>
 </html>

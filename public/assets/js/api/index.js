@@ -18,6 +18,7 @@ import { customers } from './customers.js';
 import { users } from './users.js';
 import { storage } from './storage.js';
 import { report } from './report.js';
+import { audit } from './audit.js';
 
 export const Api = {
   // Helpers
@@ -39,7 +40,8 @@ export const Api = {
   customers,
   users,
   storage,
-  report
+  report,
+  audit
 };
 
 // Ekspos ke global window browser
