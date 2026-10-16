@@ -688,7 +688,8 @@
       const minStock = Number(item.min_stock || item.minStock) || 0;
       const costPrice = Number(item.cost_price || item.costPrice) || 0;
       const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
-      const margin = sellPrice > 0 ? Math.round(((sellPrice - costPrice) / sellPrice) * 100) : 0;
+      const markup = costPrice > 0 ? Math.round(((sellPrice - costPrice) / costPrice) * 100) : (sellPrice > 0 ? 100 : 0);
+      const markupColor = markup >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]';
       const isLow = stock <= minStock;
       const isChecked = selectedItemIds.has(String(item.id));
 
@@ -729,7 +730,7 @@
         <td class="px-4 py-3.5 text-right">${stockDisplay}</td>
         <td class="px-4 py-3.5 text-right">${formatRupiah(costPrice)}</td>
         <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
-        <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">${margin}%</td>
+        <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
             <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
@@ -1176,13 +1177,13 @@
       return;
     }
 
-    const headers = ['ID', 'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori', 'Stok', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)', 'Margin (%)'];
+    const headers = ['ID', 'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori', 'Stok', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)', 'Markup (%)'];
     const rows = filtered.map(item => {
       const s = Number(item.stock) || 0;
       const min = Number(item.min_stock || item.minStock) || 0;
       const c = Number(item.cost_price || item.costPrice) || 0;
       const p = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
-      const m = p > 0 ? Math.round(((p - c) / p) * 100) : 0;
+      const m = c > 0 ? Math.round(((p - c) / c) * 100) : (p > 0 ? 100 : 0);
       return [item.id, item.sku || '-', item.barcode || '-', item.name, item.brand || '-', item.category || 'Umum', s, min, c, p, m];
     });
 
