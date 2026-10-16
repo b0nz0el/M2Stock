@@ -167,7 +167,10 @@
     }
 
     const priceInput = document.getElementById('out-price');
-    if (priceInput) priceInput.value = prod.sell_price || 0;
+    if (priceInput) {
+      priceInput.value = prod.sell_price || 0;
+      priceInput.readOnly = true;
+    }
 
     const stockInfo = document.getElementById('out-stock-info');
     if (stockInfo) {
@@ -206,6 +209,12 @@
       badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
     }
 
+    const priceInput = document.getElementById('out-price');
+    if (priceInput) {
+      priceInput.value = '0';
+      priceInput.readOnly = true;
+    }
+
     const stockInfo = document.getElementById('out-stock-info');
     if (stockInfo) stockInfo.classList.add('hidden');
 
@@ -214,6 +223,7 @@
       suggestionsEl.classList.add('hidden');
       suggestionsEl.innerHTML = '';
     }
+    calculateOutTotal();
   }
 
   function handleOutProductChange() {
@@ -301,7 +311,8 @@
     const customerId = document.getElementById('out-customer-id').value;
     const channel = document.getElementById('out-channel').value;
     const qty = Number(document.getElementById('out-qty').value);
-    const price = Number(document.getElementById('out-price').value);
+    const prod = availableProducts.find(p => String(p.id) === String(productId));
+    const price = prod ? Number(prod.sell_price || 0) : Number(document.getElementById('out-price').value);
     const note = document.getElementById('out-note').value.trim();
 
     if (!productId) {
