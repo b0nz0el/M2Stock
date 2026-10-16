@@ -123,3 +123,4 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+

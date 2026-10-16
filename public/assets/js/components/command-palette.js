@@ -311,3 +311,4 @@
   window.openCommandPalette = openCommandPalette;
   window.closeCommandPalette = closeCommandPalette;
 })();
+

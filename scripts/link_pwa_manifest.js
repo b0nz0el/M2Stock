@@ -51,3 +51,4 @@ for (const relPath of htmlFiles) {
 }
 
 console.log(`Finished linking PWA meta tags in ${updatedCount} files.`);
+
