@@ -13,17 +13,17 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
 
   let currentSettings = {
     store_info: {
-      name: 'Aquarium David',
-      slogan: 'Solusi Lengkap Kebutuhan Akuarium & Ikan Hias',
-      email: 'info@aquastock.pro',
-      phone: '0812-3456-7890',
-      address: 'Jl. Merdeka No. 123, Jakarta'
+      name: 'JTMaquarium',
+      slogan: 'Perlengkapan Aksesoris Aquarium',
+      email: 'jtmaquarium@gmail.com',
+      phone: '0812-9662-8052',
+      address: 'Jl. Mangga No. 67, Jatimakmur, Pondok Gede, Kota Bekasi'
     },
     pos_config: {
       tax_rate: 11,
       service_rate: 0,
       default_payment: 'Cash',
-      receipt_footer: 'Terima kasih telah berbelanja di Aquarium David!'
+      receipt_footer: 'Terima kasih telah berbelanja di JTMaquarium!'
     },
     stock_config: {
       min_stock_alert: 5,

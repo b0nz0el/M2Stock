@@ -77,11 +77,59 @@ export const settings = {
         .single();
 
       if (error) throw error;
+
+      if (key === 'store_info' && typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('aquastock_store_info', JSON.stringify(value));
+        } catch (_) {}
+      }
+
       return { ok: true, data: data ? data.value : value };
     } catch (err) {
       console.error(`settingsApi.save(${key}) error:`, err);
       return { ok: false, error: err };
     }
+  },
+
+  /**
+   * Mengambil informasi profil toko terpusat untuk faktur penjualan, struk kasir, PO, dan retur
+   * @returns {Promise<{name: string, slogan: string, email: string, phone: string, address: string}>}
+   */
+  async getStoreInfo() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.name) return parsed;
+          } catch (_) {}
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'store_info')
+        .maybeSingle();
+
+      if (!error && data?.value) {
+        if (typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem('aquastock_store_info', JSON.stringify(data.value));
+          } catch (_) {}
+        }
+        return data.value;
+      }
+    } catch (_) {}
+
+    return {
+      name: 'JTMaquarium',
+      slogan: 'Perlengkapan Aksesoris Aquarium',
+      email: 'jtmaquarium@gmail.com',
+      phone: '0812-9662-8052',
+      address: 'Jl. Mangga No. 67, Jatimakmur, Pondok Gede, Kota Bekasi'
+    };
   },
 
   /**

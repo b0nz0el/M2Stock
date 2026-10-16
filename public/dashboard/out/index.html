@@ -530,12 +530,12 @@
     <!-- PREVIEW STRUK FISIK (Monochrome White Paper) -->
     <div class="flex justify-center p-2 bg-black/40 rounded-xl overflow-x-auto">
       <div id="receipt-paper" class="w-[58mm] max-w-[80mm] bg-white text-black p-4 font-mono text-[11px] leading-relaxed shadow-lg select-text transition-all duration-200">
-        <!-- Header Toko -->
+        <!-- Header Toko (Sinkron dengan Pengaturan Toko) -->
         <div class="text-center space-y-0.5 pb-2 border-b border-dashed border-gray-400">
-          <h4 class="font-bold text-sm tracking-wide text-black uppercase">JTMaquarium</h4>
-          <p class="text-[10px] text-gray-700">Perlengkapan Aksesoris Aquarium</p>
-          <p class="text-[9px] text-gray-600">Jl. Mangga No. 67, Pondok Gede, Kota Bekasi</p>
-          <p class="text-[9px] text-gray-600">WA: 0812-9662-8052</p>
+          <h4 id="receipt-store-name" class="font-bold text-sm tracking-wide text-black uppercase">JTMaquarium</h4>
+          <p id="receipt-store-slogan" class="text-[10px] text-gray-700">Perlengkapan Aksesoris Aquarium</p>
+          <p id="receipt-store-address" class="text-[9px] text-gray-600">Jl. Mangga No. 67, Pondok Gede, Kota Bekasi</p>
+          <p id="receipt-store-phone" class="text-[9px] text-gray-600">WA: 0812-9662-8052</p>
         </div>
 
         <!-- Meta Transaksi -->
@@ -562,7 +562,7 @@
 
         <!-- Footer Struk -->
         <div class="text-center text-[9px] text-gray-600 pt-2 border-t border-dashed border-gray-400 space-y-0.5">
-          <p class="font-semibold text-black">Terima Kasih Atas Kunjungan Anda!</p>
+          <p id="receipt-store-footer" class="font-semibold text-black">Terima Kasih Atas Kunjungan Anda!</p>
           <p>Barang dapat ditukar maks 2 hari dgn nota fisik.</p>
           <p class="text-[8px] text-gray-400 pt-1">aQuaStock Pro POS</p>
         </div>

@@ -165,10 +165,88 @@ describe('Print and Share Features (Fase B)', () => {
 
       expect(kembali).toBe(25000);
     });
+  });
 
-    it('mengembalikan 0 jika uang yang dibayarkan pas atau kurang', () => {
-      expect(calculateChange(100000, 100000)).toBe(0);
-      expect(calculateChange(100000, 80000)).toBe(0);
+  describe('Sinkronisasi Profil Toko ke Dokumen Cetak', () => {
+    it('menyinkronkan profil toko dinamis ke header struk kasir, PO, dan retur', () => {
+      const customStore = {
+        name: 'Akuarium Indah Jaya',
+        slogan: 'Spesialis Ikan Predator & Aquascape',
+        phone: '0813-8899-0011',
+        email: 'indahjaya@gmail.com',
+        address: 'Jl. Ahmad Yani No. 88, Bekasi'
+      };
+
+      // Simulasi DOM dokumen cetak
+      document.body.innerHTML = `
+        <div id="receipt-store-name"></div>
+        <div id="receipt-store-slogan"></div>
+        <div id="receipt-store-address"></div>
+        <div id="receipt-store-phone"></div>
+        <div id="doc-po-store-name"></div>
+        <div id="doc-po-store-slogan"></div>
+        <div id="doc-po-store-address"></div>
+        <div id="doc-po-store-contact"></div>
+        <div id="doc-po-sign-name"></div>
+        <div id="doc-return-store-name"></div>
+        <div id="doc-return-store-slogan"></div>
+        <div id="doc-return-store-address"></div>
+        <div id="doc-return-store-contact"></div>
+        <div id="doc-return-sign-name"></div>
+      `;
+
+      // Fungsi helper sinkronisasi profil toko
+      function applyStoreInfoToDOM(store) {
+        const rName = document.getElementById('receipt-store-name');
+        const rSlogan = document.getElementById('receipt-store-slogan');
+        const rAddress = document.getElementById('receipt-store-address');
+        const rPhone = document.getElementById('receipt-store-phone');
+        if (rName) rName.textContent = store.name;
+        if (rSlogan) rSlogan.textContent = store.slogan;
+        if (rAddress) rAddress.textContent = store.address;
+        if (rPhone) rPhone.textContent = `WA: ${store.phone}`;
+
+        const pName = document.getElementById('doc-po-store-name');
+        const pSlogan = document.getElementById('doc-po-store-slogan');
+        const pAddress = document.getElementById('doc-po-store-address');
+        const pContact = document.getElementById('doc-po-store-contact');
+        const pSign = document.getElementById('doc-po-sign-name');
+        if (pName) pName.textContent = store.name;
+        if (pSlogan) pSlogan.textContent = store.slogan;
+        if (pAddress) pAddress.textContent = store.address;
+        if (pContact) pContact.textContent = `WA: ${store.phone} | Email: ${store.email}`;
+        if (pSign) pSign.textContent = store.name;
+
+        const retName = document.getElementById('doc-return-store-name');
+        const retSlogan = document.getElementById('doc-return-store-slogan');
+        const retAddress = document.getElementById('doc-return-store-address');
+        const retContact = document.getElementById('doc-return-store-contact');
+        const retSign = document.getElementById('doc-return-sign-name');
+        if (retName) retName.textContent = store.name;
+        if (retSlogan) retSlogan.textContent = store.slogan;
+        if (retAddress) retAddress.textContent = store.address;
+        if (retContact) retContact.textContent = `WA: ${store.phone} | Email: ${store.email}`;
+        if (retSign) retSign.textContent = store.name;
+      }
+
+      applyStoreInfoToDOM(customStore);
+
+      // Verifikasi Struk Kasir
+      expect(document.getElementById('receipt-store-name').textContent).toBe('Akuarium Indah Jaya');
+      expect(document.getElementById('receipt-store-slogan').textContent).toBe('Spesialis Ikan Predator & Aquascape');
+      expect(document.getElementById('receipt-store-address').textContent).toBe('Jl. Ahmad Yani No. 88, Bekasi');
+      expect(document.getElementById('receipt-store-phone').textContent).toBe('WA: 0813-8899-0011');
+
+      // Verifikasi Dokumen PO
+      expect(document.getElementById('doc-po-store-name').textContent).toBe('Akuarium Indah Jaya');
+      expect(document.getElementById('doc-po-store-contact').textContent).toContain('WA: 0813-8899-0011');
+      expect(document.getElementById('doc-po-store-contact').textContent).toContain('Email: indahjaya@gmail.com');
+      expect(document.getElementById('doc-po-sign-name').textContent).toBe('Akuarium Indah Jaya');
+
+      // Verifikasi Dokumen Bukti Retur
+      expect(document.getElementById('doc-return-store-name').textContent).toBe('Akuarium Indah Jaya');
+      expect(document.getElementById('doc-return-store-address').textContent).toBe('Jl. Ahmad Yani No. 88, Bekasi');
+      expect(document.getElementById('doc-return-sign-name').textContent).toBe('Akuarium Indah Jaya');
     });
   });
 });

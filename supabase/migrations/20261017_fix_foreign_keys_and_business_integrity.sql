@@ -133,3 +133,4 @@ GRANT ALL ON public.transactions TO authenticated, anon;
 GRANT ALL ON public.products TO authenticated, anon;
 
 NOTIFY pgrst, 'reload schema';
+

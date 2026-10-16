@@ -459,6 +459,30 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (docNotes) docNotes.textContent = notes;
     if (docTotal) docTotal.textContent = total;
 
+    // Sinkronkan data profil toko dinamis ke dokumen PO
+    try {
+      const storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
+        ? await window.Api.settings.getStoreInfo()
+        : null;
+      if (storeInfo) {
+        const docStoreName = document.getElementById('doc-po-store-name');
+        const docStoreSlogan = document.getElementById('doc-po-store-slogan');
+        const docStoreAddress = document.getElementById('doc-po-store-address');
+        const docStoreContact = document.getElementById('doc-po-store-contact');
+        if (docStoreName && storeInfo.name) docStoreName.textContent = storeInfo.name;
+        if (docStoreSlogan && storeInfo.slogan) docStoreSlogan.textContent = storeInfo.slogan;
+        if (docStoreAddress && storeInfo.address) docStoreAddress.textContent = storeInfo.address;
+        if (docStoreContact) {
+          const parts = [];
+          if (storeInfo.phone) parts.push(`WA: ${storeInfo.phone}`);
+          if (storeInfo.email) parts.push(`Email: ${storeInfo.email}`);
+          docStoreContact.textContent = parts.join(' | ') || '-';
+        }
+        const docStoreSign = document.getElementById('doc-po-sign-name');
+        if (docStoreSign && storeInfo.name) docStoreSign.textContent = storeInfo.name;
+      }
+    } catch (_) {}
+
     const items = item.items || item.purchase_order_items || [];
     if (tbody) {
       if (items.length === 0) {
@@ -509,8 +533,19 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const total = formatRupiah(item.total || 0);
     const items = item.items || item.purchase_order_items || [];
 
+    let storeName = 'JTMaquarium';
+    let storeSlogan = 'Perlengkapan Aksesoris Aquarium';
+    try {
+      const cached = localStorage.getItem('aquastock_store_info');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.name) storeName = parsed.name;
+        if (parsed.slogan) storeSlogan = parsed.slogan;
+      }
+    } catch (_) {}
+
     let text = `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n`;
-    text += `*Toko JTMaquarium - Perlengkapan Aksesoris Aquarium*\n`;
+    text += `*Toko ${storeName} - ${storeSlogan}*\n`;
     text += `-----------------------------------------------\n`;
     text += `*No. PO:* ${noPO}\n`;
     text += `*Tanggal:* ${tanggalPO}\n`;

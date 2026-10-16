@@ -693,6 +693,23 @@
     if (elMethod) elMethod.textContent = method;
     if (elStatus) elStatus.textContent = status;
 
+    // Sinkronkan profil toko dinamis ke struk kasir
+    try {
+      const storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
+        ? await window.Api.settings.getStoreInfo()
+        : null;
+      if (storeInfo) {
+        const elStoreName = document.getElementById('receipt-store-name');
+        const elStoreSlogan = document.getElementById('receipt-store-slogan');
+        const elStoreAddress = document.getElementById('receipt-store-address');
+        const elStorePhone = document.getElementById('receipt-store-phone');
+        if (elStoreName && storeInfo.name) elStoreName.textContent = storeInfo.name;
+        if (elStoreSlogan && storeInfo.slogan) elStoreSlogan.textContent = storeInfo.slogan;
+        if (elStoreAddress && storeInfo.address) elStoreAddress.textContent = storeInfo.address;
+        if (elStorePhone && storeInfo.phone) elStorePhone.textContent = `WA: ${storeInfo.phone}`;
+      }
+    } catch (_) {}
+
     if (elItems) {
       elItems.innerHTML = `
         <div class="space-y-0.5">

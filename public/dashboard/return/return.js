@@ -555,6 +555,30 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (docItemTotal) docItemTotal.textContent = formatRupiah(total);
     if (docReason) docReason.textContent = reason;
 
+    // Sinkronkan data profil toko dinamis ke dokumen Retur
+    try {
+      const storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
+        ? await window.Api.settings.getStoreInfo()
+        : null;
+      if (storeInfo) {
+        const docStoreName = document.getElementById('doc-return-store-name');
+        const docStoreSlogan = document.getElementById('doc-return-store-slogan');
+        const docStoreAddress = document.getElementById('doc-return-store-address');
+        const docStoreContact = document.getElementById('doc-return-store-contact');
+        if (docStoreName && storeInfo.name) docStoreName.textContent = storeInfo.name;
+        if (docStoreSlogan && storeInfo.slogan) docStoreSlogan.textContent = storeInfo.slogan;
+        if (docStoreAddress && storeInfo.address) docStoreAddress.textContent = storeInfo.address;
+        if (docStoreContact) {
+          const parts = [];
+          if (storeInfo.phone) parts.push(`WA: ${storeInfo.phone}`);
+          if (storeInfo.email) parts.push(`Email: ${storeInfo.email}`);
+          docStoreContact.textContent = parts.join(' | ') || '-';
+        }
+        const docStoreSign = document.getElementById('doc-return-sign-name');
+        if (docStoreSign && storeInfo.name) docStoreSign.textContent = storeInfo.name;
+      }
+    } catch (_) {}
+
     const modal = document.getElementById('modal-print-return');
     if (modal) {
       modal.classList.remove('hidden');
@@ -576,6 +600,17 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
   function generateReturnWhatsAppText(item) {
     if (!item) return '';
+    let storeName = 'JTMaquarium';
+    let storeSlogan = 'Perlengkapan Aksesoris Aquarium';
+    try {
+      const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.name) storeName = parsed.name;
+        if (parsed.slogan) storeSlogan = parsed.slogan;
+      }
+    } catch (_) {}
+
     const noRetur = item.no_retur || '-';
     const tanggalRetur = formatDate(item.tanggal);
     const tipeText = item.tipe === 'ke_supplier' ? 'Retur ke Supplier' : 'Retur dari Pelanggan';
@@ -587,7 +622,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const total = qty * harga;
 
     let text = `*BUKTI TANDA TERIMA RETUR BARANG*\n`;
-    text += `*Toko Jaquris Aquarium & Aksesoris, Bekasi*\n`;
+    text += `*Toko ${storeName} - ${storeSlogan}*\n`;
     text += `-----------------------------------------------\n`;
     text += `*No. Retur:* ${noRetur}\n`;
     text += `*Tanggal:* ${tanggalRetur}\n`;
@@ -600,7 +635,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     text += `- Nilai/Refund: ${formatRupiah(total)}\n`;
     text += `- Alasan: ${item.alasan || '-'}\n`;
     text += `-----------------------------------------------\n`;
-    text += `Dokumen bukti resmi toko Jaquris Aquarium. Terima kasih. 🙏`;
+    text += `Dokumen bukti resmi toko ${storeName}. Terima kasih. 🙏`;
 
     return text;
   }
