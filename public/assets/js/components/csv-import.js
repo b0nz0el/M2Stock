@@ -276,11 +276,11 @@
     modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm';
 
     const errors = validation.errors || [];
-    const previewHeaders = config.headers.slice(0, 6);
-    const previewRows = records.slice(0, 8);
+    const previewHeaders = config.headers || [];
+    const previewRows = records.slice(0, 10);
     const preview = previewRows.map(record => `
-      <tr class="border-b border-white/5">
-        ${previewHeaders.map(header => `<td class="px-3 py-2 text-xs text-[#D1D1D6]">${escapeHtml(record[header] || '-')}</td>`).join('')}
+      <tr class="border-b border-white/5 hover:bg-white/[0.02]">
+        ${previewHeaders.map(header => `<td class="px-3.5 py-2 text-xs text-[#D1D1D6] whitespace-nowrap font-mono">${escapeHtml(record[header] || '-')}</td>`).join('')}
       </tr>`).join('');
     const errorList = errors.slice(0, 20).map(error => `
       <li>Baris ${escapeHtml(error.row)}: ${escapeHtml(error.message)}</li>`).join('');
@@ -289,8 +289,8 @@
       : `${records.length} baris siap diimpor. Periksa pratinjau sebelum melanjutkan.`;
 
     modal.innerHTML = `
-      <section class="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-[#1C1C1E] shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="csv-import-title">
-        <header class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <section class="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-[#1C1C1E] shadow-2xl flex flex-col" role="dialog" aria-modal="true" aria-labelledby="csv-import-title">
+        <header class="flex items-center justify-between border-b border-white/10 px-5 py-4 flex-shrink-0">
           <div>
             <h2 id="csv-import-title" class="text-base font-semibold text-white">Pratinjau Impor: ${escapeHtml(config.title)}</h2>
             <p class="mt-1 text-xs text-[#A0A0A5]">${escapeHtml(file.name)}</p>

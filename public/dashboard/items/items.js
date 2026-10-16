@@ -610,16 +610,20 @@
 
     // Metrik total barang
     let totalStock = 0;
-    let totalValue = 0;
+    let totalCostValue = 0;
+    let totalSellValue = 0;
     currentItems.forEach(function (i) {
       const s = Number(i.stock) || 0;
+      const c = Number(i.cost_price || i.costPrice) || 0;
       const p = Number(i.sell_price || i.sellPrice || i.unitPrice) || 0;
       totalStock += s;
-      totalValue += (s * p);
+      totalCostValue += (s * c);
+      totalSellValue += (s * p);
     });
     if (subtitle) {
-      const valStr = totalValue >= 1000000 ? (totalValue / 1000000).toFixed(1) + 'jt' : Number(totalValue).toLocaleString('id-ID');
-      subtitle.textContent = `${currentItems.length} barang · ${totalStock} total stok · Rp ${valStr} nilai`;
+      const costStr = 'Rp ' + Number(totalCostValue).toLocaleString('id-ID');
+      const sellStr = 'Rp ' + Number(totalSellValue).toLocaleString('id-ID');
+      subtitle.textContent = `${currentItems.length} barang · ${totalStock} total stok · Nilai Modal: ${costStr} · Potensi Jual: ${sellStr}`;
     }
 
     // 1. Kondisi jika database memang kosong
@@ -1356,20 +1360,21 @@
         const rows = [];
         const errors = [];
         const parseNumber = (value, label, rowNumber, integer = false) => {
-          const valid = integer ? /^\d+$/.test(value) : /^\d+(\.\d+)?$/.test(value);
+          const raw = String(value ?? '').trim().replace(/^Rp\s*/i, '').replace(/[\s]/g, '');
+          const valid = integer ? /^\d+$/.test(raw) : /^\d+(\.\d+)?$/.test(raw);
           if (!valid) {
             errors.push({ row: rowNumber, message: `${label} harus berupa ${integer ? 'bilangan bulat' : 'angka'} nol atau lebih.` });
             return null;
           }
-          return Number(value);
+          return Number(raw);
         };
 
         records.forEach((record, index) => {
           const rowNumber = index + 2;
-          const sku = record['SKU'].trim();
-          const barcode = record['Barcode'].trim();
-          const name = record['Nama Barang'].trim();
-          const category = record['Kategori'].trim();
+          const sku = (record['SKU'] || '').trim();
+          const barcode = (record['Barcode'] || '').trim();
+          const name = (record['Nama Barang'] || '').trim();
+          const category = (record['Kategori'] || '').trim();
           const rowErrorsBefore = errors.length;
           if (!sku) errors.push({ row: rowNumber, message: 'SKU wajib diisi.' });
           if (!name) errors.push({ row: rowNumber, message: 'Nama barang wajib diisi.' });
@@ -1379,9 +1384,6 @@
           }
           if (barcode && (existingBarcodes.has(barcode) || seenBarcodes.has(barcode))) {
             errors.push({ row: rowNumber, message: `Barcode "${barcode}" sudah terdaftar atau duplikat di file.` });
-          }
-          if (category && !categoryNames.has(category.toLowerCase())) {
-            errors.push({ row: rowNumber, message: `Kategori "${category}" tidak ditemukan.` });
           }
           const initialStock = parseNumber(record['Stok Awal'], 'Stok awal', rowNumber, true);
           const minStock = parseNumber(record['Min Stok'], 'Min stok', rowNumber, true);
@@ -1395,8 +1397,8 @@
             sku,
             barcode,
             name,
-            brand: record['Brand'].trim(),
-            category,
+            brand: (record['Brand'] || '').trim() || '-',
+            category: category || 'Umum',
             initial_stock: initialStock,
             min_stock: minStock,
             cost_price: costPrice,
@@ -1433,6 +1435,25 @@
           (categories || []).forEach(c => {
             if (c.name) catMap.set(c.name.trim().toLowerCase(), c.id);
           });
+
+          // Auto-insert kategori baru dari file jika belum terdaftar
+          const missingCategories = Array.from(new Set(
+            rows.map(r => (r.category || '').trim()).filter(Boolean)
+          )).filter(cName => !catMap.has(cName.toLowerCase()));
+
+          if (missingCategories.length > 0) {
+            try {
+              const { data: createdCats } = await window.supabase
+                .from('categories')
+                .insert(missingCategories.map(name => ({ name })))
+                .select('id, name');
+              (createdCats || []).forEach(c => {
+                if (c.name) catMap.set(c.name.trim().toLowerCase(), c.id);
+              });
+            } catch (catErr) {
+              console.warn('Kategori baru otomatis dicatat jika memungkinkan:', catErr);
+            }
+          }
 
           // Dapatkan user ID saat ini jika login
           let currentUserId = null;
