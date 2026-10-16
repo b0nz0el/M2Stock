@@ -223,3 +223,4 @@ END $$;
 -- 4. RELOAD SCHEMA CACHE SUPABASE / POSTGREST
 -- ---------------------------------------------------------
 NOTIFY pgrst, 'reload schema';
+

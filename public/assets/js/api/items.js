@@ -250,6 +250,18 @@ export const items = {
     delete: async (id, opts) => {
       if (isSupabaseAvailable()) {
         try {
+          // Pre-check apakah produk tercatat pada transaksi, PO, atau Retur
+          const checkRes = await items.checkDeletable([id], opts);
+          if (checkRes.ok && checkRes.data && checkRes.data.skippedIds && checkRes.data.skippedIds.includes(String(id))) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: 'RELATION_CONSTRAINT',
+                message: 'Produk tidak dapat dihapus karena masih tercatat dalam riwayat transaksi, Purchase Order, atau Retur.'
+              }
+            });
+          }
+
           let query = window.supabase
             .from('products')
             .delete()
@@ -261,11 +273,18 @@ export const items = {
 
           const { error } = await query;
           if (error) {
+            const isFkViolation = error.code === '23503' ||
+              (error.message && error.message.includes('foreign key constraint')) ||
+              (error.message && error.message.includes('fk_poi_product')) ||
+              (error.message && error.message.includes('fk_returns_product'));
+
             return formatResponse({
               ok: false,
               error: {
-                code: error.code || 'SUPABASE_ERROR',
-                message: error.message || 'Gagal menghapus produk',
+                code: isFkViolation ? 'RELATION_CONSTRAINT' : (error.code || 'SUPABASE_ERROR'),
+                message: isFkViolation
+                  ? 'Produk tidak dapat dihapus karena masih tercatat dalam riwayat Purchase Order, transaksi, atau Retur.'
+                  : (error.message || 'Gagal menghapus produk'),
                 details: error
               }
             });
@@ -273,7 +292,7 @@ export const items = {
 
           return formatResponse({
             ok: true,
-            data: { success: true },
+            data: { success: true, id },
             meta: { message: 'Produk berhasil dihapus' }
           });
         } catch (err) {
@@ -290,17 +309,46 @@ export const items = {
           if (!productIds.length) {
             return formatResponse({ ok: true, data: { deletableIds: [], skippedIds: [] } });
           }
-          let query = window.supabase
+
+          // Periksa 3 relasi utama: transactions, purchase_order_items, dan returns
+          let txQuery = window.supabase
             .from('transactions')
             .select('product_id')
             .in('product_id', productIds);
 
-          if (opts && opts.signal) query = query.abortSignal(opts.signal);
-          const { data: txData, error } = await query;
-          if (error) {
-            return formatResponse({ ok: false, error: { message: error.message || 'Gagal memeriksa riwayat transaksi produk' } });
+          let poiQuery = window.supabase
+            .from('purchase_order_items')
+            .select('product_id')
+            .in('product_id', productIds);
+
+          let retQuery = window.supabase
+            .from('returns')
+            .select('produk_id')
+            .in('produk_id', productIds);
+
+          if (opts && opts.signal) {
+            txQuery = txQuery.abortSignal(opts.signal);
+            poiQuery = poiQuery.abortSignal(opts.signal);
+            retQuery = retQuery.abortSignal(opts.signal);
           }
-          const usedSet = new Set((txData || []).map(t => String(t.product_id)));
+
+          const [txRes, poiRes, retRes] = await Promise.all([
+            txQuery.then(r => r).catch(() => ({ data: [] })),
+            poiQuery.then(r => r).catch(() => ({ data: [] })),
+            retQuery.then(r => r).catch(() => ({ data: [] }))
+          ]);
+
+          const usedSet = new Set();
+          if (txRes && txRes.data) {
+            txRes.data.forEach(t => { if (t.product_id != null) usedSet.add(String(t.product_id)); });
+          }
+          if (poiRes && poiRes.data) {
+            poiRes.data.forEach(p => { if (p.product_id != null) usedSet.add(String(p.product_id)); });
+          }
+          if (retRes && retRes.data) {
+            retRes.data.forEach(r => { if (r.produk_id != null) usedSet.add(String(r.produk_id)); });
+          }
+
           const deletableIds = productIds.filter(id => !usedSet.has(id));
           const skippedIds = productIds.filter(id => usedSet.has(id));
           return formatResponse({
@@ -332,7 +380,7 @@ export const items = {
               ok: false,
               error: {
                 code: 'ALL_REFERENCED',
-                message: 'Semua produk yang dipilih tidak dapat dihapus karena memiliki riwayat transaksi'
+                message: 'Semua produk yang dipilih tidak dapat dihapus karena memiliki riwayat transaksi, Purchase Order, atau Retur'
               },
               data: { deletedIds: [], skippedIds, deletedCount: 0, skippedCount: skippedIds.length }
             });
@@ -362,7 +410,7 @@ export const items = {
             },
             meta: {
               message: skippedIds.length > 0
-                ? `${deletableIds.length} berhasil, ${skippedIds.length} dilewati (memiliki transaksi)`
+                ? `${deletableIds.length} berhasil dihapus, ${skippedIds.length} dilewati (memiliki riwayat transaksi/PO/Retur)`
                 : `${deletableIds.length} produk berhasil dihapus`
             }
           });

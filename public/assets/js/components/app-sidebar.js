@@ -446,11 +446,12 @@ class AppSidebar extends HTMLElement {
               <circle cx="50" cy="72" r="3.5" fill="#FFFFFF"/>
             </svg>
           </div>
+          
           <div class="min-w-0">
             <span class="text-base font-bold block truncate">aQuaStock</span>
             <span class="text-[10px] text-[#A0A0A5] flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-[#34C759] rounded-full"></span>
-              v3.0 PRO
+              JTMaquarium
             </span>
           </div>
         </div>
