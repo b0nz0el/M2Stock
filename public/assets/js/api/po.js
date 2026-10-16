@@ -331,14 +331,131 @@ export const po = {
   async generateFromLowStock(supplierId = null) {
     try {
       const { data, error } = await supabase.rpc('generate_draft_po_from_low_stock', {
-        p_supplier_id: supplierId || null
+        p_supplier_id: supplierId ? String(supplierId) : null
       });
       if (error) {
+        // Fallback resilient: jika RPC belum dieksekusi di database atau belum reload schema cache
+        const isMissingRpc = error.code === 'PGRST202' ||
+          (error.message && error.message.includes('schema cache')) ||
+          (error.message && error.message.includes('Could not find the function'));
+
+        if (isMissingRpc) {
+          console.warn('RPC generate_draft_po_from_low_stock belum ada di schema cache. Menggunakan fallback generator klien...');
+          return await this._generateFromLowStockFallback(supplierId);
+        }
         return formatResponse({ ok: false, error });
       }
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
+    }
+  },
+
+  /**
+   * Generator Restock Assistant langsung dari client sebagai fallback jika RPC DB belum dibuat
+   */
+  async _generateFromLowStockFallback(supplierId = null) {
+    try {
+      const { data: prods, error: prodErr } = await supabase
+        .from('products')
+        .select('*');
+      if (prodErr) throw prodErr;
+
+      const { data: openPOs } = await supabase
+        .from('purchase_orders')
+        .select('id, status')
+        .in('status', ['draft', 'dikirim']);
+
+      const openPoIds = (openPOs || []).map(p => p.id);
+      let excludedProductIds = new Set();
+      if (openPoIds.length > 0) {
+        const { data: openItems } = await supabase
+          .from('purchase_order_items')
+          .select('product_id')
+          .in('po_id', openPoIds);
+        (openItems || []).forEach(it => {
+          if (it.product_id) excludedProductIds.add(String(it.product_id));
+        });
+      }
+
+      const lowStockProducts = (prods || []).filter(p => {
+        const stock = Number(p.stock) || 0;
+        const minStock = Number(p.min_stock) || 0;
+        if (stock > minStock) return false;
+        if (excludedProductIds.has(String(p.id))) return false;
+        if (supplierId && p.supplier_id && String(p.supplier_id) !== String(supplierId)) return false;
+        return true;
+      });
+
+      if (lowStockProducts.length === 0) {
+        return formatResponse({
+          ok: true,
+          data: {
+            ok: true,
+            created: false,
+            message: 'Semua barang berstatus stok aman atau sudah memiliki draft pesanan aktif.'
+          }
+        });
+      }
+
+      const items = lowStockProducts.map(p => {
+        const stock = Number(p.stock) || 0;
+        const minStock = Number(p.min_stock) || 0;
+        const qty = Math.max(1, (minStock * 2) - stock);
+        const harga = Math.max(0, Number(p.cost_price || p.price || 0));
+        return {
+          product_id: p.id,
+          product_name: p.name,
+          qty: qty,
+          harga: harga,
+          subtotal: qty * harga
+        };
+      });
+
+      const randomSuffix = Math.floor(100 + Math.random() * 900);
+      const now = new Date();
+      const monthStr = now.getFullYear().toString() + String(now.getMonth() + 1).padStart(2, '0');
+      const no_po = `PO-${monthStr}-AUTO${randomSuffix}`;
+
+      let supplierName = 'Restock Stok Kritis';
+      if (supplierId) {
+        const { data: sup } = await supabase
+          .from('suppliers')
+          .select('name')
+          .eq('id', supplierId)
+          .maybeSingle();
+        if (sup?.name) supplierName = sup.name;
+      }
+
+      const createRes = await this.create({
+        no_po,
+        tanggal: now.toISOString().split('T')[0],
+        supplier_id: supplierId || null,
+        supplier_nama: supplierName,
+        status: 'draft',
+        catatan: 'Restock otomatis dari daftar stok menipis (Restock Assistant)',
+        items
+      });
+
+      if (!createRes.ok) {
+        return createRes;
+      }
+
+      const totalVal = items.reduce((sum, it) => sum + it.subtotal, 0);
+
+      return formatResponse({
+        ok: true,
+        data: {
+          ok: true,
+          created: true,
+          id: createRes.data?.id,
+          no_po: no_po,
+          total: totalVal,
+          item_count: items.length
+        }
+      });
+    } catch (fallbackErr) {
+      return handleError(fallbackErr);
     }
   },
 

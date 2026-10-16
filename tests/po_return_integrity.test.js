@@ -98,6 +98,66 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(res.data.created).toBe(true);
       expect(res.data.item_count).toBe(3);
     });
+
+    it('melakukan fallback client-side aman jika RPC generate_draft_po_from_low_stock belum ada di schema cache', async () => {
+      supabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: 'PGRST202',
+          message: 'Could not find the function public.generate_draft_po_from_low_stock(p_supplier_id) in the schema cache'
+        }
+      });
+
+      // Mock products
+      supabase.from.mockImplementation((table) => {
+        if (table === 'products') {
+          return {
+            select: vi.fn().mockResolvedValue({
+              data: [
+                { id: 10, name: 'Filter Sponge', stock: 2, min_stock: 5, cost_price: 15000 },
+                { id: 11, name: 'Bio Ring', stock: 10, min_stock: 5, cost_price: 25000 }
+              ],
+              error: null
+            })
+          };
+        }
+        if (table === 'purchase_orders') {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ data: [], error: null })
+            }),
+            insert: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: 'po-fallback-1', no_po: 'PO-202610-AUTO999', total: 120000 },
+                  error: null
+                }),
+                single: vi.fn().mockResolvedValue({
+                  data: { id: 'po-fallback-1', no_po: 'PO-202610-AUTO999', total: 120000 },
+                  error: null
+                })
+              })
+            })
+          };
+        }
+        if (table === 'purchase_order_items') {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ data: [], error: null })
+            }),
+            insert: vi.fn().mockResolvedValue({ data: [], error: null })
+          };
+        }
+        return {
+          select: vi.fn().mockResolvedValue({ data: [], error: null })
+        };
+      });
+
+      const res = await poApi.generateFromLowStock();
+      expect(res.ok).toBe(true);
+      expect(res.data.created).toBe(true);
+      expect(res.data.item_count).toBe(1);
+    });
   });
 
   describe('Retur Barang (Returns)', () => {
