@@ -848,6 +848,7 @@
     const bulkCountText = document.getElementById('bulk-count');
     const btnBulkPrice = document.getElementById('btn-bulk-price');
     const btnBulkDelete = document.getElementById('btn-bulk-delete');
+    const btnBulkMeta = document.getElementById('btn-bulk-meta');
 
     const filtered = filterItems();
     if (bulkBar && bulkCountText) {
@@ -863,6 +864,7 @@
     }
 
     if (btnBulkPrice) btnBulkPrice.disabled = count === 0;
+    if (btnBulkMeta) btnBulkMeta.disabled = count === 0;
     if (btnBulkDelete) btnBulkDelete.disabled = count === 0;
 
     // Periksa status centang select-all di halaman aktif
@@ -1151,6 +1153,186 @@
   }
 
   // ═══════════════════════════════════════════════
+  // BULK EDIT SATUAN & SUPPLIER
+  // ═══════════════════════════════════════════════
+  let suppliersData = [];
+
+  async function loadSuppliersForBulk() {
+    if (suppliersData && suppliersData.length > 0) return suppliersData;
+    try {
+      if (typeof Api !== 'undefined' && Api.suppliers) {
+        const res = await Api.suppliers.getAll({ status: 'active' });
+        if (res.ok) {
+          suppliersData = res.data || [];
+        }
+      } else if (typeof window.supabase !== 'undefined') {
+        const { data } = await window.supabase.from('suppliers').select('id, name').order('name');
+        suppliersData = data || [];
+      }
+    } catch (e) {
+      console.warn('Gagal memuat daftar pemasok:', e);
+    }
+    return suppliersData;
+  }
+
+  async function openBulkMetaModal() {
+    if (selectedItemIds.size === 0) {
+      if (typeof showToast === 'function') showToast('Pilih minimal 1 produk terlebih dahulu', 'info');
+      return;
+    }
+
+    const modal = document.getElementById('modal-bulk-meta');
+    if (!modal) return;
+
+    // Reset checkboxes
+    const checkUnit = document.getElementById('check-bulk-unit');
+    const checkSupplier = document.getElementById('check-bulk-supplier');
+    if (checkUnit) checkUnit.checked = false;
+    if (checkSupplier) checkSupplier.checked = false;
+    toggleBulkUnitField(false);
+    toggleBulkSupplierField(false);
+
+    // Isi dropdown Satuan dari unitsData
+    const unitSelect = document.getElementById('bulk-unit-select');
+    if (unitSelect && unitsData.length > 0) {
+      unitSelect.innerHTML = unitsData.map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('');
+    }
+
+    // Isi dropdown Supplier dari Api.suppliers
+    const suppSelect = document.getElementById('bulk-supplier-select');
+    if (suppSelect) {
+      suppSelect.innerHTML = '<option value="">Memuat daftar pemasok...</option>';
+      const supps = await loadSuppliersForBulk();
+      if (!supps || supps.length === 0) {
+        suppSelect.innerHTML = '<option value="">(Belum ada data supplier)</option>';
+      } else {
+        suppSelect.innerHTML = supps.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+      }
+    }
+
+    // Render Preview Barang yang Dipilih
+    const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
+    const subtitle = document.getElementById('bulk-meta-subtitle');
+    const countEl = document.getElementById('bulk-meta-item-count');
+    const previewList = document.getElementById('bulk-meta-preview-list');
+
+    if (subtitle) subtitle.textContent = `${selectedItems.length} barang dipilih`;
+    if (countEl) countEl.textContent = `${selectedItems.length} produk`;
+
+    if (previewList) {
+      previewList.innerHTML = selectedItems.map(item => `
+        <div class="py-1.5 flex items-center justify-between">
+          <span class="font-medium text-white truncate max-w-[240px]">${escapeHtml(item.name)}</span>
+          <span class="font-mono text-[11px] text-[#A0A0A5] shrink-0">${escapeHtml(item.sku || '-')}</span>
+        </div>
+      `).join('');
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeBulkMetaModal() {
+    const modal = document.getElementById('modal-bulk-meta');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function toggleBulkUnitField(checked) {
+    const wrap = document.getElementById('bulk-unit-wrap');
+    if (wrap) {
+      if (checked) {
+        wrap.classList.remove('hidden');
+      } else {
+        wrap.classList.add('hidden');
+      }
+    }
+  }
+
+  function toggleBulkSupplierField(checked) {
+    const wrap = document.getElementById('bulk-supplier-wrap');
+    if (wrap) {
+      if (checked) {
+        wrap.classList.remove('hidden');
+      } else {
+        wrap.classList.add('hidden');
+      }
+    }
+  }
+
+  async function executeBulkMetaUpdate() {
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
+
+    const checkUnit = document.getElementById('check-bulk-unit')?.checked;
+    const checkSupplier = document.getElementById('check-bulk-supplier')?.checked;
+
+    if (!checkUnit && !checkSupplier) {
+      if (typeof showToast === 'function') {
+        showToast('Centang setidaknya opsi Ubah Satuan Stok atau Ubah Pemasok', 'error');
+      }
+      return;
+    }
+
+    const updates = {};
+    if (checkUnit) {
+      const unitVal = document.getElementById('bulk-unit-select')?.value;
+      if (!unitVal) {
+        if (typeof showToast === 'function') showToast('Pilih satuan yang valid', 'error');
+        return;
+      }
+      updates.unit_id = Number(unitVal);
+    }
+
+    if (checkSupplier) {
+      const suppVal = document.getElementById('bulk-supplier-select')?.value;
+      if (!suppVal) {
+        if (typeof showToast === 'function') showToast('Pilih pemasok yang valid', 'error');
+        return;
+      }
+      updates.supplier_id = Number(suppVal);
+    }
+
+    const ids = Array.from(selectedItemIds);
+    if (ids.length === 0) return;
+
+    const btn = document.getElementById('btn-save-bulk-meta');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>Menerapkan...</span>';
+
+    try {
+      const res = await Api.items.bulkUpdateMeta(ids, updates);
+      if (!res.ok) {
+        if (typeof showToast === 'function') {
+          showToast(res.error?.message || 'Gagal menerapkan perubahan massal', 'error');
+        }
+        return;
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`${res.data.updatedCount} produk berhasil diperbarui`, 'success');
+      }
+
+      closeBulkMetaModal();
+      clearSelection();
+      await loadItemsFromBackend();
+    } catch (err) {
+      console.error('Bulk meta update error:', err);
+      if (typeof showToast === 'function') showToast(err.message || 'Terjadi kesalahan sistem', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
+
+  // ═══════════════════════════════════════════════
   // REFRESH & EXPORT CSV
   // ═══════════════════════════════════════════════
   async function handleRefreshItems() {
@@ -1265,6 +1447,11 @@
   window.switchBulkPriceTab = switchBulkPriceTab;
   window.updateBulkPricePreview = updateBulkPricePreview;
   window.executeBulkPriceUpdate = executeBulkPriceUpdate;
+  window.openBulkMetaModal = openBulkMetaModal;
+  window.closeBulkMetaModal = closeBulkMetaModal;
+  window.toggleBulkUnitField = toggleBulkUnitField;
+  window.toggleBulkSupplierField = toggleBulkSupplierField;
+  window.executeBulkMetaUpdate = executeBulkMetaUpdate;
   window.handleRefreshItems = handleRefreshItems;
   window.handleExportItems = handleExportItems;
 
@@ -1281,10 +1468,12 @@
     const modalDelete = document.getElementById('modal-delete');
     const modalBulkDel = document.getElementById('modal-bulk-delete');
     const modalBulkPrice = document.getElementById('modal-bulk-price');
+    const modalBulkMeta = document.getElementById('modal-bulk-meta');
     if (e.target === modalItem) closeItemModal();
     if (e.target === modalDelete) closeDeleteModal();
     if (e.target === modalBulkDel) closeBulkDeleteModal();
     if (e.target === modalBulkPrice) closeBulkPriceModal();
+    if (e.target === modalBulkMeta) closeBulkMetaModal();
   });
   document.getElementById('items-tbody')?.addEventListener('change', function (event) {
     const checkbox = event.target.closest('[data-item-select-id]');
@@ -1296,6 +1485,7 @@
       closeDeleteModal();
       closeBulkDeleteModal();
       closeBulkPriceModal();
+      closeBulkMetaModal();
     }
   });
 

@@ -521,6 +521,78 @@ export const items = {
         }
       }
       return formatResponse({ ok: true, data: { updatedCount: (updates || []).length } });
+    },
+
+    bulkUpdateMeta: async (ids, metaData = {}, opts) => {
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return formatResponse({ ok: false, error: { code: 'INVALID_INPUT', message: 'Pilih minimal 1 produk' } });
+      }
+
+      const payload = { updated_at: new Date().toISOString() };
+      if (metaData.unit_id !== undefined && metaData.unit_id !== null && metaData.unit_id !== '') {
+        payload.unit_id = Number(metaData.unit_id);
+      }
+      if (metaData.supplier_id !== undefined && metaData.supplier_id !== null && metaData.supplier_id !== '') {
+        payload.supplier_id = Number(metaData.supplier_id);
+      }
+
+      if (Object.keys(payload).length <= 1) {
+        return formatResponse({ ok: false, error: { code: 'INVALID_INPUT', message: 'Pilih satuan atau supplier yang ingin diubah' } });
+      }
+
+      if (isSupabaseAvailable()) {
+        try {
+          const results = [];
+          const failures = [];
+          for (let i = 0; i < ids.length; i++) {
+            const pId = String(ids[i]);
+            let query = window.supabase
+              .from('products')
+              .update(payload)
+              .eq('id', pId);
+
+            if (opts && opts.signal) query = query.abortSignal(opts.signal);
+            const { error } = await query;
+            if (error) {
+              console.warn(`Gagal update metadata produk ID ${pId}:`, error);
+              // Jika supplier_id belum ada di tabel products, coba update unit_id saja
+              if (error.message?.includes('supplier_id') && payload.unit_id) {
+                const { error: fallbackErr } = await window.supabase
+                  .from('products')
+                  .update({ unit_id: payload.unit_id, updated_at: payload.updated_at })
+                  .eq('id', pId);
+                if (!fallbackErr) {
+                  results.push(pId);
+                  continue;
+                }
+              }
+              failures.push({ id: pId, error });
+            } else {
+              results.push(pId);
+            }
+          }
+
+          if (failures.length && results.length === 0) {
+            return formatResponse({
+              ok: false,
+              error: { code: failures[0]?.error?.code || 'SUPABASE_ERROR', message: failures[0]?.error?.message || 'Gagal memperbarui produk' }
+            });
+          }
+
+          return formatResponse({
+            ok: true,
+            data: { updatedCount: results.length, failedCount: failures.length, updatedIds: results }
+          });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+
+      return apiRequest('/items/bulk-meta', {
+        method: 'PATCH',
+        body: JSON.stringify({ ids, ...metaData }),
+        ...opts
+      });
     }
 };
 

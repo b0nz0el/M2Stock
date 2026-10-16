@@ -163,6 +163,10 @@
             <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit Harga Massal
           </button>
           <span class="text-[#A0A0A5]">·</span>
+          <button type="button" onclick="openBulkMetaModal()" data-action="edit-bulk-meta" class="text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium disabled:opacity-40" id="btn-bulk-meta">
+            <i data-lucide="layers" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit Satuan & Supplier
+          </button>
+          <span class="text-[#A0A0A5]">·</span>
           <button type="button" onclick="openBulkDeleteModal()" data-action="delete-bulk" class="text-[#FF3B30] hover:underline flex items-center gap-1.5 font-medium disabled:opacity-40" id="btn-bulk-delete">
             <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i> Hapus Massal
           </button>
@@ -210,10 +214,13 @@
   <span class="text-xs sm:text-sm font-semibold text-white truncate shrink-0 mr-2" id="bulk-count">0 dipilih</span>
   <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
     <button type="button" onclick="clearSelection()" class="text-xs text-[#A0A0A5] hover:text-white px-2.5 sm:px-3 py-2 min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/5 transition">Batal</button>
-    <button type="button" data-action="bulk-edit" onclick="openBulkPriceModal()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition justify-center">
+    <button type="button" data-action="bulk-edit" onclick="openBulkPriceModal()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white text-xs font-semibold px-3 sm:px-3.5 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition justify-center">
       <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit<span class="hidden sm:inline"> Harga</span>
     </button>
-    <button type="button" data-action="bulk-delete" onclick="openBulkDeleteModal()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white text-xs font-semibold px-3 sm:px-4 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#FF3B30]/20 transition justify-center">
+    <button type="button" data-action="bulk-meta" onclick="openBulkMetaModal()" class="bg-[#1C1C1E] border border-white/10 hover:bg-white/10 text-[#32ADE6] text-xs font-semibold px-3 sm:px-3.5 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 transition justify-center">
+      <i data-lucide="layers" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit<span class="hidden sm:inline"> Satuan & Supplier</span>
+    </button>
+    <button type="button" data-action="bulk-delete" onclick="openBulkDeleteModal()" class="bg-[#FF3B30] hover:bg-[#D32F2F] text-white text-xs font-semibold px-3 sm:px-3.5 py-2 min-h-[44px] rounded-xl flex items-center gap-1.5 shadow-lg shadow-[#FF3B30]/20 transition justify-center">
       <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i> Hapus
     </button>
   </div>
@@ -316,6 +323,82 @@
       </button>
       <button type="button" id="btn-save-bulk-price" onclick="executeBulkPriceUpdate()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
         <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Terapkan Harga Baru
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL EDIT MASSAL SATUAN & SUPPLIER ═══════════ -->
+<div id="modal-bulk-meta" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-bulk-meta-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-5 my-auto max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="layers" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-bulk-meta-title" class="text-lg font-bold text-white">Edit Satuan & Supplier Massal</h3>
+          <p class="text-xs text-[#A0A0A5]" id="bulk-meta-subtitle">0 barang dipilih</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeBulkMetaModal()" class="text-[#A0A0A5] hover:text-white p-2 rounded-lg hover:bg-white/5 transition" aria-label="Tutup">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="space-y-4 overflow-y-auto pr-1 flex-1">
+      <!-- Opsi Ubah Satuan Stok -->
+      <div class="p-3.5 rounded-xl border border-white/10 bg-white/[0.02] space-y-2.5">
+        <div class="flex items-center justify-between">
+          <label for="check-bulk-unit" class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-white">
+            <input type="checkbox" id="check-bulk-unit" class="accent-[#0088CC] w-4 h-4 cursor-pointer" onchange="toggleBulkUnitField(this.checked)">
+            <span>Ubah Satuan Stok (Unit)</span>
+          </label>
+          <span class="text-[11px] text-[#A0A0A5]">Contoh: pcs, box, btl, pack</span>
+        </div>
+        <div id="bulk-unit-wrap" class="hidden space-y-1.5 pt-1">
+          <label for="bulk-unit-select" class="text-xs text-[#A0A0A5]">Pilih Satuan Baru:</label>
+          <select id="bulk-unit-select" class="w-full bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+            <!-- Dinamis via unitsData -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Opsi Ubah Supplier -->
+      <div class="p-3.5 rounded-xl border border-white/10 bg-white/[0.02] space-y-2.5">
+        <div class="flex items-center justify-between">
+          <label for="check-bulk-supplier" class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-white">
+            <input type="checkbox" id="check-bulk-supplier" class="accent-[#0088CC] w-4 h-4 cursor-pointer" onchange="toggleBulkSupplierField(this.checked)">
+            <span>Ubah Pemasok (Supplier)</span>
+          </label>
+          <span class="text-[11px] text-[#A0A0A5]">Pilih Supplier</span>
+        </div>
+        <div id="bulk-supplier-wrap" class="hidden space-y-1.5 pt-1">
+          <label for="bulk-supplier-select" class="text-xs text-[#A0A0A5]">Pilih Supplier Baru:</label>
+          <select id="bulk-supplier-select" class="w-full bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+            <!-- Dinamis via Api.suppliers -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Ringkasan Produk Terpilih -->
+      <div class="rounded-xl border border-white/5 bg-black/30 p-3 space-y-2">
+        <div class="flex items-center justify-between text-xs text-[#A0A0A5]">
+          <span>Daftar Produk yang Diubah:</span>
+          <span id="bulk-meta-item-count" class="font-semibold text-white">0 produk</span>
+        </div>
+        <div id="bulk-meta-preview-list" class="max-h-32 overflow-y-auto text-xs text-[#D1D1D6] space-y-1 divide-y divide-white/[0.04]">
+          <!-- List preview -->
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5 flex-shrink-0">
+      <button type="button" onclick="closeBulkMetaModal()" class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+        Batal
+      </button>
+      <button type="button" id="btn-save-bulk-meta" onclick="executeBulkMetaUpdate()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+        <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Terapkan Perubahan
       </button>
     </div>
   </div>
