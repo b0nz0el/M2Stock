@@ -194,7 +194,7 @@ button:disabled:active {
   position: fixed;
   top: calc(1rem + env(safe-area-inset-top));
   right: calc(1rem + env(safe-area-inset-right));
-  z-index: 120;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
   gap: 10px;

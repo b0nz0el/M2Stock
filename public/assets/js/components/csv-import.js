@@ -155,6 +155,25 @@
         showToast(error.message || 'Import gagal. Tidak ada baris yang disimpan.', 'error');
         confirmButton.disabled = false;
         confirmButton.textContent = `Import ${records.length} baris`;
+
+        // Tampilkan pesan error di dalam modal agar jelas terbaca oleh pengguna
+        const bodyEl = modal.querySelector('div.space-y-4');
+        if (bodyEl) {
+          const existingErr = bodyEl.querySelector('#csv-import-runtime-error');
+          if (existingErr) existingErr.remove();
+          const errDiv = document.createElement('div');
+          errDiv.id = 'csv-import-runtime-error';
+          errDiv.className = 'rounded-xl border border-[#FF453A]/40 bg-[#FF453A]/15 p-4 text-sm text-[#FF8A84] flex items-start gap-3';
+          errDiv.innerHTML = `
+            <div class="mt-0.5"><i data-lucide="alert-circle" class="w-5 h-5 text-[#FF453A]"></i></div>
+            <div class="flex-1">
+              <p class="font-bold text-white mb-0.5">Import Gagal:</p>
+              <p class="text-xs text-[#FF8A84] leading-relaxed">${escapeHtml(error.message || 'Terjadi kesalahan saat menyimpan data ke database.')}</p>
+            </div>
+          `;
+          bodyEl.prepend(errDiv);
+          window.refreshIcons?.(errDiv);
+        }
       }
     });
   }

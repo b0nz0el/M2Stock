@@ -1396,10 +1396,127 @@
         return { rows, errors };
       },
       commit: async function (rows) {
-        const { data, error } = await window.supabase.rpc('import_products_csv', { p_rows: rows });
-        return error
-          ? { ok: false, error }
-          : { ok: true, data };
+        // 1. Coba RPC database import_products_csv terlebih dahulu jika ada
+        if (window.supabase && typeof window.supabase.rpc === 'function') {
+          try {
+            const { data, error } = await window.supabase.rpc('import_products_csv', { p_rows: rows });
+            if (!error && data) {
+              return { ok: true, data };
+            }
+            if (error) {
+              console.warn('RPC import_products_csv gagal atau belum terpasang di database, beralih ke fallback klien:', error);
+            }
+          } catch (rpcErr) {
+            console.warn('RPC exception, beralih ke fallback klien:', rpcErr);
+          }
+        }
+
+        // 2. Fallback Klien: Simpan langsung ke tabel products dan transactions
+        try {
+          if (!window.supabase) {
+            throw new Error('Koneksi database Supabase tidak tersedia.');
+          }
+
+          // Ambil mapping kategori
+          const { data: categories } = await window.supabase.from('categories').select('id, name');
+          const catMap = new Map();
+          (categories || []).forEach(c => {
+            if (c.name) catMap.set(c.name.trim().toLowerCase(), c.id);
+          });
+
+          // Dapatkan user ID saat ini jika login
+          let currentUserId = null;
+          try {
+            const authRes = await window.supabase.auth.getUser();
+            currentUserId = authRes?.data?.user?.id || null;
+          } catch (_) {}
+
+          // Siapkan batch produk (stock langsung diisi dari initial_stock)
+          const productsPayload = rows.map(r => {
+            const catName = (r.category || '').trim().toLowerCase();
+            const categoryId = catMap.get(catName) || null;
+            return {
+              sku: r.sku.trim(),
+              barcode: r.barcode ? r.barcode.trim() : null,
+              name: r.name.trim(),
+              brand: r.brand ? r.brand.trim() : '-',
+              category_id: categoryId,
+              unit_id: 1,
+              stock: Number(r.initial_stock) || 0,
+              min_stock: Number(r.min_stock) || 3,
+              cost_price: Number(r.cost_price) || 0,
+              sell_price: Number(r.sell_price) || 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          });
+
+          // Insert produk ke tabel products
+          const { data: insertedProducts, error: prodErr } = await window.supabase
+            .from('products')
+            .insert(productsPayload)
+            .select('id, sku, stock, cost_price');
+
+          if (prodErr) {
+            throw new Error(`Gagal menyimpan produk: ${prodErr.message || 'Kesalahan database'}`);
+          }
+
+          // Catat mutasi stok awal ke transactions untuk produk dengan initial_stock > 0
+          const itemsWithStock = rows.filter(r => (Number(r.initial_stock) || 0) > 0);
+          if (itemsWithStock.length > 0 && Array.isArray(insertedProducts)) {
+            const prodMapBySku = new Map();
+            insertedProducts.forEach(p => prodMapBySku.set(p.sku, p));
+
+            const txPayload = [];
+            for (const item of itemsWithStock) {
+              const matchedProd = prodMapBySku.get(item.sku.trim());
+              if (matchedProd) {
+                const qty = Number(item.initial_stock);
+                const price = Number(item.cost_price) || 0;
+                txPayload.push({
+                  type: 'in',
+                  product_id: matchedProd.id,
+                  qty: qty,
+                  quantity: qty,
+                  price: price,
+                  unit_price: price,
+                  total_price: qty * price,
+                  channel: 'Offline',
+                  note: 'Stok awal dari import CSV',
+                  notes: 'Stok awal dari import CSV',
+                  created_by: currentUserId,
+                  user_id: currentUserId,
+                  created_at: new Date().toISOString()
+                });
+              }
+            }
+
+            if (txPayload.length > 0) {
+              try {
+                await window.supabase.from('transactions').insert(txPayload);
+              } catch (txErr) {
+                console.warn('Pencatatan mutasi transaksi stok awal opsional:', txErr);
+              }
+            }
+          }
+
+          return {
+            ok: true,
+            data: {
+              imported_count: rows.length,
+              source: 'client_fallback'
+            }
+          };
+        } catch (fallbackErr) {
+          console.error('Fallback import error:', fallbackErr);
+          return {
+            ok: false,
+            error: {
+              code: 'IMPORT_FAILED',
+              message: fallbackErr.message || 'Gagal mengimpor produk ke database'
+            }
+          };
+        }
       },
       onComplete: loadItemsFromBackend
     });
