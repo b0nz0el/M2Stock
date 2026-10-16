@@ -96,6 +96,253 @@
       .replace(/'/g, '&#39;');
   }
 
+  // ═══════════════════════════════════════════════
+  // KASIR POS (MULTI-ITEM CART) STATE & HANDLERS
+  // ═══════════════════════════════════════════════
+  let posCart = [];
+
+  function renderPosCart() {
+    const tbody = document.getElementById('pos-cart-tbody');
+    const submitBtn = document.getElementById('btn-submit-out');
+    if (!tbody) return;
+
+    if (posCart.length === 0) {
+      tbody.innerHTML = `
+        <tr id="pos-cart-empty">
+          <td colspan="5" class="py-10 text-center text-[#A0A0A5]">
+            <i data-lucide="shopping-cart" class="w-7 h-7 mx-auto mb-1.5 opacity-30 text-[#0088CC]" aria-hidden="true"></i>
+            <p class="text-xs font-medium text-white/80">Keranjang masih kosong</p>
+            <p class="text-[11px] text-[#A0A0A5]/60 mt-0.5">Ketik nama produk atau scan barcode di atas</p>
+          </td>
+        </tr>
+      `;
+      if (submitBtn) submitBtn.disabled = true;
+      calculatePosTotal();
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      return;
+    }
+
+    if (submitBtn) submitBtn.disabled = false;
+
+    tbody.innerHTML = posCart.map((item, idx) => {
+      const subtotal = item.qty * item.price;
+      const isMax = item.stock !== undefined && item.qty >= item.stock;
+      return `
+        <tr class="table-row hover:bg-white/[0.02] transition">
+          <td class="px-3 py-2.5">
+            <div class="font-medium text-white">${escapeHtml(item.name)}</div>
+            <div class="text-[10px] text-[#A0A0A5] flex items-center gap-1.5 mt-0.5">
+              <span>${item.sku ? escapeHtml(item.sku) + ' • ' : ''}${escapeHtml(item.unit || 'pcs')}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${item.stock > 0 ? 'bg-[#34C759]/15 text-[#34C759]' : 'bg-[#FF3B30]/15 text-[#FF3B30]'}">
+                Stok: ${item.stock ?? 0}
+              </span>
+            </div>
+          </td>
+          <td class="px-2 py-2.5 text-right font-medium text-white/90">
+            ${formatRupiahVal(item.price)}
+          </td>
+          <td class="px-2 py-2.5 text-center">
+            <div class="inline-flex items-center border border-white/10 rounded-lg bg-black/40 overflow-hidden">
+              <button type="button" onclick="updatePosCartQty(${idx}, ${item.qty - 1})"
+                      class="px-2 py-1 text-white hover:bg-white/10 text-xs transition font-bold" title="Kurang 1">−</button>
+              <input type="number" min="1" max="${item.stock ?? 999999}" value="${item.qty}"
+                     onchange="updatePosCartQty(${idx}, this.value)"
+                     class="w-12 text-center bg-transparent text-xs text-white focus:outline-none py-1 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+              <button type="button" onclick="updatePosCartQty(${idx}, ${item.qty + 1})"
+                      ${isMax ? 'disabled' : ''}
+                      class="px-2 py-1 text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition font-bold" title="Tambah 1">+</button>
+            </div>
+          </td>
+          <td class="px-3 py-2.5 text-right font-bold text-[#34C759]">
+            ${formatRupiahVal(subtotal)}
+          </td>
+          <td class="px-2 py-2.5 text-center">
+            <button type="button" onclick="removeFromPosCart(${idx})" title="Hapus dari keranjang"
+                    class="p-1 hover:bg-white/10 rounded-lg text-[#FF3B30] transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    calculatePosTotal();
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function addToPosCart(prod, qty = 1) {
+    if (!prod) return;
+    const stock = Number(prod.stock ?? 0);
+    const existingIdx = posCart.findIndex(it => String(it.product_id) === String(prod.id));
+
+    if (existingIdx >= 0) {
+      const current = posCart[existingIdx];
+      const targetQty = current.qty + qty;
+      if (stock > 0 && targetQty > stock) {
+        current.qty = stock;
+        if (typeof showToast === 'function') {
+          showToast(`Stok ${prod.name} terbatas: tersisa ${stock} unit`, 'warning');
+        }
+      } else {
+        current.qty = targetQty;
+        if (typeof showToast === 'function') {
+          showToast(`${prod.name} (+${qty})`, 'info');
+        }
+      }
+    } else {
+      if (stock <= 0) {
+        if (typeof showToast === 'function') {
+          showToast(`Perhatian: Stok ${prod.name} kosong (${stock})`, 'warning');
+        }
+      }
+      const initialQty = stock > 0 ? Math.min(qty, stock) : qty;
+      posCart.push({
+        product_id: prod.id,
+        name: prod.name,
+        sku: prod.sku || '',
+        unit: prod.unit || 'pcs',
+        price: Number(prod.sell_price || 0),
+        cost_price: Number(prod.cost_price || 0),
+        stock: stock,
+        qty: Math.max(1, initialQty)
+      });
+      if (typeof showToast === 'function') {
+        showToast(`✓ ${prod.name} masuk ke keranjang`, 'success');
+      }
+    }
+
+    renderPosCart();
+
+    const searchInput = document.getElementById('out-product-search');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    const suggestionsEl = document.getElementById('out-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+  }
+
+  function updatePosCartQty(index, newQty) {
+    const item = posCart[index];
+    if (!item) return;
+
+    const num = Number(newQty);
+    let target = isNaN(num) ? 1 : num;
+    if (target <= 0) {
+      removeFromPosCart(index);
+      return;
+    }
+
+    if (item.stock > 0 && target > item.stock) {
+      target = item.stock;
+      if (typeof showToast === 'function') {
+        showToast(`Maksimal stok ${item.name} adalah ${item.stock} unit`, 'warning');
+      }
+    }
+
+    item.qty = target;
+    renderPosCart();
+  }
+
+  function removeFromPosCart(index) {
+    if (index >= 0 && index < posCart.length) {
+      const removed = posCart.splice(index, 1);
+      if (typeof showToast === 'function' && removed[0]) {
+        showToast(`${removed[0].name} dihapus dari keranjang`, 'info');
+      }
+      renderPosCart();
+    }
+  }
+
+  function clearPosCart() {
+    posCart = [];
+    renderPosCart();
+  }
+
+  function calculatePosTotal() {
+    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const totalUnits = posCart.reduce((sum, it) => sum + it.qty, 0);
+
+    const preview = document.getElementById('out-total-preview');
+    if (preview) preview.textContent = formatRupiahVal(totalAmount);
+
+    const badge = document.getElementById('pos-items-count-badge');
+    if (badge) badge.textContent = `${posCart.length} Item (${totalUnits} Unit)`;
+
+    // Keep hidden inputs in sync for backward compatibility
+    const hiddenPrice = document.getElementById('out-price');
+    if (hiddenPrice) hiddenPrice.value = totalAmount;
+    const hiddenQty = document.getElementById('out-qty');
+    if (hiddenQty) hiddenQty.value = totalUnits;
+    if (posCart.length > 0) {
+      const hiddenPid = document.getElementById('out-product-id');
+      if (hiddenPid) hiddenPid.value = posCart[0].product_id;
+    }
+
+    calculatePosChange();
+  }
+
+  function handlePosPaymentMethodChange() {
+    const method = document.getElementById('out-payment-method')?.value || 'Cash';
+    const cashCalc = document.getElementById('pos-cash-calculator');
+    if (cashCalc) {
+      if (method === 'Cash') {
+        cashCalc.classList.remove('hidden');
+      } else {
+        cashCalc.classList.add('hidden');
+      }
+    }
+    calculatePosChange();
+  }
+
+  function calculatePosChange() {
+    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const method = document.getElementById('out-payment-method')?.value || 'Cash';
+    const cashInput = document.getElementById('pos-cash-input');
+    const preview = document.getElementById('pos-change-preview');
+
+    if (!preview) return;
+
+    if (method !== 'Cash') {
+      preview.textContent = 'Rp 0 (Non-Tunai)';
+      preview.className = 'font-bold text-sm text-[#32ADE6]';
+      return;
+    }
+
+    const inputVal = Number(cashInput?.value || 0);
+    if (!inputVal || inputVal === 0) {
+      preview.textContent = 'Rp 0';
+      preview.className = 'font-bold text-sm text-[#A0A0A5]';
+      return;
+    }
+
+    const diff = inputVal - totalAmount;
+    if (diff >= 0) {
+      preview.textContent = formatRupiahVal(diff);
+      preview.className = 'font-bold text-sm text-[#34C759]';
+    } else {
+      preview.textContent = `Kurang ${formatRupiahVal(Math.abs(diff))}`;
+      preview.className = 'font-bold text-sm text-[#FF3B30]';
+    }
+  }
+
+  function quickSetPosCash(typeOrAmount) {
+    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const cashInput = document.getElementById('pos-cash-input');
+    if (!cashInput) return;
+
+    if (typeOrAmount === 'exact') {
+      cashInput.value = totalAmount;
+    } else if (typeof typeOrAmount === 'number') {
+      const current = Number(cashInput.value) || 0;
+      cashInput.value = current + typeOrAmount;
+    }
+    calculatePosChange();
+  }
+
   function handleOutProductSearchInput(e) {
     const query = (e.target.value || '').trim();
     const suggestionsEl = document.getElementById('out-product-suggestions');
@@ -149,81 +396,11 @@
   function selectOutProduct(productId) {
     const prod = availableProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
-
-    document.getElementById('out-product-id').value = prod.id;
-    const searchInput = document.getElementById('out-product-search');
-    if (searchInput) {
-      searchInput.value = prod.name;
-      searchInput.readOnly = true;
-    }
-    const clearBtn = document.getElementById('out-clear-product');
-    if (clearBtn) clearBtn.classList.remove('hidden');
-
-    const badge = document.getElementById('out-product-badge');
-    const stock = prod.stock ?? 0;
-    if (badge) {
-      badge.textContent = `Stok: ${stock} ${prod.unit || 'pcs'}`;
-      badge.className = `text-[11px] font-medium ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}`;
-    }
-
-    const priceInput = document.getElementById('out-price');
-    if (priceInput) {
-      priceInput.value = prod.sell_price || 0;
-      priceInput.readOnly = true;
-    }
-
-    const stockInfo = document.getElementById('out-stock-info');
-    if (stockInfo) {
-      stockInfo.textContent = `Sisa stok tersedia: ${stock} ${prod.unit || 'pcs'}`;
-      stockInfo.className = `text-[11px] mt-1 ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30] font-semibold'}`;
-      stockInfo.classList.remove('hidden');
-    }
-
-    const qtyInput = document.getElementById('out-qty');
-    if (qtyInput) qtyInput.max = stock;
-
-    const suggestionsEl = document.getElementById('out-product-suggestions');
-    if (suggestionsEl) {
-      suggestionsEl.classList.add('hidden');
-      suggestionsEl.innerHTML = '';
-    }
-
-    calculateOutTotal();
-    document.getElementById('out-qty')?.focus();
+    addToPosCart(prod, 1);
   }
 
   function clearOutProductSelection() {
-    document.getElementById('out-product-id').value = '';
-    const searchInput = document.getElementById('out-product-search');
-    if (searchInput) {
-      searchInput.value = '';
-      searchInput.readOnly = false;
-      searchInput.focus();
-    }
-    const clearBtn = document.getElementById('out-clear-product');
-    if (clearBtn) clearBtn.classList.add('hidden');
-
-    const badge = document.getElementById('out-product-badge');
-    if (badge) {
-      badge.textContent = '';
-      badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
-    }
-
-    const priceInput = document.getElementById('out-price');
-    if (priceInput) {
-      priceInput.value = '0';
-      priceInput.readOnly = true;
-    }
-
-    const stockInfo = document.getElementById('out-stock-info');
-    if (stockInfo) stockInfo.classList.add('hidden');
-
-    const suggestionsEl = document.getElementById('out-product-suggestions');
-    if (suggestionsEl) {
-      suggestionsEl.classList.add('hidden');
-      suggestionsEl.innerHTML = '';
-    }
-    calculateOutTotal();
+    clearPosCart();
   }
 
   function handleOutProductChange() {
@@ -232,29 +409,28 @@
   }
 
   function calculateOutTotal() {
-    const qty = Number(document.getElementById('out-qty')?.value || 0);
-    const price = Number(document.getElementById('out-price')?.value || 0);
-    const total = qty * price;
-    const preview = document.getElementById('out-total-preview');
-    if (preview) {
-      preview.textContent = formatRupiahVal(total);
-    }
+    calculatePosTotal();
   }
 
   function openAddOutModal() {
     const form = document.getElementById('form-out');
     if (form) form.reset();
-    clearOutProductSelection();
+    clearPosCart();
+
     const photoData = document.getElementById('out-photo-data');
     if (photoData) photoData.value = '';
     const photoPreview = document.getElementById('photo-preview');
     if (photoPreview) photoPreview.classList.add('hidden');
     const photoImg = document.getElementById('photo-preview-img');
     if (photoImg) photoImg.src = '';
-    const stockInfo = document.getElementById('out-stock-info');
-    if (stockInfo) stockInfo.classList.add('hidden');
-    calculateOutTotal();
+
+    const cashInput = document.getElementById('pos-cash-input');
+    if (cashInput) cashInput.value = '';
+
+    handlePosPaymentMethodChange();
+    calculatePosTotal();
     loadDropdowns();
+
     const modal = document.getElementById('modal-out');
     if (modal) {
       modal.classList.remove('hidden');
@@ -263,17 +439,11 @@
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     setTimeout(() => {
       document.getElementById('out-product-search')?.focus();
-    }, 50);
+    }, 60);
   }
 
   function closeOutModal() {
-    clearOutProductSelection();
-    const photoData = document.getElementById('out-photo-data');
-    if (photoData) photoData.value = '';
-    const photoPreview = document.getElementById('photo-preview');
-    if (photoPreview) photoPreview.classList.add('hidden');
-    const photoImg = document.getElementById('photo-preview-img');
-    if (photoImg) photoImg.src = '';
+    clearPosCart();
     const modal = document.getElementById('modal-out');
     if (modal) {
       modal.classList.add('hidden');
@@ -307,35 +477,28 @@
       alert('Anda tidak punya akses untuk mengubah data.');
       return;
     }
-    const productId = document.getElementById('out-product-id').value;
-    const customerId = document.getElementById('out-customer-id').value;
-    const channel = document.getElementById('out-channel').value;
-    const qty = Number(document.getElementById('out-qty').value);
-    const prod = availableProducts.find(p => String(p.id) === String(productId));
-    const price = prod ? Number(prod.sell_price || 0) : Number(document.getElementById('out-price').value);
-    const note = document.getElementById('out-note').value.trim();
 
-    if (!productId) {
-      if (typeof showToast === 'function') showToast('Pilih produk terlebih dahulu', 'error');
-      return;
-    }
-    if (!qty || qty <= 0) {
-      if (typeof showToast === 'function') showToast('Jumlah keluar harus lebih dari 0', 'error');
+    if (posCart.length === 0) {
+      if (typeof showToast === 'function') showToast('Tambahkan minimal 1 produk ke keranjang belanja', 'error');
+      document.getElementById('out-product-search')?.focus();
       return;
     }
 
-    const prod = availableProducts.find(p => String(p.id) === String(productId));
-    if (prod && qty > (prod.stock ?? 0)) {
-      if (typeof showToast === 'function') {
-        showToast(`Stok tidak mencukupi! Tersedia hanya ${prod.stock ?? 0} unit`, 'error');
-      }
-      return;
-    }
+    const customerId = document.getElementById('out-customer-id')?.value || null;
+    const channel = document.getElementById('out-channel')?.value || 'Offline';
+    const paymentMethod = document.getElementById('out-payment-method')?.value || 'Cash';
+    const paymentStatus = paymentMethod === 'Tempo' ? 'Belum Lunas' : 'Lunas';
+    const note = document.getElementById('out-note')?.value.trim() || '';
+    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const cashInput = document.getElementById('pos-cash-input');
+    const paidAmount = paymentMethod === 'Cash'
+      ? (Number(cashInput?.value) || totalAmount)
+      : totalAmount;
 
     const submitBtn = document.getElementById('btn-submit-out');
     const originalHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>Menyimpan...</span>';
+    submitBtn.innerHTML = '<span>Menyimpan Kasir...</span>';
 
     try {
       let currentUserId = null;
@@ -343,38 +506,55 @@
         const user = await window.Auth.getCurrentUser();
         currentUserId = user?.id || null;
       }
-      const paymentMethod = document.getElementById('out-payment-method')?.value || 'Cash';
-      const paymentStatus = paymentMethod === 'Tempo' ? 'Belum Lunas' : 'Lunas';
 
-      const res = await Api.transactions.createOut({
-        product_id: productId,
-        customer_id: customerId || null,
+      const cartSnapshot = posCart.map(it => ({ ...it }));
+
+      const res = await Api.transactions.createBatchOut(posCart, {
         channel: channel,
-        qty: qty,
-        price: price,
+        customer_id: customerId,
         payment_method: paymentMethod,
         payment_status: paymentStatus,
-        note: note || null,
+        note: note,
         created_by: currentUserId
       });
 
       if (!res.ok) {
-        throw new Error(res.error?.message || 'Gagal menyimpan barang keluar');
+        throw new Error(res.error?.message || 'Gagal menyimpan transaksi kasir');
       }
 
       if (typeof showToast === 'function') {
-        showToast('Barang keluar berhasil dicatat! Stok berkurang.', 'success');
+        showToast(`Penjualan berhasil disimpan! (${res.data?.invoice_no || 'Lunas'})`, 'success');
       }
+
       closeOutModal();
       await loadOutTransactions();
       await loadDropdowns();
-      if (res.data && res.data.id) {
-        openThermalReceiptModal(res.data.id);
+
+      // Dapatkan nama pelanggan untuk struk
+      let customerName = 'Umum';
+      if (customerId) {
+        const custSelect = document.getElementById('out-customer-id');
+        const selectedOpt = custSelect?.querySelector(`option[value="${customerId}"]`);
+        if (selectedOpt) customerName = selectedOpt.textContent;
       }
+
+      // Langsung buka Struk Kasir Thermal dengan semua item keranjang
+      openThermalReceiptModal({
+        invoice_no: res.data?.invoice_no,
+        date: new Date().toISOString(),
+        customer: customerName,
+        cashier: (typeof window !== 'undefined' && window.Auth?.getUserEmail) ? window.Auth.getUserEmail() : 'Admin',
+        method: paymentMethod,
+        status: paymentStatus,
+        items: cartSnapshot,
+        total: totalAmount,
+        paid: paidAmount,
+        change: Math.max(0, paidAmount - totalAmount)
+      });
     } catch (err) {
       console.error('Submit out error:', err);
       if (typeof showToast === 'function') {
-        showToast(err.message || 'Terjadi kesalahan saat menyimpan', 'error');
+        showToast(err.message || 'Terjadi kesalahan sistem saat menyimpan penjualan', 'error');
       }
     } finally {
       submitBtn.disabled = false;
@@ -796,26 +976,99 @@
 
   let activeReceiptTx = null;
 
-  async function openThermalReceiptModal(txId) {
-    const tx = allOutTransactions.find(t => String(t.id) === String(txId));
-    if (!tx) {
-      if (typeof showToast === 'function') showToast('Transaksi tidak ditemukan', 'error');
-      return;
-    }
-    activeReceiptTx = tx;
+  async function openThermalReceiptModal(txIdOrBatch) {
+    let invoiceNo = '';
+    let dateStr = '';
+    let customerName = 'Umum';
+    let cashierName = 'Admin';
+    let method = 'Cash';
+    let status = 'LUNAS';
+    let items = [];
+    let total = 0;
+    let initialPaid = 0;
+    let initialChange = 0;
 
-    const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-      ? tx.note.split(' ')[0]
-      : `OUT-${String(tx.id).padStart(6, '0')}`;
-    const dateStr = formatTxDate(tx.created_at);
-    const prodName = tx.products?.name || ('Produk #' + tx.product_id);
-    const custName = tx.customers?.name || 'Umum';
-    const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
-    const qty = tx.qty || 0;
-    const price = tx.price || 0;
-    const total = qty * price;
-    const method = tx.payment_method || 'Cash';
-    const status = (tx.payment_status || 'Lunas').toUpperCase();
+    if (txIdOrBatch && typeof txIdOrBatch === 'object') {
+      // Direct batch payload from POS checkout
+      invoiceNo = txIdOrBatch.invoice_no || `INV-${Date.now()}`;
+      dateStr = formatTxDate(txIdOrBatch.date || new Date().toISOString());
+      customerName = txIdOrBatch.customer || 'Umum';
+      cashierName = txIdOrBatch.cashier || 'Admin';
+      method = txIdOrBatch.method || 'Cash';
+      status = (txIdOrBatch.status || 'Lunas').toUpperCase();
+      items = (txIdOrBatch.items || []).map(it => ({
+        name: it.name || ('Produk #' + it.product_id),
+        qty: it.qty || 0,
+        price: it.price || 0,
+        total: (it.qty || 0) * (it.price || 0)
+      }));
+      total = txIdOrBatch.total !== undefined ? txIdOrBatch.total : items.reduce((s, it) => s + it.total, 0);
+      initialPaid = txIdOrBatch.paid !== undefined ? txIdOrBatch.paid : total;
+      initialChange = txIdOrBatch.change !== undefined ? txIdOrBatch.change : Math.max(0, initialPaid - total);
+
+      activeReceiptTx = {
+        total: total,
+        paid: initialPaid,
+        change: initialChange,
+        items: items
+      };
+    } else {
+      // From transaction table row click
+      const tx = allOutTransactions.find(t => String(t.id) === String(txIdOrBatch));
+      if (!tx) {
+        if (typeof showToast === 'function') showToast('Transaksi tidak ditemukan', 'error');
+        return;
+      }
+
+      // Check if this transaction belongs to an invoice batch [INV-...]
+      const invMatch = tx.note ? tx.note.match(/\[(INV-[^\]]+)\]/) : null;
+      const invCode = invMatch ? invMatch[1] : null;
+
+      if (invCode) {
+        const siblingTxs = allOutTransactions.filter(t => t.note && t.note.includes(`[${invCode}]`));
+        invoiceNo = invCode;
+        dateStr = formatTxDate(tx.created_at);
+        customerName = tx.customers?.name || 'Umum';
+        cashierName = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+        method = tx.payment_method || 'Cash';
+        status = (tx.payment_status || 'Lunas').toUpperCase();
+        items = siblingTxs.map(t => ({
+          name: t.products?.name || ('Produk #' + t.product_id),
+          qty: t.qty || 0,
+          price: t.price || 0,
+          total: (t.qty || 0) * (t.price || 0)
+        }));
+        total = items.reduce((s, it) => s + it.total, 0);
+      } else {
+        invoiceNo = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
+          ? tx.note.split(' ')[0]
+          : `OUT-${String(tx.id).padStart(6, '0')}`;
+        dateStr = formatTxDate(tx.created_at);
+        customerName = tx.customers?.name || 'Umum';
+        cashierName = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+        method = tx.payment_method || 'Cash';
+        status = (tx.payment_status || 'Lunas').toUpperCase();
+        const qty = tx.qty || 0;
+        const price = tx.price || 0;
+        items = [{
+          name: tx.products?.name || ('Produk #' + tx.product_id),
+          qty: qty,
+          price: price,
+          total: qty * price
+        }];
+        total = qty * price;
+      }
+
+      initialPaid = total;
+      initialChange = 0;
+
+      activeReceiptTx = {
+        total: total,
+        paid: initialPaid,
+        change: initialChange,
+        items: items
+      };
+    }
 
     const elCode = document.getElementById('receipt-meta-code');
     const elDate = document.getElementById('receipt-meta-date');
@@ -829,10 +1082,10 @@
     const elStatus = document.getElementById('receipt-calc-status');
     const inputBayar = document.getElementById('receipt-input-bayar');
 
-    if (elCode) elCode.textContent = code;
+    if (elCode) elCode.textContent = invoiceNo;
     if (elDate) elDate.textContent = dateStr;
-    if (elCashier) elCashier.textContent = kasir;
-    if (elCustomer) elCustomer.textContent = custName;
+    if (elCashier) elCashier.textContent = cashierName;
+    if (elCustomer) elCustomer.textContent = customerName;
     if (elMethod) elMethod.textContent = method;
     if (elStatus) elStatus.textContent = status;
 
@@ -860,21 +1113,21 @@
     } catch (_) {}
 
     if (elItems) {
-      elItems.innerHTML = `
-        <div class="space-y-0.5">
-          <p class="font-bold text-black">${prodName}</p>
+      elItems.innerHTML = items.map(it => `
+        <div class="space-y-0.5 border-b border-dashed border-gray-200 pb-1.5 last:border-0 last:pb-0">
+          <p class="font-bold text-black">${it.name}</p>
           <div class="flex justify-between text-gray-700">
-            <span>${qty} x ${formatRupiahVal(price)}</span>
-            <span class="font-bold text-black">${formatRupiahVal(total)}</span>
+            <span>${it.qty} x ${formatRupiahVal(it.price)}</span>
+            <span class="font-bold text-black">${formatRupiahVal(it.total)}</span>
           </div>
         </div>
-      `;
+      `).join('');
     }
 
     if (elTotal) elTotal.textContent = formatRupiahVal(total);
-    if (inputBayar) inputBayar.value = total;
-    if (elPaid) elPaid.textContent = formatRupiahVal(total);
-    if (elChange) elChange.textContent = formatRupiahVal(0);
+    if (inputBayar) inputBayar.value = initialPaid;
+    if (elPaid) elPaid.textContent = formatRupiahVal(initialPaid);
+    if (elChange) elChange.textContent = formatRupiahVal(initialChange);
 
     const modal = document.getElementById('modal-thermal-receipt');
     if (modal) {
@@ -929,7 +1182,7 @@
 
   function calculateReceiptChange() {
     if (!activeReceiptTx) return;
-    const total = (activeReceiptTx.qty || 0) * (activeReceiptTx.price || 0);
+    const total = Number(activeReceiptTx.total || 0);
     const inputVal = Number(document.getElementById('receipt-input-bayar')?.value || 0);
     const change = Math.max(0, inputVal - total);
 
@@ -1393,12 +1646,32 @@ function bindScannerControls(modal) {
 
 function handleScanSuccess(decodedText) {
   triggerScanFeedback();
+  const trimmed = decodedText ? decodedText.trim() : '';
+
+  // Check if modal-out (POS) is open
+  const modalOut = document.getElementById('modal-out');
+  const isPosOpen = modalOut && !modalOut.classList.contains('hidden');
+
+  if (isPosOpen) {
+    const matchedProduct = availableProducts.find(p =>
+      (p.barcode && p.barcode.toLowerCase() === trimmed.toLowerCase()) ||
+      (p.sku && p.sku.toLowerCase() === trimmed.toLowerCase())
+    );
+
+    if (matchedProduct) {
+      addToPosCart(matchedProduct);
+      showToast(`✓ ${matchedProduct.name} ditambahkan ke keranjang`, 'success');
+      setTimeout(closeWebBarcodeScan, 300);
+      return;
+    }
+  }
+
   const input = document.getElementById('out-note');
   if (input) {
-    input.value = decodedText;
+    input.value = trimmed;
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  showToast(`Barcode terbaca: ${decodedText.slice(0, 30)}...`, 'success');
+  showToast(`Barcode terbaca: ${trimmed.slice(0, 30)}...`, 'success');
   setTimeout(closeWebBarcodeScan, 300);
 }
 
@@ -1573,10 +1846,59 @@ document.addEventListener('visibilitychange', () => {
 
 window.selectOutProduct = selectOutProduct;
 window.clearOutProductSelection = clearOutProductSelection;
+window.addToPosCart = addToPosCart;
+window.updatePosCartQty = updatePosCartQty;
+window.removeFromPosCart = removeFromPosCart;
+window.clearPosCart = clearPosCart;
+window.calculatePosChange = calculatePosChange;
+window.quickSetPosCash = quickSetPosCash;
+window.handlePosPaymentMethodChange = handlePosPaymentMethodChange;
+window.openAddOutModal = openAddOutModal;
+window.closeOutModal = closeOutModal;
+window.handleOutSubmit = handleOutSubmit;
 
 document.addEventListener('DOMContentLoaded', () => {
   const outSearchInput = document.getElementById('out-product-search');
   outSearchInput?.addEventListener('input', handleOutProductSearchInput);
+
+  // Fast Barcode Scanner or Enter Key directly adds matched product to cart
+  outSearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const query = (e.target.value || '').trim().toLowerCase();
+      if (!query) return;
+
+      // 1. Try exact barcode or SKU match
+      let match = availableProducts.find(p =>
+        (p.barcode && p.barcode.toLowerCase() === query) ||
+        (p.sku && p.sku.toLowerCase() === query)
+      );
+
+      // 2. Fallback to first partial name/sku/barcode match
+      if (!match) {
+        const matches = availableProducts.filter(p =>
+          (p.name && p.name.toLowerCase().includes(query)) ||
+          (p.sku && p.sku.toLowerCase().includes(query)) ||
+          (p.barcode && p.barcode.toLowerCase().includes(query))
+        );
+        if (matches.length > 0) match = matches[0];
+      }
+
+      if (match) {
+        addToPosCart(match, 1);
+        e.target.value = '';
+        const suggestionsEl = document.getElementById('out-product-suggestions');
+        if (suggestionsEl) {
+          suggestionsEl.classList.add('hidden');
+          suggestionsEl.innerHTML = '';
+        }
+      } else {
+        if (typeof showToast === 'function') {
+          showToast(`Produk "${query}" tidak ditemukan`, 'warning');
+        }
+      }
+    }
+  });
 
   document.addEventListener('click', (e) => {
     const suggestionsEl = document.getElementById('out-product-suggestions');

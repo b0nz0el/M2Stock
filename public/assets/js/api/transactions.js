@@ -114,6 +114,85 @@ export const transactions = {
       return transactions.create({ ...(data || {}), type: 'out' }, opts);
     },
 
+    createBatchOut: async (cartItems, commonData = {}, opts = {}) => {
+      if (!Array.isArray(cartItems) || cartItems.length === 0) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'EMPTY_CART', message: 'Keranjang belanja masih kosong.' }
+        });
+      }
+
+      // Validasi awal semua item sebelum disimpan
+      for (let i = 0; i < cartItems.length; i++) {
+        const item = cartItems[i];
+        const qty = Number(item.qty ?? item.quantity);
+        const price = Number(item.price ?? item.unit_price);
+        if (!item.product_id || !Number.isInteger(qty) || qty <= 0 || isNaN(price) || price < 0) {
+          return formatResponse({
+            ok: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: `Item ke-${i + 1} (${item.name || 'Produk'}) memiliki jumlah atau harga tidak valid.`
+            }
+          });
+        }
+      }
+
+      // Generate Invoice Code jika belum ada
+      const now = new Date();
+      const datePart = now.toISOString().slice(2, 10).replace(/-/g, '');
+      const randomPart = Math.floor(1000 + Math.random() * 9000);
+      const invoiceNo = commonData.invoice_no || `INV-${datePart}-${randomPart}`;
+
+      const createdTxs = [];
+      let totalAmount = 0;
+
+      for (const item of cartItems) {
+        const qty = Number(item.qty ?? item.quantity);
+        const price = Number(item.price ?? item.unit_price);
+        totalAmount += qty * price;
+
+        const customNote = item.note || commonData.note || '';
+        const itemNote = `[${invoiceNo}] ${customNote}`.trim();
+
+        const res = await transactions.createOut({
+          product_id: item.product_id,
+          qty: qty,
+          price: price,
+          channel: commonData.channel || 'Offline',
+          customer_id: commonData.customer_id || null,
+          payment_method: commonData.payment_method || 'Cash',
+          payment_status: commonData.payment_status || (commonData.payment_method === 'Tempo' ? 'Belum Lunas' : 'Lunas'),
+          note: itemNote,
+          created_by: commonData.created_by || null
+        }, opts);
+
+        if (!res.ok) {
+          return formatResponse({
+            ok: false,
+            error: {
+              code: res.error?.code || 'BATCH_ITEM_ERROR',
+              message: `Gagal memproses item ${item.name || item.product_id}: ${res.error?.message || 'Kesalahan database'}`,
+              details: res.error
+            }
+          });
+        }
+        createdTxs.push(res.data);
+      }
+
+      return formatResponse({
+        ok: true,
+        data: {
+          invoice_no: invoiceNo,
+          total_amount: totalAmount,
+          items_count: cartItems.length,
+          transactions: createdTxs,
+          items: createdTxs
+        },
+        meta: { message: `Penjualan kasir (${invoiceNo}) berhasil dicatat!` }
+      });
+    },
+
     create: async (data, opts) => {
       if (isSupabaseAvailable()) {
         try {
