@@ -290,11 +290,12 @@ export const po = {
    * Mengupdate status PO secara aman & atomik
    * Jika status 'diterima', otomatis memicu receive_purchase_order RPC untuk mutasi stok
    */
-  async updateStatus(id, newStatus) {
+  async updateStatus(id, newStatus, paymentMethod = 'Cash') {
     if (newStatus === 'diterima') {
       try {
         const { data: rpcData, error: rpcErr } = await supabase.rpc('receive_purchase_order', {
-          p_po_id: id
+          p_po_id: id,
+          p_payment_method: paymentMethod || 'Cash'
         });
         if (!rpcErr && rpcData && rpcData.ok) {
           return formatResponse({ ok: true, data: rpcData });

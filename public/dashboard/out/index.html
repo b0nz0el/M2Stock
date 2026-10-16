@@ -327,8 +327,20 @@
             <span id="out-total-preview">Rp 0</span>
           </div>
         </div>
-        <div class="space-y-2">
-          <label class="block text-xs font-medium text-white/60">No. Resi / Catatan</label>
+        <div>
+          <label for="out-payment-method" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Metode Pembayaran <span class="text-[#FF3B30]">*</span></label>
+          <select id="out-payment-method" required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <option value="Cash">Cash / Tunai (Lunas)</option>
+            <option value="Transfer">Transfer Bank (Lunas)</option>
+            <option value="QRIS">QRIS / E-Wallet (Lunas)</option>
+            <option value="Tempo">Tempo / Piutang (Belum Lunas)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-medium text-white/60">No. Resi / Catatan</label>
           <div class="flex gap-2">
             <input
               id="out-note"

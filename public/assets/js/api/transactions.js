@@ -12,7 +12,9 @@ function mapTransaction(row) {
     price: Number(row.unit_price ?? row.price) || 0,
     note: row.notes ?? row.note ?? null,
     created_by: row.user_id ?? row.created_by ?? null,
-    channel: row.channel || 'Offline'
+    channel: row.channel || 'Offline',
+    payment_method: row.payment_method || 'Cash',
+    payment_status: row.payment_status || 'Lunas'
   };
 }
 
@@ -144,6 +146,13 @@ export const transactions = {
             notes: data.note ?? data.notes ?? null,
             user_id: userId
           };
+
+          if (data.payment_method) {
+            row.payment_method = data.payment_method;
+          }
+          if (data.payment_status) {
+            row.payment_status = data.payment_status;
+          }
 
           let query = window.supabase
             .from('transactions')

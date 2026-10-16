@@ -204,6 +204,8 @@
         const user = await window.Auth.getCurrentUser();
         currentUserId = user?.id || null;
       }
+      const paymentMethod = document.getElementById('out-payment-method')?.value || 'Cash';
+      const paymentStatus = paymentMethod === 'Tempo' ? 'Belum Lunas' : 'Lunas';
 
       const res = await Api.transactions.createOut({
         product_id: productId,
@@ -211,6 +213,8 @@
         channel: channel,
         qty: qty,
         price: price,
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
         note: note || null,
         created_by: currentUserId
       });

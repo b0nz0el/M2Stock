@@ -288,9 +288,9 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
-  async function handleUpdateStatus(id, newStatus, successMsg) {
+  async function handleUpdateStatus(id, newStatus, successMsg, paymentMethod = 'Cash') {
     try {
-      const res = await poApi.updateStatus(id, newStatus);
+      const res = await poApi.updateStatus(id, newStatus, paymentMethod);
       if (res.ok) {
         showToast(successMsg, 'success');
         await loadData();
@@ -798,11 +798,22 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       if (receiveBtn) {
         const id = receiveBtn.getAttribute('data-id');
         if (id) {
-          if (!confirm('Tandai PO ini sebagai diterima? Seluruh item produk akan otomatis masuk ke stok toko dan riwayat barang masuk.')) {
-            return;
+          const payChoice = prompt(
+            'Konfirmasi Penerimaan PO:\nItem produk akan otomatis masuk ke stok gudang.\n\nPilih metode pembayaran ke supplier:\n1. Cash (Tunai)\n2. Transfer (Bank)\n3. Tempo (Hutang Dagang)\n\nKetik 1, 2, atau 3 (Default: 1):',
+            '1'
+          );
+          if (payChoice === null) return;
+
+          let paymentMethod = 'Cash';
+          const trimmed = payChoice.trim().toLowerCase();
+          if (trimmed === '2' || trimmed.includes('transfer')) {
+            paymentMethod = 'Transfer';
+          } else if (trimmed === '3' || trimmed.includes('tempo') || trimmed.includes('hutang')) {
+            paymentMethod = 'Tempo';
           }
+
           receiveBtn.disabled = true;
-          handleUpdateStatus(id, 'diterima', 'Barang PO telah diterima dan stok inventori berhasil bertambah');
+          handleUpdateStatus(id, 'diterima', `Barang PO diterima (${paymentMethod}) & stok inventori berhasil bertambah`, paymentMethod);
         }
         return;
       }

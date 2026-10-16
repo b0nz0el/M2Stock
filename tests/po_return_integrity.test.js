@@ -69,9 +69,9 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
 
       const res = await poApi.updateStatus('po-123', 'diterima');
 
-      expect(supabase.rpc).toHaveBeenCalledWith('receive_purchase_order', {
+      expect(supabase.rpc).toHaveBeenCalledWith('receive_purchase_order', expect.objectContaining({
         p_po_id: 'po-123'
-      });
+      }));
       expect(res.ok).toBe(true);
       expect(res.data.status).toBe('diterima');
     });
