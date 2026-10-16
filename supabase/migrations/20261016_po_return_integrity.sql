@@ -619,7 +619,7 @@ BEGIN
     v_supplier_name,
     'draft',
     0,
-    'Restock otomatis dari daftar stok menipis (Restock Assistant)',
+    'Restock Otomatis',
     v_user_id,
     now(),
     now()

@@ -433,7 +433,7 @@ export const po = {
         supplier_id: supplierId || null,
         supplier_nama: supplierName,
         status: 'draft',
-        catatan: 'Restock otomatis dari daftar stok menipis (Restock Assistant)',
+        catatan: 'Restock Otomatis',
         items
       });
 

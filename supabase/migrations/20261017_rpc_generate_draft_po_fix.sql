@@ -107,25 +107,25 @@ BEGIN
   -- Insert header PO draft dengan toleransi tipe data
   BEGIN
     IF v_sup_id_int IS NOT NULL THEN
-      EXECUTE 'INSERT INTO public.purchase_orders (no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at) VALUES ($1, CURRENT_DATE, $2, $3, ''draft'', 0, ''Restock otomatis dari daftar stok menipis (Restock Assistant)'', $4, now(), now()) RETURNING id'
+      EXECUTE 'INSERT INTO public.purchase_orders (no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at) VALUES ($1, CURRENT_DATE, $2, $3, ''draft'', 0, ''Restock Otomatis'', $4, now(), now()) RETURNING id'
       INTO v_po_id
       USING v_no_po, v_sup_id_int, v_supplier_name, v_user_id;
     ELSIF v_sup_id_uuid IS NOT NULL THEN
-      EXECUTE 'INSERT INTO public.purchase_orders (no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at) VALUES ($1, CURRENT_DATE, $2, $3, ''draft'', 0, ''Restock otomatis dari daftar stok menipis (Restock Assistant)'', $4, now(), now()) RETURNING id'
+      EXECUTE 'INSERT INTO public.purchase_orders (no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at) VALUES ($1, CURRENT_DATE, $2, $3, ''draft'', 0, ''Restock Otomatis'', $4, now(), now()) RETURNING id'
       INTO v_po_id
       USING v_no_po, v_sup_id_uuid, v_supplier_name, v_user_id;
     ELSE
       INSERT INTO public.purchase_orders (
         no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at
       ) VALUES (
-        v_no_po, CURRENT_DATE, NULL, v_supplier_name, 'draft', 0, 'Restock otomatis dari daftar stok menipis (Restock Assistant)', v_user_id, now(), now()
+        v_no_po, CURRENT_DATE, NULL, v_supplier_name, 'draft', 0, 'Restock Otomatis', v_user_id, now(), now()
       ) RETURNING id INTO v_po_id;
     END IF;
   EXCEPTION WHEN OTHERS THEN
     INSERT INTO public.purchase_orders (
       no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at
     ) VALUES (
-      v_no_po, CURRENT_DATE, NULL, v_supplier_name, 'draft', 0, 'Restock otomatis dari daftar stok menipis (Restock Assistant)', v_user_id, now(), now()
+      v_no_po, CURRENT_DATE, NULL, v_supplier_name, 'draft', 0, 'Restock Otomatis', v_user_id, now(), now()
     ) RETURNING id INTO v_po_id;
   END;
 
