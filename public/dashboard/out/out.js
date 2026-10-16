@@ -38,6 +38,15 @@
     return `<span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Offline</span>`;
   }
 
+  function resolveProductName(tx) {
+    if (tx.products && tx.products.name) return tx.products.name;
+    if (availableProducts && availableProducts.length > 0) {
+      const found = availableProducts.find(p => String(p.id) === String(tx.product_id));
+      if (found && found.name) return found.name;
+    }
+    return 'Produk #' + (tx.product_id || '-');
+  }
+
   async function loadDropdowns() {
     try {
       const prodRes = await Api.items.getAll();
@@ -45,6 +54,7 @@
         availableProducts = prodRes.data || [];
         const prodSelect = document.getElementById('out-product-id');
         if (prodSelect) {
+          const currentVal = prodSelect.value;
           prodSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
           availableProducts.forEach(p => {
             const opt = document.createElement('option');
@@ -52,6 +62,7 @@
             opt.textContent = `${p.name} (Stok: ${p.stock ?? 0})`;
             prodSelect.appendChild(opt);
           });
+          if (currentVal) prodSelect.value = currentVal;
         }
       }
 
@@ -59,6 +70,7 @@
       if (custRes && custRes.ok) {
         const custSelect = document.getElementById('out-customer-id');
         if (custSelect) {
+          const currentCustVal = custSelect.value;
           custSelect.innerHTML = '<option value="">Umum / Non-Pelanggan</option>';
           (custRes.data || []).forEach(c => {
             const opt = document.createElement('option');
@@ -66,6 +78,7 @@
             opt.textContent = c.name;
             custSelect.appendChild(opt);
           });
+          if (currentCustVal) custSelect.value = currentCustVal;
         }
       }
     } catch (err) {
@@ -228,6 +241,7 @@
       }
       closeOutModal();
       await loadOutTransactions();
+      await loadDropdowns();
       if (res.data && res.data.id) {
         openThermalReceiptModal(res.data.id);
       }
@@ -265,6 +279,7 @@
       }
       closeDeleteOutModal();
       await loadOutTransactions();
+      await loadDropdowns();
     } catch (err) {
       console.error('Delete error:', err);
       if (typeof showToast === 'function') {
@@ -453,11 +468,11 @@
         const code = (tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
           ? tx.note.split(' ')[0]
           : `OUT-${String(tx.id).padStart(6, '0')}`).toLowerCase();
-        const prodName = (tx.products?.name || '').toLowerCase();
+        const prodName = resolveProductName(tx).toLowerCase();
         const custName = (tx.customers?.name || 'umum').toLowerCase();
         const channel = (tx.channel || 'offline').toLowerCase();
         const kasir = (tx.created_by || '').toLowerCase();
-        const note = (tx.note || '').toLowerCase();
+        const note = (tx.note || tx.notes || '').toLowerCase();
 
         if (!code.includes(searchQuery) &&
             !prodName.includes(searchQuery) &&
@@ -478,7 +493,9 @@
       if (pagWrap) pagWrap.classList.add('hidden');
       const emptyText = searchQuery
         ? 'Tidak ada data barang keluar yang cocok dengan pencarian / filter'
-        : 'Belum ada transaksi barang keluar pada periode ini';
+        : (currentFilterPeriod === 'today' && allOutTransactions.length > 0)
+          ? `Belum ada transaksi barang keluar hari ini (Ada ${allOutTransactions.length} transaksi di periode lainnya. Klik tab filter 'Semua' untuk melihat).`
+          : 'Belum ada transaksi barang keluar pada periode ini';
       tbody.innerHTML = `
         <tr class="empty-state-row table-row">
           <td colspan="10" class="empty-state-cell px-4 py-12 text-center text-[#A0A0A5]">
@@ -506,7 +523,7 @@
         ? tx.note.split(' ')[0]
         : `OUT-${String(tx.id).padStart(6, '0')}`;
       const dateStr = formatTxDate(tx.created_at);
-      const prodName = tx.products?.name || 'Produk ID #' + tx.product_id;
+      const prodName = resolveProductName(tx);
       const channelBadge = getChannelBadge(tx.channel);
       const custName = tx.customers?.name || 'Umum';
       const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';

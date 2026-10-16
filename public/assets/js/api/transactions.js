@@ -180,6 +180,19 @@ export const transactions = {
             baseRow.return_id = data.return_id;
           }
 
+          // Ambil stok produk sebelum transaksi untuk verifikasi mutasi stok
+          let productBefore = null;
+          try {
+            if (typeof window.supabase.from === 'function') {
+              const { data: pData } = await window.supabase
+                .from('products')
+                .select('id, stock')
+                .eq('id', productId)
+                .maybeSingle();
+              if (pData) productBefore = pData;
+            }
+          } catch (_) {}
+
           let query = window.supabase
             .from('transactions')
             .insert([baseRow])
@@ -192,7 +205,7 @@ export const transactions = {
           let { data: inserted, error } = await query;
 
           // If the schema expects modern column names (quantity, unit_price, notes, user_id, total_price)
-          if (error && error.code === 'PGRST204') {
+          if (error && (error.code === 'PGRST204' || error.message?.includes('total_price') || error.message?.includes('notes') || error.message?.includes('quantity'))) {
             const modernRow = {
               type: data.type,
               product_id: productId,
@@ -236,6 +249,36 @@ export const transactions = {
             });
           }
 
+          // Sinkronisasi mutasi stok fallback jika trigger PostgreSQL belum aktif di database Supabase
+          if (productBefore && typeof window.supabase.from === 'function') {
+            try {
+              const { data: pAfter } = await window.supabase
+                .from('products')
+                .select('id, stock')
+                .eq('id', productId)
+                .maybeSingle();
+
+              if (pAfter) {
+                const stockBefore = Number(productBefore.stock || 0);
+                const stockAfter = Number(pAfter.stock || 0);
+
+                // Jika stok produk di database belum berubah sama sekali setelah transaksi berhasil disimpan
+                if (stockBefore === stockAfter) {
+                  const targetStock = data.type === 'in'
+                    ? stockBefore + quantity
+                    : Math.max(0, stockBefore - quantity);
+
+                  await window.supabase
+                    .from('products')
+                    .update({ stock: targetStock, updated_at: new Date().toISOString() })
+                    .eq('id', productId);
+                }
+              }
+            } catch (syncErr) {
+              console.warn('Fallback stock update warning:', syncErr);
+            }
+          }
+
           return formatResponse({
             ok: true,
             data: inserted && inserted[0] ? mapTransaction(inserted[0]) : null,
@@ -252,6 +295,30 @@ export const transactions = {
       if (isSupabaseAvailable()) {
         try {
           const targetId = isNaN(Number(id)) ? id : Number(id);
+
+          // Ambil rincian transaksi sebelum dihapus untuk sinkronisasi pengembalian stok
+          let txRow = null;
+          let prodBefore = null;
+          try {
+            if (typeof window.supabase.from === 'function') {
+              const { data: tData } = await window.supabase
+                .from('transactions')
+                .select('id, type, product_id, qty, quantity')
+                .eq('id', targetId)
+                .maybeSingle();
+              if (tData) {
+                txRow = tData;
+                const pId = isNaN(Number(txRow.product_id)) ? txRow.product_id : Number(txRow.product_id);
+                const { data: pData } = await window.supabase
+                  .from('products')
+                  .select('id, stock')
+                  .eq('id', pId)
+                  .maybeSingle();
+                if (pData) prodBefore = pData;
+              }
+            }
+          } catch (_) {}
+
           let query = window.supabase
             .from('transactions')
             .delete()
@@ -271,6 +338,37 @@ export const transactions = {
                 details: error
               }
             });
+          }
+
+          // Sinkronisasi pengembalian stok fallback jika trigger AFTER DELETE belum aktif
+          if (txRow && prodBefore && typeof window.supabase.from === 'function') {
+            try {
+              const pId = isNaN(Number(txRow.product_id)) ? txRow.product_id : Number(txRow.product_id);
+              const txQty = Number(txRow.qty ?? txRow.quantity) || 0;
+              const { data: pAfter } = await window.supabase
+                .from('products')
+                .select('id, stock')
+                .eq('id', pId)
+                .maybeSingle();
+
+              if (pAfter && txQty > 0) {
+                const stockBefore = Number(prodBefore.stock || 0);
+                const stockAfter = Number(pAfter.stock || 0);
+
+                if (stockBefore === stockAfter) {
+                  const targetStock = txRow.type === 'in'
+                    ? Math.max(0, stockBefore - txQty)
+                    : stockBefore + txQty;
+
+                  await window.supabase
+                    .from('products')
+                    .update({ stock: targetStock, updated_at: new Date().toISOString() })
+                    .eq('id', pId);
+                }
+              }
+            } catch (delSyncErr) {
+              console.warn('Fallback delete stock sync warning:', delSyncErr);
+            }
           }
 
           return formatResponse({

@@ -29,6 +29,15 @@
     return `${day} ${m} ${hh}:${mm}`;
   }
 
+  function resolveProductName(tx) {
+    if (tx.products && tx.products.name) return tx.products.name;
+    if (availableProducts && availableProducts.length > 0) {
+      const found = availableProducts.find(p => String(p.id) === String(tx.product_id));
+      if (found && found.name) return found.name;
+    }
+    return 'Produk #' + (tx.product_id || '-');
+  }
+
   async function loadDropdowns() {
     try {
       const prodRes = await Api.items.getAll();
@@ -37,6 +46,7 @@
         productsLoaded = true;
         const prodSelect = document.getElementById('in-product-id');
         if (prodSelect) {
+          const currentVal = prodSelect.value;
           prodSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
           availableProducts.forEach(p => {
             const opt = document.createElement('option');
@@ -44,6 +54,7 @@
             opt.textContent = `${p.name} (Stok: ${p.stock ?? 0})`;
             prodSelect.appendChild(opt);
           });
+          if (currentVal) prodSelect.value = currentVal;
         }
       }
 
@@ -51,6 +62,7 @@
       if (supRes && supRes.ok) {
         const supSelect = document.getElementById('in-supplier-id');
         if (supSelect) {
+          const currentSupVal = supSelect.value;
           supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
           (supRes.data || []).forEach(s => {
             const opt = document.createElement('option');
@@ -58,6 +70,7 @@
             opt.textContent = s.name;
             supSelect.appendChild(opt);
           });
+          if (currentSupVal) supSelect.value = currentSupVal;
         }
       }
     } catch (err) {
@@ -215,6 +228,7 @@
       }
       closeInModal();
       await loadInTransactions();
+      await loadDropdowns();
     } catch (err) {
       console.error('Submit in error:', err);
       if (typeof showToast === 'function') {
@@ -249,6 +263,7 @@
       }
       closeDeleteInModal();
       await loadInTransactions();
+      await loadDropdowns();
     } catch (err) {
       console.error('Delete error:', err);
       if (typeof showToast === 'function') {
@@ -431,10 +446,10 @@
 
       if (searchQuery) {
         const code = `IN-${String(tx.id).padStart(6, '0')}`.toLowerCase();
-        const prodName = (tx.products?.name || '').toLowerCase();
+        const prodName = resolveProductName(tx).toLowerCase();
         const supName = (tx.suppliers?.name || 'umum').toLowerCase();
         const kasir = (tx.created_by || '').toLowerCase();
-        const note = (tx.note || '').toLowerCase();
+        const note = (tx.note || tx.notes || '').toLowerCase();
         if (!code.includes(searchQuery) &&
             !prodName.includes(searchQuery) &&
             !supName.includes(searchQuery) &&
@@ -453,7 +468,9 @@
       if (pagWrap) pagWrap.classList.add('hidden');
       const emptyText = searchQuery
         ? 'Tidak ada data barang masuk yang cocok dengan pencarian / filter'
-        : 'Belum ada transaksi barang masuk pada periode ini';
+        : (currentFilterPeriod === 'today' && allInTransactions.length > 0)
+          ? `Belum ada transaksi barang masuk hari ini (Ada ${allInTransactions.length} transaksi di periode lainnya. Klik tab filter 'Semua' untuk melihat).`
+          : 'Belum ada transaksi barang masuk pada periode ini';
       tbody.innerHTML = `
         <tr class="empty-state-row table-row">
           <td colspan="9" class="empty-state-cell px-4 py-12 text-center text-[#A0A0A5]">
@@ -479,7 +496,7 @@
     tbody.innerHTML = paged.map(tx => {
       const code = `IN-${String(tx.id).padStart(6, '0')}`;
       const dateStr = formatTxDate(tx.created_at);
-      const prodName = tx.products?.name || 'Produk ID #' + tx.product_id;
+      const prodName = resolveProductName(tx);
       const supName = tx.suppliers?.name || 'Umum';
       const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
       const qty = tx.qty || 0;
