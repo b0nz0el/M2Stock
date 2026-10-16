@@ -670,7 +670,7 @@
 
   let activeReceiptTx = null;
 
-  function openThermalReceiptModal(txId) {
+  async function openThermalReceiptModal(txId) {
     const tx = allOutTransactions.find(t => String(t.id) === String(txId));
     if (!tx) {
       if (typeof showToast === 'function') showToast('Transaksi tidak ditemukan', 'error');
