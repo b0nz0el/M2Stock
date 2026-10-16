@@ -1329,7 +1329,17 @@
       templateName: 'template-barang.csv',
       headers,
       requiredHeaders: ['SKU', 'Nama Barang', 'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)'],
-      templateRows: [],
+      templateRows: [
+        ['PAK-LOK-001', '8991234567890', 'Pelet Kura Kura 1mm 100g', 'Lokal', 'Pakan', '10', '3', '15000', '25000'],
+        ['POM-RES-002', '8999876543210', 'Pompa Celup SP-1200', 'Resun', 'Pompa Aquarium', '5', '2', '45000', '70000'],
+        ['MED-BLU-003', '', 'Obat Ikan Blitz Ich Blue 100ml', 'Lokal', 'Obat', '20', '5', '8000', '15000']
+      ],
+      instructions: [
+        'SKU dan Nama Barang wajib diisi dan tidak boleh duplikat.',
+        'Barcode bersifat opsional (dapat dikosongkan jika produk tidak memiliki barcode fisik).',
+        'Kategori harus sesuai dengan kategori yang sudah terdaftar di toko (contoh: Pakan, Pompa Aquarium, Aksesoris, dll).',
+        'Stok Awal, Min Stok, Harga Beli, dan Harga Jual berupa angka murni (tanpa titik pemisah ribuan atau Rp).'
+      ],
       validate: async function (records) {
         const [productsResult, categoriesResult] = await Promise.all([
           Api.items.getAll(),

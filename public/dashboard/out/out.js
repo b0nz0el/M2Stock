@@ -1333,7 +1333,19 @@
         templateName: 'template-barang-keluar.csv',
         headers,
         requiredHeaders: headers,
-        templateRows: [],
+        templateRows: [
+          ['PAK-LOK-001', '8991234567890', '2', '25000', 'Budi Santoso', 'Offline', '2026-10-16', 'Kasir Tunai Toko'],
+          ['POM-RES-002', '', '1', '70000', 'Umum', 'Shopee', '2026-10-16', 'Pesanan Marketplace Resi SPX-1029'],
+          ['MED-BLU-003', '', '3', '15000', 'Ahmad Dani', 'Tokopedia', '2026-10-16', 'Pesanan Online']
+        ],
+        instructions: [
+          'SKU atau Barcode harus cocok dengan produk di Master Barang dan stok di toko harus mencukupi.',
+          'Jumlah harus berupa bilangan bulat positif lebih dari 0.',
+          'Harga Satuan berupa angka harga jual per unit barang.',
+          'Customer dapat diisi nama pelanggan terdaftar atau "Umum".',
+          'Channel dapat diisi: Offline, Shopee, Tokopedia, TikTok, Lazada, dll.',
+          'Tanggal wajib berformat YYYY-MM-DD (contoh: 2026-10-16).'
+        ],
         preventReimport: true,
         validate: async function (records) {
           const [productsResult, customersResult] = await Promise.all([

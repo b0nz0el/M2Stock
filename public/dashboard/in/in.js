@@ -917,7 +917,18 @@
         templateName: 'template-barang-masuk.csv',
         headers,
         requiredHeaders: headers,
-        templateRows: [],
+        templateRows: [
+          ['PAK-LOK-001', '8991234567890', '20', '15000', 'Distributor Pakan Jaya', '2026-10-16', 'Restock stok mingguan'],
+          ['POM-RES-002', '', '10', '45000', 'Mitra Aquarium Mandiri', '2026-10-16', 'Faktur No. INV-1029'],
+          ['MED-BLU-003', '', '15', '8000', 'Distributor Pakan Jaya', '2026-10-16', 'Bonus promo supplier']
+        ],
+        instructions: [
+          'SKU atau Barcode harus cocok dengan salah satu produk yang sudah terdaftar di Master Barang.',
+          'Jumlah harus berupa bilangan bulat positif lebih dari 0.',
+          'Harga Satuan berupa angka harga beli modal per unit barang.',
+          'Supplier bersifat opsional; jika diisi, harus sesuai nama supplier yang sudah terdaftar.',
+          'Tanggal wajib berformat YYYY-MM-DD (contoh: 2026-10-16).'
+        ],
         preventReimport: true,
         validate: async function (records) {
           const [productsResult, suppliersResult] = await Promise.all([
