@@ -158,3 +158,4 @@ describe('Financial Automation Integration (Fase A)', () => {
     });
   });
 });
+

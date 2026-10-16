@@ -50,6 +50,28 @@
     <link rel="stylesheet" href="../../assets/css/layout.css" />
     <link rel="stylesheet" href="../../assets/css/pages.css" />
     <link rel="stylesheet" href="../../assets/css/responsive.css" />
+    <style>
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+        #return-document-paper, #return-document-paper * {
+          visibility: visible !important;
+        }
+        #return-document-paper {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 8mm !important;
+          background: #fff !important;
+          color: #000 !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+      }
+    </style>
   </head>
   <body class="bg-black text-white antialiased">
     <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
@@ -729,6 +751,145 @@
             <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             <span>Hapus</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ MODAL CETAK & PREVIEW TANDA TERIMA RETUR ═══════════ -->
+    <div
+      id="modal-print-return"
+      class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-print-return-title"
+    >
+      <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl p-6 space-y-4 my-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-white/5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+              <i data-lucide="receipt" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 id="modal-print-return-title" class="text-lg font-bold text-white">Tanda Terima Retur Barang</h3>
+              <p class="text-xs text-[#A0A0A5]">Bukti fisik pengembalian barang toko resmi untuk pelanggan & supplier</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="btn-close-print-return"
+            class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- PREVIEW DOKUMEN CETAK RETUR -->
+        <div class="p-3 bg-black/40 rounded-xl overflow-x-auto max-h-[70vh] overflow-y-auto">
+          <div id="return-document-paper" class="bg-white text-black p-6 sm:p-8 rounded-lg shadow-xl font-sans text-xs leading-normal select-text max-w-xl mx-auto">
+            <!-- Kop Surat -->
+            <div class="border-b-2 border-black pb-3 mb-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h2 class="text-lg font-extrabold tracking-wider text-black">JAQURIS AQUARIUM</h2>
+                  <p class="text-[11px] font-semibold text-gray-800">Jatimakmur Aquarium & Aksesoris</p>
+                  <p class="text-[10px] text-gray-600">Jl. Raya Hankam No. 45, Pondok Gede, Kota Bekasi</p>
+                  <p class="text-[10px] text-gray-600">Telp/WA: 0812-9988-7766</p>
+                </div>
+                <div class="text-right">
+                  <span class="inline-block px-2.5 py-1 bg-black text-white font-bold text-[10px] uppercase tracking-wider rounded">
+                    BUKTI RETUR BARANG
+                  </span>
+                  <p class="font-mono text-xs font-bold text-gray-900 mt-1" id="doc-return-no">RT-202610-001</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Meta Retur -->
+            <div class="grid grid-cols-2 gap-3 pb-3 mb-3 border-b border-gray-200 text-[11px]">
+              <div>
+                <span class="text-[9px] uppercase font-bold text-gray-500">Pihak Terkait:</span>
+                <p class="font-bold text-xs text-black" id="doc-return-party">-</p>
+                <p class="text-[10px] text-gray-600" id="doc-return-type-label">Tipe: -</p>
+              </div>
+              <div class="text-right space-y-0.5">
+                <div>
+                  <span class="text-gray-500 text-[10px]">Tanggal: </span>
+                  <span class="font-semibold text-black" id="doc-return-date">-</span>
+                </div>
+                <div>
+                  <span class="text-gray-500 text-[10px]">Status: </span>
+                  <span class="font-bold uppercase text-[10px]" id="doc-return-status">DIPROSES</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rincian Barang Diretur -->
+            <table class="w-full text-left text-xs mb-3 border-collapse">
+              <thead>
+                <tr class="border-b border-black bg-gray-100 text-gray-800 font-bold text-[11px]">
+                  <th class="py-1.5 px-2">Nama Barang</th>
+                  <th class="py-1.5 px-2 text-center w-16">Jumlah</th>
+                  <th class="py-1.5 px-2 text-right w-24">Harga Satuan</th>
+                  <th class="py-1.5 px-2 text-right w-28">Total Refund</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-[11px]">
+                <tr>
+                  <td class="py-2 px-2 font-medium text-black" id="doc-return-item-name">-</td>
+                  <td class="py-2 px-2 text-center font-bold text-black" id="doc-return-item-qty">0</td>
+                  <td class="py-2 px-2 text-right text-gray-700" id="doc-return-item-price">Rp 0</td>
+                  <td class="py-2 px-2 text-right font-bold text-black" id="doc-return-item-total">Rp 0</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Alasan & Keterangan -->
+            <div class="mb-4 bg-gray-50 p-2.5 rounded border border-gray-200 text-[10px]">
+              <span class="font-bold text-gray-700">Alasan Retur / Masalah:</span>
+              <p class="text-gray-800 mt-0.5 italic" id="doc-return-reason">-</p>
+            </div>
+
+            <!-- Tanda Tangan -->
+            <div class="grid grid-cols-2 gap-6 pt-4 text-center text-[10px] text-gray-700">
+              <div>
+                <p class="font-semibold mb-12">Yang Menyerahkan:</p>
+                <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pengaju / Pelanggan )</p>
+              </div>
+              <div>
+                <p class="font-semibold mb-12">Yang Menerima (Gudang/Kasir):</p>
+                <p class="border-t border-gray-400 pt-1 font-bold text-black">( Petugas Jaquris )</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol Aksi Modal -->
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-white/5 flex-wrap">
+          <button
+            type="button"
+            id="btn-cancel-print-return"
+            class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+          >
+            Tutup
+          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-return-share-wa"
+              class="bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#25D366]/20 transition"
+            >
+              <i data-lucide="share-2" class="w-4 h-4"></i>
+              <span>Kirim via WhatsApp</span>
+            </button>
+            <button
+              type="button"
+              id="btn-return-print-action"
+              class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition"
+            >
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span>Cetak Bukti Retur</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

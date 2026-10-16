@@ -228,6 +228,9 @@
       }
       closeOutModal();
       await loadOutTransactions();
+      if (res.data && res.data.id) {
+        openThermalReceiptModal(res.data.id);
+      }
     } catch (err) {
       console.error('Submit out error:', err);
       if (typeof showToast === 'function') {
@@ -523,10 +526,16 @@
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
           <td class="px-4 py-3.5 text-right">
-            <button type="button" data-action="delete" data-transaction-id="${tx.id}" title="Hapus transaksi" aria-label="Hapus transaksi"
-                    class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
-              <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
-            </button>
+            <div class="flex items-center justify-end gap-1">
+              <button type="button" data-action="print-receipt" data-transaction-id="${tx.id}" title="Cetak Struk Kasir" aria-label="Cetak Struk Kasir"
+                      class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] hover:text-white transition">
+                <i data-lucide="receipt" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
+              <button type="button" data-action="delete" data-transaction-id="${tx.id}" title="Hapus transaksi" aria-label="Hapus transaksi"
+                      class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
+                <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -642,6 +651,151 @@
     }
   }
 
+  let activeReceiptTx = null;
+
+  function openThermalReceiptModal(txId) {
+    const tx = allOutTransactions.find(t => String(t.id) === String(txId));
+    if (!tx) {
+      if (typeof showToast === 'function') showToast('Transaksi tidak ditemukan', 'error');
+      return;
+    }
+    activeReceiptTx = tx;
+
+    const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
+      ? tx.note.split(' ')[0]
+      : `OUT-${String(tx.id).padStart(6, '0')}`;
+    const dateStr = formatTxDate(tx.created_at);
+    const prodName = tx.products?.name || ('Produk #' + tx.product_id);
+    const custName = tx.customers?.name || 'Umum';
+    const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+    const qty = tx.qty || 0;
+    const price = tx.price || 0;
+    const total = qty * price;
+    const method = tx.payment_method || 'Cash';
+    const status = (tx.payment_status || 'Lunas').toUpperCase();
+
+    const elCode = document.getElementById('receipt-meta-code');
+    const elDate = document.getElementById('receipt-meta-date');
+    const elCashier = document.getElementById('receipt-meta-cashier');
+    const elCustomer = document.getElementById('receipt-meta-customer');
+    const elMethod = document.getElementById('receipt-meta-method');
+    const elItems = document.getElementById('receipt-items-list');
+    const elTotal = document.getElementById('receipt-calc-total');
+    const elPaid = document.getElementById('receipt-calc-paid');
+    const elChange = document.getElementById('receipt-calc-change');
+    const elStatus = document.getElementById('receipt-calc-status');
+    const inputBayar = document.getElementById('receipt-input-bayar');
+
+    if (elCode) elCode.textContent = code;
+    if (elDate) elDate.textContent = dateStr;
+    if (elCashier) elCashier.textContent = kasir;
+    if (elCustomer) elCustomer.textContent = custName;
+    if (elMethod) elMethod.textContent = method;
+    if (elStatus) elStatus.textContent = status;
+
+    if (elItems) {
+      elItems.innerHTML = `
+        <div class="space-y-0.5">
+          <p class="font-bold text-black">${prodName}</p>
+          <div class="flex justify-between text-gray-700">
+            <span>${qty} x ${formatRupiahVal(price)}</span>
+            <span class="font-bold text-black">${formatRupiahVal(total)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    if (elTotal) elTotal.textContent = formatRupiahVal(total);
+    if (inputBayar) inputBayar.value = total;
+    if (elPaid) elPaid.textContent = formatRupiahVal(total);
+    if (elChange) elChange.textContent = formatRupiahVal(0);
+
+    const modal = document.getElementById('modal-thermal-receipt');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeThermalReceiptModal() {
+    activeReceiptTx = null;
+    const modal = document.getElementById('modal-thermal-receipt');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function setReceiptPaperWidth(size) {
+    const paper = document.getElementById('receipt-paper');
+    const btn58 = document.getElementById('btn-paper-58mm');
+    const btn80 = document.getElementById('btn-paper-80mm');
+
+    if (size === '80mm') {
+      if (paper) {
+        paper.classList.remove('w-[58mm]');
+        paper.classList.add('w-[80mm]');
+      }
+      if (btn80) {
+        btn80.classList.remove('bg-[#1C1C1E]', 'text-[#A0A0A5]');
+        btn80.classList.add('bg-[#0088CC]', 'text-white');
+      }
+      if (btn58) {
+        btn58.classList.remove('bg-[#0088CC]', 'text-white');
+        btn58.classList.add('bg-[#1C1C1E]', 'text-[#A0A0A5]');
+      }
+    } else {
+      if (paper) {
+        paper.classList.remove('w-[80mm]');
+        paper.classList.add('w-[58mm]');
+      }
+      if (btn58) {
+        btn58.classList.remove('bg-[#1C1C1E]', 'text-[#A0A0A5]');
+        btn58.classList.add('bg-[#0088CC]', 'text-white');
+      }
+      if (btn80) {
+        btn80.classList.remove('bg-[#0088CC]', 'text-white');
+        btn80.classList.add('bg-[#1C1C1E]', 'text-[#A0A0A5]');
+      }
+    }
+  }
+
+  function calculateReceiptChange() {
+    if (!activeReceiptTx) return;
+    const total = (activeReceiptTx.qty || 0) * (activeReceiptTx.price || 0);
+    const inputVal = Number(document.getElementById('receipt-input-bayar')?.value || 0);
+    const change = Math.max(0, inputVal - total);
+
+    const elPaid = document.getElementById('receipt-calc-paid');
+    const elChange = document.getElementById('receipt-calc-change');
+    if (elPaid) elPaid.textContent = formatRupiahVal(inputVal);
+    if (elChange) elChange.textContent = formatRupiahVal(change);
+  }
+
+  function executeReceiptPrint() {
+    document.body.classList.remove('print-mode-packing');
+    document.body.classList.add('print-mode-receipt');
+    window.print();
+  }
+
+  function executePackingListPrint() {
+    document.body.classList.remove('print-mode-receipt');
+    document.body.classList.add('print-mode-packing');
+    window.print();
+  }
+
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('print-mode-receipt', 'print-mode-packing');
+  });
+
+  window.openThermalReceiptModal = openThermalReceiptModal;
+  window.closeThermalReceiptModal = closeThermalReceiptModal;
+  window.setReceiptPaperWidth = setReceiptPaperWidth;
+  window.calculateReceiptChange = calculateReceiptChange;
+  window.executeReceiptPrint = executeReceiptPrint;
+  window.executePackingListPrint = executePackingListPrint;
+
   async function handleRefreshOut() {
     const headerBtn = document.getElementById('btn-refresh-out-header');
     const iconHeader = headerBtn ? headerBtn.querySelector('svg, i') : null;
@@ -733,6 +887,17 @@
     loadOutTransactions();
     loadDropdowns();
     document.getElementById('out-tbody')?.addEventListener('click', function (event) {
+      const printBtn = event.target.closest('[data-action="print-receipt"]');
+      if (printBtn) {
+        event.stopPropagation();
+        openThermalReceiptModal(printBtn.dataset.transactionId);
+        return;
+      }
+      const deleteBtn = event.target.closest('[data-action="delete"]');
+      if (deleteBtn) {
+        openDeleteOutModal(deleteBtn.dataset.transactionId);
+        return;
+      }
       const button = event.target.closest('[data-transaction-id]');
       if (button) openDeleteOutModal(button.dataset.transactionId);
     });

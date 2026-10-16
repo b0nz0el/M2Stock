@@ -335,6 +335,26 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
               <button 
                 type="button" 
+                data-action="print" 
+                class="btn-print-return p-1.5 rounded-lg text-[#A0A0A5] hover:text-[#32ADE6] hover:bg-[#32ADE6]/15 transition" 
+                data-id="${item.id}"
+                title="Cetak Tanda Terima Retur"
+              >
+                <i data-lucide="printer" class="w-4 h-4"></i>
+              </button>
+
+              <button 
+                type="button" 
+                data-action="share-wa" 
+                class="btn-wa-return p-1.5 rounded-lg text-[#A0A0A5] hover:text-[#25D366] hover:bg-[#25D366]/15 transition" 
+                data-id="${item.id}"
+                title="Kirim Status via WhatsApp"
+              >
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </button>
+
+              <button 
+                type="button" 
                 data-action="delete" 
                 class="btn-delete-return p-1.5 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] hover:bg-[#FF3B30]/15 transition" 
                 data-id="${item.id}"
@@ -486,6 +506,118 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     pendingDeleteId = null;
     deleteTrigger?.focus();
     deleteTrigger = null;
+  }
+
+  let activePrintReturn = null;
+
+  function openPrintReturnModal(returnId) {
+    const item = returnEntries.find(r => String(r.id) === String(returnId));
+    if (!item) {
+      showToast('Data retur tidak ditemukan', 'error');
+      return;
+    }
+    activePrintReturn = item;
+
+    const noRetur = item.no_retur || '-';
+    const tanggalRetur = formatDate(item.tanggal);
+    const tipeText = item.tipe === 'ke_supplier' ? 'Retur ke Supplier' : 'Retur dari Pelanggan';
+    const statusText = (item.status || 'diproses').toUpperCase();
+    const partyName = item.supplier_nama || item.customer_nama || (item.tipe === 'ke_supplier' ? 'Pemasok / Supplier' : 'Pelanggan Toko');
+    const prodName = getProductName(item);
+    const qty = item.qty || 1;
+    const harga = item.harga_satuan || 0;
+    const total = qty * harga;
+    const reason = item.alasan || 'Tidak ada alasan tercatat';
+
+    const docNo = document.getElementById('doc-return-no');
+    const docParty = document.getElementById('doc-return-party');
+    const docTypeLabel = document.getElementById('doc-return-type-label');
+    const docDate = document.getElementById('doc-return-date');
+    const docStatus = document.getElementById('doc-return-status');
+    const docItemName = document.getElementById('doc-return-item-name');
+    const docItemQty = document.getElementById('doc-return-item-qty');
+    const docItemPrice = document.getElementById('doc-return-item-price');
+    const docItemTotal = document.getElementById('doc-return-item-total');
+    const docReason = document.getElementById('doc-return-reason');
+
+    if (docNo) docNo.textContent = noRetur;
+    if (docParty) docParty.textContent = partyName;
+    if (docTypeLabel) docTypeLabel.textContent = `Tipe: ${tipeText}`;
+    if (docDate) docDate.textContent = tanggalRetur;
+    if (docStatus) {
+      docStatus.textContent = statusText;
+      docStatus.className = 'font-bold uppercase text-[10px] ' + 
+        (statusText === 'SELESAI' ? 'text-green-700' : (statusText === 'DITOLAK' ? 'text-red-700' : 'text-amber-700'));
+    }
+    if (docItemName) docItemName.textContent = prodName;
+    if (docItemQty) docItemQty.textContent = `${qty} unit`;
+    if (docItemPrice) docItemPrice.textContent = formatRupiah(harga);
+    if (docItemTotal) docItemTotal.textContent = formatRupiah(total);
+    if (docReason) docReason.textContent = reason;
+
+    const modal = document.getElementById('modal-print-return');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  function closePrintReturnModal() {
+    activePrintReturn = null;
+    const modal = document.getElementById('modal-print-return');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function generateReturnWhatsAppText(item) {
+    if (!item) return '';
+    const noRetur = item.no_retur || '-';
+    const tanggalRetur = formatDate(item.tanggal);
+    const tipeText = item.tipe === 'ke_supplier' ? 'Retur ke Supplier' : 'Retur dari Pelanggan';
+    const statusText = (item.status || 'diproses').toUpperCase();
+    const partyName = item.supplier_nama || item.customer_nama || (item.tipe === 'ke_supplier' ? 'Supplier' : 'Pelanggan');
+    const prodName = getProductName(item);
+    const qty = item.qty || 1;
+    const harga = item.harga_satuan || 0;
+    const total = qty * harga;
+
+    let text = `*BUKTI TANDA TERIMA RETUR BARANG*\n`;
+    text += `*Toko Jaquris Aquarium & Aksesoris, Bekasi*\n`;
+    text += `-----------------------------------------------\n`;
+    text += `*No. Retur:* ${noRetur}\n`;
+    text += `*Tanggal:* ${tanggalRetur}\n`;
+    text += `*Jenis:* ${tipeText}\n`;
+    text += `*Pihak Terkait:* ${partyName}\n`;
+    text += `*Status:* ${statusText}\n\n`;
+    text += `*Rincian Barang Diretur:*\n`;
+    text += `- Barang: ${prodName}\n`;
+    text += `- Jumlah: ${qty} unit\n`;
+    text += `- Nilai/Refund: ${formatRupiah(total)}\n`;
+    text += `- Alasan: ${item.alasan || '-'}\n`;
+    text += `-----------------------------------------------\n`;
+    text += `Dokumen bukti resmi toko Jaquris Aquarium. Terima kasih. 🙏`;
+
+    return text;
+  }
+
+  function shareReturnWhatsApp(returnId) {
+    const item = returnEntries.find(r => String(r.id) === String(returnId));
+    if (!item) {
+      showToast('Data retur tidak ditemukan', 'error');
+      return;
+    }
+    const msg = generateReturnWhatsAppText(item);
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  }
+
+  function printReturnDocument() {
+    window.print();
   }
 
   async function confirmDeleteReturn() {
@@ -777,6 +909,20 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
         return;
       }
 
+      const printBtn = e.target.closest('.btn-print-return');
+      if (printBtn) {
+        const id = printBtn.getAttribute('data-id');
+        if (id) openPrintReturnModal(id);
+        return;
+      }
+
+      const waBtn = e.target.closest('.btn-wa-return');
+      if (waBtn) {
+        const id = waBtn.getAttribute('data-id');
+        if (id) shareReturnWhatsApp(id);
+        return;
+      }
+
       const deleteBtn = e.target.closest('.btn-delete-return');
       if (deleteBtn) {
         const id = deleteBtn.getAttribute('data-id');
@@ -796,6 +942,31 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       });
       deleteModal.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeDeleteConfirmation();
+      });
+    }
+
+    // Print Return Modal events
+    const closePrintReturnBtn = document.getElementById('btn-close-print-return');
+    const cancelPrintReturnBtn = document.getElementById('btn-cancel-print-return');
+    const returnShareWaBtn = document.getElementById('btn-return-share-wa');
+    const returnPrintActionBtn = document.getElementById('btn-return-print-action');
+
+    if (closePrintReturnBtn) closePrintReturnBtn.addEventListener('click', closePrintReturnModal);
+    if (cancelPrintReturnBtn) cancelPrintReturnBtn.addEventListener('click', closePrintReturnModal);
+    if (returnShareWaBtn) {
+      returnShareWaBtn.addEventListener('click', () => {
+        if (activePrintReturn && activePrintReturn.id) shareReturnWhatsApp(activePrintReturn.id);
+      });
+    }
+    if (returnPrintActionBtn) returnPrintActionBtn.addEventListener('click', printReturnDocument);
+
+    const printReturnModal = document.getElementById('modal-print-return');
+    if (printReturnModal) {
+      printReturnModal.addEventListener('click', (e) => {
+        if (e.target === printReturnModal) closePrintReturnModal();
+      });
+      printReturnModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePrintReturnModal();
       });
     }
   }

@@ -238,6 +238,26 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
               <button 
                 type="button" 
+                data-action="print" 
+                class="btn-print-po p-1.5 rounded-lg text-[#A0A0A5] hover:text-[#32ADE6] hover:bg-[#32ADE6]/15 transition" 
+                data-id="${item.id}"
+                title="Cetak Surat Pesanan PO"
+              >
+                <i data-lucide="printer" class="w-4 h-4"></i>
+              </button>
+
+              <button 
+                type="button" 
+                data-action="share-wa" 
+                class="btn-wa-po p-1.5 rounded-lg text-[#A0A0A5] hover:text-[#25D366] hover:bg-[#25D366]/15 transition" 
+                data-id="${item.id}"
+                title="Kirim via WhatsApp"
+              >
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </button>
+
+              <button 
+                type="button" 
                 data-action="delete" 
                 class="btn-delete-po p-1.5 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] hover:bg-[#FF3B30]/15 transition" 
                 data-id="${item.id}"
@@ -387,6 +407,139 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       if (cancelButton) cancelButton.disabled = false;
       if (window.refreshIcons) window.refreshIcons();
     }
+  }
+
+  let activePrintPO = null;
+
+  function openPrintPOModal(poId) {
+    const item = poEntries.find(p => String(p.id) === String(poId));
+    if (!item) {
+      showToast('Data Purchase Order tidak ditemukan', 'error');
+      return;
+    }
+    activePrintPO = item;
+
+    const noPO = item.no_po || '-';
+    const tanggalPO = formatDate(item.tanggal);
+    const supplierName = item.supplier_nama || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+    const status = (item.status || 'draft').toUpperCase();
+    const notes = item.catatan || 'Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.';
+    const total = formatRupiah(item.total || 0);
+
+    const docNo = document.getElementById('doc-po-no');
+    const docSupplier = document.getElementById('doc-po-supplier');
+    const docSupplierNotes = document.getElementById('doc-po-supplier-notes');
+    const docDate = document.getElementById('doc-po-date');
+    const docStatus = document.getElementById('doc-po-status');
+    const docNotes = document.getElementById('doc-po-notes');
+    const docTotal = document.getElementById('doc-po-total');
+    const tbody = document.getElementById('doc-po-items-tbody');
+
+    if (docNo) docNo.textContent = noPO;
+    if (docSupplier) docSupplier.textContent = supplierName;
+    if (docSupplierNotes) docSupplierNotes.textContent = item.supplier_kontak || 'Pemasok Terdaftar';
+    if (docDate) docDate.textContent = tanggalPO;
+    if (docStatus) docStatus.textContent = status;
+    if (docNotes) docNotes.textContent = notes;
+    if (docTotal) docTotal.textContent = total;
+
+    const items = item.items || item.purchase_order_items || [];
+    if (tbody) {
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">Rincian produk tidak tersedia</td></tr>`;
+      } else {
+        tbody.innerHTML = items.map((it, idx) => {
+          const pName = it.product_name || it.products?.name || ('Produk #' + it.product_id);
+          const qty = it.qty || 1;
+          const harga = it.harga || it.unit_price || 0;
+          const subtotal = qty * harga;
+          return `
+            <tr class="border-b border-gray-100">
+              <td class="py-2 px-2 text-center text-gray-600">${idx + 1}</td>
+              <td class="py-2 px-2 font-medium text-black">${pName}</td>
+              <td class="py-2 px-2 text-center font-bold text-black">${qty} unit</td>
+              <td class="py-2 px-2 text-right text-gray-700">${formatRupiah(harga)}</td>
+              <td class="py-2 px-2 text-right font-semibold text-black">${formatRupiah(subtotal)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    const modal = document.getElementById('modal-print-po');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  function closePrintPOModal() {
+    activePrintPO = null;
+    const modal = document.getElementById('modal-print-po');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function generatePOWhatsAppText(item) {
+    if (!item) return '';
+    const supplierName = item.supplier_nama || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+    const noPO = item.no_po || '-';
+    const tanggalPO = formatDate(item.tanggal);
+    const total = formatRupiah(item.total || 0);
+    const items = item.items || item.purchase_order_items || [];
+
+    let text = `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n`;
+    text += `*Toko Jaquris Aquarium & Aksesoris, Bekasi*\n`;
+    text += `-----------------------------------------------\n`;
+    text += `*No. PO:* ${noPO}\n`;
+    text += `*Tanggal:* ${tanggalPO}\n`;
+    text += `*Kepada:* ${supplierName}\n`;
+    text += `*Status:* ${(item.status || 'draft').toUpperCase()}\n\n`;
+    text += `*Rincian Pesanan:*\n`;
+
+    if (items.length === 0) {
+      text += `- (Pesanan inventori standar)\n`;
+    } else {
+      items.forEach((it, idx) => {
+        const pName = it.product_name || it.products?.name || ('Produk #' + it.product_id);
+        const qty = it.qty || 1;
+        const harga = it.harga || it.unit_price || 0;
+        const subtotal = qty * harga;
+        text += `${idx + 1}. ${pName} (${qty} unit) @ ${formatRupiah(harga)} = ${formatRupiah(subtotal)}\n`;
+      });
+    }
+
+    text += `\n*TOTAL NILAI PO:* ${total}\n`;
+    if (item.catatan) {
+      text += `*Catatan:* ${item.catatan}\n`;
+    }
+    text += `-----------------------------------------------\n`;
+    text += `Mohon konfirmasi ketersediaan barang. Terima kasih! 🙏`;
+
+    return text;
+  }
+
+  function sharePOWhatsApp(poId) {
+    const item = poEntries.find(p => String(p.id) === String(poId));
+    if (!item) {
+      showToast('Data PO tidak ditemukan', 'error');
+      return;
+    }
+    const msg = generatePOWhatsAppText(item);
+    const encoded = encodeURIComponent(msg);
+    const supObj = availableSuppliers.find(s => String(s.id) === String(item.supplier_id));
+    const phone = supObj?.phone ? supObj.phone.replace(/[^0-9]/g, '') : '';
+    const targetUrl = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+    window.open(targetUrl, '_blank');
+  }
+
+  function printPODocument() {
+    window.print();
   }
 
   // Master Data Loader & Select Populator
@@ -818,6 +971,20 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
         return;
       }
 
+      const printBtn = e.target.closest('.btn-print-po');
+      if (printBtn) {
+        const id = printBtn.getAttribute('data-id');
+        if (id) openPrintPOModal(id);
+        return;
+      }
+
+      const waBtn = e.target.closest('.btn-wa-po');
+      if (waBtn) {
+        const id = waBtn.getAttribute('data-id');
+        if (id) sharePOWhatsApp(id);
+        return;
+      }
+
       const deleteBtn = e.target.closest('.btn-delete-po');
       if (deleteBtn) {
         const id = deleteBtn.getAttribute('data-id');
@@ -842,6 +1009,31 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       });
       deleteModal.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeDeleteConfirmation();
+      });
+    }
+
+    // Print PO Modal events
+    const closePrintBtn = document.getElementById('btn-close-print-po');
+    const cancelPrintBtn = document.getElementById('btn-cancel-print-po');
+    const docShareWaBtn = document.getElementById('btn-doc-share-wa');
+    const docPrintActionBtn = document.getElementById('btn-doc-print-action');
+
+    if (closePrintBtn) closePrintBtn.addEventListener('click', closePrintPOModal);
+    if (cancelPrintBtn) cancelPrintBtn.addEventListener('click', closePrintPOModal);
+    if (docShareWaBtn) {
+      docShareWaBtn.addEventListener('click', () => {
+        if (activePrintPO && activePrintPO.id) sharePOWhatsApp(activePrintPO.id);
+      });
+    }
+    if (docPrintActionBtn) docPrintActionBtn.addEventListener('click', printPODocument);
+
+    const printPoModal = document.getElementById('modal-print-po');
+    if (printPoModal) {
+      printPoModal.addEventListener('click', (e) => {
+        if (e.target === printPoModal) closePrintPOModal();
+      });
+      printPoModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePrintPOModal();
       });
     }
   }

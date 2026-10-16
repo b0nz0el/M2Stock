@@ -32,6 +32,28 @@
 <link rel="stylesheet" href="../../assets/css/layout.css">
 <link rel="stylesheet" href="../../assets/css/pages.css">
 <link rel="stylesheet" href="../../assets/css/responsive.css">
+<style>
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #po-document-paper, #po-document-paper * {
+    visibility: visible !important;
+  }
+  #po-document-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+</style>
 </head>
 <body class="bg-black text-white antialiased">
 
@@ -369,6 +391,129 @@
         <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
         <span>Hapus</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL CETAK & PREVIEW SURAT PESANAN PO ═══════════ -->
+<div id="modal-print-po" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-print-po-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="file-text" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-print-po-title" class="text-lg font-bold text-white">Surat Pesanan (Purchase Order)</h3>
+          <p class="text-xs text-[#A0A0A5]">Cetak dokumen resmi atau bagikan langsung ke supplier via WhatsApp</p>
+        </div>
+      </div>
+      <button type="button" id="btn-close-print-po" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- PREVIEW DOKUMEN CETAK PO (Clean White Paper Layout) -->
+    <div class="p-3 bg-black/40 rounded-xl overflow-x-auto max-h-[70vh] overflow-y-auto">
+      <div id="po-document-paper" class="bg-white text-black p-6 sm:p-8 rounded-lg shadow-xl font-sans text-xs leading-normal select-text max-w-2xl mx-auto">
+        <!-- Kop Surat Toko -->
+        <div class="border-b-2 border-black pb-3 mb-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl font-extrabold tracking-wider text-black">JAQURIS AQUARIUM</h2>
+              <p class="text-xs font-semibold text-gray-800">Jatimakmur Aquarium & Aksesoris</p>
+              <p class="text-[11px] text-gray-600 mt-0.5">Jl. Raya Hankam No. 45, Pondok Gede, Kota Bekasi</p>
+              <p class="text-[11px] text-gray-600">Telp / WA: 0812-9988-7766 | Email: toko.jaquris@gmail.com</p>
+            </div>
+            <div class="text-right">
+              <span class="inline-block px-3 py-1 bg-black text-white font-bold text-xs uppercase tracking-widest rounded">
+                PURCHASE ORDER
+              </span>
+              <p class="font-mono text-sm font-bold text-gray-900 mt-1" id="doc-po-no">PO-202610-001</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informasi PO & Supplier -->
+        <div class="grid grid-cols-2 gap-4 pb-4 mb-4 border-b border-gray-200">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Kepada Pemasok (Supplier):</span>
+            <p class="font-bold text-sm text-black mt-0.5" id="doc-po-supplier">-</p>
+            <p class="text-[11px] text-gray-600" id="doc-po-supplier-notes">-</p>
+          </div>
+          <div class="text-right space-y-1">
+            <div>
+              <span class="text-gray-500 text-[11px]">Tanggal Pemesanan: </span>
+              <span class="font-semibold text-black" id="doc-po-date">-</span>
+            </div>
+            <div>
+              <span class="text-gray-500 text-[11px]">Status Dokumen: </span>
+              <span class="font-bold uppercase text-[11px] text-gray-900" id="doc-po-status">DRAFT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabel Rincian Barang -->
+        <table class="w-full text-left text-xs mb-4 border-collapse">
+          <thead>
+            <tr class="border-b-2 border-black bg-gray-100 text-gray-800 font-bold">
+              <th class="py-2 px-2 text-center w-8">No</th>
+              <th class="py-2 px-2">Nama Barang / Produk</th>
+              <th class="py-2 px-2 text-center w-16">Jumlah</th>
+              <th class="py-2 px-2 text-right w-28">Harga Satuan</th>
+              <th class="py-2 px-2 text-right w-32">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="doc-po-items-tbody" class="divide-y divide-gray-200">
+            <!-- Diisi dinamis -->
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-black font-bold">
+              <td colspan="4" class="py-2.5 px-2 text-right uppercase text-xs">Total Nilai Pesanan:</td>
+              <td class="py-2.5 px-2 text-right text-sm text-black" id="doc-po-total">Rp 0</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Catatan Pesanan -->
+        <div class="mb-6 bg-gray-50 p-2.5 rounded border border-gray-200 text-[11px]">
+          <span class="font-bold text-gray-700">Catatan / Instruksi Pengiriman:</span>
+          <p class="text-gray-600 mt-0.5" id="doc-po-notes">Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.</p>
+        </div>
+
+        <!-- Kolom Tanda Tangan (3 Pihak) -->
+        <div class="grid grid-cols-3 gap-4 pt-4 text-center text-[10px] text-gray-700">
+          <div>
+            <p class="font-semibold mb-12">Dibuat Oleh (Admin):</p>
+            <p class="border-t border-gray-400 pt-1 font-bold text-black">( Petugas Toko )</p>
+          </div>
+          <div>
+            <p class="font-semibold mb-12">Disetujui Oleh (Owner):</p>
+            <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pemilik Jaquris )</p>
+          </div>
+          <div>
+            <p class="font-semibold mb-12">Diterima Oleh (Supplier):</p>
+            <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pemasok Barang )</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol Aksi Modal -->
+    <div class="flex items-center justify-between gap-2 pt-2 border-t border-white/5 flex-wrap">
+      <button type="button" id="btn-cancel-print-po" class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+        Tutup
+      </button>
+      <div class="flex items-center gap-2">
+        <button type="button" id="btn-doc-share-wa" class="bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#25D366]/20 transition">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span>Kirim via WhatsApp</span>
+        </button>
+        <button type="button" id="btn-doc-print-action" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Cetak / Simpan PDF</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

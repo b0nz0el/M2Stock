@@ -36,18 +36,34 @@
 <style>
 @media print {
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
-  #modal-packing-list, #modal-packing-list * {
-    visibility: visible;
+  body.print-mode-receipt #receipt-paper,
+  body.print-mode-receipt #receipt-paper * {
+    visibility: visible !important;
   }
-  #modal-packing-list {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+  body.print-mode-receipt #receipt-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 3mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  body.print-mode-packing #modal-packing-list,
+  body.print-mode-packing #modal-packing-list * {
+    visibility: visible !important;
+  }
+  body.print-mode-packing #modal-packing-list {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #fff !important;
     color: #000 !important;
   }
@@ -472,6 +488,97 @@
       <button type="button" onclick="window.print()" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
         <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i>
         <span>Cetak (Print)</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL CETAK STRUK KASIR THERMAL ═══════════ -->
+<div id="modal-thermal-receipt" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-receipt-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 my-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+          <i data-lucide="receipt" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-receipt-title" class="text-lg font-bold text-white">Struk Kasir Thermal</h3>
+          <p class="text-xs text-[#A0A0A5]">Cetak bukti pembayaran fisik untuk pelanggan</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeThermalReceiptModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- Ukuran & Kalkulator Pembayaran -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/30 p-3 rounded-xl border border-white/5">
+      <div>
+        <label class="block text-xs text-[#A0A0A5] font-medium mb-1">Lebar Printer Kertas</label>
+        <div class="flex gap-2">
+          <button type="button" id="btn-paper-58mm" onclick="setReceiptPaperWidth('58mm')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-[#0088CC] text-white border border-[#0088CC] transition">58 mm</button>
+          <button type="button" id="btn-paper-80mm" onclick="setReceiptPaperWidth('80mm')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">80 mm</button>
+        </div>
+      </div>
+      <div>
+        <label for="receipt-input-bayar" class="block text-xs text-[#A0A0A5] font-medium mb-1">Nominal Diterima (Rp)</label>
+        <input type="number" id="receipt-input-bayar" min="0" placeholder="0" oninput="calculateReceiptChange()"
+               class="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
+      </div>
+    </div>
+
+    <!-- PREVIEW STRUK FISIK (Monochrome White Paper) -->
+    <div class="flex justify-center p-2 bg-black/40 rounded-xl overflow-x-auto">
+      <div id="receipt-paper" class="w-[58mm] max-w-[80mm] bg-white text-black p-4 font-mono text-[11px] leading-relaxed shadow-lg select-text transition-all duration-200">
+        <!-- Header Toko -->
+        <div class="text-center space-y-0.5 pb-2 border-b border-dashed border-gray-400">
+          <h4 class="font-bold text-sm tracking-wide text-black uppercase">JAQURIS AQUARIUM</h4>
+          <p class="text-[10px] text-gray-700">Jatimakmur Aquarium & Aksesoris</p>
+          <p class="text-[9px] text-gray-600">Jl. Raya Hankam, Pondok Gede, Bekasi</p>
+          <p class="text-[9px] text-gray-600">Telp/WA: 0812-9988-7766</p>
+        </div>
+
+        <!-- Meta Transaksi -->
+        <div class="py-2 space-y-0.5 text-[10px] border-b border-dashed border-gray-400">
+          <div class="flex justify-between"><span class="text-gray-600">No. Nota:</span><span id="receipt-meta-code" class="font-bold">-</span></div>
+          <div class="flex justify-between"><span class="text-gray-600">Waktu:</span><span id="receipt-meta-date">-</span></div>
+          <div class="flex justify-between"><span class="text-gray-600">Kasir:</span><span id="receipt-meta-cashier">Admin</span></div>
+          <div class="flex justify-between"><span class="text-gray-600">Pelanggan:</span><span id="receipt-meta-customer">Umum</span></div>
+          <div class="flex justify-between"><span class="text-gray-600">Metode Bayar:</span><span id="receipt-meta-method" class="font-semibold text-black">Cash</span></div>
+        </div>
+
+        <!-- Daftar Item Pembelian -->
+        <div id="receipt-items-list" class="py-2 space-y-1 text-[10px] border-b border-dashed border-gray-400">
+          <!-- Diisi dinamis -->
+        </div>
+
+        <!-- Rincian Total, Bayar, Kembalian -->
+        <div class="py-2 space-y-1 text-[10px]">
+          <div class="flex justify-between font-bold text-xs"><span>TOTAL</span><span id="receipt-calc-total">Rp 0</span></div>
+          <div class="flex justify-between text-gray-700"><span>BAYAR</span><span id="receipt-calc-paid">Rp 0</span></div>
+          <div class="flex justify-between text-gray-700"><span>KEMBALI</span><span id="receipt-calc-change">Rp 0</span></div>
+          <div class="flex justify-between pt-1 text-[9px] font-semibold"><span class="uppercase">Status:</span><span id="receipt-calc-status" class="text-black uppercase">LUNAS</span></div>
+        </div>
+
+        <!-- Footer Struk -->
+        <div class="text-center text-[9px] text-gray-600 pt-2 border-t border-dashed border-gray-400 space-y-0.5">
+          <p class="font-semibold text-black">Terima Kasih Atas Kunjungan Anda!</p>
+          <p>Barang dapat ditukar maks 2 hari dgn nota fisik.</p>
+          <p class="text-[8px] text-gray-400 pt-1">aQuaStock Pro POS</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol Aksi -->
+    <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
+      <button type="button" onclick="closeThermalReceiptModal()"
+              class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+        Tutup
+      </button>
+      <button type="button" onclick="executeReceiptPrint()"
+              class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+        <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Cetak Struk Thermal</span>
       </button>
     </div>
   </div>
