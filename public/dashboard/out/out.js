@@ -1332,7 +1332,7 @@
         title: 'Barang Keluar',
         templateName: 'template-barang-keluar.csv',
         headers,
-        requiredHeaders: headers,
+        requiredHeaders: ['SKU', 'Jumlah', 'Harga Satuan (Rp)', 'Customer', 'Channel', 'Tanggal (YYYY-MM-DD)'],
         templateRows: [
           ['PAK-LOK-001', '8991234567890', '2', '25000', 'Budi Santoso', 'Offline', '2026-10-16', 'Kasir Tunai Toko'],
           ['POM-RES-002', '', '1', '70000', 'Umum', 'Shopee', '2026-10-16', 'Pesanan Marketplace Resi SPX-1029'],
@@ -1340,11 +1340,13 @@
         ],
         instructions: [
           'SKU atau Barcode harus cocok dengan produk di Master Barang dan stok di toko harus mencukupi.',
+          'Barcode bersifat opsional (dapat dikosongkan jika produk tidak memiliki barcode fisik).',
           'Jumlah harus berupa bilangan bulat positif lebih dari 0.',
           'Harga Satuan berupa angka harga jual per unit barang.',
           'Customer dapat diisi nama pelanggan terdaftar atau "Umum".',
           'Channel dapat diisi: Offline, Shopee, Tokopedia, TikTok, Lazada, dll.',
-          'Tanggal wajib berformat YYYY-MM-DD (contoh: 2026-10-16).'
+          'Tanggal wajib berformat YYYY-MM-DD (contoh: 2026-10-16).',
+          'Catatan bersifat opsional (keterangan tambahan/nomor resi/pesanan).'
         ],
         preventReimport: true,
         validate: async function (records) {
@@ -1362,13 +1364,14 @@
           const errors = [];
           records.forEach((record, index) => {
             const rowNumber = index + 2;
-            const sku = record['SKU'].trim();
-            const barcode = record['Barcode'].trim();
-            const quantityText = record['Jumlah'].trim();
-            const priceText = record['Harga Satuan (Rp)'].trim();
-            const customer = record['Customer'].trim();
-            const channel = record['Channel'].trim() || 'Offline';
-            const date = record['Tanggal (YYYY-MM-DD)'].trim();
+            const sku = (record['SKU'] || '').trim();
+            const barcode = (record['Barcode'] || '').trim();
+            const quantityText = (record['Jumlah'] || '').trim();
+            const priceText = (record['Harga Satuan (Rp)'] || '').trim();
+            const customer = (record['Customer'] || '').trim();
+            const channel = (record['Channel'] || '').trim() || 'Offline';
+            const date = (record['Tanggal (YYYY-MM-DD)'] || '').trim();
+            const notes = (record['Catatan'] || '').trim();
             const rowErrorsBefore = errors.length;
 
             if (!sku && !barcode) errors.push({ row: rowNumber, message: 'SKU atau barcode wajib diisi.' });
@@ -1409,7 +1412,7 @@
               customer,
               channel,
               date,
-              notes: record['Catatan'].trim()
+              notes
             });
           });
           return { rows, errors };
