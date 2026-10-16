@@ -105,7 +105,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (elMargin) elMargin.textContent = `Margin ${kpi.profitMargin}%`;
     if (elTx) elTx.textContent = Number(kpi.totalTxOut).toLocaleString('id-ID');
     if (elQty) elQty.textContent = `${Number(kpi.totalQtySold).toLocaleString('id-ID')} unit terjual`;
-    if (elStock) elStock.textContent = formatShortNumber(kpi.totalStockCostValue);
+    if (elStock) elStock.textContent = formatRupiah(kpi.totalStockCostValue);
     if (elStockUnit) elStockUnit.textContent = `${Number(kpi.totalStockQty).toLocaleString('id-ID')} unit total`;
   }
 

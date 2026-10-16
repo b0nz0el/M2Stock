@@ -196,6 +196,31 @@
     }, 50);
   }
 
+  function autoGenerateSkuForItem() {
+    const catSelect = document.getElementById('item-category');
+    const catName = (catSelect && catSelect.selectedIndex >= 0 && catSelect.value) ? catSelect.options[catSelect.selectedIndex].text : '';
+    const brand = document.getElementById('item-brand')?.value.trim() || '';
+    let maxSeq = 0;
+    if (Array.isArray(currentItems)) {
+      for (const item of currentItems) {
+        if (item.id && Number(item.id) > maxSeq) {
+          maxSeq = Number(item.id);
+        }
+        if (item.sku) {
+          const m = String(item.sku).match(/(\d+)$/);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxSeq) maxSeq = num;
+          }
+        }
+      }
+    }
+    const genSku = typeof generateSKU === 'function' ? generateSKU(catName, brand, maxSeq) : (typeof window.generateSKU === 'function' ? window.generateSKU(catName, brand, maxSeq) : `ITEM-${maxSeq + 1}`);
+    const skuInput = document.getElementById('item-sku');
+    if (skuInput) skuInput.value = genSku;
+    return genSku;
+  }
+
   function openEditItemModal(id) {
     const item = currentItems.find(function (i) { return String(i.id) === String(id); });
     if (!item) return;
@@ -275,7 +300,7 @@
     }
 
     const id = document.getElementById('item-id').value;
-    const sku = document.getElementById('item-sku').value.trim();
+    let sku = document.getElementById('item-sku').value.trim();
     const barcode = document.getElementById('item-barcode').value.trim();
     const name = document.getElementById('item-name').value.trim();
     const brand = document.getElementById('item-brand').value.trim();
@@ -289,6 +314,9 @@
     if (!name) {
       if (typeof showToast === 'function') showToast('Nama barang tidak boleh kosong', 'error');
       return;
+    }
+    if (!sku) {
+      sku = autoGenerateSkuForItem();
     }
     if (!sku) {
       if (typeof showToast === 'function') showToast('SKU barang wajib diisi', 'error');
@@ -1429,6 +1457,7 @@
   window.closeDeleteModal = closeDeleteModal;
   window.confirmDeleteItem = confirmDeleteItem;
   window.loadItemsFromBackend = loadItemsFromBackend;
+  window.autoGenerateSkuForItem = autoGenerateSkuForItem;
 
   // Fitur Fase 4.8
   window.handleSearchItems = handleSearchItems;

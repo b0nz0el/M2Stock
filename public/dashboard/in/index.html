@@ -298,7 +298,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label for="in-category-id" class="block text-xs font-medium text-[#A0A0A5] mb-1">Kategori</label>
-            <select id="in-category-id" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <select id="in-category-id" onchange="autoUpdateInSkuPlaceholder()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
               <option value="">Umum (Tanpa Kategori)</option>
             </select>
           </div>
@@ -311,12 +311,22 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label for="in-brand" class="block text-xs font-medium text-[#A0A0A5] mb-1">Brand / Merek</label>
+            <input type="text" id="in-brand" oninput="autoUpdateInSkuPlaceholder()" placeholder="mis. Lokal, Amara, Kandila" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          </div>
+          <div>
             <label for="in-sell-price" class="block text-xs font-medium text-[#A0A0A5] mb-1">Harga Jual Satuan (Rp) <span class="text-[#FF3B30]">*</span></label>
             <input type="number" id="in-sell-price" min="0" value="0" placeholder="0" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
           </div>
-          <div>
-            <label for="in-sku" class="block text-xs font-medium text-[#A0A0A5] mb-1">SKU / Kode (Opsional)</label>
-            <input type="text" id="in-sku" placeholder="Otomatis jika kosong" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+        </div>
+        <div>
+          <label for="in-sku" class="block text-xs font-medium text-[#A0A0A5] mb-1">SKU / Kode (Opsional)</label>
+          <div class="flex gap-2">
+            <input type="text" id="in-sku" placeholder="Otomatis jika kosong" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <button type="button" onclick="applyInAutoSku()" title="Generate SKU Otomatis" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-[#32ADE6] border border-white/10 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>Auto SKU</span>
+            </button>
           </div>
         </div>
       </div>

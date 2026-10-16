@@ -57,7 +57,7 @@
 
       if (elTotalItems) elTotalItems.textContent = totalItems;
       if (elTotalStock) elTotalStock.textContent = totalStock;
-      if (elStockValue) elStockValue.textContent = formatShortRupiah(stockValue);
+      if (elStockValue) elStockValue.textContent = formatRupiahVal(stockValue);
       if (elCriticalStock) elCriticalStock.textContent = criticalProducts.length;
 
       // Render Restock List

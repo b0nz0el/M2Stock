@@ -5,7 +5,8 @@ import {
   animateNumber,
   showToast,
   focusProgrammatically,
-  exportToCSV
+  exportToCSV,
+  generateSKU
 } from '../public/assets/js/utils.js';
 
 describe('utils.js', () => {
@@ -318,6 +319,33 @@ describe('utils.js', () => {
 
       expect(template).toBe('\uFEFF"SKU","Nama Barang"');
       expect(clickSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('generateSKU', () => {
+    it('menghasilkan SKU sesuai rumus kategori(3)-brand(3)-urutan(3)', () => {
+      expect(generateSKU('Pakan', 'Lokal', 0)).toBe('PAK-LOK-001');
+      expect(generateSKU('Pakan', 'Berlian', 3)).toBe('PAK-BER-004');
+      expect(generateSKU('Vitamin', 'Lokal', 5)).toBe('VIT-LOK-006');
+      expect(generateSKU('Obat', 'Lokal', 11)).toBe('OBA-LOK-012');
+      expect(generateSKU('Filtrasi', 'Amara', 19)).toBe('FIL-AMA-020');
+      expect(generateSKU('Pompa', 'Kandila', 43)).toBe('POM-KAN-044');
+      expect(generateSKU('Pompa', 'Kandila', 46)).toBe('POM-KAN-047');
+    });
+
+    it('menangani input string idTerakhir atau string SKU sebelumnya', () => {
+      expect(generateSKU('Pakan', 'Lokal', '46')).toBe('PAK-LOK-047');
+      expect(generateSKU('Pompa', 'JIX', 'POM-JIX-038')).toBe('POM-JIX-039');
+    });
+
+    it('menggunakan fallback default UMU dan LOK jika kategori atau brand kosong', () => {
+      expect(generateSKU('', '', 0)).toBe('UMU-LOK-001');
+      expect(generateSKU(null, null, 10)).toBe('UMU-LOK-011');
+      expect(generateSKU(undefined, undefined, undefined)).toBe('UMU-LOK-001');
+    });
+
+    it('melakukan padding X untuk kode kategori atau brand yang kurang dari 3 karakter', () => {
+      expect(generateSKU('AA', 'B', 1)).toBe('AAX-BXX-002');
     });
   });
 });

@@ -261,6 +261,7 @@
       suggestionsEl.innerHTML = '';
     }
 
+    autoUpdateInSkuPlaceholder();
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     document.getElementById('in-price')?.focus();
   }
@@ -287,6 +288,14 @@
       badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
     }
 
+    const brandInput = document.getElementById('in-brand');
+    if (brandInput) brandInput.value = '';
+    const skuInput = document.getElementById('in-sku');
+    if (skuInput) {
+      skuInput.value = '';
+      skuInput.placeholder = 'Otomatis jika kosong';
+    }
+
     const newFields = document.getElementById('in-new-product-fields');
     if (newFields) newFields.classList.add('hidden');
 
@@ -294,6 +303,60 @@
     if (suggestionsEl) {
       suggestionsEl.classList.add('hidden');
       suggestionsEl.innerHTML = '';
+    }
+  }
+
+  function getLastProductSequence() {
+    let maxSeq = 0;
+    if (Array.isArray(availableProducts)) {
+      for (const p of availableProducts) {
+        if (p.id && Number(p.id) > maxSeq) {
+          maxSeq = Number(p.id);
+        }
+        if (p.sku) {
+          const match = String(p.sku).match(/(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (!isNaN(num) && num > maxSeq) {
+              maxSeq = num;
+            }
+          }
+        }
+      }
+    }
+    return maxSeq;
+  }
+
+  function getInGeneratedSku() {
+    const catSelect = document.getElementById('in-category-id');
+    const catName = catSelect && catSelect.selectedIndex >= 0 && catSelect.value ? catSelect.options[catSelect.selectedIndex].text : '';
+    const brand = document.getElementById('in-brand')?.value.trim() || '';
+    const lastId = getLastProductSequence();
+    if (typeof generateSKU === 'function') {
+      return generateSKU(catName, brand, lastId);
+    } else if (typeof window.generateSKU === 'function') {
+      return window.generateSKU(catName, brand, lastId);
+    }
+    return '';
+  }
+
+  function autoUpdateInSkuPlaceholder() {
+    const skuInput = document.getElementById('in-sku');
+    if (!skuInput) return;
+    const genSku = getInGeneratedSku();
+    if (genSku) {
+      skuInput.placeholder = `Otomatis: ${genSku}`;
+    } else {
+      skuInput.placeholder = 'Otomatis jika kosong';
+    }
+  }
+
+  function applyInAutoSku() {
+    const skuInput = document.getElementById('in-sku');
+    if (!skuInput) return;
+    const genSku = getInGeneratedSku();
+    if (genSku) {
+      skuInput.value = genSku;
     }
   }
 
@@ -436,13 +499,24 @@
         const unitId = document.getElementById('in-unit-id')?.value || 1;
         const sellPrice = Number(document.getElementById('in-sell-price')?.value || 0);
         const barcodeVal = document.getElementById('in-barcode')?.value.trim() || null;
+        const brandVal = document.getElementById('in-brand')?.value.trim() || 'Lokal';
         let skuVal = document.getElementById('in-sku')?.value.trim();
         if (!skuVal) {
-          skuVal = 'PRD-' + Date.now().toString().slice(-6);
+          const catSelect = document.getElementById('in-category-id');
+          const categoryName = (catSelect && catSelect.selectedIndex >= 0 && catSelect.value) ? catSelect.options[catSelect.selectedIndex].text : '';
+          const lastId = getLastProductSequence();
+          if (typeof generateSKU === 'function') {
+            skuVal = generateSKU(categoryName, brandVal, lastId);
+          } else if (typeof window.generateSKU === 'function') {
+            skuVal = window.generateSKU(categoryName, brandVal, lastId);
+          } else {
+            skuVal = 'PRD-' + Date.now().toString().slice(-6);
+          }
         }
 
         const createRes = await Api.items.create({
           name: productName,
+          brand: brandVal,
           sku: skuVal,
           barcode: barcodeVal,
           category_id: categoryId ? Number(categoryId) : null,
@@ -873,6 +947,9 @@
   window.selectInProduct = selectInProduct;
   window.selectNewProduct = selectNewProduct;
   window.clearInProductSelection = clearInProductSelection;
+  window.autoUpdateInSkuPlaceholder = autoUpdateInSkuPlaceholder;
+  window.applyInAutoSku = applyInAutoSku;
+  window.getLastProductSequence = getLastProductSequence;
 
   document.addEventListener('DOMContentLoaded', function () {
     setupSearchListeners();

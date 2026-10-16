@@ -484,8 +484,15 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label for="item-sku" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">SKU<span class="text-[#FF3B30]">*</span></label>
-          <input type="text" id="item-sku" required placeholder="mis. FILT-002"
-                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <div class="flex gap-2">
+            <input type="text" id="item-sku" required placeholder="mis. PAK-LOK-001"
+                   class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <button type="button" id="btn-generate-sku" onclick="autoGenerateSkuForItem()" title="Generate SKU Otomatis"
+                    class="px-3 py-2 bg-white/5 hover:bg-white/10 text-[#32ADE6] border border-white/10 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span>Auto</span>
+            </button>
+          </div>
         </div>
         <div>
           <label for="item-barcode" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Barcode Produk</label>

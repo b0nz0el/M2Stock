@@ -156,8 +156,44 @@ function exportToCSV(filename, rows, headers, options = {}) {
   return csvString;
 }
 
+/* ═══════════════════════════════════════════════
+   SKU GENERATOR
+   Format: Kategori(3)-Brand(3)-Nomor(3+)
+   Contoh: generateSKU('Pakan', 'Lokal', 46) => 'PAK-LOK-047'
+   ═══════════════════════════════════════════════ */
+function generateSKU(kategori, brand, idTerakhir) {
+  function getCode(str, defaultCode) {
+    if (!str || typeof str !== 'string') return defaultCode;
+    const clean = str.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    if (clean.length === 0) return defaultCode;
+    if (clean.length < 3) return clean.padEnd(3, 'X');
+    return clean.slice(0, 3);
+  }
+
+  const catCode = getCode(kategori, 'UMU');
+  const brandCode = getCode(brand, 'LOK');
+
+  let lastIdNum = 0;
+  if (typeof idTerakhir === 'number') {
+    lastIdNum = idTerakhir;
+  } else if (typeof idTerakhir === 'string') {
+    const match = idTerakhir.match(/(\d+)$/);
+    if (match) {
+      lastIdNum = parseInt(match[1], 10);
+    } else {
+      lastIdNum = parseInt(idTerakhir, 10) || 0;
+    }
+  }
+
+  const nextNum = Math.max(0, lastIdNum) + 1;
+  const numStr = String(nextNum).padStart(3, '0');
+
+  return `${catCode}-${brandCode}-${numStr}`;
+}
+
 if (typeof window !== 'undefined') {
   window.exportToCSV = exportToCSV;
+  window.generateSKU = generateSKU;
 }
 
 /* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */
@@ -168,6 +204,7 @@ if (typeof module !== 'undefined' && module.exports) {
     detectMultiplier,
     animateNumber,
     focusProgrammatically,
-    exportToCSV
+    exportToCSV,
+    generateSKU
   };
 }
