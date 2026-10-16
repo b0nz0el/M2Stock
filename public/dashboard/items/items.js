@@ -525,13 +525,14 @@
   let searchQuery = '';
   let selectedCategory = 'all';
   let selectedStockFilter = 'all';
+  let selectedSort = 'name-asc'; // Default: Otomatis Nama A-Z
   let currentPage = 1;
   const pageSize = 10;
   let selectedItemIds = new Set();
   let bulkPriceMode = 'nominal'; // 'nominal' | 'percent'
 
   function filterItems() {
-    return currentItems.filter(function (item) {
+    const list = currentItems.filter(function (item) {
       // 1. Search text (name, SKU, barcode, brand, category)
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -557,6 +558,27 @@
       }
       return true;
     });
+
+    // Otomatis urutkan data (default Nama A-Z)
+    list.sort(function (a, b) {
+      const nameA = (a.name || '').trim();
+      const nameB = (b.name || '').trim();
+      if (selectedSort === 'name-desc') {
+        return nameB.localeCompare(nameA, 'id', { sensitivity: 'base', numeric: true });
+      } else if (selectedSort === 'stock-asc') {
+        return (Number(a.stock) || 0) - (Number(b.stock) || 0);
+      } else if (selectedSort === 'stock-desc') {
+        return (Number(b.stock) || 0) - (Number(a.stock) || 0);
+      } else if (selectedSort === 'price-asc') {
+        return (Number(a.sell_price || a.sellPrice || a.unitPrice) || 0) - (Number(b.sell_price || b.sellPrice || b.unitPrice) || 0);
+      } else if (selectedSort === 'price-desc') {
+        return (Number(b.sell_price || b.sellPrice || b.unitPrice) || 0) - (Number(a.sell_price || a.sellPrice || a.unitPrice) || 0);
+      }
+      // Default: name-asc (A-Z)
+      return nameA.localeCompare(nameB, 'id', { sensitivity: 'base', numeric: true });
+    });
+
+    return list;
   }
 
   function renderPagination(totalFiltered) {
@@ -810,6 +832,44 @@
     renderItemsTable();
   }
 
+  function updateSortIcon() {
+    const icon = document.getElementById('sort-name-icon');
+    if (!icon) return;
+    if (selectedSort === 'name-asc') {
+      icon.setAttribute('data-lucide', 'arrow-down-a-z');
+      icon.className = 'w-3.5 h-3.5 text-[#0088CC]';
+    } else if (selectedSort === 'name-desc') {
+      icon.setAttribute('data-lucide', 'arrow-up-z-a');
+      icon.className = 'w-3.5 h-3.5 text-[#0088CC]';
+    } else {
+      icon.setAttribute('data-lucide', 'arrow-up-down');
+      icon.className = 'w-3.5 h-3.5 text-[#A0A0A5]/40';
+    }
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons();
+    }
+  }
+
+  function handleSortItems(val) {
+    selectedSort = val || 'name-asc';
+    updateSortIcon();
+    currentPage = 1;
+    renderItemsTable();
+  }
+
+  function toggleSortByName() {
+    if (selectedSort === 'name-asc') {
+      selectedSort = 'name-desc';
+    } else {
+      selectedSort = 'name-asc';
+    }
+    const sortSelect = document.getElementById('sort-items');
+    if (sortSelect) sortSelect.value = selectedSort;
+    updateSortIcon();
+    currentPage = 1;
+    renderItemsTable();
+  }
+
   function goToPage(p) {
     currentPage = p;
     renderItemsTable();
@@ -821,6 +881,7 @@
     searchQuery = '';
     selectedCategory = 'all';
     selectedStockFilter = 'all';
+    selectedSort = 'name-asc';
     currentPage = 1;
     const searchInput = document.getElementById('search-items');
     if (searchInput) searchInput.value = '';
@@ -830,6 +891,9 @@
     if (catSelect) catSelect.value = 'all';
     const stockSelect = document.getElementById('filter-stock');
     if (stockSelect) stockSelect.value = 'all';
+    const sortSelect = document.getElementById('sort-items');
+    if (sortSelect) sortSelect.value = 'name-asc';
+    updateSortIcon();
     renderItemsTable();
   }
 
@@ -1424,6 +1488,10 @@
       }
 
       currentItems = res.data || [];
+      // Urutkan default otomatis A-Z
+      currentItems.sort(function (a, b) {
+        return (a.name || '').trim().localeCompare((b.name || '').trim(), 'id', { sensitivity: 'base', numeric: true });
+      });
 
       // Update badge di sidebar & simpan di session cache
       try {
@@ -1459,10 +1527,12 @@
   window.loadItemsFromBackend = loadItemsFromBackend;
   window.autoGenerateSkuForItem = autoGenerateSkuForItem;
 
-  // Fitur Fase 4.8
+  // Fitur Fase 4.8 & Sorting
   window.handleSearchItems = handleSearchItems;
   window.handleCategoryFilter = handleCategoryFilter;
   window.handleStockFilter = handleStockFilter;
+  window.handleSortItems = handleSortItems;
+  window.toggleSortByName = toggleSortByName;
   window.goToPage = goToPage;
   window.resetFilters = resetFilters;
   window.toggleItemSelect = toggleItemSelect;

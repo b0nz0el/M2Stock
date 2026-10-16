@@ -9,10 +9,12 @@ export const items = {
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
         try {
+          const orderCol = (params && params.order) || 'name';
+          const ascending = params && typeof params.ascending === 'boolean' ? params.ascending : true;
           let query = window.supabase
             .from('products')
             .select('*, categories(name), units(name)')
-            .order('created_at', { ascending: false });
+            .order(orderCol, { ascending });
 
           if (params && params.category_id) {
             query = query.eq('category_id', Number(params.category_id));
