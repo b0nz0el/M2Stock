@@ -292,12 +292,23 @@
     </div>
 
     <form id="form-out" class="space-y-4" onsubmit="handleOutSubmit(event)">
-      <div>
-        <label for="out-product-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Pilih Produk <span class="text-[#FF3B30]">*</span></label>
-        <select id="out-product-id" required onchange="handleOutProductChange()"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
-          <option value="">-- Pilih Produk --</option>
-        </select>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-1.5">
+          <label for="out-product-search" class="block text-xs font-medium text-[#A0A0A5]">Pilih Produk <span class="text-[#FF3B30]">*</span></label>
+          <span id="out-product-badge" class="text-[11px] font-medium text-[#A0A0A5]"></span>
+        </div>
+        <div class="relative">
+          <input type="text" id="out-product-search" required autocomplete="off"
+                 placeholder="Ketik nama produk atau scan barcode..."
+                 class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+          <input type="hidden" id="out-product-id" value="">
+          <button type="button" id="out-clear-product" onclick="clearOutProductSelection()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#A0A0A5] hover:text-white bg-white/10 hover:bg-white/20 rounded-md px-2 py-0.5 transition">
+            Ganti
+          </button>
+        </div>
+        <!-- Dropdown Suggestions Container -->
+        <div id="out-product-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#1C1C1E] border border-white/15 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50 divide-y divide-white/5">
+        </div>
         <p id="out-stock-info" class="text-[11px] text-[#A0A0A5] mt-1 hidden"></p>
       </div>
 

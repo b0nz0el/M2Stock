@@ -248,6 +248,9 @@ export const items = {
     },
 
     delete: async (id, opts) => {
+      if (opts && opts.force) {
+        return items.forceDelete(id, opts);
+      }
       if (isSupabaseAvailable()) {
         try {
           // Pre-check apakah produk tercatat pada transaksi, PO, atau Retur
@@ -300,6 +303,49 @@ export const items = {
         }
       }
       return apiRequest(`/items/${id}`, { method: 'DELETE', ...opts });
+    },
+
+    forceDelete: async (id, opts) => {
+      if (isSupabaseAvailable()) {
+        try {
+          // Bersihkan data relasi terkait data uji coba
+          await Promise.all([
+            window.supabase.from('transactions').delete().eq('product_id', id),
+            window.supabase.from('purchase_order_items').delete().eq('product_id', id),
+            window.supabase.from('returns').delete().eq('produk_id', id)
+          ]);
+
+          let query = window.supabase
+            .from('products')
+            .delete()
+            .eq('id', id);
+
+          if (opts && opts.signal) {
+            query = query.abortSignal(opts.signal);
+          }
+
+          const { error } = await query;
+          if (error) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: error.code || 'SUPABASE_ERROR',
+                message: error.message || 'Gagal menghapus produk secara permanen',
+                details: error
+              }
+            });
+          }
+
+          return formatResponse({
+            ok: true,
+            data: { success: true, id },
+            meta: { message: 'Produk dan seluruh relasi berhasil dibersihkan' }
+          });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+      return apiRequest(`/items/${id}?force=true`, { method: 'DELETE', ...opts });
     },
 
     checkDeletable: async (ids, opts) => {

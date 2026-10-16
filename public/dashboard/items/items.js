@@ -393,17 +393,45 @@
     }
   }
 
-  function openDeleteItemModal(id) {
+  async function openDeleteItemModal(id) {
     const item = currentItems.find(function (i) { return String(i.id) === String(id); });
     if (!item) return;
 
     itemToDeleteId = item.id;
     document.getElementById('delete-item-name').textContent = item.name + ' (' + item.sku + ')';
+
+    const warningEl = document.getElementById('delete-item-warning');
+    const forceCheckbox = document.getElementById('check-force-delete');
+    const btnConfirm = document.getElementById('btn-confirm-delete');
+
+    if (warningEl) warningEl.classList.add('hidden');
+    if (forceCheckbox) forceCheckbox.checked = false;
+    if (btnConfirm) {
+      const span = btnConfirm.querySelector('span');
+      if (span) span.textContent = 'Hapus';
+    }
+
     const modal = document.getElementById('modal-delete');
     if (modal) {
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+
+    // Periksa apakah produk terkait dengan riwayat transaksi/PO/retur
+    try {
+      if (Api.items?.checkDeletable) {
+        const checkRes = await Api.items.checkDeletable([id]);
+        if (checkRes.ok && checkRes.data && checkRes.data.skippedIds && checkRes.data.skippedIds.includes(String(id))) {
+          if (warningEl) warningEl.classList.remove('hidden');
+          if (btnConfirm) {
+            const span = btnConfirm.querySelector('span');
+            if (span) span.textContent = 'Hapus Bersih';
+          }
+          if (typeof window.refreshIcons === 'function') window.refreshIcons();
+        }
+      }
+    } catch (_) {}
   }
 
   function closeDeleteModal() {
@@ -424,13 +452,24 @@
       return;
     }
 
+    const force = Boolean(document.getElementById('check-force-delete')?.checked);
+    const warningEl = document.getElementById('delete-item-warning');
+    const isRestricted = warningEl && !warningEl.classList.contains('hidden');
+
+    if (isRestricted && !force) {
+      if (typeof showToast === 'function') {
+        showToast('Centang konfirmasi pembersihan data terkait terlebih dahulu', 'info');
+      }
+      return;
+    }
+
     const btn = document.getElementById('btn-confirm-delete');
     const originalContent = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span>Menghapus...</span>';
 
     try {
-      const res = await Api.items.delete(itemToDeleteId);
+      const res = await Api.items.delete(itemToDeleteId, { force });
       if (!res.ok) {
         if (typeof showToast === 'function') {
           showToast(res.error?.message || 'Gagal menghapus produk dari Supabase', 'error');
@@ -442,7 +481,7 @@
 
       closeDeleteModal();
       if (typeof showToast === 'function') {
-        showToast('Produk berhasil dihapus', 'success');
+        showToast(force ? 'Produk dan data terkait berhasil dibersihkan' : 'Produk berhasil dihapus', 'success');
       }
       await loadItemsFromBackend();
     } catch (err) {

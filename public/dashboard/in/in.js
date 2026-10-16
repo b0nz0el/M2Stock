@@ -38,6 +38,20 @@
     return 'Produk #' + (tx.product_id || '-');
   }
 
+  let categoriesData = [];
+  let unitsData = [];
+  let selectedExistingProduct = null;
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   async function loadDropdowns() {
     try {
       const prodRes = await Api.items.getAll();
@@ -45,16 +59,14 @@
         availableProducts = prodRes.data || [];
         productsLoaded = true;
         const prodSelect = document.getElementById('in-product-id');
-        if (prodSelect) {
-          const currentVal = prodSelect.value;
-          prodSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
+        if (prodSelect && prodSelect.tagName === 'SELECT') {
+          prodSelect.innerHTML = '<option value="">Pilih Produk</option>';
           availableProducts.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
-            opt.textContent = `${p.name} (Stok: ${p.stock ?? 0})`;
+            opt.textContent = p.name;
             prodSelect.appendChild(opt);
           });
-          if (currentVal) prodSelect.value = currentVal;
         }
       }
 
@@ -73,20 +85,216 @@
           if (currentSupVal) supSelect.value = currentSupVal;
         }
       }
+
+      // Load categories & units for new product registration
+      if (typeof window.supabase !== 'undefined') {
+        const [catRes, unitRes] = await Promise.all([
+          window.supabase.from('categories').select('id, name').order('name'),
+          window.supabase.from('units').select('id, name').order('name')
+        ]);
+        if (catRes.data) {
+          categoriesData = catRes.data;
+          const catSel = document.getElementById('in-category-id');
+          if (catSel) {
+            catSel.innerHTML = '<option value="">Umum (Tanpa Kategori)</option>';
+            categoriesData.forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = c.id;
+              opt.textContent = c.name;
+              catSel.appendChild(opt);
+            });
+          }
+        }
+        if (unitRes.data) {
+          unitsData = unitRes.data;
+          const unitSel = document.getElementById('in-unit-id');
+          if (unitSel) {
+            unitSel.innerHTML = '';
+            unitsData.forEach(u => {
+              const opt = document.createElement('option');
+              opt.value = u.id;
+              opt.textContent = u.name;
+              unitSel.appendChild(opt);
+            });
+          }
+        }
+      }
     } catch (err) {
       console.error('Error loading dropdowns:', err);
     }
   }
 
+  function handleProductSearchInput(e) {
+    const query = (e.target.value || '').trim();
+    const suggestionsEl = document.getElementById('in-product-suggestions');
+    if (!suggestionsEl) return;
+
+    if (!query) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+      return;
+    }
+
+    const q = query.toLowerCase();
+    const matches = availableProducts.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
+    ).slice(0, 8);
+
+    let html = '';
+    matches.forEach(p => {
+      html += `
+        <button type="button" class="w-full text-left px-3.5 py-2.5 hover:bg-white/10 flex items-center justify-between text-sm transition" onclick="selectInProduct(${p.id})">
+          <div>
+            <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+            <div class="text-xs text-[#A0A0A5]">${p.sku ? escapeHtml(p.sku) + ' • ' : ''}${escapeHtml(p.category || 'Umum')}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-semibold text-[#34C759]">Stok: ${p.stock ?? 0} ${escapeHtml(p.unit || 'pcs')}</div>
+            <div class="text-[11px] text-[#A0A0A5]">${formatRupiahVal(p.cost_price || 0)}</div>
+          </div>
+        </button>
+      `;
+    });
+
+    html += `
+      <button type="button" class="w-full text-left px-3.5 py-2.5 bg-[#0088CC]/10 hover:bg-[#0088CC]/20 text-[#32ADE6] text-xs font-semibold flex items-center gap-2 transition" onclick="selectNewProduct('${escapeHtml(query)}')">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>Daftarkan "<strong>${escapeHtml(query)}</strong>" sebagai produk baru</span>
+      </button>
+    `;
+
+    suggestionsEl.innerHTML = html;
+    suggestionsEl.classList.remove('hidden');
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function selectInProduct(productId) {
+    const prod = availableProducts.find(p => String(p.id) === String(productId));
+    if (!prod) return;
+
+    selectedExistingProduct = prod;
+    const prodInput = document.getElementById('in-product-id');
+    if (prodInput) {
+      if (prodInput.tagName === 'SELECT' && !prodInput.querySelector(`option[value="${prod.id}"]`)) {
+        const opt = document.createElement('option');
+        opt.value = prod.id;
+        opt.textContent = prod.name;
+        prodInput.appendChild(opt);
+      }
+      prodInput.value = String(prod.id);
+      prodInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const searchInput = document.getElementById('in-product-search');
+    if (searchInput) {
+      searchInput.value = prod.name;
+      searchInput.readOnly = true;
+    }
+    const clearBtn = document.getElementById('in-clear-product');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const badge = document.getElementById('in-product-badge');
+    if (badge) {
+      badge.textContent = `✓ Terdaftar (Stok: ${prod.stock ?? 0} ${prod.unit || 'pcs'})`;
+      badge.className = 'text-[11px] font-medium text-[#34C759]';
+    }
+
+    const priceInput = document.getElementById('in-price');
+    if (priceInput) priceInput.value = String(prod.cost_price || 0);
+
+    const barcodeInput = document.getElementById('in-barcode');
+    if (barcodeInput && prod.barcode) barcodeInput.value = prod.barcode;
+
+    const newFields = document.getElementById('in-new-product-fields');
+    if (newFields) newFields.classList.add('hidden');
+
+    const suggestionsEl = document.getElementById('in-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+
+    calculateInTotal();
+    document.getElementById('in-qty')?.focus();
+  }
+
   function handleInProductChange() {
     const select = document.getElementById('in-product-id');
-    const pId = select.value;
+    const pId = select?.value;
     const prod = availableProducts.find(p => String(p.id) === String(pId));
     const priceInput = document.getElementById('in-price');
     if (prod && priceInput) {
-      priceInput.value = prod.cost_price || 0;
+      priceInput.value = String(prod.cost_price || 0);
     }
     calculateInTotal();
+  }
+
+  function selectNewProduct(name) {
+    selectedExistingProduct = null;
+    const prodInput = document.getElementById('in-product-id');
+    if (prodInput) {
+      prodInput.value = '';
+      prodInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const searchInput = document.getElementById('in-product-search');
+    if (searchInput) {
+      searchInput.value = name || searchInput.value;
+      searchInput.readOnly = false;
+    }
+    const clearBtn = document.getElementById('in-clear-product');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const badge = document.getElementById('in-product-badge');
+    if (badge) {
+      badge.textContent = '✨ Produk Baru (Akan didaftarkan)';
+      badge.className = 'text-[11px] font-medium text-[#32ADE6]';
+    }
+
+    const newFields = document.getElementById('in-new-product-fields');
+    if (newFields) newFields.classList.remove('hidden');
+
+    const suggestionsEl = document.getElementById('in-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    document.getElementById('in-price')?.focus();
+  }
+
+  function clearInProductSelection() {
+    selectedExistingProduct = null;
+    const prodInput = document.getElementById('in-product-id');
+    if (prodInput) {
+      prodInput.value = '';
+      prodInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const searchInput = document.getElementById('in-product-search');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.readOnly = false;
+      searchInput.focus();
+    }
+    const clearBtn = document.getElementById('in-clear-product');
+    if (clearBtn) clearBtn.classList.add('hidden');
+
+    const badge = document.getElementById('in-product-badge');
+    if (badge) {
+      badge.textContent = '';
+      badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
+    }
+
+    const newFields = document.getElementById('in-new-product-fields');
+    if (newFields) newFields.classList.add('hidden');
+
+    const suggestionsEl = document.getElementById('in-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
   }
 
   async function handleInBarcodeLookup(scannedBarcode) {
@@ -94,7 +302,7 @@
     const status = document.getElementById('in-barcode-status');
     const select = document.getElementById('in-product-id');
     const barcode = String(scannedBarcode ?? input?.value ?? '').trim();
-    if (!input || !select) return;
+    if (!input) return;
     if (!barcode) {
       if (status) status.textContent = '';
       return;
@@ -102,25 +310,30 @@
 
     input.value = barcode;
     if (!productsLoaded) await loadDropdowns();
-    if (!productsLoaded) {
-      if (status) status.textContent = 'Daftar produk belum berhasil dimuat. Periksa koneksi lalu coba lagi.';
-      if (typeof showToast === 'function') showToast('Daftar produk belum berhasil dimuat', 'error');
-      return;
-    }
 
     const product = availableProducts.find(p => String(p.barcode || '').trim() === barcode);
     if (!product) {
-      select.value = '';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-      document.getElementById('in-price').value = '0';
+      if (select) {
+        select.value = '';
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      const priceInput = document.getElementById('in-price');
+      if (priceInput) priceInput.value = '0';
       calculateInTotal();
+
+      const searchInput = document.getElementById('in-product-search');
+      if (searchInput) {
+        selectNewProduct('');
+      }
+
       if (status) status.textContent = 'Barcode tidak ditemukan. Pastikan produk dan barcode sudah terdaftar.';
-      if (typeof showToast === 'function') showToast('Produk dengan barcode tersebut tidak ditemukan', 'error');
+      if (typeof showToast === 'function') {
+        showToast('Produk dengan barcode tersebut tidak ditemukan', 'error');
+      }
       return;
     }
 
-    select.value = String(product.id);
-    select.dispatchEvent(new Event('change', { bubbles: true }));
+    selectInProduct(product.id);
     if (status) status.textContent = `Produk dipilih: ${product.name}`;
     if (typeof showToast === 'function') showToast(`Produk "${product.name}" berhasil dipilih`, 'success');
     document.getElementById('in-qty')?.focus();
@@ -139,6 +352,7 @@
   function openAddInModal() {
     const form = document.getElementById('form-in');
     if (form) form.reset();
+    clearInProductSelection();
     calculateInTotal();
     loadDropdowns();
     const modal = document.getElementById('modal-in');
@@ -147,9 +361,13 @@
       modal.classList.add('flex');
     }
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    setTimeout(() => {
+      document.getElementById('in-product-search')?.focus();
+    }, 50);
   }
 
   function closeInModal() {
+    clearInProductSelection();
     const modal = document.getElementById('modal-in');
     if (modal) {
       modal.classList.add('hidden');
@@ -183,14 +401,16 @@
       alert('Anda tidak punya akses untuk mengubah data.');
       return;
     }
-    const productId = document.getElementById('in-product-id').value;
+    let productId = document.getElementById('in-product-id').value;
+    const productName = document.getElementById('in-product-search')?.value.trim() || '';
     const supplierId = document.getElementById('in-supplier-id').value;
     const qty = Number(document.getElementById('in-qty').value);
     const price = Number(document.getElementById('in-price').value);
     const note = document.getElementById('in-note').value.trim();
 
-    if (!productId) {
-      if (typeof showToast === 'function') showToast('Pilih produk terlebih dahulu', 'error');
+    if (!productName) {
+      if (typeof showToast === 'function') showToast('Masukkan nama produk terlebih dahulu', 'error');
+      document.getElementById('in-product-search')?.focus();
       return;
     }
     if (!qty || qty <= 0) {
@@ -208,6 +428,36 @@
       if (typeof window.Auth !== 'undefined') {
         const user = await window.Auth.getCurrentUser();
         currentUserId = user?.id || null;
+      }
+
+      // Jika belum ada productId, berarti ini PRODUK BARU!
+      if (!productId) {
+        const categoryId = document.getElementById('in-category-id')?.value || null;
+        const unitId = document.getElementById('in-unit-id')?.value || 1;
+        const sellPrice = Number(document.getElementById('in-sell-price')?.value || 0);
+        const barcodeVal = document.getElementById('in-barcode')?.value.trim() || null;
+        let skuVal = document.getElementById('in-sku')?.value.trim();
+        if (!skuVal) {
+          skuVal = 'PRD-' + Date.now().toString().slice(-6);
+        }
+
+        const createRes = await Api.items.create({
+          name: productName,
+          sku: skuVal,
+          barcode: barcodeVal,
+          category_id: categoryId ? Number(categoryId) : null,
+          unit_id: Number(unitId),
+          cost_price: price,
+          sell_price: sellPrice,
+          stock: 0,
+          min_stock: 3
+        });
+
+        if (!createRes.ok || !createRes.data) {
+          throw new Error(createRes.error?.message || 'Gagal mendaftarkan produk baru');
+        }
+
+        productId = createRes.data.id;
       }
 
       const res = await Api.transactions.createIn({
@@ -609,10 +859,36 @@
     }
   }
 
+  // Window exports for product selection, modal management, and testing
+  window.loadDropdowns = loadDropdowns;
+  window.handleInBarcodeLookup = handleInBarcodeLookup;
+  window.handleInProductChange = handleInProductChange;
+  window.handleInSubmit = handleInSubmit;
+  window.openAddInModal = openAddInModal;
+  window.closeInModal = closeInModal;
+  window.openDeleteInModal = openDeleteInModal;
+  window.closeDeleteInModal = closeDeleteInModal;
+  window.confirmDeleteIn = confirmDeleteIn;
+  window.calculateInTotal = calculateInTotal;
+  window.selectInProduct = selectInProduct;
+  window.selectNewProduct = selectNewProduct;
+  window.clearInProductSelection = clearInProductSelection;
+
   document.addEventListener('DOMContentLoaded', function () {
     setupSearchListeners();
     loadInTransactions();
     loadDropdowns();
+
+    const searchInput = document.getElementById('in-product-search');
+    searchInput?.addEventListener('input', handleProductSearchInput);
+
+    document.addEventListener('click', function (e) {
+      const suggestionsEl = document.getElementById('in-product-suggestions');
+      const input = document.getElementById('in-product-search');
+      if (suggestionsEl && !suggestionsEl.contains(e.target) && e.target !== input) {
+        suggestionsEl.classList.add('hidden');
+      }
+    });
 
     document.getElementById('in-tbody')?.addEventListener('click', function (event) {
       const button = event.target.closest('[data-transaction-id]');

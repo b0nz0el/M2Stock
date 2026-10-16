@@ -86,29 +86,139 @@
     }
   }
 
-  function handleOutProductChange() {
-    const select = document.getElementById('out-product-id');
-    const pId = select.value;
-    const prod = availableProducts.find(p => String(p.id) === String(pId));
-    const priceInput = document.getElementById('out-price');
-    const stockInfo = document.getElementById('out-stock-info');
-    const qtyInput = document.getElementById('out-qty');
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-    if (prod) {
-      if (priceInput) priceInput.value = prod.sell_price || 0;
-      if (stockInfo) {
-        const stock = prod.stock ?? 0;
-        stockInfo.textContent = `Sisa stok tersedia: ${stock} unit`;
-        stockInfo.className = `text-[11px] mt-1 ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30] font-semibold'}`;
-        stockInfo.classList.remove('hidden');
-      }
-      if (qtyInput) {
-        qtyInput.max = prod.stock ?? 0;
-      }
-    } else {
-      if (stockInfo) stockInfo.classList.add('hidden');
+  function handleOutProductSearchInput(e) {
+    const query = (e.target.value || '').trim();
+    const suggestionsEl = document.getElementById('out-product-suggestions');
+    if (!suggestionsEl) return;
+
+    if (!query) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+      return;
     }
+
+    const q = query.toLowerCase();
+    const matches = availableProducts.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
+    ).slice(0, 8);
+
+    if (matches.length === 0) {
+      suggestionsEl.innerHTML = `
+        <div class="px-3.5 py-3 text-xs text-[#A0A0A5] text-center">
+          Produk tidak ditemukan di katalog
+        </div>
+      `;
+      suggestionsEl.classList.remove('hidden');
+      return;
+    }
+
+    let html = '';
+    matches.forEach(p => {
+      const stock = p.stock ?? 0;
+      html += `
+        <button type="button" class="w-full text-left px-3.5 py-2.5 hover:bg-white/10 flex items-center justify-between text-sm transition" onclick="selectOutProduct(${p.id})">
+          <div>
+            <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+            <div class="text-xs text-[#A0A0A5]">${p.sku ? escapeHtml(p.sku) + ' • ' : ''}${escapeHtml(p.category || 'Umum')}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-semibold ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}">Stok: ${stock} ${escapeHtml(p.unit || 'pcs')}</div>
+            <div class="text-[11px] text-[#A0A0A5]">${formatRupiahVal(p.sell_price || 0)}</div>
+          </div>
+        </button>
+      `;
+    });
+
+    suggestionsEl.innerHTML = html;
+    suggestionsEl.classList.remove('hidden');
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function selectOutProduct(productId) {
+    const prod = availableProducts.find(p => String(p.id) === String(productId));
+    if (!prod) return;
+
+    document.getElementById('out-product-id').value = prod.id;
+    const searchInput = document.getElementById('out-product-search');
+    if (searchInput) {
+      searchInput.value = prod.name;
+      searchInput.readOnly = true;
+    }
+    const clearBtn = document.getElementById('out-clear-product');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const badge = document.getElementById('out-product-badge');
+    const stock = prod.stock ?? 0;
+    if (badge) {
+      badge.textContent = `Stok: ${stock} ${prod.unit || 'pcs'}`;
+      badge.className = `text-[11px] font-medium ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}`;
+    }
+
+    const priceInput = document.getElementById('out-price');
+    if (priceInput) priceInput.value = prod.sell_price || 0;
+
+    const stockInfo = document.getElementById('out-stock-info');
+    if (stockInfo) {
+      stockInfo.textContent = `Sisa stok tersedia: ${stock} ${prod.unit || 'pcs'}`;
+      stockInfo.className = `text-[11px] mt-1 ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30] font-semibold'}`;
+      stockInfo.classList.remove('hidden');
+    }
+
+    const qtyInput = document.getElementById('out-qty');
+    if (qtyInput) qtyInput.max = stock;
+
+    const suggestionsEl = document.getElementById('out-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+
     calculateOutTotal();
+    document.getElementById('out-qty')?.focus();
+  }
+
+  function clearOutProductSelection() {
+    document.getElementById('out-product-id').value = '';
+    const searchInput = document.getElementById('out-product-search');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.readOnly = false;
+      searchInput.focus();
+    }
+    const clearBtn = document.getElementById('out-clear-product');
+    if (clearBtn) clearBtn.classList.add('hidden');
+
+    const badge = document.getElementById('out-product-badge');
+    if (badge) {
+      badge.textContent = '';
+      badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
+    }
+
+    const stockInfo = document.getElementById('out-stock-info');
+    if (stockInfo) stockInfo.classList.add('hidden');
+
+    const suggestionsEl = document.getElementById('out-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+  }
+
+  function handleOutProductChange() {
+    const pId = document.getElementById('out-product-id')?.value;
+    if (pId) selectOutProduct(pId);
   }
 
   function calculateOutTotal() {
@@ -124,6 +234,7 @@
   function openAddOutModal() {
     const form = document.getElementById('form-out');
     if (form) form.reset();
+    clearOutProductSelection();
     const photoData = document.getElementById('out-photo-data');
     if (photoData) photoData.value = '';
     const photoPreview = document.getElementById('photo-preview');
@@ -140,9 +251,13 @@
       modal.classList.add('flex');
     }
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    setTimeout(() => {
+      document.getElementById('out-product-search')?.focus();
+    }, 50);
   }
 
   function closeOutModal() {
+    clearOutProductSelection();
     const photoData = document.getElementById('out-photo-data');
     if (photoData) photoData.value = '';
     const photoPreview = document.getElementById('photo-preview');
@@ -1445,7 +1560,21 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+window.selectOutProduct = selectOutProduct;
+window.clearOutProductSelection = clearOutProductSelection;
+
 document.addEventListener('DOMContentLoaded', () => {
+  const outSearchInput = document.getElementById('out-product-search');
+  outSearchInput?.addEventListener('input', handleOutProductSearchInput);
+
+  document.addEventListener('click', (e) => {
+    const suggestionsEl = document.getElementById('out-product-suggestions');
+    const input = document.getElementById('out-product-search');
+    if (suggestionsEl && !suggestionsEl.contains(e.target) && e.target !== input) {
+      suggestionsEl.classList.add('hidden');
+    }
+  });
+
   document.getElementById('btn-scan-barcode')?.addEventListener('click', startWebBarcodeScan);
   document.getElementById('btn-take-photo')?.addEventListener('click', takePhotoCapture);
   document.getElementById('btn-remove-photo')?.addEventListener('click', () => {
