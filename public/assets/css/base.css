@@ -22,6 +22,22 @@ body {
   overflow-x: hidden;
 }
 
+/* ═══ TABULAR NUMS (Linear / MD3 standard for currencies & stock) ═══ */
+.tabular-nums,
+[data-tabular-nums],
+.font-tabular,
+td.text-right,
+th.text-right,
+.price-value,
+.currency-value,
+.stock-val,
+.cart-total,
+.tabular {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum" 1;
+  font-feature-settings: "tnum" 1;
+}
+
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

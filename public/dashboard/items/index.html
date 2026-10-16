@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>aQuaStock Pro - Barang</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0088CC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="aQuaStock Pro">
+<link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png">
 
 
 <!-- Auth guard (redirect jika belum login) -->
@@ -155,13 +161,33 @@
             </tr>
           </thead>
           <tbody id="items-tbody">
-            <tr>
-              <td colspan="12" class="px-4 py-8 text-center text-[#A0A0A5]">
-                <div class="flex items-center justify-center gap-2">
-                  <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-[#0088CC]" aria-hidden="true"></i>
-                  <span>Memuat data barang...</span>
-                </div>
-              </td>
+            <tr class="animate-pulse border-b border-white/[0.03]">
+              <td class="px-4 py-3"><div class="w-4 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-8 h-8 bg-white/5 rounded-lg skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-36 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-16 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-20 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-20 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-16 h-4 bg-white/5 rounded-full skeleton"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-10 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-16 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-16 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-10 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3"><div class="w-14 h-7 bg-white/5 rounded-lg skeleton ml-auto"></div></td>
+            </tr>
+            <tr class="animate-pulse border-b border-white/[0.03]">
+              <td class="px-4 py-3"><div class="w-4 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-8 h-8 bg-white/5 rounded-lg skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-44 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-16 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-20 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-20 h-4 bg-white/5 rounded skeleton"></div></td>
+              <td class="px-4 py-3"><div class="w-20 h-4 bg-white/5 rounded-full skeleton"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-12 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-16 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-16 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3 text-right"><div class="w-10 h-4 bg-white/5 rounded skeleton ml-auto"></div></td>
+              <td class="px-4 py-3"><div class="w-14 h-7 bg-white/5 rounded-lg skeleton ml-auto"></div></td>
             </tr>
           </tbody>
         </table>

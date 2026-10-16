@@ -52,6 +52,7 @@
       const prodRes = await Api.items.getAll();
       if (prodRes && prodRes.ok) {
         availableProducts = prodRes.data || [];
+        renderPosCatalogGrid();
         const prodSelect = document.getElementById('out-product-id');
         if (prodSelect) {
           const currentVal = prodSelect.value;
@@ -262,19 +263,87 @@
     renderPosCart();
   }
 
+  let posCurrentCategory = 'all';
+
+  function filterPosCategory(category) {
+    posCurrentCategory = category;
+    document.querySelectorAll('.pos-category-chip').forEach(btn => {
+      if (btn.getAttribute('data-category') === category) {
+        btn.classList.add('bg-[#0088CC]', 'text-white', 'border-[#0088CC]');
+        btn.classList.remove('bg-white/5', 'text-[#A0A0A5]', 'border-white/10');
+      } else {
+        btn.classList.remove('bg-[#0088CC]', 'text-white', 'border-[#0088CC]');
+        btn.classList.add('bg-white/5', 'text-[#A0A0A5]', 'border-white/10');
+      }
+    });
+    renderPosCatalogGrid();
+  }
+
+  function renderPosCatalogGrid() {
+    const gridEl = document.getElementById('pos-catalog-grid');
+    if (!gridEl) return;
+
+    let prods = availableProducts || [];
+    if (posCurrentCategory !== 'all') {
+      prods = prods.filter(p => {
+        const cat = (p.categories?.name || p.category_name || p.category || '').toLowerCase();
+        return cat.includes(posCurrentCategory.toLowerCase());
+      });
+    }
+
+    if (prods.length === 0) {
+      gridEl.innerHTML = `
+        <div class="col-span-full py-6 text-center text-[#A0A0A5] text-xs">
+          Tidak ada produk dalam kategori ini.
+        </div>
+      `;
+      return;
+    }
+
+    gridEl.innerHTML = prods.slice(0, 36).map(p => {
+      const stock = Number(p.stock ?? 0);
+      const isOutOfStock = stock <= 0;
+      return `
+        <button type="button" onclick="addToPosCart(availableProducts.find(x => String(x.id) === '${p.id}'))"
+                class="group text-left p-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-[#0088CC]/50 transition flex flex-col justify-between h-20 relative overflow-hidden focus:outline-none focus:ring-1 focus:ring-[#0088CC]">
+          <div>
+            <div class="font-semibold text-xs text-white group-hover:text-[#32ADE6] line-clamp-1 leading-tight transition">${escapeHtml(p.name)}</div>
+            <div class="text-[10px] text-[#A0A0A5] mt-0.5 truncate">${escapeHtml(p.sku || '')}</div>
+          </div>
+          <div class="flex items-center justify-between mt-1">
+            <span class="text-xs font-bold text-[#34C759]">${formatRupiahVal(p.sell_price)}</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${!isOutOfStock ? 'bg-[#34C759]/15 text-[#34C759]' : 'bg-[#FF3B30]/15 text-[#FF3B30]'}">
+              ${stock} ${escapeHtml(p.unit || 'pcs')}
+            </span>
+          </div>
+        </button>
+      `;
+    }).join('');
+  }
+
   function calculatePosTotal() {
-    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const rawSubtotal = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
     const totalUnits = posCart.reduce((sum, it) => sum + it.qty, 0);
 
+    const discountInput = document.getElementById('pos-discount-input');
+    const discountVal = discountInput ? Math.max(0, Number(discountInput.value) || 0) : 0;
+
+    const taxToggle = document.getElementById('pos-tax-toggle');
+    const hasTax = taxToggle ? taxToggle.checked : false;
+
+    const afterDiscount = Math.max(0, rawSubtotal - discountVal);
+    const taxAmount = hasTax ? Math.round(afterDiscount * 0.11) : 0;
+    const finalTotal = afterDiscount + taxAmount;
+
     const preview = document.getElementById('out-total-preview');
-    if (preview) preview.textContent = formatRupiahVal(totalAmount);
+    if (preview) preview.textContent = formatRupiahVal(finalTotal);
 
     const badge = document.getElementById('pos-items-count-badge');
     if (badge) badge.textContent = `${posCart.length} Item (${totalUnits} Unit)`;
 
     // Keep hidden inputs in sync for backward compatibility
     const hiddenPrice = document.getElementById('out-price');
-    if (hiddenPrice) hiddenPrice.value = totalAmount;
+    if (hiddenPrice) hiddenPrice.value = finalTotal;
     const hiddenQty = document.getElementById('out-qty');
     if (hiddenQty) hiddenQty.value = totalUnits;
     if (posCart.length > 0) {
@@ -299,7 +368,15 @@
   }
 
   function calculatePosChange() {
-    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const rawSubtotal = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const discountInput = document.getElementById('pos-discount-input');
+    const discountVal = discountInput ? Math.max(0, Number(discountInput.value) || 0) : 0;
+    const taxToggle = document.getElementById('pos-tax-toggle');
+    const hasTax = taxToggle ? taxToggle.checked : false;
+    const afterDiscount = Math.max(0, rawSubtotal - discountVal);
+    const taxAmount = hasTax ? Math.round(afterDiscount * 0.11) : 0;
+    const totalAmount = afterDiscount + taxAmount;
+
     const method = document.getElementById('out-payment-method')?.value || 'Cash';
     const cashInput = document.getElementById('pos-cash-input');
     const preview = document.getElementById('pos-change-preview');
@@ -330,7 +407,15 @@
   }
 
   function quickSetPosCash(typeOrAmount) {
-    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const rawSubtotal = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const discountInput = document.getElementById('pos-discount-input');
+    const discountVal = discountInput ? Math.max(0, Number(discountInput.value) || 0) : 0;
+    const taxToggle = document.getElementById('pos-tax-toggle');
+    const hasTax = taxToggle ? taxToggle.checked : false;
+    const afterDiscount = Math.max(0, rawSubtotal - discountVal);
+    const taxAmount = hasTax ? Math.round(afterDiscount * 0.11) : 0;
+    const totalAmount = afterDiscount + taxAmount;
+
     const cashInput = document.getElementById('pos-cash-input');
     if (!cashInput) return;
 
@@ -430,6 +515,7 @@
     handlePosPaymentMethodChange();
     calculatePosTotal();
     loadDropdowns();
+    renderPosCatalogGrid();
 
     const modal = document.getElementById('modal-out');
     if (modal) {
@@ -1871,6 +1957,8 @@ window.handlePosPaymentMethodChange = handlePosPaymentMethodChange;
 window.openAddOutModal = openAddOutModal;
 window.closeOutModal = closeOutModal;
 window.handleOutSubmit = handleOutSubmit;
+window.filterPosCategory = filterPosCategory;
+window.renderPosCatalogGrid = renderPosCatalogGrid;
 
 document.addEventListener('DOMContentLoaded', () => {
   const outSearchInput = document.getElementById('out-product-search');

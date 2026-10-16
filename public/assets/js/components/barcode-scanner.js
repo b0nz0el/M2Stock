@@ -99,11 +99,36 @@
     }
   }
 
+  function playScanFeedback() {
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(100);
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+      }
+    } catch (_) {}
+  }
+
+  window.playScanFeedback = playScanFeedback;
+
   async function finishScan(modal, value, onScan) {
     if (scanInProgress || !modal.isConnected) return;
     const barcode = String(value || '').trim();
     if (!barcode) return;
     scanInProgress = true;
+    playScanFeedback();
     await stopScanner(modal);
     onScan(barcode);
   }
@@ -212,6 +237,76 @@
       showToast(message, 'error');
     }
   }
+
+  // ═══════════════════════════════════════════════
+  // HARDWARE USB / BLUETOOTH RAPID KEYSTROKE SCANNER
+  // ═══════════════════════════════════════════════
+  let buffer = '';
+  let lastKeyTime = 0;
+  const SCANNER_INTERVAL_MS = 50;
+  const MIN_BARCODE_LENGTH = 8;
+
+  function dispatchGlobalBarcodeScan(code) {
+    if (!code) return;
+    window.dispatchEvent(new CustomEvent('barcode:scanned', { detail: { barcode: code }, bubbles: true }));
+
+    const path = window.location.pathname;
+    if (path.includes('/dashboard/out')) {
+      if (typeof window.handleBarcodeDetected === 'function') {
+        window.handleBarcodeDetected(code);
+      } else if (typeof window.addToPosCart === 'function' && Array.isArray(window.availableProducts)) {
+        const found = window.availableProducts.find(p => p.barcode === code || p.sku === code);
+        if (found) window.addToPosCart(found);
+      }
+    } else if (path.includes('/dashboard/in')) {
+      if (typeof window.handleInBarcodeDetected === 'function') {
+        window.handleInBarcodeDetected(code);
+      }
+    } else if (path.includes('/dashboard/items')) {
+      const searchInput = document.getElementById('search-item');
+      if (searchInput) {
+        searchInput.value = code;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  }
+
+  window.dispatchGlobalBarcodeScan = dispatchGlobalBarcodeScan;
+
+  document.addEventListener('keydown', function (event) {
+    const activeEl = document.activeElement;
+    const isRegularInput = activeEl && (
+      (activeEl.tagName === 'INPUT' && !activeEl.id.includes('barcode') && !activeEl.id.includes('search')) ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.isContentEditable
+    );
+
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastKeyTime;
+    lastKeyTime = currentTime;
+
+    if (event.key === 'Enter') {
+      if (buffer.length >= MIN_BARCODE_LENGTH) {
+        const scannedCode = buffer.trim();
+        buffer = '';
+        if (scannedCode) {
+          event.preventDefault();
+          playScanFeedback();
+          dispatchGlobalBarcodeScan(scannedCode);
+        }
+      } else {
+        buffer = '';
+      }
+      return;
+    }
+
+    if (event.key && event.key.length === 1) {
+      if (timeDiff > SCANNER_INTERVAL_MS && buffer.length > 0) {
+        buffer = '';
+      }
+      buffer += event.key;
+    }
+  }, true);
 
   window.openItemBarcodeScanner = openBarcodeScanner;
 })();

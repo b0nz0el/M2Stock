@@ -66,6 +66,32 @@
   font-weight: 600;
   letter-spacing: 0.2px;
 }
+.badge-pill,
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ═══ BOTTOM SHEET / MOBILE SLIDE-UP MODAL ═══ */
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bottom-sheet-dialog {
+  animation: slideUpSheet 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 .btn {
   transition: all 0.15s;
   font-weight: 600;
@@ -509,6 +535,42 @@ tbody tr:nth-child(5) {
   height: 3px;
   background: #0088cc;
   border-radius: 0 0 3px 3px;
+}
+
+/* ═══ PROMINENT CENTRAL FAB (SCAN/OUT POS) ═══ */
+.bottom-nav-item[data-tab="out"] {
+  position: relative;
+  top: -10px;
+  background: linear-gradient(135deg, #0088CC, #006699);
+  color: #FFFFFF !important;
+  border-radius: 9999px;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  box-shadow: 0 8px 24px rgba(0, 136, 204, 0.5);
+  border: 3px solid #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 0 6px;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+}
+.bottom-nav-item[data-tab="out"]:active {
+  transform: scale(0.92);
+}
+.bottom-nav-item[data-tab="out"] svg,
+.bottom-nav-item[data-tab="out"] [data-lucide] {
+  width: 24px !important;
+  height: 24px !important;
+  color: #FFFFFF !important;
+}
+.bottom-nav-item[data-tab="out"] span {
+  display: none !important;
+}
+.bottom-nav-item[data-tab="out"].active::before {
+  display: none !important;
 }
 
 /* ═══ FLOATING BULK ACTION BAR ═══ */

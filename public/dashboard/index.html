@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>aQuaStock Pro - Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="../assets/images/logo.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0088CC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="aQuaStock Pro">
+<link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png">
 
 
 <!-- Auth guard (redirect jika belum login) -->
@@ -177,7 +183,20 @@
             Top 5 Terlaris
           </h3>
           <div id="top-products-list" class="space-y-3.5">
-            <p class="text-xs text-[#A0A0A5] py-4 text-center">Memuat data produk terlaris...</p>
+            <div class="space-y-3 animate-pulse">
+              <div class="flex items-center justify-between">
+                <div class="h-4 bg-white/5 rounded-full w-3/5 skeleton"></div>
+                <div class="h-4 bg-white/5 rounded-full w-1/5 skeleton"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="h-4 bg-white/5 rounded-full w-1/2 skeleton"></div>
+                <div class="h-4 bg-white/5 rounded-full w-1/5 skeleton"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="h-4 bg-white/5 rounded-full w-2/3 skeleton"></div>
+                <div class="h-4 bg-white/5 rounded-full w-1/5 skeleton"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -194,7 +213,10 @@
             </a>
           </div>
           <div id="restock-list" class="space-y-3">
-            <p class="text-xs text-[#A0A0A5] py-4 text-center">Memuat data stok...</p>
+            <div class="space-y-2.5 animate-pulse">
+              <div class="h-4 bg-white/5 rounded-full w-4/5 skeleton"></div>
+              <div class="h-4 bg-white/5 rounded-full w-3/5 skeleton"></div>
+            </div>
           </div>
         </div>
 
@@ -236,8 +258,21 @@
             </tr>
           </thead>
           <tbody id="recent-transactions-tbody">
-            <tr class="table-row">
-              <td colspan="6" class="px-5 py-8 text-center text-[#A0A0A5]">Memuat riwayat transaksi...</td>
+            <tr class="table-row animate-pulse">
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-20"></div></td>
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-36"></div></td>
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-16"></div></td>
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-20"></div></td>
+              <td class="px-5 py-4 text-right"><div class="h-3.5 bg-white/5 rounded skeleton w-12 ml-auto"></div></td>
+              <td class="px-5 py-4 text-right"><div class="h-3.5 bg-white/5 rounded skeleton w-24 ml-auto"></div></td>
+            </tr>
+            <tr class="table-row animate-pulse">
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-24"></div></td>
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-32"></div></td>
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-16"></div></td>
+              <td class="px-5 py-4"><div class="h-3.5 bg-white/5 rounded skeleton w-16"></div></td>
+              <td class="px-5 py-4 text-right"><div class="h-3.5 bg-white/5 rounded skeleton w-12 ml-auto"></div></td>
+              <td class="px-5 py-4 text-right"><div class="h-3.5 bg-white/5 rounded skeleton w-24 ml-auto"></div></td>
             </tr>
           </tbody>
         </table>

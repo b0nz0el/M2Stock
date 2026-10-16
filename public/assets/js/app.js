@@ -264,3 +264,59 @@ console.info('aQuaStock Pro v3.0 — Fully Responsive');
     console.warn('[Welcome] Failed to load name:', err.message);
   }
 })();
+
+/* ═══ Command Palette (⌘K / Ctrl+K) ═══ */
+(function loadCommandPalette() {
+  if (typeof document === 'undefined' || document.getElementById('command-palette-script')) return;
+  const script = document.createElement('script');
+  script.id = 'command-palette-script';
+  script.src = '/assets/js/components/command-palette.js';
+  script.defer = true;
+  document.head.appendChild(script);
+})();
+
+/* ═══ Zero Native Alert / Modern Toast Interceptor ═══ */
+if (typeof window !== 'undefined') {
+  window.alert = function (message) {
+    if (typeof showToast === 'function') {
+      showToast(message, 'info');
+    } else {
+      console.warn('[Alert]', message);
+    }
+  };
+}
+
+/* ═══ Offline Sync Engine Loader ═══ */
+(function loadOfflineSync() {
+  if (typeof document === 'undefined' || document.getElementById('offline-sync-script')) return;
+  const script = document.createElement('script');
+  script.id = 'offline-sync-script';
+  script.src = '/assets/js/utils/offline-sync.js';
+  script.defer = true;
+  document.head.appendChild(script);
+})();
+
+/* ═══ PWA Service Worker Registration ═══ */
+(function registerPwaServiceWorker() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (typeof showToast === 'function') {
+                showToast('Versi baru aplikasi tersedia. Muat ulang untuk memperbarui.', 'info');
+              }
+            }
+          });
+        }
+      });
+    }).catch((err) => {
+      console.warn('[PWA] SW registration failed:', err);
+    });
+  });
+})();
+
+
