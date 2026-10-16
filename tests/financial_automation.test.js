@@ -67,8 +67,8 @@ describe('Financial Automation Integration (Fase A)', () => {
       expect(insert).toHaveBeenCalledWith([expect.objectContaining({
         type: 'out',
         product_id: 10,
-        quantity: 5,
-        unit_price: 25000,
+        qty: 5,
+        price: 25000,
         payment_method: 'Cash',
         payment_status: 'Lunas'
       })]);

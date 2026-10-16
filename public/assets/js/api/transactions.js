@@ -6,12 +6,22 @@
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
 
 function mapTransaction(row) {
+  const qty = Number(row.qty ?? row.quantity) || 0;
+  const price = Number(row.price ?? row.unit_price) || 0;
+  const note = row.note ?? row.notes ?? null;
+  const created_by = row.created_by ?? row.user_id ?? null;
+
   return {
     ...row,
-    qty: Number(row.quantity ?? row.qty) || 0,
-    price: Number(row.unit_price ?? row.price) || 0,
-    note: row.notes ?? row.note ?? null,
-    created_by: row.user_id ?? row.created_by ?? null,
+    qty,
+    quantity: qty,
+    price,
+    unit_price: price,
+    total_price: Number(row.total_price) || (qty * price),
+    note,
+    notes: note,
+    created_by,
+    user_id: created_by,
     channel: row.channel || 'Offline',
     payment_method: row.payment_method || 'Cash',
     payment_status: row.payment_status || 'Lunas'
@@ -134,36 +144,87 @@ export const transactions = {
             });
           }
 
-          const row = {
+          const productId = isNaN(Number(data.product_id)) ? data.product_id : Number(data.product_id);
+          const customerId = data.customer_id ? (isNaN(Number(data.customer_id)) ? data.customer_id : Number(data.customer_id)) : null;
+          const supplierId = data.supplier_id ? (isNaN(Number(data.supplier_id)) ? data.supplier_id : Number(data.supplier_id)) : null;
+
+          // Universal schema compatibility: primary row targets the live schema (qty, price, note, created_by)
+          const baseRow = {
             type: data.type,
-            product_id: data.product_id,
-            quantity,
-            unit_price: unitPrice,
-            total_price: quantity * unitPrice,
-            customer_id: data.customer_id || null,
-            supplier_id: data.supplier_id || null,
+            product_id: productId,
+            qty: quantity,
+            price: unitPrice,
+            customer_id: customerId,
+            supplier_id: supplierId,
             channel: data.channel || 'Offline',
-            notes: data.note ?? data.notes ?? null,
-            user_id: userId
+            note: data.note ?? data.notes ?? null,
+            created_by: userId
           };
 
           if (data.payment_method) {
-            row.payment_method = data.payment_method;
+            baseRow.payment_method = data.payment_method;
           }
           if (data.payment_status) {
-            row.payment_status = data.payment_status;
+            baseRow.payment_status = data.payment_status;
+          }
+          if (data.cash_flow_id) {
+            baseRow.cash_flow_id = data.cash_flow_id;
+          }
+          if (data.debt_id) {
+            baseRow.debt_id = data.debt_id;
+          }
+          if (data.po_id) {
+            baseRow.po_id = data.po_id;
+          }
+          if (data.return_id) {
+            baseRow.return_id = data.return_id;
           }
 
           let query = window.supabase
             .from('transactions')
-            .insert([row])
+            .insert([baseRow])
             .select('*, products(id, name, sku, brand, stock), suppliers(id, name), customers(id, name)');
 
           if (opts && opts.signal) {
             query = query.abortSignal(opts.signal);
           }
 
-          const { data: inserted, error } = await query;
+          let { data: inserted, error } = await query;
+
+          // If the schema expects modern column names (quantity, unit_price, notes, user_id, total_price)
+          if (error && error.code === 'PGRST204') {
+            const modernRow = {
+              type: data.type,
+              product_id: productId,
+              quantity,
+              unit_price: unitPrice,
+              total_price: quantity * unitPrice,
+              customer_id: customerId,
+              supplier_id: supplierId,
+              channel: data.channel || 'Offline',
+              notes: data.note ?? data.notes ?? null,
+              user_id: userId
+            };
+            if (data.payment_method) modernRow.payment_method = data.payment_method;
+            if (data.payment_status) modernRow.payment_status = data.payment_status;
+            if (data.cash_flow_id) modernRow.cash_flow_id = data.cash_flow_id;
+            if (data.debt_id) modernRow.debt_id = data.debt_id;
+            if (data.po_id) modernRow.po_id = data.po_id;
+            if (data.return_id) modernRow.return_id = data.return_id;
+
+            let retryQuery = window.supabase
+              .from('transactions')
+              .insert([modernRow])
+              .select('*, products(id, name, sku, brand, stock), suppliers(id, name), customers(id, name)');
+
+            if (opts && opts.signal) {
+              retryQuery = retryQuery.abortSignal(opts.signal);
+            }
+            const retryRes = await retryQuery;
+            inserted = retryRes.data;
+            error = retryRes.error;
+          }
+
           if (error) {
             return formatResponse({
               ok: false,
@@ -190,10 +251,11 @@ export const transactions = {
     delete: async (id, opts) => {
       if (isSupabaseAvailable()) {
         try {
+          const targetId = isNaN(Number(id)) ? id : Number(id);
           let query = window.supabase
             .from('transactions')
             .delete()
-            .eq('id', id);
+            .eq('id', targetId);
 
           if (opts && opts.signal) {
             query = query.abortSignal(opts.signal);
