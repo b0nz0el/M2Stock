@@ -286,7 +286,7 @@
       <li>Baris ${escapeHtml(error.row)}: ${escapeHtml(error.message)}</li>`).join('');
     const summary = errors.length
       ? `${records.length} baris ditemukan, ${errors.length} masalah. Tidak ada data yang akan disimpan.`
-      : `${records.length} baris siap diimpor. Periksa pratinjau sebelum melanjutkan.`;
+      : `${records.length} baris siap diimpor & disinkronkan. Periksa pratinjau sebelum melanjutkan.`;
 
     modal.innerHTML = `
       <section class="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-[#1C1C1E] shadow-2xl flex flex-col" role="dialog" aria-modal="true" aria-labelledby="csv-import-title">
@@ -322,7 +322,7 @@
           </button>
           <div class="ml-auto flex gap-2">
             <button type="button" data-close-import class="rounded-lg bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10">Batal</button>
-            <button type="button" data-confirm-import ${errors.length || !records.length ? 'disabled' : ''} class="rounded-lg bg-[#0088CC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0077BB] disabled:cursor-not-allowed disabled:opacity-40">Import ${records.length} baris</button>
+            <button type="button" data-confirm-import ${errors.length || !records.length ? 'disabled' : ''} class="rounded-lg bg-[#0088CC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0077BB] disabled:cursor-not-allowed disabled:opacity-40">Import / Sinkronkan ${records.length} baris</button>
           </div>
         </footer>
       </section>`;
@@ -343,14 +343,14 @@
     confirmButton.addEventListener('click', async () => {
       if (confirmButton.disabled) return;
       confirmButton.disabled = true;
-      confirmButton.textContent = 'Mengimpor…';
+      confirmButton.textContent = 'Menyimpan & Menyinkronkan…';
       try {
         const result = await config.commit(validation.rows, fileHash);
         if (!result || result.ok === false) {
           throw new Error(result?.error?.message || 'Import gagal. Tidak ada baris yang disimpan.');
         }
         close();
-        showToast(`Berhasil mengimpor ${records.length} baris ${config.title}.`, 'success');
+        showToast(`Berhasil memproses & menyinkronkan ${records.length} baris ${config.title}.`, 'success');
         try {
           await config.onComplete?.(result);
         } catch (error) {

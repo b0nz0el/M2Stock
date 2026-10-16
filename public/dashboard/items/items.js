@@ -1352,9 +1352,12 @@
         if (!productsResult?.ok) throw new Error(productsResult?.error?.message || 'Gagal memeriksa SKU dan barcode yang terdaftar.');
         if (categoriesResult.error) throw new Error(categoriesResult.error.message || 'Gagal memeriksa kategori.');
 
-        const existingSkus = new Set((productsResult.data || []).map(item => String(item.sku || '').trim().toLowerCase()));
-        const existingBarcodes = new Set((productsResult.data || []).map(item => String(item.barcode || '').trim()).filter(Boolean));
-        const categoryNames = new Set((categoriesResult.data || []).map(category => String(category.name).trim().toLowerCase()));
+        const existingBarcodeMap = new Map();
+        (productsResult.data || []).forEach(item => {
+          if (item.barcode && item.sku) {
+            existingBarcodeMap.set(String(item.barcode).trim(), String(item.sku).trim().toLowerCase());
+          }
+        });
         const seenSkus = new Set();
         const seenBarcodes = new Set();
         const rows = [];
@@ -1379,11 +1382,14 @@
           if (!sku) errors.push({ row: rowNumber, message: 'SKU wajib diisi.' });
           if (!name) errors.push({ row: rowNumber, message: 'Nama barang wajib diisi.' });
           const skuKey = sku.toLowerCase();
-          if (sku && (existingSkus.has(skuKey) || seenSkus.has(skuKey))) {
-            errors.push({ row: rowNumber, message: `SKU "${sku}" sudah terdaftar atau duplikat di file.` });
+          if (sku && seenSkus.has(skuKey)) {
+            errors.push({ row: rowNumber, message: `SKU "${sku}" duplikat di dalam file CSV.` });
           }
-          if (barcode && (existingBarcodes.has(barcode) || seenBarcodes.has(barcode))) {
-            errors.push({ row: rowNumber, message: `Barcode "${barcode}" sudah terdaftar atau duplikat di file.` });
+          if (barcode && seenBarcodes.has(barcode)) {
+            errors.push({ row: rowNumber, message: `Barcode "${barcode}" duplikat di dalam file CSV.` });
+          }
+          if (barcode && existingBarcodeMap.has(barcode) && existingBarcodeMap.get(barcode) !== skuKey) {
+            errors.push({ row: rowNumber, message: `Barcode "${barcode}" sudah digunakan oleh produk lain di toko.` });
           }
           const initialStock = parseNumber(record['Stok Awal'], 'Stok awal', rowNumber, true);
           const minStock = parseNumber(record['Min Stok'], 'Min stok', rowNumber, true);
@@ -1408,31 +1414,26 @@
         return { rows, errors };
       },
       commit: async function (rows) {
-        // 1. Coba RPC database import_products_csv terlebih dahulu jika ada
-        if (window.supabase && typeof window.supabase.rpc === 'function') {
-          try {
-            const { data, error } = await window.supabase.rpc('import_products_csv', { p_rows: rows });
-            if (!error && data) {
-              return { ok: true, data };
-            }
-            if (error) {
-              console.warn('RPC import_products_csv gagal atau belum terpasang di database, beralih ke fallback klien:', error);
-            }
-          } catch (rpcErr) {
-            console.warn('RPC exception, beralih ke fallback klien:', rpcErr);
-          }
-        }
-
-        // 2. Fallback Klien: Simpan langsung ke tabel products dan transactions
         try {
           if (!window.supabase) {
             throw new Error('Koneksi database Supabase tidak tersedia.');
           }
 
-          // Ambil mapping kategori
-          const { data: categories } = await window.supabase.from('categories').select('id, name');
+          // 1. Ambil data produk & kategori yang ada saat ini
+          const [productsRes, categoriesRes] = await Promise.all([
+            window.supabase.from('products').select('id, sku, barcode, stock'),
+            window.supabase.from('categories').select('id, name')
+          ]);
+
+          const existingProds = productsRes.data || [];
+          const prodMapBySku = new Map();
+          existingProds.forEach(p => {
+            if (p.sku) prodMapBySku.set(p.sku.trim().toLowerCase(), p);
+          });
+
+          // Mapping kategori
           const catMap = new Map();
-          (categories || []).forEach(c => {
+          (categoriesRes.data || []).forEach(c => {
             if (c.name) catMap.set(c.name.trim().toLowerCase(), c.id);
           });
 
@@ -1455,96 +1456,86 @@
             }
           }
 
-          // Dapatkan user ID saat ini jika login
-          let currentUserId = null;
-          try {
-            const authRes = await window.supabase.auth.getUser();
-            currentUserId = authRes?.data?.user?.id || null;
-          } catch (_) {}
+          // Pisahkan antara produk yang sudah ada (UPDATE / SINKRON) vs produk baru (INSERT)
+          const toUpdate = [];
+          const toInsert = [];
 
-          // Siapkan batch produk (stock langsung diisi dari initial_stock)
-          const productsPayload = rows.map(r => {
+          rows.forEach(r => {
+            const skuKey = (r.sku || '').trim().toLowerCase();
             const catName = (r.category || '').trim().toLowerCase();
             const categoryId = catMap.get(catName) || null;
-            return {
-              sku: r.sku.trim(),
-              barcode: r.barcode ? r.barcode.trim() : null,
-              name: r.name.trim(),
-              brand: r.brand ? r.brand.trim() : '-',
-              category_id: categoryId,
-              unit_id: 1,
-              stock: Number(r.initial_stock) || 0,
-              min_stock: Number(r.min_stock) || 3,
-              cost_price: Number(r.cost_price) || 0,
-              sell_price: Number(r.sell_price) || 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
+            const existing = prodMapBySku.get(skuKey);
+
+            if (existing) {
+              toUpdate.push({
+                id: existing.id,
+                sku: r.sku.trim(),
+                barcode: r.barcode ? r.barcode.trim() : null,
+                name: r.name.trim(),
+                brand: r.brand ? r.brand.trim() : '-',
+                category_id: categoryId,
+                stock: Number(r.initial_stock) || 0,
+                min_stock: Number(r.min_stock) || 3,
+                cost_price: Number(r.cost_price) || 0,
+                sell_price: Number(r.sell_price) || 0,
+                updated_at: new Date().toISOString()
+              });
+            } else {
+              toInsert.push({
+                sku: r.sku.trim(),
+                barcode: r.barcode ? r.barcode.trim() : null,
+                name: r.name.trim(),
+                brand: r.brand ? r.brand.trim() : '-',
+                category_id: categoryId,
+                unit_id: 1,
+                stock: Number(r.initial_stock) || 0,
+                min_stock: Number(r.min_stock) || 3,
+                cost_price: Number(r.cost_price) || 0,
+                sell_price: Number(r.sell_price) || 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            }
           });
 
-          // Insert produk ke tabel products
-          const { data: insertedProducts, error: prodErr } = await window.supabase
-            .from('products')
-            .insert(productsPayload)
-            .select('id, sku, stock, cost_price');
-
-          if (prodErr) {
-            throw new Error(`Gagal menyimpan produk: ${prodErr.message || 'Kesalahan database'}`);
-          }
-
-          // Catat mutasi stok awal ke transactions untuk produk dengan initial_stock > 0
-          const itemsWithStock = rows.filter(r => (Number(r.initial_stock) || 0) > 0);
-          if (itemsWithStock.length > 0 && Array.isArray(insertedProducts)) {
-            const prodMapBySku = new Map();
-            insertedProducts.forEach(p => prodMapBySku.set(p.sku, p));
-
-            const txPayload = [];
-            for (const item of itemsWithStock) {
-              const matchedProd = prodMapBySku.get(item.sku.trim());
-              if (matchedProd) {
-                const qty = Number(item.initial_stock);
-                const price = Number(item.cost_price) || 0;
-                txPayload.push({
-                  type: 'in',
-                  product_id: matchedProd.id,
-                  qty: qty,
-                  quantity: qty,
-                  price: price,
-                  unit_price: price,
-                  total_price: qty * price,
-                  channel: 'Offline',
-                  note: 'Stok awal dari import CSV',
-                  notes: 'Stok awal dari import CSV',
-                  created_by: currentUserId,
-                  user_id: currentUserId,
-                  created_at: new Date().toISOString()
-                });
+          // 2. Eksekusi UPDATE untuk produk yang sudah ada (sinkronisasi stok & harga secara presisi)
+          if (toUpdate.length > 0) {
+            for (const item of toUpdate) {
+              const { id, ...updateFields } = item;
+              const { error: updErr } = await window.supabase
+                .from('products')
+                .update(updateFields)
+                .eq('id', id);
+              if (updErr) {
+                console.warn(`Gagal menyinkronkan produk ${item.sku}:`, updErr);
               }
             }
+          }
 
-            if (txPayload.length > 0) {
-              try {
-                await window.supabase.from('transactions').insert(txPayload);
-              } catch (txErr) {
-                console.warn('Pencatatan mutasi transaksi stok awal opsional:', txErr);
-              }
+          // 3. Eksekusi INSERT untuk produk baru
+          if (toInsert.length > 0) {
+            const { error: insErr } = await window.supabase
+              .from('products')
+              .insert(toInsert);
+            if (insErr) {
+              throw new Error(`Gagal menyimpan produk baru: ${insErr.message || 'Kesalahan database'}`);
             }
           }
 
           return {
             ok: true,
             data: {
-              imported_count: rows.length,
-              source: 'client_fallback'
+              updated_count: toUpdate.length,
+              inserted_count: toInsert.length,
+              total_count: rows.length
             }
           };
-        } catch (fallbackErr) {
-          console.error('Fallback import error:', fallbackErr);
+        } catch (err) {
+          console.error('Import/sinkronisasi error:', err);
           return {
             ok: false,
             error: {
-              code: 'IMPORT_FAILED',
-              message: fallbackErr.message || 'Gagal mengimpor produk ke database'
+              message: err.message || 'Gagal menyimpan dan menyinkronkan produk.'
             }
           };
         }
