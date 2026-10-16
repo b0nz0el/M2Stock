@@ -182,13 +182,36 @@ button:disabled:active {
   background: rgba(255, 255, 255, 0.06);
   color: #f5f5f7;
 }
+.toast__close:focus-visible {
+  outline: 2px solid #32ade6;
+  outline-offset: 2px;
+}
 .toast--leaving {
   opacity: 0;
   transform: translateX(12px);
 }
+.toast-container {
+  position: fixed;
+  top: calc(1rem + env(safe-area-inset-top));
+  right: calc(1rem + env(safe-area-inset-right));
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(26rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+}
 @media (max-width: 639px) {
   .toast {
     width: 100%;
+  }
+  .toast-container {
+    top: calc(0.75rem + env(safe-area-inset-top));
+    right: calc(0.75rem + env(safe-area-inset-right));
+    width: calc(100vw - 1.5rem);
   }
 }
 @keyframes toastIn {
@@ -199,6 +222,127 @@ button:disabled:active {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* ═══ PO & RETURN DIALOGS ═══ */
+.po-modal-overlay {
+  overscroll-behavior: contain;
+}
+body.modal-open {
+  overflow: hidden;
+}
+.po-modal-dialog,
+.return-modal-dialog {
+  max-height: min(92vh, 900px);
+  margin-block: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(0, 136, 204, 0.08), transparent 55%),
+    #1c1c1e;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+}
+.po-modal-dialog:focus,
+.return-modal-dialog:focus,
+.confirm-dialog:focus {
+  outline: none;
+}
+.confirm-dialog {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(255, 59, 48, 0.07), transparent 55%),
+    #1c1c1e;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+}
+.action-feedback {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 59, 48, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff746d;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.po-modal-dialog #po-items-container .po-item-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 5fr) minmax(3.25rem, 0.9fr) minmax(6rem, 1.4fr)
+    minmax(7rem, 1.6fr) 2.25rem;
+  gap: 8px;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.24);
+}
+.po-modal-dialog .po-items-header {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 5fr) minmax(3.25rem, 0.9fr) minmax(6rem, 1.4fr)
+    minmax(7rem, 1.6fr) 2.25rem;
+  gap: 8px;
+}
+.po-modal-dialog .po-items-header > :nth-child(2) {
+  text-align: center;
+}
+.po-modal-dialog .po-items-header > :nth-child(4) {
+  text-align: right;
+}
+.po-modal-dialog #po-items-container .po-item-qty input {
+  text-align: center;
+}
+.po-modal-dialog #po-items-container .item-subtotal {
+  display: block;
+  line-height: 1.35;
+  font-size: 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.po-modal-dialog #po-modal-grand-total {
+  font-variant-numeric: tabular-nums;
+}
+.po-modal-dialog input:focus-visible,
+.po-modal-dialog textarea:focus-visible,
+.po-modal-dialog select:focus-visible,
+.return-modal-dialog input:focus-visible,
+.return-modal-dialog textarea:focus-visible,
+.return-modal-dialog select:focus-visible {
+  outline: 2px solid rgba(50, 173, 230, 0.7);
+  outline-offset: 1px;
+}
+@media (max-width: 639px) {
+  .po-modal-dialog,
+  .return-modal-dialog {
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-top));
+    padding: 1rem;
+    border-radius: 18px;
+  }
+  .po-modal-dialog .po-items-header {
+    display: none;
+  }
+  .po-modal-dialog #po-items-container .po-item-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+  }
+  .po-modal-dialog #po-items-container .po-item-name {
+    grid-column: 1 / -1;
+  }
+  .po-modal-dialog #po-items-container .po-item-qty {
+    grid-column: 1 / 3;
+  }
+  .po-modal-dialog #po-items-container .po-item-price {
+    grid-column: 3 / -1;
+  }
+  .po-modal-dialog #po-items-container .po-item-subtotal {
+    grid-column: 1 / 6;
+    text-align: left;
+  }
+  .po-modal-dialog #po-items-container .po-item-remove {
+    grid-column: 6 / 7;
+  }
+  .po-modal-dialog #po-items-container .po-item-row input {
+    min-height: 42px;
   }
 }
 

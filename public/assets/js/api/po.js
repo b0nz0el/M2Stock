@@ -264,11 +264,22 @@ export const po = {
    */
   async delete(id) {
     try {
-      const { error } = await supabase.from('purchase_orders').delete().eq('id', id);
+      const { data, error } = await supabase
+        .from('purchase_orders')
+        .delete()
+        .eq('id', id)
+        .select('id')
+        .maybeSingle();
       if (error) {
         return formatResponse({ ok: false, error });
       }
-      return formatResponse({ ok: true, data: { id } });
+      if (!data) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'NOT_FOUND', message: 'Purchase Order tidak ditemukan atau tidak dapat dihapus' }
+        });
+      }
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }

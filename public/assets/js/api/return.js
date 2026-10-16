@@ -20,7 +20,7 @@ export const returnApi = {
   /**
    * Mengambil daftar retur dengan filter
    */
-  async getAll({ page = 1, limit = 50, tipe = null, status = null, search = '', startDate = null, endDate = null } = {}) {
+  async getAll({ page = 1, limit = 50, tipe = null, status = null, search = '', productIds = [], startDate = null, endDate = null } = {}) {
     try {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
@@ -46,7 +46,15 @@ export const returnApi = {
 
       if (search && search.trim() !== '') {
         const s = search.trim();
-        query = query.or(`no_retur.ilike.%${s}%,alasan.ilike.%${s}%,keterangan.ilike.%${s}%`);
+        const searchFilters = [
+          `no_retur.ilike.%${s}%`,
+          `alasan.ilike.%${s}%`,
+          `keterangan.ilike.%${s}%`
+        ];
+        if (productIds.length) {
+          searchFilters.push(`produk_id.in.(${productIds.join(',')})`);
+        }
+        query = query.or(searchFilters.join(','));
       }
 
       const { data, error, count } = await query
@@ -131,7 +139,17 @@ export const returnApi = {
   /**
    * Menambah pencatatan retur baru
    */
-  async create({ no_retur, tanggal, tipe, produk_id = null, produk_nama = '', qty, alasan, status = 'diproses', keterangan = '' }) {
+  async create({ no_retur, tanggal, tipe, produk_id, qty, alasan, status = 'diproses', keterangan = '' }) {
+    if (!produk_id) {
+      return formatResponse({
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Produk retur wajib dipilih dari master barang'
+        }
+      });
+    }
+
     try {
       let created_by = null;
       try {
@@ -147,11 +165,11 @@ export const returnApi = {
         no_retur: autoNo,
         tanggal: tanggal || new Date().toISOString().slice(0, 10),
         tipe: (tipe || 'ke_supplier').toLowerCase(),
-        produk_id: produk_id || null,
+        produk_id,
         qty: Number(qty) || 1,
         alasan: (alasan || '').trim(),
         status: status || 'diproses',
-        keterangan: keterangan ? keterangan.trim() : (produk_nama ? `Barang: ${produk_nama}` : null),
+        keterangan: keterangan ? keterangan.trim() || null : null,
         created_by,
         created_at: new Date().toISOString()
       };
@@ -192,11 +210,22 @@ export const returnApi = {
    */
   async delete(id) {
     try {
-      const { error } = await supabase.from('returns').delete().eq('id', id);
+      const { data, error } = await supabase
+        .from('returns')
+        .delete()
+        .eq('id', id)
+        .select('id')
+        .maybeSingle();
       if (error) {
         return formatResponse({ ok: false, error });
       }
-      return formatResponse({ ok: true, data: { id } });
+      if (!data) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'NOT_FOUND', message: 'Catatan retur tidak ditemukan atau tidak dapat dihapus' }
+        });
+      }
+      return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
     }

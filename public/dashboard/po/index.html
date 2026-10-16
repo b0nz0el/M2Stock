@@ -215,13 +215,16 @@
   </main>
 
   <!-- ═══════════ MODAL BUAT PURCHASE ORDER ═══════════ -->
-  <div id="modal-po" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-2xl p-6 space-y-5 shadow-2xl relative my-8">
-      <div class="flex items-center justify-between border-b border-white/10 pb-4">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i data-lucide="clipboard-pen" class="w-5 h-5 text-[#0088CC]"></i>
-          Buat Purchase Order Baru
-        </h3>
+  <div id="modal-po" class="po-modal-overlay fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="po-modal-dialog bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-2xl p-6 space-y-5 shadow-2xl relative my-8">
+      <div class="po-modal-header flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i data-lucide="clipboard-pen" class="w-5 h-5 text-[#0088CC]" aria-hidden="true"></i>
+            Buat Purchase Order Baru
+          </h3>
+          <p class="mt-1 text-xs text-[#A0A0A5]">Catat kebutuhan barang dan tujuan pemasok dalam satu pesanan.</p>
+        </div>
         <button type="button" id="btn-close-po-modal" class="text-[#A0A0A5] hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
@@ -269,12 +272,12 @@
           </div>
 
           <!-- Items Header -->
-          <div class="grid grid-cols-12 gap-2 text-[11px] font-semibold text-[#A0A0A5] uppercase px-2">
-            <div class="col-span-5">Barang</div>
-            <div class="col-span-2 text-center">Qty</div>
-            <div class="col-span-2">Harga (Rp)</div>
-            <div class="col-span-2 text-right">Subtotal</div>
-            <div class="col-span-1"></div>
+          <div class="po-items-header text-[11px] font-semibold text-[#A0A0A5] uppercase px-2">
+            <div>Barang</div>
+            <div>Qty</div>
+            <div>Harga (Rp)</div>
+            <div>Subtotal</div>
+            <div></div>
           </div>
 
           <!-- Container Dynamic Rows -->
@@ -336,10 +339,36 @@
   </nav>
 </div>
 
+<!-- ═══════════ MODAL KONFIRMASI HAPUS PURCHASE ORDER ═══════════ -->
+<div id="modal-delete-po" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-po-title" aria-describedby="modal-delete-po-description">
+  <div class="confirm-dialog bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center flex-shrink-0">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 id="modal-delete-po-title" class="text-base font-bold text-white">Hapus Purchase Order</h3>
+        <p class="text-xs text-[#A0A0A5]">Tindakan ini tidak dapat dibatalkan</p>
+      </div>
+    </div>
+    <p id="modal-delete-po-description" class="text-sm text-[#A0A0A5] leading-relaxed">
+      Yakin ingin menghapus Purchase Order ini? Seluruh rincian item akan ikut terhapus.
+    </p>
+    <p id="delete-po-feedback" class="action-feedback hidden" role="alert" aria-live="assertive"></p>
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <button type="button" id="btn-cancel-delete-po" class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+        Batal
+      </button>
+      <button type="button" id="btn-confirm-delete-po" class="bg-[#FF3B30] hover:bg-[#D70015] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Hapus</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
-<div id="toast-container" 
-     class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
-     role="status" aria-live="polite"></div>
+<div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
 <!-- Scripts -->
 <script type="module" src="../../assets/js/supabase-client.js"></script>

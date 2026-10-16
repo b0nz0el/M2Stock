@@ -4,6 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { returnApi } from '../../assets/js/api/return.js';
+import { items as itemsApi } from '../../assets/js/api/items.js';
 import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
 import { getUserRole } from '../../assets/js/utils/rbac.js';
 
@@ -19,7 +20,12 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   let totalRecords = 0;
   let totalPages = 1;
   let returnEntries = [];
+  let availableProducts = [];
+  let productsById = new Map();
   let userRole = 'STAFF';
+  let pendingDeleteId = null;
+  let deleteTrigger = null;
+  let deleteInProgress = false;
 
   function formatRupiah(num) {
     return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
@@ -36,6 +42,73 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       return dateStr;
     } catch (_) {
       return dateStr;
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[char]);
+  }
+
+  function getProductName(item) {
+    return item.produk_nama
+      || productsById.get(String(item.produk_id))?.name
+      || item.keterangan
+      || (item.produk_id ? `Produk #${item.produk_id.slice(0, 8)}` : 'Barang Toko');
+  }
+
+  function setProductSelectMessage(message) {
+    const select = document.getElementById('return-produk');
+    if (!select) return;
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = message;
+    select.replaceChildren(option);
+  }
+
+  async function loadProducts() {
+    setProductSelectMessage('Memuat master produk...');
+    try {
+      const result = await itemsApi.getAll();
+      if (!result?.ok) {
+        availableProducts = [];
+        productsById.clear();
+        setProductSelectMessage('Gagal memuat master produk');
+        showToast(result?.error?.message || 'Gagal memuat master produk', 'error');
+        return false;
+      }
+
+      availableProducts = (result.data || []).filter((product) => product?.id && product.name);
+      productsById = new Map(availableProducts.map((product) => [String(product.id), product]));
+
+      const select = document.getElementById('return-produk');
+      if (select) {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = availableProducts.length
+          ? 'Pilih barang dari master produk'
+          : 'Belum ada barang di master produk';
+        select.replaceChildren(placeholder);
+        availableProducts.forEach((product) => {
+          const option = document.createElement('option');
+          option.value = product.id;
+          option.textContent = product.sku ? `${product.name} · ${product.sku}` : product.name;
+          select.appendChild(option);
+        });
+      }
+      return true;
+    } catch (err) {
+      console.error('Error loading return products:', err);
+      availableProducts = [];
+      productsById.clear();
+      setProductSelectMessage('Gagal memuat master produk');
+      showToast('Gagal memuat master produk', 'error');
+      return false;
     }
   }
 
@@ -99,35 +172,48 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
   function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
-    if (!container) return;
+    if (!container) {
+      console.error('Toast container is missing');
+      return;
+    }
 
-    const colors = {
-      success: 'bg-[#34C759] text-black',
-      error: 'bg-[#FF3B30] text-white',
-      info: 'bg-[#0088CC] text-white',
-      warning: 'bg-[#FF9F0A] text-black'
+    const icons = {
+      success: 'check',
+      error: 'alert-circle',
+      info: 'info',
+      warning: 'alert-triangle'
     };
-
     const toast = document.createElement('div');
-    toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 text-sm font-semibold pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
-    toast.innerHTML = `
-      <span>${message}</span>
-      <button class="opacity-70 hover:opacity-100">&times;</button>
-    `;
+    toast.className = `toast toast--${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
-    toast.querySelector('button').onclick = () => {
-      toast.remove();
-    };
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'toast__icon';
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', icons[type] || icons.info);
+    icon.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(icon);
+
+    const text = document.createElement('span');
+    text.className = 'toast__message';
+    text.textContent = message;
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'toast__close';
+    closeButton.setAttribute('aria-label', 'Tutup notifikasi');
+    closeButton.textContent = '×';
+    closeButton.addEventListener('click', () => toast.remove());
+
+    toast.append(iconWrap, text, closeButton);
 
     container.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.classList.remove('translate-y-2', 'opacity-0');
-    });
+    if (window.refreshIcons) window.refreshIcons();
 
     setTimeout(() => {
-      toast.classList.add('opacity-0', 'translate-y-2');
-      setTimeout(() => toast.remove(), 300);
-    }, 4000);
+      toast.classList.add('toast--leaving');
+      setTimeout(() => toast.remove(), 250);
+    }, 5000);
   }
 
   async function loadData() {
@@ -149,12 +235,19 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     try {
       const { startDate, endDate } = getDateFilterRange(currentPeriod);
+      const searchTerm = currentSearch.trim().toLocaleLowerCase();
+      const matchingProductIds = searchTerm
+        ? availableProducts
+          .filter((product) => `${product.name} ${product.sku || ''}`.toLocaleLowerCase().includes(searchTerm))
+          .map((product) => product.id)
+        : [];
       const resList = await returnApi.getAll({
           page: currentPage,
           limit: pageSize,
           tipe: currentTipe,
           status: currentStatus,
           search: currentSearch,
+          productIds: matchingProductIds,
           startDate,
           endDate
         });
@@ -201,7 +294,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (emptyState) emptyState.classList.add('hidden');
 
     tbody.innerHTML = data.map((item) => {
-      const namaBarang = item.produk_nama || item.keterangan || (item.produk_id ? `Produk #${item.produk_id.slice(0, 8)}` : 'Barang Toko');
+      const namaBarang = getProductName(item);
       return `
         <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
           <td class="px-4 py-3.5 font-mono text-xs font-semibold text-[#32ADE6]">
@@ -214,8 +307,8 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
             ${getTipeBadge(item.tipe)}
           </td>
           <td class="px-4 py-3.5 font-medium text-sm text-white">
-            <div>${namaBarang}</div>
-            ${item.keterangan && item.keterangan !== namaBarang ? `<div class="text-[11px] text-[#A0A0A5] truncate max-w-xs mt-0.5">${item.keterangan}</div>` : ''}
+            <div>${escapeHtml(namaBarang)}</div>
+            ${item.keterangan && item.keterangan !== namaBarang ? `<div class="text-[11px] text-[#A0A0A5] truncate max-w-xs mt-0.5">${escapeHtml(item.keterangan)}</div>` : ''}
           </td>
           <td class="px-4 py-3.5 text-xs text-[#A0A0A5] max-w-xs truncate" title="${item.alasan || ''}">
             ${item.alasan || '-'}
@@ -308,19 +401,93 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   async function handleDeleteReturn(id) {
-    if (!confirm('Yakin ingin menghapus catatan retur ini?')) return;
+    const button = document.getElementById('btn-confirm-delete-return');
+    const cancelButton = document.getElementById('btn-cancel-delete-return');
+    const feedback = document.getElementById('delete-return-feedback');
+    const originalButtonHtml = button?.innerHTML;
+    deleteInProgress = true;
+    if (button) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.innerHTML = '<span>Menghapus...</span>';
+    }
+    if (cancelButton) cancelButton.disabled = true;
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+
     try {
       const res = await returnApi.delete(id);
       if (res.ok) {
+        deleteInProgress = false;
+        closeDeleteConfirmation();
         showToast('Catatan retur berhasil dihapus', 'success');
         await loadData();
       } else {
-        showToast(res.error?.message || 'Gagal menghapus data', 'error');
+        const message = res.error?.message || 'Gagal menghapus data';
+        if (feedback) {
+          feedback.textContent = message;
+          feedback.classList.remove('hidden');
+        }
+        showToast(message, 'error');
       }
     } catch (err) {
       console.error(err);
-      showToast('Terjadi kesalahan sistem', 'error');
+      const message = err.message || 'Terjadi kesalahan sistem saat menghapus catatan retur';
+      if (feedback) {
+        feedback.textContent = message;
+        feedback.classList.remove('hidden');
+      }
+      showToast(message, 'error');
+    } finally {
+      deleteInProgress = false;
+      if (button) {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.innerHTML = originalButtonHtml;
+      }
+      if (cancelButton) cancelButton.disabled = false;
+      if (window.refreshIcons) window.refreshIcons();
     }
+  }
+
+  function openDeleteConfirmation(id, trigger) {
+    const modal = document.getElementById('modal-delete-return');
+    if (!modal) {
+      showToast('Dialog konfirmasi hapus tidak tersedia', 'error');
+      return;
+    }
+
+    pendingDeleteId = id;
+    deleteTrigger = trigger;
+    const feedback = document.getElementById('delete-return-feedback');
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+    document.body.classList.add('modal-open');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.getElementById('btn-cancel-delete-return')?.focus();
+  }
+
+  function closeDeleteConfirmation() {
+    if (deleteInProgress) return;
+    const modal = document.getElementById('modal-delete-return');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    document.body.classList.remove('modal-open');
+    pendingDeleteId = null;
+    deleteTrigger?.focus();
+    deleteTrigger = null;
+  }
+
+  async function confirmDeleteReturn() {
+    if (!pendingDeleteId) return;
+    await handleDeleteReturn(pendingDeleteId);
   }
 
   function openModal(defaultTipe = 'ke_supplier') {
@@ -345,6 +512,8 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const statusSelect = document.getElementById('return-status');
     if (statusSelect) statusSelect.value = 'diproses';
 
+    loadProducts();
+    document.body.classList.add('modal-open');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     if (window.lucide) window.lucide.createIcons();
@@ -355,6 +524,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (!modal) return;
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+    document.body.classList.remove('modal-open');
   }
 
   async function handleSubmitForm(e) {
@@ -368,15 +538,15 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const no_retur = document.getElementById('return-no')?.value || '';
     const tipe = document.getElementById('return-tipe')?.value || 'ke_supplier';
     const tanggal = document.getElementById('return-tanggal')?.value || new Date().toISOString().slice(0, 10);
-    const produk_nama = document.getElementById('return-produk')?.value || '';
+    const produk_id = document.getElementById('return-produk')?.value || '';
     const qty = Number(document.getElementById('return-qty')?.value || 1);
     const harga_satuan = Number(document.getElementById('return-harga')?.value || 0);
     const alasan = document.getElementById('return-alasan')?.value || '';
     const status = document.getElementById('return-status')?.value || 'diproses';
     const keterangan = document.getElementById('return-keterangan')?.value || '';
 
-    if (!produk_nama.trim()) {
-      showToast('Nama barang wajib diisi', 'warning');
+    if (!productsById.has(String(produk_id))) {
+      showToast('Pilih barang dari master produk', 'warning');
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Simpan';
@@ -407,7 +577,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
         no_retur,
         tanggal,
         tipe,
-        produk_nama,
+        produk_id,
         qty,
         harga_satuan,
         alasan,
@@ -444,7 +614,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       r.no_retur,
       r.tanggal || '',
       r.tipe,
-      `"${(r.produk_nama || r.keterangan || '').replace(/"/g, '""')}"`,
+      `"${getProductName(r).replace(/"/g, '""')}"`,
       `"${(r.alasan || '').replace(/"/g, '""')}"`,
       r.qty,
       r.status,
@@ -583,10 +753,24 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       const deleteBtn = e.target.closest('.btn-delete-return');
       if (deleteBtn) {
         const id = deleteBtn.getAttribute('data-id');
-        if (id) handleDeleteReturn(id);
+        if (id) openDeleteConfirmation(id, deleteBtn);
         return;
       }
     });
+
+    const deleteModal = document.getElementById('modal-delete-return');
+    const cancelDeleteBtn = document.getElementById('btn-cancel-delete-return');
+    const confirmDeleteBtn = document.getElementById('btn-confirm-delete-return');
+    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteConfirmation);
+    if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', confirmDeleteReturn);
+    if (deleteModal) {
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteConfirmation();
+      });
+      deleteModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDeleteConfirmation();
+      });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -595,6 +779,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     } catch (_) {}
 
     setupEvents();
+    await loadProducts();
     await loadData();
   });
 

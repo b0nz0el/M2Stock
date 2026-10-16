@@ -18,6 +18,9 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   let totalPages = 1;
   let poEntries = [];
   let userRole = 'STAFF';
+  let pendingDeleteId = null;
+  let deleteTrigger = null;
+  let deleteInProgress = false;
 
   function formatRupiah(num) {
     return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
@@ -73,35 +76,48 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
   function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
-    if (!container) return;
+    if (!container) {
+      console.error('Toast container is missing');
+      return;
+    }
 
-    const colors = {
-      success: 'bg-[#34C759] text-black',
-      error: 'bg-[#FF3B30] text-white',
-      info: 'bg-[#0088CC] text-white',
-      warning: 'bg-[#FF9F0A] text-black'
+    const icons = {
+      success: 'check',
+      error: 'alert-circle',
+      info: 'info',
+      warning: 'alert-triangle'
     };
-
     const toast = document.createElement('div');
-    toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 text-sm font-semibold pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
-    toast.innerHTML = `
-      <span>${message}</span>
-      <button class="opacity-70 hover:opacity-100">&times;</button>
-    `;
+    toast.className = `toast toast--${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
-    toast.querySelector('button').onclick = () => {
-      toast.remove();
-    };
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'toast__icon';
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', icons[type] || icons.info);
+    icon.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(icon);
+
+    const text = document.createElement('span');
+    text.className = 'toast__message';
+    text.textContent = message;
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'toast__close';
+    closeButton.setAttribute('aria-label', 'Tutup notifikasi');
+    closeButton.textContent = '×';
+    closeButton.addEventListener('click', () => toast.remove());
+
+    toast.append(iconWrap, text, closeButton);
 
     container.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.classList.remove('translate-y-2', 'opacity-0');
-    });
+    if (window.refreshIcons) window.refreshIcons();
 
     setTimeout(() => {
-      toast.classList.add('opacity-0', 'translate-y-2');
-      setTimeout(() => toast.remove(), 300);
-    }, 4000);
+      toast.classList.add('toast--leaving');
+      setTimeout(() => toast.remove(), 250);
+    }, 5000);
   }
 
   async function loadData() {
@@ -283,43 +299,113 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
+  function openDeleteConfirmation(id, trigger) {
+    const modal = document.getElementById('modal-delete-po');
+    if (!modal) {
+      showToast('Dialog konfirmasi hapus tidak tersedia', 'error');
+      return;
+    }
+
+    pendingDeleteId = id;
+    deleteTrigger = trigger;
+    const feedback = document.getElementById('delete-po-feedback');
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+    document.body.classList.add('modal-open');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.getElementById('btn-cancel-delete-po')?.focus();
+  }
+
+  function closeDeleteConfirmation() {
+    if (deleteInProgress) return;
+    const modal = document.getElementById('modal-delete-po');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    document.body.classList.remove('modal-open');
+    pendingDeleteId = null;
+    deleteTrigger?.focus();
+    deleteTrigger = null;
+  }
+
   async function handleDelete(id) {
-    if (!confirm('Yakin ingin menghapus Purchase Order ini? Seluruh rincian item akan ikut terhapus.')) return;
+    const button = document.getElementById('btn-confirm-delete-po');
+    const cancelButton = document.getElementById('btn-cancel-delete-po');
+    const feedback = document.getElementById('delete-po-feedback');
+    const originalButtonHtml = button?.innerHTML;
+    deleteInProgress = true;
+    if (button) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.innerHTML = '<span>Menghapus...</span>';
+    }
+    if (cancelButton) cancelButton.disabled = true;
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+
     try {
       const res = await poApi.delete(id);
       if (res.ok) {
+        deleteInProgress = false;
+        closeDeleteConfirmation();
         showToast('Purchase Order berhasil dihapus', 'success');
         await loadData();
       } else {
-        showToast(res.error?.message || 'Gagal menghapus PO', 'error');
+        const message = res.error?.message || 'Gagal menghapus PO';
+        if (feedback) {
+          feedback.textContent = message;
+          feedback.classList.remove('hidden');
+        }
+        showToast(message, 'error');
       }
     } catch (err) {
       console.error(err);
-      showToast('Terjadi kesalahan sistem', 'error');
+      const message = err.message || 'Terjadi kesalahan sistem saat menghapus Purchase Order';
+      if (feedback) {
+        feedback.textContent = message;
+        feedback.classList.remove('hidden');
+      }
+      showToast(message, 'error');
+    } finally {
+      deleteInProgress = false;
+      if (button) {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.innerHTML = originalButtonHtml;
+      }
+      if (cancelButton) cancelButton.disabled = false;
+      if (window.refreshIcons) window.refreshIcons();
     }
   }
 
   // Dynamic Item Rows in Modal
   function createItemRow(nama = '', qty = 1, harga = 0) {
     const row = document.createElement('div');
-    row.className = 'po-item-row grid grid-cols-12 gap-2 items-center bg-black/30 p-2.5 rounded-xl border border-white/5';
+    row.className = 'po-item-row items-center bg-black/30 p-2.5 rounded-xl border border-white/5';
     row.innerHTML = `
-      <div class="col-span-5">
+      <div class="po-item-name">
         <input type="text" required placeholder="Nama Barang..." value="${nama}"
                class="item-nama w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
       </div>
-      <div class="col-span-2">
+      <div class="po-item-qty">
         <input type="number" required min="1" step="1" value="${qty}" placeholder="Qty"
                class="item-qty w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white text-center focus:outline-none focus:border-[#0088CC]">
       </div>
-      <div class="col-span-2">
+      <div class="po-item-price">
         <input type="number" required min="0" step="1000" value="${harga}" placeholder="Harga"
                class="item-harga w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
       </div>
-      <div class="col-span-2 text-right">
+      <div class="po-item-subtotal text-right">
         <span class="item-subtotal text-xs font-semibold text-[#34C759]">Rp 0</span>
       </div>
-      <div class="col-span-1 text-center">
+      <div class="po-item-remove text-center">
         <button type="button" class="btn-remove-item text-[#A0A0A5] hover:text-[#FF3B30] p-1 transition" title="Hapus Baris">
           <i data-lucide="trash" class="w-3.5 h-3.5"></i>
         </button>
@@ -385,12 +471,11 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (statusSelect) statusSelect.value = 'draft';
 
     itemsContainer.innerHTML = '';
-    // Tambah 2 baris item awal secara default
-    itemsContainer.appendChild(createItemRow('Filter Canister HW-3000', 2, 1250000));
-    itemsContainer.appendChild(createItemRow('Lampu LED Chihiros 60cm', 1, 1000000));
+    itemsContainer.appendChild(createItemRow());
 
     calculateGrandTotal();
 
+    document.body.classList.add('modal-open');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     if (window.lucide) window.lucide.createIcons();
@@ -401,6 +486,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (!modal) return;
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+    document.body.classList.remove('modal-open');
   }
 
   async function handleSubmitForm(e) {
@@ -619,10 +705,29 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       const deleteBtn = e.target.closest('.btn-delete-po');
       if (deleteBtn) {
         const id = deleteBtn.getAttribute('data-id');
-        if (id) handleDelete(id);
+        if (id) openDeleteConfirmation(id, deleteBtn);
         return;
       }
     });
+
+    const deleteModal = document.getElementById('modal-delete-po');
+    const cancelDeleteBtn = document.getElementById('btn-cancel-delete-po');
+    const confirmDeleteBtn = document.getElementById('btn-confirm-delete-po');
+    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteConfirmation);
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', () => {
+        if (!pendingDeleteId) return;
+        handleDelete(pendingDeleteId);
+      });
+    }
+    if (deleteModal) {
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteConfirmation();
+      });
+      deleteModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDeleteConfirmation();
+      });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', async () => {

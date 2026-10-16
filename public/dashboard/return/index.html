@@ -452,9 +452,7 @@
         id="modal-return"
         class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
       >
-        <div
-          class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative"
-        >
+        <div class="return-modal-dialog bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative">
           <div
             class="flex items-center justify-between border-b border-white/10 pb-4"
           >
@@ -523,15 +521,15 @@
               <div>
                 <label
                   class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2"
-                  >Nama Barang</label
+                  >Barang dari Master Produk</label
                 >
-                <input
-                  type="text"
+                <select
                   id="return-produk"
                   required
-                  placeholder="Contoh: Filter Canister HW-3000"
                   class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]"
-                />
+                >
+                  <option value="">Pilih barang dari master produk</option>
+                </select>
               </div>
             </div>
 
@@ -692,13 +690,51 @@
       </nav>
     </div>
 
-    <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+    <!-- ═══════════ MODAL KONFIRMASI HAPUS RETUR ═══════════ -->
     <div
-      id="toast-container"
-      class="fixed top-5 right-5 left-5 sm:left-auto sm:w-auto z-[100] flex flex-col gap-2 pointer-events-none"
-      role="status"
-      aria-live="polite"
-    ></div>
+      id="modal-delete-return"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-delete-return-title"
+      aria-describedby="modal-delete-return-description"
+    >
+      <div class="confirm-dialog bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center flex-shrink-0">
+            <i data-lucide="trash-2" class="w-5 h-5 text-[#FF3B30]" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h3 id="modal-delete-return-title" class="text-base font-bold text-white">Hapus Catatan Retur</h3>
+            <p class="text-xs text-[#A0A0A5]">Tindakan ini tidak dapat dibatalkan</p>
+          </div>
+        </div>
+        <p id="modal-delete-return-description" class="text-sm text-[#A0A0A5] leading-relaxed">
+          Yakin ingin menghapus catatan retur ini?
+        </p>
+        <p id="delete-return-feedback" class="action-feedback hidden" role="alert" aria-live="assertive"></p>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button
+            type="button"
+            id="btn-cancel-delete-return"
+            class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            id="btn-confirm-delete-return"
+            class="bg-[#FF3B30] hover:bg-[#D70015] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Hapus</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+    <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
     <!-- Scripts -->
     <script type="module" src="../../assets/js/supabase-client.js"></script>
