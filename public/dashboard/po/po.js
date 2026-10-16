@@ -45,6 +45,14 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
+  function formatPoNote(note) {
+    if (!note) return '';
+    if (note.includes('Restock otomatis') || note.includes('Restock Assistant')) {
+      return 'Restock Otomatis';
+    }
+    return note;
+  }
+
   function getStatusBadge(status) {
     const s = (status || 'draft').toLowerCase();
     const map = {
@@ -200,7 +208,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
           </td>
           <td class="px-4 py-3.5 font-medium text-sm text-white">
             <div>${supplierName}</div>
-            ${item.catatan && !item.catatan.startsWith('Supplier:') ? `<div class="text-[11px] text-[#A0A0A5] truncate max-w-xs mt-0.5">${item.catatan}</div>` : ''}
+            ${item.catatan && !item.catatan.startsWith('Supplier:') ? `<div class="text-[11px] text-[#A0A0A5] truncate max-w-xs mt-0.5">${formatPoNote(item.catatan)}</div>` : ''}
           </td>
           <td class="px-4 py-3.5 text-xs text-[#A0A0A5] whitespace-nowrap">
             ${itemCount} item
@@ -441,7 +449,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const tanggalPO = formatDate(item.tanggal);
     const supplierName = item.supplier_nama || item.suppliers?.name || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
     const status = (item.status || 'draft').toUpperCase();
-    const notes = item.catatan || 'Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.';
+    const notes = formatPoNote(item.catatan) || 'Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.';
     const total = formatRupiah(item.total || 0);
 
     const docNo = document.getElementById('doc-po-no');
@@ -585,7 +593,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     text += `\n*TOTAL NILAI PO:* ${total}\n`;
     if (item.catatan) {
-      text += `*Catatan:* ${item.catatan}\n`;
+      text += `*Catatan:* ${formatPoNote(item.catatan)}\n`;
     }
     text += `-----------------------------------------------\n`;
     text += `Mohon konfirmasi ketersediaan barang. Terima kasih! 🙏`;
@@ -878,7 +886,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       (p.items && p.items.length) || (p.purchase_order_items && p.purchase_order_items.length) || 1,
       p.status,
       p.total,
-      `"${(p.catatan || '').replace(/"/g, '""')}"`
+      `"${(formatPoNote(p.catatan) || '').replace(/"/g, '""')}"`
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
