@@ -5,6 +5,7 @@
 
 import { returnApi } from '../../assets/js/api/return.js';
 import { items as itemsApi } from '../../assets/js/api/items.js';
+import { settings as settingsApi } from '../../assets/js/api/settings.js';
 import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
 import { getUserRole } from '../../assets/js/utils/rbac.js';
 
@@ -509,8 +510,9 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   let activePrintReturn = null;
+  let activeStoreInfo = null;
 
-  function openPrintReturnModal(returnId) {
+  async function openPrintReturnModal(returnId) {
     const item = returnEntries.find(r => String(r.id) === String(returnId));
     if (!item) {
       showToast('Data retur tidak ditemukan', 'error');
@@ -557,10 +559,20 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     // Sinkronkan data profil toko dinamis ke dokumen Retur
     try {
-      const storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
-        ? await window.Api.settings.getStoreInfo()
-        : null;
+      let storeInfo = null;
+      if (settingsApi && typeof settingsApi.getStoreInfo === 'function') {
+        storeInfo = await settingsApi.getStoreInfo();
+      } else if (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo) {
+        storeInfo = await window.Api.settings.getStoreInfo();
+      }
+      if (!storeInfo && typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) {
+          try { storeInfo = JSON.parse(cached); } catch (_) {}
+        }
+      }
       if (storeInfo) {
+        activeStoreInfo = storeInfo;
         const docStoreName = document.getElementById('doc-return-store-name');
         const docStoreSlogan = document.getElementById('doc-return-store-slogan');
         const docStoreAddress = document.getElementById('doc-return-store-address');
@@ -598,18 +610,24 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
-  function generateReturnWhatsAppText(item) {
+  function generateReturnWhatsAppText(item, overrideStoreInfo = null) {
     if (!item) return '';
     let storeName = 'JTMaquarium';
     let storeSlogan = 'Perlengkapan Aksesoris Aquarium';
-    try {
-      const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.name) storeName = parsed.name;
-        if (parsed.slogan) storeSlogan = parsed.slogan;
-      }
-    } catch (_) {}
+    const info = overrideStoreInfo || activeStoreInfo;
+    if (info && info.name) {
+      storeName = info.name;
+      if (info.slogan) storeSlogan = info.slogan;
+    } else {
+      try {
+        const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.name) storeName = parsed.name;
+          if (parsed.slogan) storeSlogan = parsed.slogan;
+        }
+      } catch (_) {}
+    }
 
     const noRetur = item.no_retur || '-';
     const tanggalRetur = formatDate(item.tanggal);
@@ -640,13 +658,20 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     return text;
   }
 
-  function shareReturnWhatsApp(returnId) {
+  async function shareReturnWhatsApp(returnId) {
     const item = returnEntries.find(r => String(r.id) === String(returnId));
     if (!item) {
       showToast('Data retur tidak ditemukan', 'error');
       return;
     }
-    const msg = generateReturnWhatsAppText(item);
+    if (!activeStoreInfo) {
+      try {
+        if (settingsApi && typeof settingsApi.getStoreInfo === 'function') {
+          activeStoreInfo = await settingsApi.getStoreInfo();
+        }
+      } catch (_) {}
+    }
+    const msg = generateReturnWhatsAppText(item, activeStoreInfo);
     const encoded = encodeURIComponent(msg);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
   }

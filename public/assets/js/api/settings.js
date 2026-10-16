@@ -97,23 +97,13 @@ export const settings = {
    */
   async getStoreInfo() {
     try {
-      if (typeof localStorage !== 'undefined') {
-        const cached = localStorage.getItem('aquastock_store_info');
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (parsed && parsed.name) return parsed;
-          } catch (_) {}
-        }
-      }
-
       const { data, error } = await supabase
         .from('app_settings')
         .select('value')
         .eq('key', 'store_info')
         .maybeSingle();
 
-      if (!error && data?.value) {
+      if (!error && data?.value && data.value.name) {
         if (typeof localStorage !== 'undefined') {
           try {
             localStorage.setItem('aquastock_store_info', JSON.stringify(data.value));
@@ -122,6 +112,17 @@ export const settings = {
         return data.value;
       }
     } catch (_) {}
+
+    // Fallback ke localStorage jika koneksi Supabase gagal atau offline
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.name) return parsed;
+        }
+      } catch (_) {}
+    }
 
     return {
       name: 'JTMaquarium',

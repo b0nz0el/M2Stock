@@ -712,9 +712,15 @@
 
     // Sinkronkan profil toko dinamis ke struk kasir
     try {
-      const storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
+      let storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
         ? await window.Api.settings.getStoreInfo()
         : null;
+      if (!storeInfo && typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) {
+          try { storeInfo = JSON.parse(cached); } catch (_) {}
+        }
+      }
       if (storeInfo) {
         const elStoreName = document.getElementById('receipt-store-name');
         const elStoreSlogan = document.getElementById('receipt-store-slogan');

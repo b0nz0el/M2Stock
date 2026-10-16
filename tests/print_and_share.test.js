@@ -248,6 +248,32 @@ describe('Print and Share Features (Fase B)', () => {
       expect(document.getElementById('doc-return-store-address').textContent).toBe('Jl. Ahmad Yani No. 88, Bekasi');
       expect(document.getElementById('doc-return-sign-name').textContent).toBe('Akuarium Indah Jaya');
     });
+
+    it('menggunakan profil toko dinamis pada generator teks WhatsApp PO dan Retur', () => {
+      const customStore = {
+        name: 'AquaMarine Specialist',
+        slogan: 'Pusat Terumbu Karang & Ikan Hias Air Laut'
+      };
+
+      function generatePOWhatsAppText(item, overrideStoreInfo = null) {
+        let storeName = overrideStoreInfo?.name || 'JTMaquarium';
+        let storeSlogan = overrideStoreInfo?.slogan || 'Perlengkapan Aksesoris Aquarium';
+        return `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n*Toko ${storeName} - ${storeSlogan}*`;
+      }
+
+      function generateReturnWhatsAppText(item, overrideStoreInfo = null) {
+        let storeName = overrideStoreInfo?.name || 'JTMaquarium';
+        let storeSlogan = overrideStoreInfo?.slogan || 'Perlengkapan Aksesoris Aquarium';
+        return `*BUKTI TANDA TERIMA RETUR BARANG*\n*Toko ${storeName} - ${storeSlogan}*`;
+      }
+
+      const poMsg = generatePOWhatsAppText({}, customStore);
+      expect(poMsg).toContain('*Toko AquaMarine Specialist - Pusat Terumbu Karang & Ikan Hias Air Laut*');
+
+      const retMsg = generateReturnWhatsAppText({}, customStore);
+      expect(retMsg).toContain('*Toko AquaMarine Specialist - Pusat Terumbu Karang & Ikan Hias Air Laut*');
+    });
   });
 });
+
 

@@ -6,6 +6,7 @@
 import { po as poApi } from '../../assets/js/api/po.js';
 import { suppliers as suppliersApi } from '../../assets/js/api/suppliers.js';
 import { items as itemsApi } from '../../assets/js/api/items.js';
+import { settings as settingsApi } from '../../assets/js/api/settings.js';
 import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
 import { getUserRole } from '../../assets/js/utils/rbac.js';
 
@@ -410,6 +411,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   let activePrintPO = null;
+  let activeStoreInfo = null;
 
   function resolveItemProductName(it) {
     if (!it) return 'Produk';
@@ -461,10 +463,20 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     // Sinkronkan data profil toko dinamis ke dokumen PO
     try {
-      const storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
-        ? await window.Api.settings.getStoreInfo()
-        : null;
+      let storeInfo = null;
+      if (settingsApi && typeof settingsApi.getStoreInfo === 'function') {
+        storeInfo = await settingsApi.getStoreInfo();
+      } else if (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo) {
+        storeInfo = await window.Api.settings.getStoreInfo();
+      }
+      if (!storeInfo && typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) {
+          try { storeInfo = JSON.parse(cached); } catch (_) {}
+        }
+      }
       if (storeInfo) {
+        activeStoreInfo = storeInfo;
         const docStoreName = document.getElementById('doc-po-store-name');
         const docStoreSlogan = document.getElementById('doc-po-store-slogan');
         const docStoreAddress = document.getElementById('doc-po-store-address');
@@ -525,7 +537,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
-  function generatePOWhatsAppText(item) {
+  function generatePOWhatsAppText(item, overrideStoreInfo = null) {
     if (!item) return '';
     const supplierName = item.supplier_nama || item.suppliers?.name || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
     const noPO = item.no_po || '-';
@@ -535,14 +547,20 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     let storeName = 'JTMaquarium';
     let storeSlogan = 'Perlengkapan Aksesoris Aquarium';
-    try {
-      const cached = localStorage.getItem('aquastock_store_info');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.name) storeName = parsed.name;
-        if (parsed.slogan) storeSlogan = parsed.slogan;
-      }
-    } catch (_) {}
+    const info = overrideStoreInfo || activeStoreInfo;
+    if (info && info.name) {
+      storeName = info.name;
+      if (info.slogan) storeSlogan = info.slogan;
+    } else {
+      try {
+        const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.name) storeName = parsed.name;
+          if (parsed.slogan) storeSlogan = parsed.slogan;
+        }
+      } catch (_) {}
+    }
 
     let text = `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n`;
     text += `*Toko ${storeName} - ${storeSlogan}*\n`;
@@ -584,7 +602,14 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (!availableProducts || availableProducts.length === 0) {
       await loadMasterData();
     }
-    const msg = generatePOWhatsAppText(item);
+    if (!activeStoreInfo) {
+      try {
+        if (settingsApi && typeof settingsApi.getStoreInfo === 'function') {
+          activeStoreInfo = await settingsApi.getStoreInfo();
+        }
+      } catch (_) {}
+    }
+    const msg = generatePOWhatsAppText(item, activeStoreInfo);
     const encoded = encodeURIComponent(msg);
     const supObj = availableSuppliers.find(s => String(s.id) === String(item.supplier_id)) || item.suppliers;
     const phone = supObj?.phone ? supObj.phone.replace(/[^0-9]/g, '') : '';
