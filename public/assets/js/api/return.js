@@ -137,9 +137,9 @@ export const returnApi = {
   },
 
   /**
-   * Menambah pencatatan retur baru
+   * Menambah pencatatan retur baru dengan relasi dan harga satuan
    */
-  async create({ no_retur, tanggal, tipe, produk_id, qty, alasan, status = 'diproses', keterangan = '' }) {
+  async create({ no_retur, tanggal, tipe, produk_id, qty, harga_satuan = 0, supplier_id = null, customer_id = null, alasan, status = 'diproses', keterangan = '' }) {
     if (!produk_id) {
       return formatResponse({
         ok: false,
@@ -161,12 +161,23 @@ export const returnApi = {
 
       const autoNo = no_retur && no_retur.trim() !== '' ? no_retur.trim() : this.generateNoRetur(tipe);
 
+      // Ambil nama produk untuk snapshot
+      let snapshot_product_name = null;
+      try {
+        const { data: pData } = await supabase.from('products').select('name').eq('id', produk_id).maybeSingle();
+        if (pData?.name) snapshot_product_name = pData.name;
+      } catch (_) {}
+
       const payload = {
         no_retur: autoNo,
         tanggal: tanggal || new Date().toISOString().slice(0, 10),
         tipe: (tipe || 'ke_supplier').toLowerCase(),
         produk_id,
+        supplier_id: supplier_id || null,
+        customer_id: customer_id || null,
         qty: Number(qty) || 1,
+        harga_satuan: Number(harga_satuan) || 0,
+        snapshot_product_name,
         alasan: (alasan || '').trim(),
         status: status || 'diproses',
         keterangan: keterangan ? keterangan.trim() || null : null,
@@ -185,10 +196,25 @@ export const returnApi = {
   },
 
   /**
-   * Mengupdate data retur (misal update status menjadi selesai atau ditolak)
+   * Mengupdate data retur
+   * Jika status diubah menjadi 'selesai', memicu complete_return RPC untuk memutasi stok
    */
   async update(id, updates) {
     try {
+      if (updates && updates.status === 'selesai') {
+        try {
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('complete_return', {
+            p_return_id: id
+          });
+          if (!rpcErr && rpcData && rpcData.ok) {
+            return formatResponse({ ok: true, data: rpcData });
+          }
+          if (rpcErr) {
+            return formatResponse({ ok: false, error: rpcErr });
+          }
+        } catch (_) {}
+      }
+
       const { data, error } = await supabase.from('returns').update(updates).eq('id', id).select().single();
       if (error) {
         return formatResponse({ ok: false, error });

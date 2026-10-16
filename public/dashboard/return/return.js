@@ -386,10 +386,13 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   async function handleCompleteReturn(id) {
+    if (!confirm('Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.')) {
+      return;
+    }
     try {
       const res = await returnApi.update(id, { status: 'selesai' });
       if (res.ok) {
-        showToast('Status retur berhasil diubah menjadi Selesai', 'success');
+        showToast('Retur selesai dan mutasi stok berhasil diproses', 'success');
         await loadData();
       } else {
         showToast(res.error?.message || 'Gagal memperbarui status', 'error');
@@ -693,12 +696,36 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const addHeaderBtn = document.getElementById('btn-add-return-header');
     if (addHeaderBtn) addHeaderBtn.addEventListener('click', () => openModal('ke_supplier'));
 
-    // Tipe change in modal generates new No Retur prefix
+    // Tipe change in modal generates new No Retur prefix & updates price estimate
     const tipeModalSelect = document.getElementById('return-tipe');
     if (tipeModalSelect) {
       tipeModalSelect.addEventListener('change', (e) => {
         const noInput = document.getElementById('return-no');
         if (noInput) noInput.value = returnApi.generateNoRetur(e.target.value);
+
+        const prodSelect = document.getElementById('return-produk');
+        const prod = prodSelect ? productsById.get(String(prodSelect.value)) : null;
+        const priceInput = document.getElementById('return-harga');
+        if (prod && priceInput) {
+          priceInput.value = e.target.value === 'ke_supplier'
+            ? (prod.costPrice || prod.cost_price || 0)
+            : (prod.sellPrice || prod.sell_price || 0);
+        }
+      });
+    }
+
+    // Product change autofills price based on selected product and return type
+    const returnProductSelect = document.getElementById('return-produk');
+    if (returnProductSelect) {
+      returnProductSelect.addEventListener('change', (e) => {
+        const prod = productsById.get(String(e.target.value));
+        const priceInput = document.getElementById('return-harga');
+        const tipeVal = document.getElementById('return-tipe')?.value || 'ke_supplier';
+        if (prod && priceInput) {
+          priceInput.value = tipeVal === 'ke_supplier'
+            ? (prod.costPrice || prod.cost_price || 0)
+            : (prod.sellPrice || prod.sell_price || 0);
+        }
       });
     }
 

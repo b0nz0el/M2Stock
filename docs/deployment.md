@@ -33,24 +33,25 @@ aQuaStock Pro tidak memerlukan server backend khusus (seperti Node.js server, Py
 
 ---
 
-## 2. Pilihan Platform Deployment
+## 2. Platform Deployment Aktif (Cloudflare Pages)
 
-### Pilihan A: GitHub Pages (Rekomendasi Default)
-Proyek ini telah dikonfigurasi untuk mendeploy folder `public/` langsung ke GitHub Pages.
+Aplikasi **aQuaStock Pro** saat ini telah aktif di-deploy ke lingkungan produksi menggunakan **Cloudflare Pages** pada domain:
+**`https://aquastock-pro.pages.dev`**
 
-1. **Konfigurasi Repository**:
-   - Buka repositori GitHub di menu **Settings → Pages**.
-   - Pada bagian **Build and deployment → Source**, pilih **GitHub Actions**.
-2. **Workflow GitHub Actions**:
-   - File konfigurasi workflow `.github/workflows/deploy.yml` secara otomatis mem-publish folder `public/` setiap kali ada perintah `git push` ke branch `main`.
+### 2.1 Konfigurasi Cloudflare Pages
+Pengaturan proyek di Cloudflare Pages Dashboard:
+- **Project Name**: `aquastock-pro`
+- **Framework Preset**: `None` / `Other`
+- **Build Command**: `npm run build:css` (Mengompilasi styling Tailwind CSS ke `public/assets/css/style.css`)
+- **Build Output Directory**: `public`
+- **Root Directory**: `/`
+- **Node.js Compatibility**: v18+ atau v20+
 
-### Pilihan B: Cloudflare Pages / Vercel / Netlify
-1. Hubungkan repository GitHub ke dashboard penyedia (misal Vercel atau Cloudflare Pages).
-2. Tentukan pengaturan build:
-   - **Framework Preset**: *Other* / *Static Site*
-   - **Build Command**: `npm run build:css`
-   - **Output Directory**: `public`
-3. Konfigurasikan Clean URLs (agar rute `/dashboard/items/` dilayani tanpa perlu ekstensi `.html`).
+### 2.2 Pilihan Hosting Alternatif
+1. **GitHub Pages**:
+   - File konfigurasi workflow `.github/workflows/deploy.yml` dapat mem-publish folder `public/` saat ada perintah `git push` ke branch `main`.
+2. **Vercel / Netlify**:
+   - Gunakan Output Directory `public` dan Build Command `npm run build:css`.
 
 ---
 

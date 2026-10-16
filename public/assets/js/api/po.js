@@ -146,7 +146,7 @@ export const po = {
   },
 
   /**
-   * Membuat Purchase Order baru beserta item-itemnya
+   * Membuat Purchase Order baru beserta item-itemnya secara atomik
    */
   async create({ no_po, tanggal, supplier_id = null, supplier_nama = '', status = 'draft', catatan = '', items = [] }) {
     try {
@@ -158,7 +158,7 @@ export const po = {
 
       const autoNo = no_po && no_po.trim() !== '' ? no_po.trim() : this.generateNoPO();
 
-      // Hitung total dari items
+      // Hitung total dari items & siapkan struktur payload
       let grandTotal = 0;
       const formattedItems = (items || []).map(it => {
         const qty = Math.max(1, Number(it.qty) || 1);
@@ -167,17 +167,48 @@ export const po = {
         grandTotal += subtotal;
         return {
           product_id: it.product_id || null,
-          product_nama: it.product_nama || null,
+          product_name: it.product_name || it.product_nama || null,
+          product_nama: it.product_name || it.product_nama || null,
           qty,
           harga,
           subtotal
         };
       });
 
+      // 1. Coba eksekusi melalui PostgreSQL RPC atomik
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('create_purchase_order_atomic', {
+          p_no_po: autoNo,
+          p_tanggal: tanggal || new Date().toISOString().slice(0, 10),
+          p_supplier_id: supplier_id || null,
+          p_supplier_name: supplier_nama || '',
+          p_status: status || 'draft',
+          p_catatan: catatan || '',
+          p_items: formattedItems
+        });
+
+        if (!rpcError && rpcData && rpcData.ok) {
+          return formatResponse({
+            ok: true,
+            data: {
+              id: rpcData.id,
+              no_po: rpcData.no_po,
+              total: rpcData.total,
+              supplier_nama,
+              items: formattedItems
+            }
+          });
+        }
+      } catch (_) {
+        // Fallback ke insert langsung jika RPC belum terpasang di database
+      }
+
+      // 2. Fallback Direct Insert (jika RPC belum aktif)
       const poPayload = {
         no_po: autoNo,
         tanggal: tanggal || new Date().toISOString().slice(0, 10),
         supplier_id: supplier_id || null,
+        supplier_name: supplier_nama || null,
         status: status || 'draft',
         total: grandTotal,
         catatan: catatan ? catatan.trim() : (supplier_nama ? `Supplier: ${supplier_nama}` : null),
@@ -205,6 +236,7 @@ export const po = {
         const itemsPayload = formattedItems.map(it => ({
           po_id: insertedPO.id,
           product_id: it.product_id,
+          product_name: it.product_name || it.product_nama,
           qty: it.qty,
           harga: it.harga,
           subtotal: it.subtotal,
@@ -212,6 +244,8 @@ export const po = {
         }));
         const { error: itemsError } = await supabase.from('purchase_order_items').insert(itemsPayload);
         if (itemsError) {
+          // Rollback header jika items gagal disimpan
+          await supabase.from('purchase_orders').delete().eq('id', insertedPO.id);
           return formatResponse({ ok: false, error: itemsError });
         }
       }
@@ -253,10 +287,38 @@ export const po = {
   },
 
   /**
-   * Mengupdate status PO secara instan
+   * Mengupdate status PO secara aman & atomik
+   * Jika status 'diterima', otomatis memicu receive_purchase_order RPC untuk mutasi stok
    */
   async updateStatus(id, newStatus) {
+    if (newStatus === 'diterima') {
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('receive_purchase_order', {
+          p_po_id: id
+        });
+        if (!rpcErr && rpcData && rpcData.ok) {
+          return formatResponse({ ok: true, data: rpcData });
+        }
+      } catch (_) {}
+    }
     return this.update(id, { status: newStatus });
+  },
+
+  /**
+   * Restock Assistant: Membuat Draft PO dari daftar barang dengan stok menipis (stock <= min_stock)
+   */
+  async generateFromLowStock(supplierId = null) {
+    try {
+      const { data, error } = await supabase.rpc('generate_draft_po_from_low_stock', {
+        p_supplier_id: supplierId || null
+      });
+      if (error) {
+        return formatResponse({ ok: false, error });
+      }
+      return formatResponse({ ok: true, data });
+    } catch (err) {
+      return handleError(err);
+    }
   },
 
   /**

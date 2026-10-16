@@ -129,17 +129,29 @@ Diakses via `Api.items.uploadImage`:
 - `DELETE /storage/v1/object/product-images/{filename.webp}`: Menghapus file foto saat produk dihapus atau diganti.
 
 ### 2.6 Remote Procedure Calls (RPC)
-Diakses via `Api.users.*`:
+Diakses via `Api.users.*`, `Api.po.*`, dan `Api.returns.*`:
 - `POST /rest/v1/rpc/get_auth_users`:  
   Mengembalikan daftar seluruh pengguna terdaftar dari `auth.users` digabungkan dengan `public.profiles`.  
   *Otorisasi*: **Hanya Owner** (dicek via fungsi `is_owner()`).
 - `POST /rest/v1/rpc/update_user_role`:  
   Menerima payload `{ target_user_id: string, new_role: 'OWNER' | 'STAFF' | 'VIEWER' }`.  
   *Otorisasi*: **Hanya Owner**. Dilindungi proteksi anti-demote diri sendiri dan validasi role yang sah.
+- `POST /rest/v1/rpc/create_purchase_order_atomic`:
+  Menerima payload `{ p_po: object, p_items: array }` untuk membuat header PO dan rincian item dalam 1 transaksi database atomik. Mencegah status parsial (*orphaned PO header*).
+  *Otorisasi*: Authenticated staff / owner.
+- `POST /rest/v1/rpc/receive_purchase_order`:
+  Menerima payload `{ p_po_id: uuid }`. Memvalidasi status PO harus `'dikirim'`, mengubah status menjadi `'diterima'`, dan secara atomik mencatat mutasi barang masuk (`transactions` type `'in'` dengan referensi `po_id`) yang otomatis memicu penambahan stok produk. Dilengkapi unique constraint partial idempotency (`uq_transactions_po_product`) untuk mencegah penerimaan ganda.
+  *Otorisasi*: Authenticated staff / owner.
+- `POST /rest/v1/rpc/complete_return`:
+  Menerima payload `{ p_return_id: uuid }`. Memvalidasi status retur harus `'proses'`, mengubah status menjadi `'selesai'`, dan mencatat mutasi `transactions` (`'out'` untuk retur `ke_supplier`, `'in'` untuk retur `dari_customer`) secara atomik. Dilindungi index `uq_transactions_return` agar tidak terjadi duplikasi mutasi.
+  *Otorisasi*: Authenticated staff / owner.
+- `POST /rest/v1/rpc/generate_draft_po_from_low_stock`:
+  Memindai semua produk dengan `stock <= min_stock` yang belum ada dalam PO terbuka (`draft` / `dikirim`). Mengelompokkan item berdasarkan `supplier_id` produk (atau supplier fallback) dan membuat Purchase Order berstatus `draft` dengan kuantitas restock optimal `(min_stock * 2) - stock`.
+  *Otorisasi*: Authenticated staff / owner.
 
 ---
 
-## 3. Database Schema (7 Tabel PostgreSQL)
+## 3. Database Schema (11 Tabel PostgreSQL)
 
 ### 3.1 `profiles`
 Menyimpan atribut pengguna aplikasi yang terhubung ke Supabase Auth.
@@ -215,7 +227,7 @@ create table public.products (
 ```
 
 ### 3.6 `transactions`
-Catatan mutasi stok barang masuk (pembelian/restock) dan barang keluar (penjualan).
+Catatan mutasi stok barang masuk (pembelian/restock/retur customer) dan barang keluar (penjualan/retur supplier).
 ```sql
 create table public.transactions (
   id uuid primary key default gen_random_uuid(),
@@ -227,6 +239,8 @@ create table public.transactions (
   reference_no text,
   supplier_id uuid references public.suppliers(id) on delete set null,
   customer_id uuid references public.customers(id) on delete set null,
+  po_id uuid references public.purchase_orders(id) on delete set null,
+  return_id uuid references public.returns(id) on delete set null,
   channel text not null default 'Offline',
   notes text,
   user_id uuid references auth.users(id) on delete set null,
@@ -234,7 +248,64 @@ create table public.transactions (
 );
 ```
 
-### 3.7 `notifications`
+### 3.7 `purchase_orders`
+Surat Pemesanan Barang (PO) ke mitra supplier.
+```sql
+create table public.purchase_orders (
+  id uuid primary key default gen_random_uuid(),
+  po_number text not null unique,
+  supplier_id uuid references public.suppliers(id) on delete set null,
+  supplier_name text,
+  status text not null check (status in ('draft', 'dikirim', 'diterima', 'dibatalkan')) default 'draft',
+  order_date date not null default current_date,
+  expected_delivery date,
+  received_at timestamptz,
+  notes text,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
+
+### 3.8 `purchase_order_items`
+Rincian kuantitas dan harga satuan barang yang dipesan pada Purchase Order.
+```sql
+create table public.purchase_order_items (
+  id uuid primary key default gen_random_uuid(),
+  po_id uuid not null references public.purchase_orders(id) on delete cascade,
+  product_id uuid not null references public.products(id) on delete restrict,
+  product_name text,
+  quantity integer not null check (quantity > 0),
+  unit_price numeric(15, 2) not null default 0,
+  received_quantity integer not null default 0 check (received_quantity >= 0),
+  created_at timestamptz not null default now()
+);
+```
+
+### 3.9 `returns`
+Pengelolaan pengembalian barang (retur ke supplier atau retur dari customer).
+```sql
+create table public.returns (
+  id uuid primary key default gen_random_uuid(),
+  return_number text not null unique,
+  type text not null check (type in ('ke_supplier', 'dari_customer')),
+  product_id uuid not null references public.products(id) on delete restrict,
+  supplier_id uuid references public.suppliers(id) on delete set null,
+  customer_id uuid references public.customers(id) on delete set null,
+  quantity integer not null check (quantity > 0),
+  harga_satuan numeric(15, 2) not null default 0 check (harga_satuan >= 0),
+  alasan text not null,
+  status text not null check (status in ('draft', 'proses', 'selesai', 'ditolak')) default 'draft',
+  snapshot_product_name text,
+  snapshot_entity_name text,
+  completed_at timestamptz,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
+
+### 3.10 `notifications`
 Pemberitahuan peringatan stok kritis dan aktivitas transaksi sistem.
 ```sql
 create table public.notifications (
@@ -243,6 +314,20 @@ create table public.notifications (
   message text not null,
   type text not null check (type in ('warning', 'info', 'success', 'danger')) default 'info',
   is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+```
+
+### 3.11 `audit_logs`
+Catatan jejak audit sistem yang terproteksi (append-only via internal RPC / trigger tepercaya).
+```sql
+create table public.audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  event_type text not null,
+  table_name text not null,
+  record_id text,
+  user_id uuid references auth.users(id) on delete set null,
+  details jsonb default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 ```
@@ -268,6 +353,14 @@ Seluruh tabel mengaktifkan `alter table ... enable row level security;`.
 | `customers` | ALL | authenticated | `auth.role() = 'authenticated'` |
 | `transactions`| SELECT/INSERT | authenticated | `true` (Semua staff dapat mencatat transaksi) |
 | `transactions`| DELETE | authenticated | `public.is_owner()` (Hanya owner dapat membatalkan mutasi transaksi) |
+| `purchase_orders` | SELECT/INSERT/UPDATE | authenticated | `true` |
+| `purchase_orders` | DELETE | authenticated | `public.is_owner()` |
+| `purchase_order_items` | SELECT/INSERT/UPDATE | authenticated | `true` |
+| `purchase_order_items` | DELETE | authenticated | `public.is_owner()` |
+| `returns` | SELECT/INSERT/UPDATE | authenticated | `true` |
+| `returns` | DELETE | authenticated | `public.is_owner()` |
 | `notifications`| SELECT/UPDATE | authenticated | `true` |
+| `audit_logs` | SELECT | authenticated | `public.is_owner()` |
+| `audit_logs` | INSERT/UPDATE/DELETE | authenticated | Disallow direct client mutations; hanya via `log_audit_event()` security definer |
 
-> Skrip DDL lengkap, fungsi trigger stok otomatis, dan implementasi RPC tersedia di [setup-database.md](setup-database.md).
+> Skrip DDL lengkap, fungsi trigger stok otomatis, dan implementasi RPC tersedia di [setup-database.md](setup-database.md) dan folder `supabase/migrations/`.

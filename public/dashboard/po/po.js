@@ -4,6 +4,8 @@
    ═══════════════════════════════════════════════════ */
 
 import { po as poApi } from '../../assets/js/api/po.js';
+import { suppliers as suppliersApi } from '../../assets/js/api/suppliers.js';
+import { items as itemsApi } from '../../assets/js/api/items.js';
 import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
 import { getUserRole } from '../../assets/js/utils/rbac.js';
 
@@ -21,6 +23,8 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   let pendingDeleteId = null;
   let deleteTrigger = null;
   let deleteInProgress = false;
+  let availableSuppliers = [];
+  let availableProducts = [];
 
   function formatRupiah(num) {
     return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
@@ -385,14 +389,56 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
+  // Master Data Loader & Select Populator
+  async function loadMasterData() {
+    try {
+      const [supRes, prodRes] = await Promise.all([
+        suppliersApi.getAll({ status: 'active' }).catch(() => ({ ok: false, data: [] })),
+        itemsApi.getAll().catch(() => ({ ok: false, data: [] }))
+      ]);
+
+      if (supRes.ok && Array.isArray(supRes.data)) {
+        availableSuppliers = supRes.data;
+      }
+      if (prodRes.ok && Array.isArray(prodRes.data)) {
+        availableProducts = prodRes.data;
+      }
+    } catch (err) {
+      console.warn('Gagal memuat master data supplier/produk untuk PO:', err);
+    }
+  }
+
+  function populateSupplierSelect(selectedId = '') {
+    const select = document.getElementById('po-supplier');
+    if (!select) return;
+    if (availableSuppliers.length === 0) {
+      select.innerHTML = '<option value="">-- Belum Ada Supplier Aktif --</option>';
+      return;
+    }
+    select.innerHTML = '<option value="">-- Pilih Supplier --</option>' +
+      availableSuppliers.map(s => {
+        const isSel = s.id === selectedId;
+        return `<option value="${s.id}" data-name="${s.name}" ${isSel ? 'selected' : ''}>${s.name}</option>`;
+      }).join('');
+  }
+
   // Dynamic Item Rows in Modal
-  function createItemRow(nama = '', qty = 1, harga = 0) {
+  function createItemRow(selectedProductId = '', qty = 1, harga = 0) {
     const row = document.createElement('div');
     row.className = 'po-item-row items-center bg-black/30 p-2.5 rounded-xl border border-white/5';
+
+    const productOptions = availableProducts.map(p => {
+      const cost = p.costPrice || p.cost_price || 0;
+      const isSel = p.id === selectedProductId;
+      return `<option value="${p.id}" data-price="${cost}" data-name="${p.name}" ${isSel ? 'selected' : ''}>${p.name} (Stok: ${p.stock})</option>`;
+    }).join('');
+
     row.innerHTML = `
       <div class="po-item-name">
-        <input type="text" required placeholder="Nama Barang..." value="${nama}"
-               class="item-nama w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
+        <select required class="item-select w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
+          <option value="">-- Pilih Barang --</option>
+          ${productOptions}
+        </select>
       </div>
       <div class="po-item-qty">
         <input type="number" required min="1" step="1" value="${qty}" placeholder="Qty"
@@ -412,9 +458,18 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       </div>
     `;
 
+    const selectEl = row.querySelector('.item-select');
     const qtyInput = row.querySelector('.item-qty');
     const hargaInput = row.querySelector('.item-harga');
     const removeBtn = row.querySelector('.btn-remove-item');
+
+    selectEl.addEventListener('change', () => {
+      const opt = selectEl.selectedOptions[0];
+      if (opt && opt.dataset.price) {
+        hargaInput.value = opt.dataset.price;
+      }
+      updateRowSubtotal();
+    });
 
     function updateRowSubtotal() {
       const q = Math.max(1, Number(qtyInput.value) || 1);
@@ -453,7 +508,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (grandEl) grandEl.textContent = formatRupiah(grand);
   }
 
-  function openModal() {
+  async function openModal() {
     const modal = document.getElementById('modal-po');
     const form = document.getElementById('form-po');
     const itemsContainer = document.getElementById('po-items-container');
@@ -469,6 +524,11 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     const statusSelect = document.getElementById('po-status');
     if (statusSelect) statusSelect.value = 'draft';
+
+    if (availableSuppliers.length === 0 || availableProducts.length === 0) {
+      await loadMasterData();
+    }
+    populateSupplierSelect();
 
     itemsContainer.innerHTML = '';
     itemsContainer.appendChild(createItemRow());
@@ -499,12 +559,14 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     const no_po = document.getElementById('po-no')?.value || '';
     const tanggal = document.getElementById('po-tanggal')?.value || new Date().toISOString().slice(0, 10);
-    const supplier_nama = document.getElementById('po-supplier')?.value || '';
+    const supplierSelect = document.getElementById('po-supplier');
+    const supplier_id = supplierSelect?.value || null;
+    const supplier_nama = supplierSelect?.selectedOptions[0]?.dataset?.name || supplierSelect?.selectedOptions[0]?.text || '';
     const status = document.getElementById('po-status')?.value || 'draft';
     const catatan = document.getElementById('po-catatan')?.value || '';
 
-    if (!supplier_nama.trim()) {
-      showToast('Nama supplier wajib diisi', 'warning');
+    if (!supplier_id) {
+      showToast('Pilih supplier tujuan pesanan', 'warning');
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Simpan PO';
@@ -513,21 +575,27 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
 
     const items = [];
+    let hasInvalid = false;
     document.querySelectorAll('.po-item-row').forEach(row => {
-      const nama = row.querySelector('.item-nama')?.value?.trim();
+      const selectEl = row.querySelector('.item-select');
+      const prodId = selectEl?.value;
+      const prodName = selectEl?.selectedOptions[0]?.dataset?.name || '';
       const qty = Number(row.querySelector('.item-qty')?.value || 1);
       const harga = Number(row.querySelector('.item-harga')?.value || 0);
-      if (nama) {
+      if (!prodId) {
+        hasInvalid = true;
+      } else {
         items.push({
-          product_nama: nama,
+          product_id: prodId,
+          product_name: prodName,
           qty,
           harga
         });
       }
     });
 
-    if (items.length === 0) {
-      showToast('Minimal masukkan 1 rincian item barang', 'warning');
+    if (hasInvalid || items.length === 0) {
+      showToast('Pilih produk dari master barang untuk seluruh rincian item', 'warning');
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Simpan PO';
@@ -539,6 +607,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       const res = await poApi.create({
         no_po,
         tanggal,
+        supplier_id,
         supplier_nama,
         status,
         catatan,
@@ -628,6 +697,36 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     const exportBtn = document.getElementById('btn-export-po');
     if (exportBtn) exportBtn.addEventListener('click', exportCSV);
 
+    // Restock Assistant (Stok Kritis)
+    const autoRestockBtn = document.getElementById('btn-auto-restock-po');
+    if (autoRestockBtn) {
+      autoRestockBtn.addEventListener('click', async () => {
+        autoRestockBtn.disabled = true;
+        autoRestockBtn.classList.add('opacity-50');
+        showToast('Memindai stok menipis dan membuat draft PO...', 'info');
+        try {
+          const res = await poApi.generateFromLowStock();
+          if (res.ok && res.data) {
+            if (res.data.created) {
+              showToast(`Draft PO ${res.data.no_po} berhasil dibuat (${res.data.item_count} item)!`, 'success');
+              currentPage = 1;
+              currentStatus = 'all';
+              await loadData();
+            } else {
+              showToast(res.data.message || 'Semua barang dalam batas stok aman', 'info');
+            }
+          } else {
+            showToast(res.error?.message || 'Gagal membuat draft PO otomatis', 'error');
+          }
+        } catch (err) {
+          showToast('Terjadi kesalahan saat memproses restock', 'error');
+        } finally {
+          autoRestockBtn.disabled = false;
+          autoRestockBtn.classList.remove('opacity-50');
+        }
+      });
+    }
+
     // Open Modal
     const addBtn = document.getElementById('btn-open-po-modal');
     if (addBtn) addBtn.addEventListener('click', openModal);
@@ -698,7 +797,13 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       const receiveBtn = e.target.closest('.btn-receive-po');
       if (receiveBtn) {
         const id = receiveBtn.getAttribute('data-id');
-        if (id) handleUpdateStatus(id, 'diterima', 'Barang PO telah diterima lengkap');
+        if (id) {
+          if (!confirm('Tandai PO ini sebagai diterima? Seluruh item produk akan otomatis masuk ke stok toko dan riwayat barang masuk.')) {
+            return;
+          }
+          receiveBtn.disabled = true;
+          handleUpdateStatus(id, 'diterima', 'Barang PO telah diterima dan stok inventori berhasil bertambah');
+        }
         return;
       }
 
@@ -736,7 +841,10 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     } catch (_) {}
 
     setupEvents();
-    await loadData();
+    await Promise.all([
+      loadMasterData(),
+      loadData()
+    ]);
   });
 
 })();
