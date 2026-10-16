@@ -11,7 +11,7 @@ describe('Print and Share Features (Fase B)', () => {
       const items = item.items || item.purchase_order_items || [];
 
       let text = `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n`;
-      text += `*Toko Jaquris Aquarium & Aksesoris, Bekasi*\n`;
+      text += `*Toko JTMaquarium - Perlengkapan Aksesoris Aquarium*\n`;
       text += `-----------------------------------------------\n`;
       text += `*No. PO:* ${noPO}\n`;
       text += `*Tanggal:* ${tanggalPO}\n`;
@@ -66,6 +66,32 @@ describe('Print and Share Features (Fase B)', () => {
       expect(result).toContain('2. Lampu LED RGB 30cm (5 unit)');
       expect(result).toContain('*Catatan:* Kirim via kurir toko sebelum jam 17:00 WIB');
       expect(result).toContain('Mohon konfirmasi ketersediaan barang.');
+    });
+
+    it('menyinkronkan nama produk dari relasi products atau katalog jika product_name kosong', () => {
+      const catalog = [
+        { id: 23, name: 'Akuarium Kaca Optic Clear 60cm' }
+      ];
+
+      function resolveItemProductName(it, catalogProducts = []) {
+        if (!it) return 'Produk';
+        if (it.product_name && String(it.product_name).trim() !== '') return String(it.product_name).trim();
+        if (it.products?.name && String(it.products.name).trim() !== '') return String(it.products.name).trim();
+        const pid = String(it.product_id || '');
+        if (pid && Array.isArray(catalogProducts)) {
+          const found = catalogProducts.find(p => String(p.id) === pid);
+          if (found && found.name) return found.name;
+        }
+        return it.product_id ? ('Produk #' + it.product_id) : 'Produk';
+      }
+
+      // Kasus A: product_name kosong tapi ada relasi products
+      const itemWithRel = { product_id: 23, products: { name: 'Akuarium Kaca Optic Clear 60cm' } };
+      expect(resolveItemProductName(itemWithRel, catalog)).toBe('Akuarium Kaca Optic Clear 60cm');
+
+      // Kasus B: product_name dan products kosong tapi ada di catalog
+      const itemOnlyId = { product_id: 23 };
+      expect(resolveItemProductName(itemOnlyId, catalog)).toBe('Akuarium Kaca Optic Clear 60cm');
     });
   });
 

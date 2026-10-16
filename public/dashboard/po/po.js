@@ -411,7 +411,19 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
   let activePrintPO = null;
 
-  function openPrintPOModal(poId) {
+  function resolveItemProductName(it) {
+    if (!it) return 'Produk';
+    if (it.product_name && String(it.product_name).trim() !== '') return String(it.product_name).trim();
+    if (it.products?.name && String(it.products.name).trim() !== '') return String(it.products.name).trim();
+    const pid = String(it.product_id || '');
+    if (pid && Array.isArray(availableProducts) && availableProducts.length > 0) {
+      const found = availableProducts.find(p => String(p.id) === pid);
+      if (found && found.name) return found.name;
+    }
+    return it.product_id ? ('Produk #' + it.product_id) : 'Produk';
+  }
+
+  async function openPrintPOModal(poId) {
     const item = poEntries.find(p => String(p.id) === String(poId));
     if (!item) {
       showToast('Data Purchase Order tidak ditemukan', 'error');
@@ -419,9 +431,13 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
     activePrintPO = item;
 
+    if (!availableProducts || availableProducts.length === 0) {
+      await loadMasterData();
+    }
+
     const noPO = item.no_po || '-';
     const tanggalPO = formatDate(item.tanggal);
-    const supplierName = item.supplier_nama || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+    const supplierName = item.supplier_nama || item.suppliers?.name || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
     const status = (item.status || 'draft').toUpperCase();
     const notes = item.catatan || 'Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.';
     const total = formatRupiah(item.total || 0);
@@ -437,7 +453,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     if (docNo) docNo.textContent = noPO;
     if (docSupplier) docSupplier.textContent = supplierName;
-    if (docSupplierNotes) docSupplierNotes.textContent = item.supplier_kontak || 'Pemasok Terdaftar';
+    if (docSupplierNotes) docSupplierNotes.textContent = item.supplier_kontak || item.suppliers?.phone || 'Pemasok Terdaftar';
     if (docDate) docDate.textContent = tanggalPO;
     if (docStatus) docStatus.textContent = status;
     if (docNotes) docNotes.textContent = notes;
@@ -449,7 +465,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
         tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">Rincian produk tidak tersedia</td></tr>`;
       } else {
         tbody.innerHTML = items.map((it, idx) => {
-          const pName = it.product_name || it.products?.name || ('Produk #' + it.product_id);
+          const pName = resolveItemProductName(it);
           const qty = it.qty || 1;
           const harga = it.harga || it.unit_price || 0;
           const subtotal = qty * harga;
@@ -487,14 +503,14 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
   function generatePOWhatsAppText(item) {
     if (!item) return '';
-    const supplierName = item.supplier_nama || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+    const supplierName = item.supplier_nama || item.suppliers?.name || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
     const noPO = item.no_po || '-';
     const tanggalPO = formatDate(item.tanggal);
     const total = formatRupiah(item.total || 0);
     const items = item.items || item.purchase_order_items || [];
 
     let text = `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n`;
-    text += `*Toko Jaquris Aquarium & Aksesoris, Bekasi*\n`;
+    text += `*Toko JTMaquarium - Perlengkapan Aksesoris Aquarium*\n`;
     text += `-----------------------------------------------\n`;
     text += `*No. PO:* ${noPO}\n`;
     text += `*Tanggal:* ${tanggalPO}\n`;
@@ -506,7 +522,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       text += `- (Pesanan inventori standar)\n`;
     } else {
       items.forEach((it, idx) => {
-        const pName = it.product_name || it.products?.name || ('Produk #' + it.product_id);
+        const pName = resolveItemProductName(it);
         const qty = it.qty || 1;
         const harga = it.harga || it.unit_price || 0;
         const subtotal = qty * harga;
@@ -524,15 +540,18 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     return text;
   }
 
-  function sharePOWhatsApp(poId) {
+  async function sharePOWhatsApp(poId) {
     const item = poEntries.find(p => String(p.id) === String(poId));
     if (!item) {
       showToast('Data PO tidak ditemukan', 'error');
       return;
     }
+    if (!availableProducts || availableProducts.length === 0) {
+      await loadMasterData();
+    }
     const msg = generatePOWhatsAppText(item);
     const encoded = encodeURIComponent(msg);
-    const supObj = availableSuppliers.find(s => String(s.id) === String(item.supplier_id));
+    const supObj = availableSuppliers.find(s => String(s.id) === String(item.supplier_id)) || item.suppliers;
     const phone = supObj?.phone ? supObj.phone.replace(/[^0-9]/g, '') : '';
     const targetUrl = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
     window.open(targetUrl, '_blank');

@@ -138,3 +138,13 @@ $$;
 GRANT ALL ON public.transactions TO authenticated;
 GRANT ALL ON public.transactions TO anon;
 NOTIFY pgrst, 'reload schema';
+
+-- 6. BACKFILL NAMA BARANG PADA PURCHASE_ORDER_ITEMS JIKA KOSONG
+-- ---------------------------------------------------------
+UPDATE public.purchase_order_items poi
+SET product_name = p.name
+FROM public.products p
+WHERE poi.product_id = p.id
+  AND (poi.product_name IS NULL OR poi.product_name = '');
+
+

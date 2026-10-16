@@ -26,7 +26,20 @@ export const po = {
 
       let query = supabase
         .from('purchase_orders')
-        .select('*, purchase_order_items(id, product_id, qty, harga, subtotal)', { count: 'exact' });
+        .select(`
+          *,
+          suppliers (id, name, phone, address),
+          purchase_order_items (
+            id,
+            po_id,
+            product_id,
+            product_name,
+            qty,
+            harga,
+            subtotal,
+            products (id, name, sku, brand)
+          )
+        `, { count: 'exact' });
 
       if (status && status !== 'ALL') {
         query = query.eq('status', status.toLowerCase());
@@ -125,7 +138,14 @@ export const po = {
     try {
       const { data, error } = await supabase
         .from('purchase_orders')
-        .select('*, purchase_order_items(*)')
+        .select(`
+          *,
+          suppliers (id, name, phone, address),
+          purchase_order_items (
+            *,
+            products (id, name, sku, brand)
+          )
+        `)
         .eq('id', id)
         .maybeSingle();
 
