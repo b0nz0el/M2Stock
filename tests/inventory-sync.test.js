@@ -20,13 +20,8 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
     vi.clearAllMocks();
   });
 
-  it('melakukan sinkronisasi mutasi stok bertambah saat Barang Masuk dicatat jika trigger database tidak aktif', async () => {
-    let productStock = 10;
-    const updateSpy = vi.fn().mockImplementation((payload) => {
-      productStock = payload.stock;
-      return { eq: vi.fn().mockResolvedValue({ error: null }) };
-    });
-
+  it('tidak menulis saldo produk dari browser saat Barang Masuk dicatat', async () => {
+    const updateSpy = vi.fn();
     const mockSupabase = {
       from: vi.fn((table) => {
         if (table === 'products') {
@@ -34,7 +29,7 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: 25, stock: productStock },
+                  data: { id: 25, stock: 10, cost_price: 20000, name: 'Pakan discus' },
                   error: null
                 })
               }))
@@ -72,19 +67,11 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
     });
 
     expect(res.ok).toBe(true);
-    expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 15 }),
-    );
-    expect(productStock).toBe(15);
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
-  it('melakukan sinkronisasi mutasi stok berkurang saat Barang Keluar dicatat jika trigger database tidak aktif', async () => {
-    let productStock = 20;
-    const updateSpy = vi.fn().mockImplementation((payload) => {
-      productStock = payload.stock;
-      return { eq: vi.fn().mockResolvedValue({ error: null }) };
-    });
-
+  it('tidak menulis saldo produk dari browser saat Barang Keluar dicatat', async () => {
+    const updateSpy = vi.fn();
     const mockSupabase = {
       from: vi.fn((table) => {
         if (table === 'products') {
@@ -92,7 +79,7 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: 30, stock: productStock },
+                  data: { id: 30, stock: 20, cost_price: 25000, name: 'Pompa' },
                   error: null
                 })
               }))
@@ -130,19 +117,11 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
     });
 
     expect(res.ok).toBe(true);
-    expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 16 }),
-    );
-    expect(productStock).toBe(16);
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
-  it('mengembalikan stok barang saat transaksi masuk atau keluar dihapus jika trigger tidak aktif', async () => {
-    let productStock = 16;
-    const updateSpy = vi.fn().mockImplementation((payload) => {
-      productStock = payload.stock;
-      return { eq: vi.fn().mockResolvedValue({ error: null }) };
-    });
-
+  it('tidak mengubah saldo produk dari browser saat transaksi dihapus', async () => {
+    const updateSpy = vi.fn();
     const mockSupabase = {
       from: vi.fn((table) => {
         if (table === 'transactions') {
@@ -165,7 +144,7 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: 30, stock: productStock },
+                  data: { id: 30, stock: 16 },
                   error: null
                 })
               }))
@@ -181,11 +160,7 @@ describe('Audit Sinkronisasi Menu: Barang, Barang Masuk, Barang Keluar', () => {
     const res = await transactions.delete(1000);
 
     expect(res.ok).toBe(true);
-    // Menghapus transaksi keluar 4 unit mengembalikan stok dari 16 -> 20
-    expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 20 }),
-    );
-    expect(productStock).toBe(20);
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
   it('menyelesaikan nama barang yang tidak ter-join via fallback catalog cache', () => {

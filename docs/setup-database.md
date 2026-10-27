@@ -14,6 +14,7 @@ Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yan
 6. Untuk menambahkan dukungan barcode pada tabel produk, jalankan migrasi `supabase/migrations/20261016_product_barcodes.sql` melalui **SQL Editor**.
 7. Untuk mencatat kanal transaksi dan mencegah stok menjadi negatif, jalankan migrasi `supabase/migrations/20261016_inventory_stock_safety.sql` melalui **SQL Editor**.
 8. Untuk mengelola kategori dan satuan stok dari menu Pengaturan, jalankan migrasi `supabase/migrations/20261016_product_units.sql` melalui **SQL Editor**.
+Saldo produk hanya boleh berubah melalui trigger/database transaction; frontend tidak lagi melakukan fallback update stok. Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan berurutan, termasuk `20261028_inventory_single_stock_trigger.sql`, lalu verifikasi trigger `trg_transaction_stock_update` ada dan enabled sebelum mencatat transaksi. Jangan mengandalkan saldo master bila trigger belum aktif.
 
 ---
 

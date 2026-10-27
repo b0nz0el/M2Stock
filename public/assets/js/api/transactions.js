@@ -445,36 +445,8 @@ export const transactions = {
             });
           }
 
-          // Sinkronisasi mutasi stok fallback jika trigger PostgreSQL belum aktif di database Supabase
-          if (productBefore && typeof window.supabase.from === 'function') {
-            try {
-              const { data: pAfter } = await window.supabase
-                .from('products')
-                .select('id, stock')
-                .eq('id', productId)
-                .maybeSingle();
-
-              if (pAfter) {
-                const stockBefore = Number(productBefore.stock || 0);
-                const stockAfter = Number(pAfter.stock || 0);
-
-                // Jika stok produk di database belum berubah sama sekali setelah transaksi berhasil disimpan
-                if (stockBefore === stockAfter) {
-                  const targetStock = data.type === 'in'
-                    ? stockBefore + quantity
-                    : Math.max(0, stockBefore - quantity);
-
-                  await window.supabase
-                    .from('products')
-                    .update({ stock: targetStock, updated_at: new Date().toISOString() })
-                    .eq('id', productId);
-                }
-              }
-            } catch (syncErr) {
-              console.warn('Fallback stock update warning:', syncErr);
-            }
-          }
-
+          // Stock is mutated by the PostgreSQL transaction trigger only. A client-side
+          // fallback can race with the trigger and apply the same movement twice.
           // Catat audit log dan notifikasi jika bukan bagian dari transaksi kasir multi-item (batch POS)
           const isPosBatchItem = Boolean((data.note || '').includes('[INV-'));
           if (!isPosBatchItem) {
@@ -534,29 +506,6 @@ export const transactions = {
         try {
           const targetId = isNaN(Number(id)) ? id : Number(id);
 
-          // Ambil rincian transaksi sebelum dihapus untuk sinkronisasi pengembalian stok
-          let txRow = null;
-          let prodBefore = null;
-          try {
-            if (typeof window.supabase.from === 'function') {
-              const { data: tData } = await window.supabase
-                .from('transactions')
-                .select('id, type, product_id, qty, quantity')
-                .eq('id', targetId)
-                .maybeSingle();
-              if (tData) {
-                txRow = tData;
-                const pId = isNaN(Number(txRow.product_id)) ? txRow.product_id : Number(txRow.product_id);
-                const { data: pData } = await window.supabase
-                  .from('products')
-                  .select('id, stock')
-                  .eq('id', pId)
-                  .maybeSingle();
-                if (pData) prodBefore = pData;
-              }
-            }
-          } catch (_) {}
-
           let query = window.supabase
             .from('transactions')
             .delete()
@@ -576,37 +525,6 @@ export const transactions = {
                 details: error
               }
             });
-          }
-
-          // Sinkronisasi pengembalian stok fallback jika trigger AFTER DELETE belum aktif
-          if (txRow && prodBefore && typeof window.supabase.from === 'function') {
-            try {
-              const pId = isNaN(Number(txRow.product_id)) ? txRow.product_id : Number(txRow.product_id);
-              const txQty = Number(txRow.qty ?? txRow.quantity) || 0;
-              const { data: pAfter } = await window.supabase
-                .from('products')
-                .select('id, stock')
-                .eq('id', pId)
-                .maybeSingle();
-
-              if (pAfter && txQty > 0) {
-                const stockBefore = Number(prodBefore.stock || 0);
-                const stockAfter = Number(pAfter.stock || 0);
-
-                if (stockBefore === stockAfter) {
-                  const targetStock = txRow.type === 'in'
-                    ? Math.max(0, stockBefore - txQty)
-                    : stockBefore + txQty;
-
-                  await window.supabase
-                    .from('products')
-                    .update({ stock: targetStock, updated_at: new Date().toISOString() })
-                    .eq('id', pId);
-                }
-              }
-            } catch (delSyncErr) {
-              console.warn('Fallback delete stock sync warning:', delSyncErr);
-            }
           }
 
           try {
