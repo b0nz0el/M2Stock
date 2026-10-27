@@ -94,4 +94,28 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('grid-template-columns: repeat(3, 1fr)');
     });
   });
+
+  describe('PWA Auto-Update & Zero-Stale Cache Synchronization', () => {
+    it('verifies Cloudflare Pages public/_headers prevents caching sw.js', () => {
+      const headersPath = path.join(rootDir, 'public/_headers');
+      expect(fs.existsSync(headersPath)).toBe(true);
+      const headers = fs.readFileSync(headersPath, 'utf8');
+      expect(headers).toContain('/sw.js');
+      expect(headers).toContain('Cache-Control: no-cache, no-store, must-revalidate');
+    });
+
+    it('verifies sw.js employs Network-First strategy for critical CSS/JS', () => {
+      const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
+      expect(sw).toContain("url.pathname.startsWith('/assets/css/') || url.pathname.startsWith('/assets/js/')");
+      expect(sw).toContain('SKIP_WAITING');
+    });
+
+    it('verifies app.js registers SW with updateViaCache none and listens to controllerchange', () => {
+      const appJs = fs.readFileSync(path.join(rootDir, 'public/assets/js/app.js'), 'utf8');
+      expect(appJs).toContain("updateViaCache: 'none'");
+      expect(appJs).toContain("navigator.serviceWorker.addEventListener('controllerchange'");
+      expect(appJs).toContain('window.checkForPwaUpdate');
+    });
+  });
 });
+

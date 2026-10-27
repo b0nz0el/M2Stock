@@ -2368,6 +2368,25 @@
             </div>
           </form>
         </div>
+
+        <!-- Card Pembaruan PWA & Sinkronisasi Versi -->
+        <div class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-base sm:text-lg text-white">Pembaruan &amp; Sinkronisasi Sistem PWA</h3>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white">aQuaStock Pro v3.4.0 (PWA Local-First)</span></p>
+              </div>
+            </div>
+            <button type="button" onclick="window.checkForPwaUpdate()" class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-md">
+              <i data-lucide="refresh-cw" class="w-4 h-4 text-[#32ADE6]"></i>
+              <span>Periksa Pembaruan Sekarang</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- TAB 6: AKUN SAYA -->

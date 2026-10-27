@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.3.0-spa';
+const CACHE_NAME = 'aquastock-v3.4.0-pwa';
 
 const STATIC_PRECACHE = [
   '/',
@@ -45,6 +45,12 @@ const STATIC_PRECACHE = [
   '/assets/js/components/barcode-scanner.js',
   '/assets/js/utils/offline-sync.js'
 ];
+
+self.addEventListener('message', (event) => {
+  if (event.data && (event.data.type === 'SKIP_WAITING' || event.data === 'skipWaiting')) {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -99,29 +105,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static Assets (CSS, JS, Fonts, Images): Cache-First
-  if (url.pathname.startsWith('/assets/') || url.pathname === '/manifest.json') {
+  // Critical Assets (CSS & JS): Network-First dengan Cache Fallback
+  // Menjamin pembaruan layout dan skrip langsung aktif saat online tanpa tertahan cache basi
+  if (url.pathname.startsWith('/assets/css/') || url.pathname.startsWith('/assets/js/')) {
     event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) {
-          // Revalidate in background
-          fetch(req).then((networkRes) => {
-            if (networkRes && networkRes.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, networkRes));
-            }
-          }).catch(() => {});
-          return cached;
-        }
-
-        return fetch(req).then((networkRes) => {
+      fetch(req)
+        .then((networkRes) => {
           if (networkRes && networkRes.status === 200) {
             const resClone = networkRes.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
           }
           return networkRes;
-        });
+        })
+        .catch(async () => {
+          const cached = await caches.match(req);
+          if (cached) return cached;
+          throw new Error('Offline and critical asset not cached: ' + req.url);
+        })
+    );
+    return;
+  }
+
+  // Static Assets (Fonts, Images, Icons, Manifest): Stale-While-Revalidate
+  if (url.pathname.startsWith('/assets/') || url.pathname === '/manifest.json') {
+    event.respondWith(
+      caches.match(req).then((cached) => {
+        const fetchPromise = fetch(req).then((networkRes) => {
+          if (networkRes && networkRes.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, networkRes));
+          }
+          return networkRes;
+        }).catch(() => {});
+        return cached || fetchPromise;
       })
     );
   }
 });
-

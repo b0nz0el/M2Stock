@@ -451,19 +451,58 @@ if (typeof window !== 'undefined') {
   document.head.appendChild(script);
 })();
 
-/* ═══ PWA Service Worker Registration ═══ */
+/* ═══ PWA Service Worker Registration & Seamless Auto-Update Engine ═══ */
 (function registerPwaServiceWorker() {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+  let isRefreshing = false;
+
+  // 1. Otomatis reload halaman saat Service Worker baru aktif mengambil alih kontrol
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    window.location.reload();
+  });
+
+  function promptAndActivate(worker) {
+    if (!worker) return;
+    worker.postMessage({ type: 'SKIP_WAITING' });
+  }
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((reg) => {
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((reg) => {
+      // 2. Periksa pembaruan segera saat aplikasi dimuat
+      try { reg.update(); } catch (_) {}
+
+      // 3. Periksa pembaruan saat pengguna membuka kembali PWA dari background (iOS Safari / PWA Standalone)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          try { reg.update(); } catch (_) {}
+        }
+      });
+      window.addEventListener('focus', () => {
+        try { reg.update(); } catch (_) {}
+      });
+
+      // 4. Periksa pembaruan berkala setiap 15 menit
+      setInterval(() => {
+        try { reg.update(); } catch (_) {}
+      }, 15 * 60 * 1000);
+
+      // 5. Jika ada worker baru yang sedang menunggu, aktifkan segera
+      if (reg.waiting) {
+        promptAndActivate(reg.waiting);
+      }
+
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               if (typeof showToast === 'function') {
-                showToast('Versi baru aplikasi tersedia. Muat ulang untuk memperbarui.', 'info');
+                showToast('Versi terbaru aQuaStock Pro terpasang! Memperbarui...', 'info');
               }
+              promptAndActivate(newWorker);
             }
           });
         }
@@ -472,6 +511,40 @@ if (typeof window !== 'undefined') {
       console.warn('[PWA] SW registration failed:', err);
     });
   });
+
+  // Tombol bantuan manual untuk memeriksa pembaruan di UI
+  window.checkForPwaUpdate = async function () {
+    if (!('serviceWorker' in navigator)) {
+      if (typeof showToast === 'function') showToast('Pemeriksaan pembaruan selesai. Halaman dimuat ulang...', 'info');
+      window.location.reload();
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        if (typeof showToast === 'function') showToast('Memeriksa versi terbaru ke server...', 'info');
+        await reg.update();
+        if (reg.waiting) {
+          promptAndActivate(reg.waiting);
+        } else {
+          // Bersihkan cache lama dan reload untuk menjamin aset teranyar
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          if (typeof showToast === 'function') {
+            showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.0)!', 'success');
+          }
+          setTimeout(() => window.location.reload(), 600);
+        }
+      } else {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.warn('[PWA] Manual update check error:', e);
+      window.location.reload();
+    }
+  };
 })();
 
 /* ═══ Global Logout Event Delegation ═══ */
