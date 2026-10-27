@@ -280,7 +280,7 @@ export const report = {
     outTransactions.forEach(t => {
       const kasir = (typeof window !== 'undefined' && typeof window.resolveUserName === 'function')
         ? window.resolveUserName(t.created_by)
-        : (t.created_by && !t.created_by.includes('-') ? t.created_by : 'Kasir');
+        : (t.created_by && !t.created_by.includes('-') ? t.created_by : 'David');
       const qty = Number(t.qty) || 0;
       const price = Number(t.price) || Number(t.products?.sell_price) || 0;
       const revenue = qty * price;

@@ -99,6 +99,9 @@
       }
 
       // 2. Fetch Transactions
+      if (typeof window.loadUserDirectory === 'function') {
+        try { await window.loadUserDirectory(); } catch (_) {}
+      }
       const txRes = await Api.transactions.getAll({ limit: 150 });
       const transactions = txRes?.ok ? (txRes.data || []) : [];
 
@@ -120,7 +123,7 @@
               : getChannelBadge(tx.channel);
             const kasir = (typeof window.resolveUserName === 'function')
               ? window.resolveUserName(tx.created_by)
-              : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'Kasir');
+              : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'David');
             const isOut = tx.type === 'out';
             const qtyStr = isOut ? `-${tx.qty}` : `+${tx.qty}`;
             const qtyClass = isOut ? 'text-[#FF3B30]' : 'text-[#34C759]';
@@ -129,9 +132,9 @@
             return `
               <tr class="table-row border-b border-white/5">
                 <td data-label="TANGGAL" class="px-5 py-3.5 text-[#A0A0A5]">${dateStr}</td>
-                <td data-label="BARANG" class="px-5 py-3.5 font-medium">${prodName}</td>
+                <td data-label="BARANG" class="px-5 py-3.5 font-medium">${escapeHtml(prodName)}</td>
                 <td data-label="CHANNEL" class="px-5 py-3.5">${channelBadge}</td>
-                <td data-label="KASIR" class="px-5 py-3.5 text-[#A0A0A5]">${kasir}</td>
+                <td data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}" class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(kasir)}</td>
                 <td data-label="JUMLAH" class="px-5 py-3.5 text-right font-semibold ${qtyClass}">${qtyStr}</td>
                 <td data-label="TOTAL" class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
               </tr>

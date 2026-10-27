@@ -21,24 +21,33 @@
     document.getElementById('item-barcode-scanner')?.remove();
     const modal = document.createElement('div');
     modal.id = 'item-barcode-scanner';
-    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm';
+    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md';
     modal.innerHTML = `
       <section class="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#1C1C1E] shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="item-scanner-title">
         <header class="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div>
             <h2 id="item-scanner-title" class="text-sm font-semibold text-white">Pindai Barcode Produk</h2>
-            <p class="mt-0.5 text-xs text-[#A0A0A5]">Arahkan barcode ke dalam bingkai</p>
+            <p class="mt-0.5 text-xs text-[#A0A0A5]">Arahkan barcode ke bingkai atau ambil foto</p>
           </div>
-          <button type="button" id="item-scanner-close" class="grid h-10 w-10 place-items-center rounded-xl text-[#A0A0A5] hover:bg-white/5 hover:text-white" aria-label="Tutup pemindai">
+          <button type="button" id="item-scanner-close" class="grid h-10 w-10 place-items-center rounded-xl text-[#A0A0A5] hover:bg-white/5 hover:text-white transition active:scale-90" aria-label="Tutup pemindai">
             <i data-lucide="x" class="h-5 w-5" aria-hidden="true"></i>
           </button>
         </header>
-        <div class="relative bg-black">
+        <div class="relative bg-black min-h-64 flex items-center justify-center overflow-hidden">
           <video id="item-scanner-video" class="hidden aspect-[4/3] w-full object-cover" autoplay muted playsinline></video>
           <div id="item-scanner-reader" class="min-h-64 w-full"></div>
-          <div id="item-scanner-frame" class="pointer-events-none absolute left-1/2 top-1/2 hidden h-36 w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-[#32ADE6] shadow-[0_0_0_999px_rgba(0,0,0,0.28)]"></div>
+          <div id="item-scanner-frame" class="pointer-events-none absolute left-1/2 top-1/2 hidden h-36 w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-[#32ADE6] shadow-[0_0_0_999px_rgba(0,0,0,0.35)]"></div>
         </div>
-        <p id="item-scanner-status" class="px-4 py-3 text-center text-xs text-[#A0A0A5]" aria-live="polite">Mengaktifkan kamera…</p>
+        <p id="item-scanner-status" class="px-4 py-2.5 text-center text-xs text-[#A0A0A5]" aria-live="polite">Mengaktifkan kamera…</p>
+        
+        <!-- Opsi Pemindaian Alternatif (Universal untuk iOS PWA & Android) -->
+        <div class="p-3 bg-[#121214] border-t border-white/10 flex flex-col gap-2">
+          <input type="file" id="item-scanner-file-input" accept="image/*" capture="environment" class="hidden">
+          <button type="button" id="btn-scan-via-photo" class="w-full bg-[#0088CC]/20 hover:bg-[#0088CC]/30 border border-[#0088CC]/40 text-[#32ADE6] active:scale-95 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+            <i data-lucide="camera" class="w-4 h-4 text-[#32ADE6]"></i>
+            <span>Ambil / Unggah Foto Barcode</span>
+          </button>
+        </div>
       </section>
     `;
     document.body.appendChild(modal);
@@ -141,7 +150,7 @@
 
     const cameraStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }
+      video: { facingMode: { ideal: 'environment' } }
     });
     if (session !== scannerSession || !modal.isConnected) {
       cameraStream.getTracks().forEach((track) => track.stop());
@@ -182,12 +191,41 @@
       .filter((format) => format !== undefined);
     const scannerInstance = new window.Html5Qrcode('item-scanner-reader', { verbose: false, formatsToSupport: formats });
     scanner = scannerInstance;
-    await scannerInstance.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 260, height: 160 } },
-      (decodedText) => finishScan(modal, decodedText, onScan),
-      () => {}
-    );
+
+    let cameraConfig = { facingMode: 'environment' };
+    try {
+      if (typeof window.Html5Qrcode.getCameras === 'function') {
+        const devices = await window.Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          const back = devices.find(d => /back|belakang|rear|environment/i.test(d.label)) || devices[devices.length - 1];
+          if (back && back.id) {
+            cameraConfig = back.id;
+          }
+        }
+      }
+    } catch (_) {}
+
+    const startWithConfig = async (cfg) => {
+      return scannerInstance.start(
+        cfg,
+        { fps: 10, qrbox: { width: 260, height: 160 }, aspectRatio: 1.333333 },
+        (decodedText) => finishScan(modal, decodedText, onScan),
+        () => {}
+      );
+    };
+
+    try {
+      await startWithConfig(cameraConfig);
+    } catch (err1) {
+      console.warn('Gagal start dengan kamera ID, mencoba environment constraint:', err1);
+      try {
+        await startWithConfig({ facingMode: 'environment' });
+      } catch (err2) {
+        console.warn('Gagal facingMode environment, mencoba generic user facing:', err2);
+        await startWithConfig({ facingMode: 'user' });
+      }
+    }
+
     if (session !== scannerSession || !modal.isConnected) {
       if (scanner === scannerInstance) scanner = null;
       try {
@@ -222,6 +260,32 @@
       if (event.target === modal) stopScanner(modal);
     });
 
+    // Setup input file foto barcode (100% universal untuk semua smartphone)
+    const fileInput = modal.querySelector('#item-scanner-file-input');
+    const photoBtn = modal.querySelector('#btn-scan-via-photo');
+    if (photoBtn && fileInput) {
+      photoBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setStatus(modal, 'Memindai foto barcode…');
+        try {
+          await loadHtml5Qrcode();
+          const tempScanner = scanner || new window.Html5Qrcode('item-scanner-reader', { verbose: false });
+          const decodedText = await tempScanner.scanFile(file, true);
+          if (decodedText) {
+            await finishScan(modal, decodedText, onScan);
+          }
+        } catch (err) {
+          console.warn('Barcode tidak terbaca dari foto:', err);
+          setStatus(modal, 'Barcode tidak terbaca dari foto. Coba foto lebih dekat dan pastikan fokus.');
+          if (typeof showToast === 'function') {
+            showToast('Barcode tidak terdeteksi dari foto. Pastikan gambar jelas.', 'error');
+          }
+        }
+      });
+    }
+
     try {
       if (typeof window.BarcodeDetector === 'function'
         && typeof window.BarcodeDetector.getSupportedFormats === 'function'
@@ -229,12 +293,13 @@
       await startFallbackScanner(modal, onScan, session);
     } catch (error) {
       if (session !== scannerSession || !modal.isConnected) return;
-      console.error('Gagal memulai pemindai barcode produk:', error);
-      const message = error.name === 'NotAllowedError'
-        ? 'Izin kamera ditolak. Izinkan akses kamera di pengaturan browser.'
-        : error.message || 'Kamera tidak dapat diaktifkan.';
-      await stopScanner(modal);
-      showToast(message, 'error');
+      console.warn('Kamera langsung tidak dapat diakses, beralih ke mode foto:', error);
+      setStatus(modal, 'Kamera langsung dibatasi oleh izin browser/sistem. Klik tombol "Ambil / Unggah Foto Barcode" di bawah untuk memindai.');
+      const scanBtn = modal.querySelector('#btn-scan-via-photo');
+      if (scanBtn) {
+        scanBtn.classList.remove('bg-[#0088CC]/20', 'text-[#32ADE6]');
+        scanBtn.classList.add('bg-[#0088CC]', 'text-white', 'shadow-lg', 'shadow-[#0088CC]/30');
+      }
     }
   }
 

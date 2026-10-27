@@ -824,7 +824,7 @@
       const supName = tx.suppliers?.name || 'Umum';
       const kasir = (typeof window.resolveUserName === 'function')
         ? window.resolveUserName(tx.created_by)
-        : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'Kasir');
+        : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'David');
       const qty = tx.qty || 0;
       const price = tx.price || 0;
       const total = qty * price;
@@ -835,7 +835,7 @@
           <td class="px-4 py-3.5 text-[#A0A0A5]">${dateStr}</td>
           <td class="px-4 py-3.5 font-medium">${prodName}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5]">${supName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${kasir}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
           <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+${qty}</td>
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
@@ -891,7 +891,7 @@
       const supName = tx.suppliers?.name || 'Umum';
       const kasir = (typeof window.resolveUserName === 'function')
         ? window.resolveUserName(tx.created_by)
-        : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'Kasir');
+        : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'David');
       const qty = tx.qty || 0;
       const price = tx.price || 0;
       const total = qty * price;

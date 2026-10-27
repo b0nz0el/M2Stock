@@ -149,10 +149,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       const rawIp = log.ip && log.ip !== '-' ? log.ip : (detectedCurrentIp || '-');
       return `
         <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-          <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">
+          <td data-label="WAKTU" class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">
             ${formatDateTime(log.created_at)}
           </td>
-          <td class="px-5 py-3.5 font-medium text-white text-sm">
+          <td data-label="USER" class="px-5 py-3.5 font-medium text-white text-sm">
             <div class="flex items-center gap-2">
               <span class="w-6 h-6 rounded-full bg-white/10 text-white flex items-center justify-center text-[10px] font-bold">
                 ${userDisplay.charAt(0).toUpperCase()}
@@ -160,14 +160,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
               <span class="truncate max-w-[180px]" title="${escapeHtml(userDisplay)}">${escapeHtml(userDisplay)}</span>
             </div>
           </td>
-          <td class="px-5 py-3.5 whitespace-nowrap">
+          <td data-label="AKSI" class="px-5 py-3.5 whitespace-nowrap">
             ${getActionBadge(log.action)}
           </td>
-          <td class="px-5 py-3.5 text-sm text-[#E0E0E0]">
+          <td data-label="DETAIL" class="px-5 py-3.5 text-sm text-[#E0E0E0]">
             <span class="font-medium text-white">${escapeHtml(log.target || '-')}</span>
           </td>
-          <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs whitespace-nowrap">
-            <span class="bg-black/30 px-2 py-1 rounded border border-white/5 text-[11px]">${escapeHtml(rawIp)}</span>
+          <td data-label="IP ADDRESS" class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs whitespace-nowrap">
+            <span class="bg-black/40 px-2.5 py-1 rounded-lg border border-white/10 text-[11px] text-[#32ADE6] font-mono">${escapeHtml(rawIp)}</span>
           </td>
         </tr>
       `;

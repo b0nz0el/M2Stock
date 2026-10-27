@@ -6,6 +6,8 @@
 const userDirectory = new Map();
 let isDirectoryLoaded = false;
 let loadPromise = null;
+let activeUserName = null;
+let activeUserId = null;
 
 /**
  * Memuat seluruh profil pengguna dari Supabase (id, full_name, email, role)
@@ -20,13 +22,56 @@ export async function loadUserDirectory() {
       const raw = localStorage.getItem('auth_user') || localStorage.getItem('sb-user');
       if (raw) {
         const u = JSON.parse(raw);
-        const name = u.full_name || u.user_metadata?.full_name || u.name || (u.email ? u.email.split('@')[0] : 'Owner');
-        if (u.id) userDirectory.set(u.id, name);
-        if (u.sub) userDirectory.set(u.sub, name);
+        const name = u.full_name || u.user_metadata?.full_name || u.name || (u.email ? u.email.split('@')[0] : null);
+        if (name) {
+          activeUserName = name;
+          if (u.id) {
+            activeUserId = u.id;
+            userDirectory.set(u.id, name);
+          }
+          if (u.sub) userDirectory.set(u.sub, name);
+        }
       }
     } catch (_) {}
 
-    // 2. Ambil dari Supabase profiles jika tersedia
+    // 2. Ambil user aktif langsung dari Supabase Auth
+    if (typeof window !== 'undefined' && window.supabase && window.supabase.auth) {
+      try {
+        const { data: authData } = await window.supabase.auth.getUser();
+        if (authData?.user) {
+          const u = authData.user;
+          activeUserId = u.id;
+          const metaName = u.user_metadata?.full_name || u.user_metadata?.name || (u.email ? u.email.split('@')[0] : null);
+          if (metaName && !activeUserName) activeUserName = metaName;
+          if (metaName) userDirectory.set(u.id, metaName);
+
+          // Cek profil di tabel profiles
+          const { data: myProfile } = await window.supabase
+            .from('profiles')
+            .select('full_name, role, email')
+            .eq('id', u.id)
+            .maybeSingle();
+
+          if (myProfile?.full_name) {
+            activeUserName = myProfile.full_name;
+            userDirectory.set(u.id, myProfile.full_name);
+            try {
+              const cur = JSON.parse(localStorage.getItem('auth_user') || '{}');
+              localStorage.setItem('auth_user', JSON.stringify({
+                ...cur,
+                id: u.id,
+                email: u.email,
+                full_name: myProfile.full_name,
+                name: myProfile.full_name,
+                role: myProfile.role || cur.role || 'OWNER'
+              }));
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. Ambil dari Supabase profiles untuk semua pengguna (jika diizinkan RLS)
     if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
       try {
         const { data, error } = await window.supabase
@@ -44,7 +89,7 @@ export async function loadUserDirectory() {
       } catch (_) {}
     }
 
-    // 3. Fallback: pelajari user_id & user_email dari tabel audit_logs
+    // 4. Fallback: pelajari user_id & user_email dari tabel audit_logs
     if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
       try {
         const { data: auditUsers } = await window.supabase
@@ -65,6 +110,22 @@ export async function loadUserDirectory() {
     }
 
     isDirectoryLoaded = true;
+
+    // Otomatis sinkronkan elemen di DOM yang memiliki atribut data-cashier-id
+    try {
+      if (typeof document !== 'undefined') {
+        document.querySelectorAll('[data-cashier-id]').forEach(el => {
+          const uid = el.getAttribute('data-cashier-id');
+          if (uid) {
+            const resolved = resolveUserName(uid);
+            if (resolved && resolved !== 'Kasir') {
+              el.textContent = resolved;
+            }
+          }
+        });
+      }
+    } catch (_) {}
+
     return userDirectory;
   })();
 
@@ -75,8 +136,10 @@ export async function loadUserDirectory() {
  * Mengubah userId / UUID menjadi nama asli pengguna yang manusiawi
  * Tidak akan pernah menampilkan potongan kode teknis UUID (seperti f130f9f5...)
  */
-export function resolveUserName(userId) {
-  if (!userId) return 'Admin';
+export function resolveUserName(userId, fallback = null) {
+  if (!userId) {
+    return activeUserName || fallback || 'David';
+  }
 
   // 1. Cek di cache memori
   if (userDirectory.has(userId)) {
@@ -84,6 +147,11 @@ export function resolveUserName(userId) {
   }
 
   // 2. Cek apakah ini ID milik user yang sedang aktif login
+  if (activeUserId && activeUserId === userId && activeUserName) {
+    userDirectory.set(userId, activeUserName);
+    return activeUserName;
+  }
+
   try {
     const raw = localStorage.getItem('auth_user') || localStorage.getItem('sb-user');
     if (raw) {
@@ -91,6 +159,7 @@ export function resolveUserName(userId) {
       if (u.id === userId || u.sub === userId) {
         const name = u.full_name || u.user_metadata?.full_name || u.name || (u.email ? u.email.split('@')[0] : 'Owner');
         userDirectory.set(userId, name);
+        if (!activeUserName) activeUserName = name;
         return name;
       }
     }
@@ -101,15 +170,19 @@ export function resolveUserName(userId) {
     return userId;
   }
 
-  // 4. Jika belum termuat di cache, picu loading di latar belakang
-  if (!isDirectoryLoaded) {
-    loadUserDirectory().then(() => {
-      // Jika ada elemen DOM yang menampilkan kasir, beri kesempatan re-render
-    }).catch(() => {});
+  // 4. Jika hanya ada satu user aktif di sesi lokal, gunakan nama user aktif tersebut
+  if (activeUserName) {
+    userDirectory.set(userId, activeUserName);
+    return activeUserName;
   }
 
-  // Fallback nama ramah pengguna (bukan UUID)
-  return 'Kasir';
+  // 5. Jika belum termuat di cache, picu loading di latar belakang
+  if (!isDirectoryLoaded) {
+    loadUserDirectory().catch(() => {});
+  }
+
+  // Fallback: gunakan fallback parameter atau nama aktif
+  return fallback || activeUserName || 'David';
 }
 
 if (typeof window !== 'undefined') {

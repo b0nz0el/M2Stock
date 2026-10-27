@@ -153,6 +153,18 @@
       try {
         if (window.supabase) {
           const userObj = res.data?.user || (await window.supabase.auth.getUser())?.data?.user;
+          if (userObj) {
+            const userName = userObj.user_metadata?.full_name || (userObj.email ? userObj.email.split('@')[0] : 'David');
+            try {
+              localStorage.setItem('auth_user', JSON.stringify({
+                id: userObj.id,
+                email: userObj.email,
+                full_name: userName,
+                name: userName,
+                role: userObj.user_metadata?.role || 'OWNER'
+              }));
+            } catch (_) {}
+          }
           let clientIp = null;
           if (typeof window.getClientIp === 'function') {
             try { clientIp = await window.getClientIp(); } catch (_) {}

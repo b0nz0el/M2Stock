@@ -880,18 +880,21 @@
   }
 
   function formatCashierName(userId) {
-    if (!userId) return 'Admin';
+    if (typeof window !== 'undefined' && typeof window.resolveUserName === 'function') {
+      return window.resolveUserName(userId);
+    }
+    if (!userId) return 'David';
     if (typeof userId === 'string' && userId.length > 20 && userId.includes('-')) {
       try {
         const rawAuth = localStorage.getItem('auth_user') || localStorage.getItem('sb-user');
         if (rawAuth) {
           const u = JSON.parse(rawAuth);
           if (u.id === userId || u.sub === userId) {
-            return u.full_name || u.name || u.email?.split('@')[0] || 'Kasir (Anda)';
+            return u.full_name || u.name || u.email?.split('@')[0] || 'David';
           }
         }
       } catch (_) {}
-      return 'Kasir';
+      return 'David';
     }
     return userId;
   }
@@ -985,7 +988,7 @@
           <td class="px-4 py-3.5 font-medium">${prodName}</td>
           <td class="px-4 py-3.5">${channelBadge}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5]">${custName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${kasir}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
           <td class="px-4 py-3.5 text-right text-[#FF3B30] font-semibold">-${qty}</td>
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
@@ -1432,6 +1435,9 @@
 
   async function loadOutTransactions() {
     try {
+      if (typeof window !== 'undefined' && typeof window.loadUserDirectory === 'function') {
+        try { await window.loadUserDirectory(); } catch (_) {}
+      }
       const res = await Api.transactions.getByType('out');
       if (res && res.ok) {
         allOutTransactions = res.data || [];

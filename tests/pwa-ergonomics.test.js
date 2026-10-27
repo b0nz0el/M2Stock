@@ -165,6 +165,58 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       const loginCode = fs.readFileSync(path.join(rootDir, 'public/assets/js/login.js'), 'utf8');
       expect(loginCode).toContain('ip: clientIp || null');
     });
+
+    it('verifies sidebar mobile drawer has iOS notch safe-area in responsive.css', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('padding-top: max(env(safe-area-inset-top, 24px), 20px) !important;');
+      expect(responsiveCss).toContain('button[data-action="close-sidebar"]');
+    });
+
+    it('verifies mobile audit log layout has responsive cards and toolbar', () => {
+      const auditHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      expect(auditHtml).toContain('audit-search-input');
+      expect(auditHtml).toContain('btn-refresh-audit');
+      expect(auditHtml).toContain('btn-export-audit');
+
+      const auditJs = fs.readFileSync(path.join(rootDir, 'public/dashboard/audit.js'), 'utf8');
+      expect(auditJs).toContain('data-label="WAKTU"');
+      expect(auditJs).toContain('data-label="IP ADDRESS"');
+
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('#page-audit .card table tbody tr');
+      expect(responsiveCss).toContain('#page-audit .card table tbody td[data-label="WAKTU"]');
+    });
+
+    it('verifies barcode scanner has lenient constraints and photo fallback', () => {
+      const scannerJs = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/barcode-scanner.js'), 'utf8');
+      expect(scannerJs).toContain('btn-scan-via-photo');
+      expect(scannerJs).toContain('item-scanner-file-input');
+      expect(scannerJs).toContain('scanFile');
+      expect(scannerJs).toContain('facingMode: { ideal:');
+    });
+
+    it('verifies photo product picker accepts universal image format for Android and iOS', () => {
+      const modalHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      expect(modalHtml).toContain('id="item-image-file" accept="image/*,image/heic"');
+    });
+
+    it('verifies Barang Masuk add button has modern gradient styling', () => {
+      const modalHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      expect(modalHtml).toContain('Catat Barang Masuk');
+      expect(modalHtml).toContain('package-plus');
+
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('#page-in > div:first-child .flex.gap-2 > button[data-action="add"]');
+      expect(responsiveCss).toContain('linear-gradient(135deg, #0088CC 0%, #32ADE6 100%)');
+    });
+
+    it('verifies service worker and components are bumped to v3.4.3', () => {
+      const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
+      expect(sw).toContain('aquastock-v3.4.3-pwa');
+
+      const appSidebar = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
+      expect(appSidebar).toContain('v3.4.3');
+    });
   });
 });
 
