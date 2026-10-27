@@ -61,9 +61,11 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     return { startDate, endDate };
   }
 
-  async function loadReport() {
+  async function loadReport(showFeedback = false) {
     const refreshBtn = document.getElementById('btn-refresh-report');
+    const refreshIcon = refreshBtn ? refreshBtn.querySelector('i, svg') : null;
     if (refreshBtn) refreshBtn.classList.add('opacity-50', 'pointer-events-none');
+    if (refreshIcon) refreshIcon.classList.add('animate-spin');
 
     try {
       const { startDate, endDate } = getPeriodDates(currentPeriod);
@@ -77,13 +79,19 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       renderKPI();
       renderChart();
       renderTabTable();
+      if (showFeedback && typeof showToast === 'function') {
+        showToast('Laporan berhasil diperbarui', 'info');
+      }
     } catch (err) {
       console.error('Error loadReport:', err);
       if (typeof showToast === 'function') {
         showToast(err.message || 'Gagal memuat laporan', 'error');
       }
     } finally {
-      if (refreshBtn) refreshBtn.classList.remove('opacity-50', 'pointer-events-none');
+      setTimeout(() => {
+        if (refreshBtn) refreshBtn.classList.remove('opacity-50', 'pointer-events-none');
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }, 350);
       if (typeof window.refreshIcons === 'function') window.refreshIcons();
     }
   }
@@ -424,7 +432,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const btnRefresh = document.getElementById('btn-refresh-report');
     if (btnRefresh) {
       btnRefresh.addEventListener('click', () => {
-        loadReport();
+        loadReport(true);
       });
     }
 

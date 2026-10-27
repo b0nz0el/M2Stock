@@ -497,6 +497,19 @@ window.addEventListener('pageshow', function() {
   if (mainContent) mainContent.style.opacity = '';
 });
 
+/* Meredam log unhandled rejection harmless akibat browser aborting view transitions saat navigasi cepat */
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (
+      event.reason &&
+      (event.reason.name === 'AbortError' ||
+       (typeof event.reason.message === 'string' && event.reason.message.includes('Transition was skipped')))
+    ) {
+      event.preventDefault();
+    }
+  });
+}
+
 /* Export untuk keperluan pengujian / module */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {

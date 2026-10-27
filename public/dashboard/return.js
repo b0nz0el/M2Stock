@@ -873,9 +873,22 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       });
     }
 
-    // Refresh
+    // Refresh dengan feedback visual & toast
     const refreshBtn = document.getElementById('btn-refresh-return');
-    if (refreshBtn) refreshBtn.addEventListener('click', loadData);
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        const icon = refreshBtn.querySelector('i, svg');
+        if (icon) icon.classList.add('animate-spin');
+        try {
+          await loadData();
+          if (typeof showToast === 'function') showToast('Data retur berhasil dimuat ulang', 'info');
+        } finally {
+          setTimeout(() => {
+            if (icon) icon.classList.remove('animate-spin');
+          }, 350);
+        }
+      });
+    }
 
     // Export CSV
     const exportBtn = document.getElementById('btn-export-return');
@@ -1043,6 +1056,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   if (typeof window !== 'undefined') {
     window.initReturn = initReturn;
+    window.openReturnModal = (tipe = 'ke_supplier') => openModal(tipe);
+    window.openModal = openModal;
+    window.loadReturnData = loadData;
+    window.exportReturnCSV = exportCSV;
   }
 
   if (document.readyState === 'loading') {

@@ -898,6 +898,38 @@
     letter-spacing: 0.3px !important;
   }
 
+  /* ═══ Supplier Mobile Card Optimization (International SaaS Standard) ═══ */
+  #page-suppliers .card table tbody tr {
+    padding: 16px !important;
+  }
+
+  #page-suppliers .card table tbody tr:has(td:last-child button) td:first-child {
+    padding-right: 80px !important;
+  }
+
+  #page-suppliers .card table tbody td.supplier-name-cell::before,
+  #page-suppliers .card table tbody td[data-label="NAMA SUPPLIER"]::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #page-suppliers .card table tbody td.supplier-name-cell {
+    justify-content: flex-start !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid var(--aq-border-subtle, rgba(255, 255, 255, 0.05)) !important;
+    margin-bottom: 8px !important;
+  }
+
+  #page-suppliers .card table tbody td.supplier-address-cell,
+  #page-suppliers .card table tbody td[data-label="ALAMAT"] {
+    max-width: 65% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-align: right !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.4 !important;
+  }
+
   /* ═══ iOS < 15 fallback untuk :has() ═══ */
   @supports not (selector(:has(*))) {
     .card table tbody td:first-child::before {

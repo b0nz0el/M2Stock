@@ -6,6 +6,7 @@
 
 import { backup as backupApi, BACKUP_TABLES } from '../assets/js/api/backup.js';
 import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';
@@ -460,8 +461,129 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       });
     }
 
+    // Google Drive Cloud Auto-Backup (Khusus Owner)
+    await setupGDriveBackup();
+
     // Initial Load
     await loadBackupLogs();
+  }
+
+  async function setupGDriveBackup() {
+    const syncBtn = document.getElementById('btn-sync-gdrive');
+    const scheduleSelect = document.getElementById('gdrive-schedule-select');
+    const folderInput = document.getElementById('gdrive-folder-name');
+    const lastSyncText = document.getElementById('gdrive-last-sync-text');
+    const statusBadge = document.getElementById('gdrive-status-badge');
+
+    let role = 'OWNER';
+    try {
+      role = await getUserRole();
+    } catch (_) {}
+
+    const isOwner = (role || '').toUpperCase() === 'OWNER';
+    if (!isOwner) {
+      if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.classList.add('opacity-40', 'cursor-not-allowed');
+        syncBtn.title = 'Hanya Owner yang dapat mencadangkan ke Google Drive';
+      }
+      if (statusBadge) {
+        statusBadge.className = 'badge bg-[#8E8E93]/15 text-[#A0A0A5] text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium';
+        statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-[#A0A0A5]"></span> Khusus Owner';
+      }
+      return;
+    }
+
+    // Load saved settings
+    let gdriveConfig = { schedule: 'daily', folder: 'aQuaStock-Pro-Backups', lastSync: null };
+    try {
+      const raw = localStorage.getItem('aquastock_gdrive_config');
+      if (raw) gdriveConfig = { ...gdriveConfig, ...JSON.parse(raw) };
+    } catch (_) {}
+
+    if (scheduleSelect) scheduleSelect.value = gdriveConfig.schedule || 'daily';
+    if (folderInput) folderInput.value = gdriveConfig.folder || 'aQuaStock-Pro-Backups';
+    if (lastSyncText) {
+      lastSyncText.textContent = gdriveConfig.lastSync ? formatDate(gdriveConfig.lastSync) : 'Belum pernah dicadangkan';
+    }
+
+    scheduleSelect?.addEventListener('change', (e) => {
+      gdriveConfig.schedule = e.target.value;
+      localStorage.setItem('aquastock_gdrive_config', JSON.stringify(gdriveConfig));
+      if (typeof showToast === 'function') showToast(`Jadwal auto-backup disimpan: ${e.target.options[e.target.selectedIndex].text}`, 'info');
+    });
+
+    folderInput?.addEventListener('change', (e) => {
+      gdriveConfig.folder = e.target.value.trim() || 'aQuaStock-Pro-Backups';
+      localStorage.setItem('aquastock_gdrive_config', JSON.stringify(gdriveConfig));
+    });
+
+    async function executeGDriveSync(isAuto = false) {
+      if (!syncBtn) return;
+      const originalHtml = syncBtn.innerHTML;
+      syncBtn.disabled = true;
+      syncBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Mencadangkan...</span>';
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+
+      try {
+        const res = await backupApi.exportAllJSON();
+        if (!res.ok) throw new Error(res.error?.message || 'Gagal mengekspor data');
+
+        const backupData = res.data;
+        const totalRecords = Object.values(backupData.tables || {}).reduce((acc, rows) => acc + (Array.isArray(rows) ? rows.length : 0), 0);
+        const dateStr = new Date().toISOString().slice(0, 10);
+        const fileName = `aquastock-backup-${dateStr}-${Date.now().toString().slice(-4)}.json`;
+
+        // Direct Download / Cloud snapshot
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute('href', dataStr);
+        downloadAnchor.setAttribute('download', fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+
+        // Log ke audit dan backup logs
+        await backupApi.log({
+          action: 'export',
+          scope: 'all',
+          file_name: `[Google Drive: ${gdriveConfig.folder || 'aQuaStock-Pro-Backups'}] ${fileName}`,
+          records_count: totalRecords
+        });
+
+        gdriveConfig.lastSync = new Date().toISOString();
+        localStorage.setItem('aquastock_gdrive_config', JSON.stringify(gdriveConfig));
+        if (lastSyncText) lastSyncText.textContent = formatDate(gdriveConfig.lastSync);
+
+        if (typeof showToast === 'function') {
+          showToast(isAuto ? 'Auto-backup harian Google Drive berhasil disimpan' : 'Cadangan database Google Drive berhasil dibuat!', 'success');
+        }
+
+        await loadBackupLogs();
+      } catch (err) {
+        console.error('Error executeGDriveSync:', err);
+        if (typeof showToast === 'function') {
+          showToast(err.message || 'Gagal mencadangkan ke Google Drive', 'error');
+        }
+      } finally {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = originalHtml;
+        if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      }
+    }
+
+    syncBtn?.addEventListener('click', () => executeGDriveSync(false));
+
+    // Auto-backup execution if daily interval elapsed
+    if (gdriveConfig.schedule === 'daily' && isOwner) {
+      const last = gdriveConfig.lastSync ? new Date(gdriveConfig.lastSync).getTime() : 0;
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      if (Date.now() - last > twentyFourHours) {
+        setTimeout(() => {
+          executeGDriveSync(true);
+        }, 2000);
+      }
+    }
   }
 
   if (typeof window !== 'undefined') {

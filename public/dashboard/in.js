@@ -933,7 +933,12 @@
     }
   }
 
-  // Window exports for product selection, modal management, and testing
+  // Window exports for product selection, modal management, filtering, and testing
+  window.filterInPeriod = filterInPeriod;
+  window.handleSearchIn = handleSearchIn;
+  window.goToInPage = goToInPage;
+  window.loadInTransactions = loadInTransactions;
+  window.handleExportIn = handleExportIn;
   window.loadDropdowns = loadDropdowns;
   window.handleInBarcodeLookup = handleInBarcodeLookup;
   window.handleInProductChange = handleInProductChange;

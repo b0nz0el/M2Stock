@@ -99,13 +99,13 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Selamat datang kembali, <span id="welcome-name" class="text-white font-medium">User</span></p>
         </div>
         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <select aria-label="Periode" class="w-full sm:w-auto bg-[#1C1C1E] border border-white/5 rounded-xl px-4 py-3 sm:py-2 text-sm font-medium focus:outline-none focus:border-[#0088CC]">
-            <option>Hari Ini</option>
-            <option>7 Hari</option>
-            <option>30 Hari</option>
+          <select id="dashboard-period-filter" aria-label="Periode" onchange="handleDashboardPeriodChange(this.value)" class="w-full sm:w-auto bg-[#1C1C1E] border border-white/5 rounded-xl px-4 py-3 sm:py-2 text-sm font-medium focus:outline-none focus:border-[#0088CC]">
+            <option value="today">Hari Ini</option>
+            <option value="7d">7 Hari</option>
+            <option value="30d" selected>30 Hari</option>
           </select>
-          <button data-action="refresh" onclick="loadDashboardData()" class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-white/5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium border border-white/5 flex items-center justify-center gap-2 transition">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" aria-hidden="true"></i> Refresh
+          <button type="button" id="btn-refresh-dashboard" data-action="refresh" onclick="loadDashboardData()" class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-white/5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium border border-white/5 flex items-center justify-center gap-2 transition text-white">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" aria-hidden="true"></i> <span>Refresh</span>
           </button>
         </div>
       </div>
@@ -820,9 +820,19 @@
                 </select>
               </label>
 
-              <button type="button" id="btn-refresh-return" title="Muat ulang data" aria-label="Muat ulang data retur" class="return-refresh-button flex items-center justify-center gap-2 p-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition">
-                <i data-lucide="rotate-cw" class="w-4 h-4" aria-hidden="true"></i>
-                <span>Muat Ulang</span>
+              <button type="button" id="btn-export-return" title="Export CSV" aria-label="Export CSV" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition text-xs font-medium">
+                <i data-lucide="download" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                <span class="hidden sm:inline">Export CSV</span>
+              </button>
+
+              <button type="button" id="btn-refresh-return" title="Muat ulang data" aria-label="Muat ulang data retur" class="return-refresh-button flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#1C1C1E] text-[#A0A0A5] border border-white/10 hover:text-white transition text-xs font-medium">
+                <i data-lucide="rotate-cw" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                <span class="hidden sm:inline">Muat Ulang</span>
+              </button>
+
+              <button type="button" id="btn-add-return-header" data-action="add" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#0088CC] text-white hover:bg-[#0077BB] transition shadow-lg shadow-[#0088CC]/20">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Catat Retur</span>
               </button>
             </div>
           </div>
@@ -1453,15 +1463,29 @@
     </div>
 
     <!-- =========================== REPORT =========================== -->
-    <div id="page-report" class="page p-6 space-y-5">
-      <div class="report-page-header flex items-center justify-between">
-        <h2 class="text-3xl font-bold tracking-tight">Laporan</h2>
-        <div class="report-period-actions flex gap-2 flex-wrap">
-          <select aria-label="Periode" class="bg-[#1C1C1E] border border-white/5 rounded-xl px-4 py-2.5 text-sm font-medium">
-            <option>Bulan Ini</option>
-            <option>Minggu Ini</option>
-            <option>Tahun Ini</option>
+      <div class="report-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-bold tracking-tight">Laporan</h2>
+          <p class="text-sm text-[#A0A0A5] mt-1">Analisis finansial, penjualan, margin laba & valuasi stok</p>
+        </div>
+        <div class="report-period-actions flex items-center gap-2 flex-wrap">
+          <select id="report-period" aria-label="Periode Laporan" class="bg-[#1C1C1E] border border-white/5 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-[#0088CC]">
+            <option value="today">Hari Ini</option>
+            <option value="7d">7 Hari Terakhir</option>
+            <option value="month" selected>Bulan Ini</option>
+            <option value="30d">30 Hari Terakhir</option>
+            <option value="year">Tahun Ini</option>
+            <option value="all">Semua Waktu</option>
           </select>
+          <button type="button" id="btn-refresh-report" title="Muat ulang laporan" aria-label="Muat ulang laporan" class="bg-[#1C1C1E] hover:bg-white/5 px-3 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-1.5 transition text-[#A0A0A5] hover:text-white">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          </button>
+          <button type="button" id="btn-export-excel" title="Export CSV / Excel" aria-label="Export CSV" class="bg-[#1C1C1E] hover:bg-white/5 px-3.5 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-1.5 transition text-white">
+            <i data-lucide="download" class="w-4 h-4"></i> <span class="hidden sm:inline">Export CSV</span>
+          </button>
+          <button type="button" id="btn-export-pdf" title="Cetak Laporan / PDF" aria-label="Cetak Laporan" class="bg-[#1C1C1E] hover:bg-white/5 px-3.5 py-2.5 rounded-xl text-sm font-medium border border-white/5 flex items-center gap-1.5 transition text-white">
+            <i data-lucide="printer" class="w-4 h-4"></i> <span class="hidden sm:inline">Cetak</span>
+          </button>
         </div>
       </div>
 
@@ -1898,6 +1922,59 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- CARD 3: GOOGLE DRIVE CLOUD AUTO-BACKUP (KHUSUS OWNER) -->
+      <div id="card-gdrive-backup" class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl space-y-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#4285F4]/15 text-[#4285F4] grid place-items-center shrink-0">
+              <i data-lucide="cloud" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold text-lg text-white">Google Drive Cloud Auto-Backup</h3>
+                <span class="badge bg-[#0088CC]/20 text-[#32ADE6] text-[10px] font-bold px-2 py-0.5 rounded">KHUSUS OWNER</span>
+              </div>
+              <p class="text-xs text-[#A0A0A5] mt-0.5">Otomatisasi pencadangan data toko langsung ke folder Google Drive pribadi Owner</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="gdrive-status-badge" class="badge bg-[#34C759]/15 text-[#34C759] text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-[#34C759]"></span> Cloud Ready
+            </span>
+            <button type="button" id="btn-sync-gdrive" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition">
+              <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+              <span>Cadangkan ke Google Drive</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-1.5">
+            <p class="text-xs text-[#A0A0A5] font-medium">Jadwal Auto-Backup</p>
+            <select id="gdrive-schedule-select" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
+              <option value="daily">Harian (Otomatis saat Owner Login)</option>
+              <option value="weekly">Mingguan (Setiap 7 Hari)</option>
+              <option value="manual">Manual Saja (Sesuai Tombol)</option>
+            </select>
+            <p class="text-[10px] text-[#A0A0A5]">Pencadangan berjalan otomatis di latar belakang</p>
+          </div>
+
+          <div class="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-1.5">
+            <p class="text-xs text-[#A0A0A5] font-medium">Folder Tujuan Drive</p>
+            <input type="text" id="gdrive-folder-name" value="aQuaStock-Pro-Backups" placeholder="aQuaStock-Pro-Backups" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
+            <p class="text-[10px] text-[#A0A0A5]">Folder arsip snapshot database</p>
+          </div>
+
+          <div class="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-1.5">
+            <p class="text-xs text-[#A0A0A5] font-medium">Terakhir Dicadangkan</p>
+            <p id="gdrive-last-sync-text" class="text-sm font-semibold text-white pt-0.5">Belum ada sinkronisasi</p>
+            <p class="text-[10px] text-[#34C759] flex items-center gap-1">
+              <i data-lucide="check" class="w-3 h-3"></i> Terverifikasi terenkripsi JSON
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- Riwayat Backup Table Card -->

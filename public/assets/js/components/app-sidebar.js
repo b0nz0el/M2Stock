@@ -41,12 +41,23 @@ class AppSidebar extends HTMLElement {
     this.addEventListener('click', this._handleClick);
     this._highlightActiveMenu();
     this._loadUserProfile();
+    this._loadStoreInfo();
     this._loadBadgeCounts();
+
+    this._handleStoreUpdate = (e) => {
+      if (e?.detail?.name) this._updateStoreName(e.detail.name);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('aquastock:store-info-updated', this._handleStoreUpdate);
+    }
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this._handleClick);
     document.removeEventListener('keydown', this._handleTrapFocus);
+    if (typeof window !== 'undefined' && this._handleStoreUpdate) {
+      window.removeEventListener('aquastock:store-info-updated', this._handleStoreUpdate);
+    }
   }
 
   _applyRoleBadge(role) {
@@ -205,6 +216,34 @@ class AppSidebar extends HTMLElement {
               role: role
             }));
           } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
+
+  _updateStoreName(name) {
+    const storeEl = this.querySelector('#sidebar-store-name');
+    if (storeEl && name) {
+      storeEl.textContent = name;
+    }
+  }
+
+  async _loadStoreInfo() {
+    try {
+      const cached = localStorage.getItem('aquastock_store_info');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.name) {
+          this._updateStoreName(parsed.name);
+        }
+      }
+    } catch (_) {}
+
+    try {
+      if (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo) {
+        const storeInfo = await window.Api.settings.getStoreInfo();
+        if (storeInfo && storeInfo.name) {
+          this._updateStoreName(storeInfo.name);
         }
       }
     } catch (_) {}
@@ -463,7 +502,7 @@ class AppSidebar extends HTMLElement {
             <span class="text-base font-bold block truncate">aQuaStock</span>
             <span class="text-[10px] text-[#A0A0A5] flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-[#34C759] rounded-full"></span>
-              JTMaquarium
+              <span id="sidebar-store-name" class="truncate max-w-[130px]">JTMaquarium</span>
             </span>
           </div>
         </div>

@@ -1959,6 +1959,12 @@ window.closeOutModal = closeOutModal;
 window.handleOutSubmit = handleOutSubmit;
 window.filterPosCategory = filterPosCategory;
 window.renderPosCatalogGrid = renderPosCatalogGrid;
+window.filterOutPeriod = filterOutPeriod;
+window.handleSearchOut = handleSearchOut;
+window.goToOutPage = goToOutPage;
+window.loadOutTransactions = loadOutTransactions;
+window.handleExportOut = handleExportOut;
+window.openPackingListModal = openPackingListModal;
 
 document.addEventListener('DOMContentLoaded', () => {
   const outSearchInput = document.getElementById('out-product-search');

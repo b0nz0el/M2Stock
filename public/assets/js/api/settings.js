@@ -78,10 +78,17 @@ export const settings = {
 
       if (error) throw error;
 
-      if (key === 'store_info' && typeof localStorage !== 'undefined') {
-        try {
-          localStorage.setItem('aquastock_store_info', JSON.stringify(value));
-        } catch (_) {}
+      if (key === 'store_info') {
+        if (typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem('aquastock_store_info', JSON.stringify(value));
+          } catch (_) {}
+        }
+        if (typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(new CustomEvent('aquastock:store-info-updated', { detail: value }));
+          } catch (_) {}
+        }
       }
 
       return { ok: true, data: data ? data.value : value };

@@ -165,19 +165,18 @@ function renderSuppliers() {
 
     return `
       <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
-        <td class="px-5 py-3.5">
+        <td class="px-5 py-3.5 supplier-name-cell">
           <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-[#0088CC]/15 text-[#32ADE6]' : 'bg-white/5 text-[#A0A0A5]'} grid place-items-center text-sm font-bold">
+            <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-[#0088CC]/15 text-[#32ADE6]' : 'bg-white/5 text-[#A0A0A5]'} grid place-items-center text-sm font-bold shrink-0">
               <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i>
             </div>
-            <div>
-              <p class="font-medium text-white">${escapeHtml(s.name)}</p>
-              <p class="text-[11px] text-[#A0A0A5] md:hidden">${escapeHtml(s.phone || '-')}</p>
+            <div class="min-w-0">
+              <p class="font-semibold text-white text-sm truncate">${escapeHtml(s.name)}</p>
             </div>
           </div>
         </td>
-        <td class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(s.phone || '-')}</td>
-        <td class="px-5 py-3.5 text-[#A0A0A5] max-w-xs truncate">${escapeHtml(s.address || '-')}</td>
+        <td class="px-5 py-3.5 text-[#A0A0A5]">${s.phone ? `<a href="tel:${escapeHtml(s.phone)}" class="text-[#32ADE6] hover:underline">${escapeHtml(s.phone)}</a>` : '-'}</td>
+        <td class="px-5 py-3.5 text-[#A0A0A5] supplier-address-cell">${escapeHtml(s.address || '-')}</td>
         <td class="px-5 py-3.5">${statusBadge}</td>
         <td class="px-5 py-3.5 text-right">
           <div class="flex items-center justify-end gap-1.5">

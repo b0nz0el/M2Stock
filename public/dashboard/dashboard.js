@@ -30,7 +30,22 @@
     return `<span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Offline</span>`;
   }
 
-  async function loadDashboardData() {
+  let currentDashboardPeriod = '30d';
+
+  function handleDashboardPeriodChange(period) {
+    currentDashboardPeriod = period || '30d';
+    loadDashboardData(currentDashboardPeriod, false);
+  }
+
+  async function loadDashboardData(period = null, showFeedback = true) {
+    const activePeriod = period || document.getElementById('dashboard-period-filter')?.value || currentDashboardPeriod || '30d';
+    currentDashboardPeriod = activePeriod;
+
+    const refreshBtn = document.getElementById('btn-refresh-dashboard');
+    const refreshIcon = refreshBtn?.querySelector('i, svg');
+    if (refreshIcon) refreshIcon.classList.add('animate-spin');
+    if (refreshBtn) refreshBtn.disabled = true;
+
     try {
       // 1. Fetch Products
       const prodRes = await Api.items.getAll();
@@ -84,10 +99,10 @@
       }
 
       // 2. Fetch Transactions
-      const txRes = await Api.transactions.getAll({ limit: 100 });
+      const txRes = await Api.transactions.getAll({ limit: 150 });
       const transactions = txRes?.ok ? (txRes.data || []) : [];
 
-      // A. Recent Transactions (Top 5)
+      // A. Recent Transactions (Top 5 dari keseluruhan)
       const recentTbody = document.getElementById('recent-transactions-tbody');
       if (recentTbody) {
         if (transactions.length === 0) {
@@ -124,10 +139,37 @@
         if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
       }
 
-      // B. Top 5 Terlaris (from Out transactions)
-      const outTransactions = transactions.filter(t => t.type === 'out');
+      // Hitung batas waktu filter periode
+      const now = new Date();
+      let periodCutoff = 0;
+      let periodLabel = '30 Hari';
+      let chartDaysCount = 10;
+
+      if (activePeriod === 'today') {
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        periodCutoff = todayStart.getTime();
+        periodLabel = 'Hari Ini';
+        chartDaysCount = 7;
+      } else if (activePeriod === '7d') {
+        periodCutoff = now.getTime() - (7 * 24 * 60 * 60 * 1000);
+        periodLabel = '7 Hari';
+        chartDaysCount = 7;
+      } else {
+        periodCutoff = now.getTime() - (30 * 24 * 60 * 60 * 1000);
+        periodLabel = '30 Hari';
+        chartDaysCount = 10;
+      }
+
+      // Saring transaksi keluar sesuai periode
+      const filteredOutTransactions = transactions.filter(t => {
+        if (t.type !== 'out') return false;
+        const tTime = new Date(t.created_at).getTime();
+        return tTime >= periodCutoff;
+      });
+
+      // B. Top 5 Terlaris (Berdasarkan periode terpilih)
       const salesByProduct = {};
-      outTransactions.forEach(t => {
+      filteredOutTransactions.forEach(t => {
         const pId = t.product_id;
         const pName = t.products?.name || 'Produk #' + pId;
         if (!salesByProduct[pId]) {
@@ -140,7 +182,7 @@
       const topContainer = document.getElementById('top-products-list');
       if (topContainer) {
         if (topList.length === 0) {
-          topContainer.innerHTML = '<p class="text-xs text-[#A0A0A5] py-4 text-center">Belum ada data penjualan</p>';
+          topContainer.innerHTML = `<p class="text-xs text-[#A0A0A5] py-4 text-center">Belum ada penjualan periode ${periodLabel}</p>`;
         } else {
           const maxQty = topList[0].qty || 1;
           const colors = [
@@ -169,36 +211,31 @@
         }
       }
 
-      // C. Sales Chart (Last 10 Days)
-      const now = new Date();
-      const last10Days = [];
-      for (let i = 9; i >= 0; i--) {
+      // C. Sales Chart
+      const chartDays = [];
+      for (let i = chartDaysCount - 1; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-        last10Days.push(d);
+        chartDays.push(d);
       }
 
       const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-      const chartLabels = last10Days.map(d => `${d.getDate()} ${months[d.getMonth()]}`);
-      const salesDaily = new Array(10).fill(0);
-      const profitDaily = new Array(10).fill(0);
+      const chartLabels = chartDays.map(d => `${d.getDate()} ${months[d.getMonth()]}`);
+      const salesDaily = new Array(chartDaysCount).fill(0);
+      const profitDaily = new Array(chartDaysCount).fill(0);
 
-      let total30Sales = 0;
-      let total30Profit = 0;
-      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      let totalPeriodSales = 0;
+      let totalPeriodProfit = 0;
 
-      outTransactions.forEach(t => {
-        const tTime = new Date(t.created_at).getTime();
+      filteredOutTransactions.forEach(t => {
         const rev = (t.qty || 0) * (t.price || 0);
         const cost = (t.qty || 0) * (t.products?.cost_price || 0);
         const pft = Math.max(0, rev - cost);
 
-        if (tTime >= thirtyDaysAgo) {
-          total30Sales += rev;
-          total30Profit += pft;
-        }
+        totalPeriodSales += rev;
+        totalPeriodProfit += pft;
 
         const tDate = new Date(t.created_at);
-        last10Days.forEach((d, idx) => {
+        chartDays.forEach((d, idx) => {
           if (tDate.getDate() === d.getDate() && tDate.getMonth() === d.getMonth() && tDate.getFullYear() === d.getFullYear()) {
             salesDaily[idx] += Math.round(rev / 1000); // in thousands (rb)
             profitDaily[idx] += Math.round(pft / 1000);
@@ -209,17 +246,17 @@
       // Update Sales Summary header
       const salesSummaryEl = document.getElementById('dash-sales-summary');
       if (salesSummaryEl) {
-        salesSummaryEl.textContent = `Total: ${formatRupiahVal(total30Sales)} · Laba: ${formatRupiahVal(total30Profit)}`;
+        salesSummaryEl.textContent = `${periodLabel}: ${formatRupiahVal(totalPeriodSales)} · Laba: ${formatRupiahVal(totalPeriodProfit)}`;
       }
 
-      // Update sales bar chart ALWAYS (zero filled when no out transactions)
+      // Update sales bar chart ALWAYS
       if (typeof window.updateDashboardSalesChart === 'function') {
         window.updateDashboardSalesChart(chartLabels, salesDaily, profitDaily);
       }
 
-      // D. Channel Chart
+      // D. Channel Chart (sesuai periode terpilih)
       const channelCounts = { 'Shopee': 0, 'Tokopedia': 0, 'TikTok': 0, 'Offline': 0 };
-      outTransactions.forEach(t => {
+      filteredOutTransactions.forEach(t => {
         const ch = t.channel || 'Offline';
         if (ch.toLowerCase().includes('shopee')) channelCounts['Shopee'] += (t.qty || 0);
         else if (ch.toLowerCase().includes('tokopedia')) channelCounts['Tokopedia'] += (t.qty || 0);
@@ -237,7 +274,7 @@
           );
         } else {
           window.updateDashboardChannelChart(
-            ['Belum ada penjualan'],
+            ['Belum ada data'],
             [1],
             ['rgba(255,255,255,0.08)']
           );
@@ -245,19 +282,32 @@
       }
 
       if (typeof window.refreshIcons === 'function') window.refreshIcons();
+
+      if (showFeedback && typeof window.showToast === 'function') {
+        window.showToast('Data dashboard berhasil dimuat ulang', 'info');
+      }
     } catch (err) {
       console.error('Error loading dashboard data:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Gagal memuat data dashboard', 'error');
+      }
+    } finally {
+      setTimeout(() => {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+        if (refreshBtn) refreshBtn.disabled = false;
+      }, 350);
     }
   }
 
   if (typeof window !== 'undefined') {
     window.loadDashboardData = loadDashboardData;
+    window.handleDashboardPeriodChange = handleDashboardPeriodChange;
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
-      loadDashboardData();
+      loadDashboardData(null, false);
     });
   } else {
-    loadDashboardData();
+    loadDashboardData(null, false);
   }
