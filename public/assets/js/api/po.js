@@ -279,7 +279,7 @@ export const po = {
             tipe: 'info',
             judul: 'Purchase Order Baru',
             pesan: `PO ${no_po} telah dibuat untuk supplier ${supplier_nama || '-'}.`,
-            link: '/po'
+            link: '/dashboard/po/'
           });
         }
       } catch (_) {}

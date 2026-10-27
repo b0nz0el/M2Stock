@@ -199,7 +199,7 @@ export const returnApi = {
             tipe: 'info',
             judul: 'Retur Barang Baru',
             pesan: `Retur ${autoNo} (${tipe === 'ke_supplier' ? 'Ke Supplier' : 'Dari Customer'}) dicatat sebanyak ${qty} item.`,
-            link: '/return'
+            link: '/dashboard/return/'
           });
         }
       } catch (_) {}

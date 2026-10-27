@@ -1,1 +1,16 @@
+/items        /dashboard/items/      302
+/in           /dashboard/in/         302
+/out          /dashboard/out/        302
+/po           /dashboard/po/         302
+/return       /dashboard/return/     302
+/suppliers    /dashboard/suppliers/  302
+/customers    /dashboard/customers/  302
+/cash         /dashboard/cash/       302
+/debt         /dashboard/debt/       302
+/report       /dashboard/report/     302
+/users        /dashboard/users/      302
+/audit        /dashboard/audit/      302
+/notif        /dashboard/notif/      302
+/backup       /dashboard/backup/     302
+/settings     /dashboard/settings/   302
 /dashboard/*  /dashboard/index.html  200

@@ -275,7 +275,22 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     }
 
     if (link && link.trim() !== '') {
-      window.location.href = link.trim();
+      const cleanLink = link.trim();
+      const targetSlug = cleanLink.replace(/^\/dashboard\/?/, '').replace(/^\//, '').replace(/\/$/, '').split(/[?#]/)[0];
+      const validPages = [
+        'dashboard', 'items', 'in', 'out', 'po', 'return',
+        'suppliers', 'customers', 'cash', 'debt', 'report',
+        'users', 'audit', 'notif', 'backup', 'settings'
+      ];
+
+      if (validPages.includes(targetSlug) && typeof window.showPage === 'function') {
+        window.showPage(targetSlug);
+      } else if (cleanLink.startsWith('http://') || cleanLink.startsWith('https://')) {
+        window.location.href = cleanLink;
+      } else {
+        const fullUrl = cleanLink.startsWith('/dashboard') ? cleanLink : ('/dashboard/' + (targetSlug ? targetSlug + '/' : ''));
+        window.location.href = fullUrl;
+      }
     }
   }
 

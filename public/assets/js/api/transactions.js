@@ -194,7 +194,7 @@ export const transactions = {
             tipe: 'success',
             judul: 'Penjualan Kasir Baru',
             pesan: `Transaksi kasir (${invoiceNo}) berhasil dicatat: ${cartItems.length} item dengan total Rp ${Number(totalAmount || 0).toLocaleString('id-ID')}.`,
-            link: '/out'
+            link: '/dashboard/out/'
           });
         }
       } catch (_) {}
@@ -397,7 +397,7 @@ export const transactions = {
                   tipe: data.type === 'in' ? 'info' : 'success',
                   judul: `${txTypeLabel} Tercatat`,
                   pesan: `Transaksi ${txTypeLabel.toLowerCase()} produk ID ${productId} ${prodName} sebanyak ${quantity} item telah dicatat.`,
-                  link: data.type === 'in' ? '/in' : '/out'
+                  link: data.type === 'in' ? '/dashboard/in/' : '/dashboard/out/'
                 });
               }
             } catch (_) {}
@@ -413,7 +413,7 @@ export const transactions = {
                     tipe: 'warning',
                     judul: 'Peringatan Stok Kritis!',
                     pesan: `Stok produk ${productBefore.name || productId} kini tersisa ${remainingStock} (batas minimum: ${productBefore.min_stock}). Segera lakukan restock!`,
-                    link: '/items'
+                    link: '/dashboard/items/'
                   });
                 }
               }
