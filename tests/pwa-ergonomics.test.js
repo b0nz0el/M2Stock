@@ -35,7 +35,7 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
     });
   });
 
-  describe('Header Touch Targets (Apple HIG & Material Design 3)', () => {
+  describe('Header Touch Targets & Safe Area Insets (iOS Notch & Dynamic Island)', () => {
     it('enforces 44px min touch target on mobile header buttons (hamburger, notif, logout)', () => {
       const html = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
       
@@ -48,14 +48,28 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       // Logout button: w-11 h-11
       expect(html).toMatch(/data-action="logout"[^>]*class="[^"]*w-11 h-11/);
     });
+
+    it('protects header from notch collision using safe-area-inset-top and avoids overflow-x: hidden breaking sticky', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('env(safe-area-inset-top');
+      expect(responsiveCss).toContain('overflow-x: clip;');
+    });
   });
 
-  describe('Bottom Navigation & Mobile Ergonomics', () => {
+  describe('Bottom Navigation & iOS Home Indicator Ergonomics', () => {
     it('ensures bottom-nav-item typography is 11px (0.6875rem) semi-bold with 44px height', () => {
       const componentsCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/components.css'), 'utf8');
       expect(componentsCss).toContain('font-size: 0.6875rem;');
       expect(componentsCss).toContain('font-weight: 600;');
       expect(componentsCss).toContain('min-height: 44px;');
+    });
+
+    it('provides generous clearance for iOS home indicator bar in layout.css and responsive.css', () => {
+      const layoutCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/layout.css'), 'utf8');
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      
+      expect(layoutCss).toContain('env(safe-area-inset-bottom');
+      expect(responsiveCss).toContain('padding-bottom: max(18px, env(safe-area-inset-bottom, 18px))');
     });
 
     it('positions mobile toast container above bottom navigation', () => {
@@ -69,6 +83,15 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('.card table tbody td:last-child:has(button) button');
       expect(responsiveCss).toContain('min-width: 44px !important;');
       expect(responsiveCss).toContain('min-height: 44px !important;');
+    });
+  });
+
+  describe('Barang Keluar (#page-out) and Barang Masuk (#page-in) Mobile Optimization', () => {
+    it('ensures primary CTA (Kasir POS / Tambah) is prominent and metric cards are in compact grid', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('#page-out > div:first-child .flex.gap-2 > button[data-action="add"]');
+      expect(responsiveCss).toContain('#page-out .grid.grid-cols-4');
+      expect(responsiveCss).toContain('grid-template-columns: repeat(3, 1fr)');
     });
   });
 });

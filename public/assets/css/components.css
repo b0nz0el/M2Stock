@@ -550,7 +550,7 @@ tbody tr:nth-child(5) {
 /* ═══ PROMINENT CENTRAL FAB (SCAN/OUT POS) ═══ */
 .bottom-nav-item[data-tab="out"] {
   position: relative;
-  top: -10px;
+  top: -14px;
   background: linear-gradient(135deg, #0088CC, #006699);
   color: #FFFFFF !important;
   border-radius: 9999px;

@@ -459,6 +459,18 @@ class AppSidebar extends HTMLElement {
 
     document.removeEventListener('keydown', this._handleTrapFocus);
 
+    // Sync active state back to current active page so 'menu' tab does not remain stuck
+    const curPage = (typeof window !== 'undefined' && typeof window.currentPageId === 'function')
+      ? window.currentPageId()
+      : 'dashboard';
+    const bottomTab = ['dashboard', 'items', 'in', 'out'].includes(curPage) ? curPage : 'menu';
+    document.querySelectorAll('.bottom-nav-item').forEach(b => {
+      const isActive = b.dataset.tab === bottomTab;
+      b.classList.toggle('active', isActive);
+      if (isActive) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
+
     if (this._lastFocused && typeof this._lastFocused.focus === 'function' && document.body.contains(this._lastFocused)) {
       try {
         if (typeof focusProgrammatically === 'function') {

@@ -95,14 +95,23 @@ main, #main-content {
     display: none;
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: calc(64px + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
+    height: auto;
+    min-height: calc(56px + env(safe-area-inset-bottom, 20px));
+    padding-bottom: max(18px, env(safe-area-inset-bottom, 18px));
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    box-sizing: border-box;
     background: rgba(28, 28, 30, 0.95);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid rgba(255,255,255,0.08);
     z-index: 45;
   }
-  .bottom-nav-items { display: flex; height: 64px; }
+  .bottom-nav-items {
+    display: flex;
+    height: 52px;
+    align-items: center;
+  }
 
   /* ═══ SIDEBAR SCROLL (Desktop & Mobile) ═══ */
   @media (min-width: 1024px) {
