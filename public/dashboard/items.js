@@ -64,6 +64,25 @@
         }
         if (filterVal) filterSelect.value = filterVal;
       }
+
+      // 3. Dropdown Supplier Form Tambah
+      const supSelect = document.getElementById('item-supplier-id');
+      if (supSelect && typeof Api !== 'undefined' && Api.suppliers?.getAll) {
+        try {
+          const supRes = await Api.suppliers.getAll();
+          if (supRes.ok && Array.isArray(supRes.data)) {
+            const currentSup = supSelect.value;
+            supSelect.innerHTML = '<option value="">Umum / Saldo Awal Toko</option>';
+            supRes.data.forEach(function (s) {
+              const opt = document.createElement('option');
+              opt.value = s.id;
+              opt.textContent = s.name;
+              supSelect.appendChild(opt);
+            });
+            if (currentSup) supSelect.value = currentSup;
+          }
+        } catch (_) {}
+      }
     } catch (e) {
       console.error('Gagal memuat kategori dan satuan:', e);
       if (typeof showToast === 'function') {
@@ -344,7 +363,12 @@
     document.getElementById('item-id').value = '';
     document.getElementById('item-stock').disabled = false;
     document.getElementById('item-stock-label').innerHTML = 'Stok Awal <span class="text-[#FF3B30]">*</span>';
-    document.getElementById('item-stock-help').textContent = 'Stok awal fisik toko. Jika barang ini dari faktur supplier, isi 0 lalu catat di menu Barang Masuk agar tidak terhitung ganda.';
+    document.getElementById('item-stock-help').textContent = 'Stok awal fisik toko. Pilih supplier di samping jika berasal dari faktur pembelian baru agar otomatis tercatat di Barang Masuk.';
+    const supWrap = document.getElementById('item-supplier-wrap');
+    if (supWrap) supWrap.classList.remove('hidden');
+    const supSel = document.getElementById('item-supplier-id');
+    if (supSel) supSel.value = '';
+
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
     if (submitBtn) {
@@ -404,7 +428,9 @@
     document.getElementById('item-stock').value = item.stock || 0;
     document.getElementById('item-stock').disabled = true;
     document.getElementById('item-stock-label').textContent = 'Stok Saat Ini';
-    document.getElementById('item-stock-help').textContent = 'Stok hanya berubah melalui transaksi barang masuk atau barang keluar.';
+    document.getElementById('item-stock-help').innerHTML = 'Stok hanya berubah melalui mutasi. Untuk koreksi stok fisik toko, gunakan tombol <button type="button" onclick="closeItemModal(); openStockAdjustmentModal(\'' + item.id + '\')" class="text-[#FF9500] hover:underline font-semibold inline-flex items-center gap-1"><i data-lucide=\"sliders-horizontal\" class=\"w-3 h-3\"></i> Penyesuaian Stok (Stock Opname)</button>.';
+    const supWrap = document.getElementById('item-supplier-wrap');
+    if (supWrap) supWrap.classList.add('hidden');
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
@@ -576,13 +602,39 @@
         image_url: finalImageUrl,
         images: finalUrls
       };
-      if (!id) payload.stock = stock;
-
       let res;
       if (id) {
         res = await Api.items.update(id, payload);
       } else {
-        res = await Api.items.create(payload);
+        const supplierIdVal = document.getElementById('item-supplier-id')?.value || null;
+        if (stock > 0 && typeof Api.transactions?.createIn === 'function') {
+          payload.stock = 0;
+          res = await Api.items.create(payload);
+          if (res.ok && res.data?.id) {
+            const newProdId = res.data.id;
+            let currentUserId = null;
+            if (typeof window.Auth !== 'undefined') {
+              const u = await window.Auth.getCurrentUser();
+              currentUserId = u?.id || null;
+            }
+            try {
+              await Api.transactions.createIn({
+                product_id: newProdId,
+                supplier_id: supplierIdVal || null,
+                qty: stock,
+                price: cost_price,
+                note: supplierIdVal ? 'Penerimaan Faktur Awal Produk Baru' : 'Saldo Awal Fisik Toko',
+                created_by: currentUserId
+              });
+            } catch (txErr) {
+              console.warn('Gagal mencatat transaksi masuk otomatis untuk stok awal:', txErr);
+              await window.supabase?.from('products').update({ stock: stock }).eq('id', newProdId);
+            }
+          }
+        } else {
+          payload.stock = stock;
+          res = await Api.items.create(payload);
+        }
       }
 
       if (!res.ok) {
@@ -656,6 +708,149 @@
     if (modal) {
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+    }
+  }
+
+  let selectedAdjustmentProduct = null;
+
+  function openStockAdjustmentModal(productId) {
+    const item = currentItems.find(i => String(i.id) === String(productId));
+    if (!item) return;
+
+    selectedAdjustmentProduct = item;
+    const idInput = document.getElementById('adj-product-id');
+    if (idInput) idInput.value = item.id;
+
+    const nameEl = document.getElementById('adj-product-name');
+    if (nameEl) nameEl.textContent = item.name || 'Produk';
+
+    const skuEl = document.getElementById('adj-product-sku');
+    if (skuEl) skuEl.textContent = item.sku || '-';
+
+    const catEl = document.getElementById('adj-product-cat');
+    if (catEl) catEl.textContent = item.category || 'Umum';
+
+    const unitEl = document.getElementById('adj-product-unit');
+    if (unitEl) unitEl.textContent = item.unit || 'pcs';
+
+    const unitLabelCur = document.getElementById('adj-unit-label-current');
+    if (unitLabelCur) unitLabelCur.textContent = item.unit || 'pcs';
+
+    const curStockEl = document.getElementById('adj-current-stock');
+    if (curStockEl) curStockEl.textContent = String(item.stock ?? 0);
+
+    const actualInput = document.getElementById('adj-actual-stock');
+    if (actualInput) {
+      actualInput.value = String(item.stock ?? 0);
+    }
+
+    const reasonSel = document.getElementById('adj-reason');
+    if (reasonSel) reasonSel.value = 'Koreksi Salah Input / Dobel';
+
+    const notesInput = document.getElementById('adj-notes');
+    if (notesInput) notesInput.value = '';
+
+    calculateAdjustmentDifference();
+
+    const modal = document.getElementById('modal-stock-adjustment');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    setTimeout(() => actualInput?.focus(), 50);
+  }
+
+  function closeStockAdjustmentModal() {
+    selectedAdjustmentProduct = null;
+    const modal = document.getElementById('modal-stock-adjustment');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function calculateAdjustmentDifference() {
+    if (!selectedAdjustmentProduct) return;
+    const currentStock = Number(selectedAdjustmentProduct.stock || 0);
+    const actualInput = document.getElementById('adj-actual-stock');
+    const actualStock = Number(actualInput?.value || 0);
+    const unit = selectedAdjustmentProduct.unit || 'pcs';
+
+    const diff = actualStock - currentStock;
+    const badge = document.getElementById('adj-diff-badge');
+    const box = document.getElementById('adj-diff-box');
+
+    if (badge && box) {
+      if (diff === 0) {
+        badge.textContent = `0 ${unit} (Tidak ada perubahan)`;
+        badge.className = 'font-bold text-[#A0A0A5]';
+        box.className = 'p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-white/5 border-white/10 text-white';
+      } else if (diff > 0) {
+        badge.textContent = `+${diff} ${unit} (Stok Bertambah)`;
+        badge.className = 'font-bold text-[#34C759]';
+        box.className = 'p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-[#34C759]/10 border-[#34C759]/30 text-white';
+      } else {
+        badge.textContent = `${diff} ${unit} (Stok Berkurang)`;
+        badge.className = 'font-bold text-[#FF3B30]';
+        box.className = 'p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-[#FF3B30]/10 border-[#FF3B30]/30 text-white';
+      }
+    }
+  }
+
+  async function handleStockAdjustmentSubmit(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+    if (role === 'VIEWER') {
+      alert('Anda tidak punya akses untuk mengubah data.');
+      return;
+    }
+
+    const prodId = document.getElementById('adj-product-id')?.value;
+    const actualStock = Number(document.getElementById('adj-actual-stock')?.value);
+    const reason = document.getElementById('adj-reason')?.value || 'Stock Opname Fisik';
+    const notes = document.getElementById('adj-notes')?.value.trim() || '';
+
+    if (!prodId) return;
+    if (isNaN(actualStock) || actualStock < 0) {
+      if (typeof showToast === 'function') showToast('Stok fisik harus bernilai 0 atau lebih', 'error');
+      return;
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-adjustment');
+    const originalContent = btnSubmit ? btnSubmit.innerHTML : '';
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<span>Menyimpan...</span>';
+    }
+
+    try {
+      if (typeof Api.items?.adjustStock !== 'function') {
+        throw new Error('Fitur adjustStock belum tersedia di modul Api.items');
+      }
+
+      const res = await Api.items.adjustStock(prodId, actualStock, reason, notes);
+      if (!res.ok) {
+        throw new Error(res.error?.message || 'Gagal menyimpan penyesuaian stok');
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(res.meta?.message || `Stok berhasil disesuaikan menjadi ${actualStock}`, 'success');
+      }
+
+      closeStockAdjustmentModal();
+      await loadItemsFromBackend();
+    } catch (err) {
+      console.error('Adjustment error:', err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Terjadi kesalahan saat menyesuaikan stok', 'error');
+      }
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalContent;
+      }
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
     }
   }
 
@@ -989,6 +1184,9 @@
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
+            <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]">
+              <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
             <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
@@ -1756,21 +1954,29 @@
   window.handleRefreshItems = handleRefreshItems;
   window.handleExportItems = handleExportItems;
 
+  window.openStockAdjustmentModal = openStockAdjustmentModal;
+  window.closeStockAdjustmentModal = closeStockAdjustmentModal;
+  window.calculateAdjustmentDifference = calculateAdjustmentDifference;
+  window.handleStockAdjustmentSubmit = handleStockAdjustmentSubmit;
+
   // Tutup modal saat klik pada backdrop atau tekan Escape
   window.addEventListener('click', function (e) {
     const itemAction = e.target.closest('[data-item-action]');
     if (itemAction) {
       const itemId = itemAction.dataset.itemId;
+      if (itemAction.dataset.itemAction === 'adjust-stock') openStockAdjustmentModal(itemId);
       if (itemAction.dataset.itemAction === 'edit') openEditItemModal(itemId);
       if (itemAction.dataset.itemAction === 'delete') openDeleteItemModal(itemId);
     }
 
     const modalItem = document.getElementById('modal-item');
+    const modalAdj = document.getElementById('modal-stock-adjustment');
     const modalDelete = document.getElementById('modal-delete');
     const modalBulkDel = document.getElementById('modal-bulk-delete');
     const modalBulkPrice = document.getElementById('modal-bulk-price');
     const modalBulkMeta = document.getElementById('modal-bulk-meta');
     if (e.target === modalItem) closeItemModal();
+    if (e.target === modalAdj) closeStockAdjustmentModal();
     if (e.target === modalDelete) closeDeleteModal();
     if (e.target === modalBulkDel) closeBulkDeleteModal();
     if (e.target === modalBulkPrice) closeBulkPriceModal();
@@ -1783,6 +1989,7 @@
   window.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       closeItemModal();
+      closeStockAdjustmentModal();
       closeDeleteModal();
       closeBulkDeleteModal();
       closeBulkPriceModal();

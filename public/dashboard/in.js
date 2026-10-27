@@ -486,6 +486,8 @@
       suggestionsEl.classList.add('hidden');
       suggestionsEl.innerHTML = '';
     }
+
+    updateInStockPreview();
   }
 
   function getLastProductSequence() {
@@ -584,6 +586,23 @@
     document.getElementById('in-qty')?.focus();
   }
 
+  function updateInStockPreview() {
+    const previewBox = document.getElementById('in-stock-preview');
+    const previewText = document.getElementById('in-stock-preview-text');
+    if (!previewBox || !previewText) return;
+
+    if (selectedExistingProduct) {
+      const curStock = Number(selectedExistingProduct.stock || 0);
+      const qty = Number(document.getElementById('in-qty')?.value || 0);
+      const unit = selectedExistingProduct.unit || 'pcs';
+      const totalNew = curStock + qty;
+      previewText.textContent = `Stok Saat Ini: ${curStock} + Masuk: ${qty} = Total Baru: ${totalNew} ${unit}`;
+      previewBox.classList.remove('hidden');
+    } else {
+      previewBox.classList.add('hidden');
+    }
+  }
+
   function calculateInTotal() {
     const qty = Number(document.getElementById('in-qty')?.value || 0);
     const price = Number(document.getElementById('in-price')?.value || 0);
@@ -592,6 +611,7 @@
     if (preview) {
       preview.textContent = formatRupiahVal(total);
     }
+    updateInStockPreview();
   }
 
   function openAddInModal() {

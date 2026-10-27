@@ -303,6 +303,115 @@ export const items = {
       return apiRequest(`/items/${id}`, { method: 'PUT', body: data, ...opts });
     },
 
+    adjustStock: async (id, actualStock, reason = 'Stock Opname Fisik', notes = '', opts = {}) => {
+      if (isSupabaseAvailable()) {
+        try {
+          const targetStock = Number(actualStock);
+          if (isNaN(targetStock) || targetStock < 0) {
+            return formatResponse({
+              ok: false,
+              error: { code: 'INVALID_STOCK', message: 'Stok fisik harus berupa angka nol atau lebih.' }
+            });
+          }
+
+          const { data: prod, error: pErr } = await window.supabase
+            .from('products')
+            .select('id, name, sku, stock, cost_price')
+            .eq('id', id)
+            .single();
+
+          if (pErr || !prod) {
+            return formatResponse({
+              ok: false,
+              error: { code: 'NOT_FOUND', message: 'Produk tidak ditemukan.' }
+            });
+          }
+
+          const currentStock = Number(prod.stock || 0);
+          const diff = targetStock - currentStock;
+
+          if (diff === 0) {
+            return formatResponse({
+              ok: true,
+              data: prod,
+              meta: { message: 'Stok sudah sesuai, tidak ada perubahan.' }
+            });
+          }
+
+          let currentUserId = null;
+          try {
+            if (window.supabase?.auth) {
+              const uRes = await window.supabase.auth.getUser();
+              currentUserId = uRes?.data?.user?.id || null;
+            }
+          } catch (_) {}
+
+          const noteText = `[STOCK OPNAME] ${reason}${notes ? ' - ' + notes : ''} (Koreksi ${diff > 0 ? '+' : ''}${diff})`;
+
+          if (diff > 0) {
+            await window.supabase
+              .from('transactions')
+              .insert([{
+                type: 'in',
+                product_id: Number(id),
+                qty: diff,
+                price: Number(prod.cost_price || 0),
+                channel: 'Offline',
+                note: noteText,
+                created_by: currentUserId
+              }]);
+          } else {
+            await window.supabase
+              .from('transactions')
+              .insert([{
+                type: 'out',
+                product_id: Number(id),
+                qty: Math.abs(diff),
+                price: Number(prod.cost_price || 0),
+                channel: 'Offline',
+                note: noteText,
+                created_by: currentUserId
+              }]);
+          }
+
+          const { data: updated, error: uErr } = await window.supabase
+            .from('products')
+            .update({ stock: targetStock, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .select();
+
+          if (uErr) {
+            return formatResponse({
+              ok: false,
+              error: { code: uErr.code || 'UPDATE_ERROR', message: uErr.message || 'Gagal memperbarui stok produk.' }
+            });
+          }
+
+          const resProd = updated && updated[0] ? updated[0] : { ...prod, stock: targetStock };
+
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('UPDATE', `Stock Opname: ${prod.name} (SKU: ${prod.sku || '-'}) disesuaikan dari ${currentStock} menjadi ${targetStock}. Alasan: ${reason}`);
+            }
+          } catch (_) {}
+
+          return formatResponse({
+            ok: true,
+            data: resProd,
+            meta: {
+              message: `Stok produk berhasil disesuaikan menjadi ${targetStock}`,
+              previousStock: currentStock,
+              difference: diff
+            }
+          });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+
+      return apiRequest(`/items/${id}/adjust-stock`, { method: 'POST', body: { actualStock, reason, notes }, ...opts });
+    },
+
     delete: async (id, opts) => {
       if (opts && opts.force) {
         return items.forceDelete(id, opts);
