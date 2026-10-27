@@ -95,14 +95,55 @@ function pageUrl(pageId) {
   return dashboardBase() + (slug ? slug + '/' : '');
 }
 
+let isNavigating = false;
+
 /* Navigasi: multi-page clean URL → arahkan ke /dashboard/<slug>/
-   Animasi ditangani sepenuhnya oleh CSS (@view-transition di layout.css) */
+   Menyediakan feedback visual instan (highlight menu aktif + top progress bar) sebelum halaman berpindah */
 function showPage(pageId) {
+  if (isNavigating) return;
+  const currentId = currentPageId();
+  if (currentId === pageId) return;
+
   const url = pageUrl(pageId);
+  isNavigating = true;
 
-  // Cegah navigasi ke halaman yang sama (no-op)
-  if (currentPageId() === pageId) return;
+  // 1. Feedback instan: tandai item menu yang diklik langsung aktif
+  const appSidebar = document.querySelector('app-sidebar');
+  if (appSidebar && typeof appSidebar._highlightActiveMenu === 'function') {
+    appSidebar._highlightActiveMenu(pageId);
+  }
+  document.querySelectorAll('.bottom-nav-item').forEach(b => {
+    const isActive = b.dataset.tab === pageId;
+    b.classList.toggle('active', isActive);
+    if (isActive) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
 
+  // 2. Munculkan top progress bar tipis Linear-style
+  if (typeof document !== 'undefined') {
+    let bar = document.getElementById('nav-progress-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'nav-progress-bar';
+      document.body.appendChild(bar);
+    }
+    void bar.offsetWidth; // force reflow untuk trigger CSS transition
+    bar.className = 'nav-progress-active';
+
+    // 3. Haluskan keluar konten: redupkan <main> secara halus (sidebar & header tetap solid)
+    const mainContent = document.getElementById('main-content') || document.querySelector('main');
+    if (mainContent) {
+      mainContent.style.transition = 'opacity 0.15s ease-out';
+      mainContent.style.opacity = '0.7';
+    }
+  }
+
+  // 4. Tutup drawer mobile jika navigasi dilakukan dari drawer mobile
+  if (typeof window !== 'undefined' && window.innerWidth <= (typeof MOBILE_BREAKPOINT !== 'undefined' ? MOBILE_BREAKPOINT : 1024)) {
+    closeSidebar();
+  }
+
+  // 5. Arahkan peramban ke halaman baru
   window.location.href = url;
 }
 
@@ -309,6 +350,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // Sinkronkan tab aktif dengan halaman yang sedang dibuka
   syncActiveState();
 
+  // Selesaikan animasi progress bar & reset state navigasi
+  isNavigating = false;
+  const navBar = document.getElementById('nav-progress-bar');
+  if (navBar) {
+    navBar.className = 'nav-progress-done';
+    setTimeout(() => {
+      if (navBar && navBar.parentNode) navBar.remove();
+    }, 280);
+  }
+
   // A11y: Pindahkan fokus ke heading halaman setelah navigasi
   const heading = document.querySelector('main h1, main h2, .page h1, .page h2');
   if (heading) {
@@ -319,6 +370,15 @@ document.addEventListener('DOMContentLoaded', function() {
       heading.focus();
     }
   }
+});
+
+// Penanganan Back/Forward cache (bfcache) pada peramban
+window.addEventListener('pageshow', function() {
+  isNavigating = false;
+  const navBar = document.getElementById('nav-progress-bar');
+  if (navBar && navBar.parentNode) navBar.remove();
+  const mainContent = document.getElementById('main-content') || document.querySelector('main');
+  if (mainContent) mainContent.style.opacity = '';
 });
 
 /* Export untuk keperluan pengujian / module */

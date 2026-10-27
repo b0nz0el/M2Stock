@@ -2,57 +2,90 @@
    aQuaStock Pro — layout.css
    Page transition, page/aside/header, struktur bottom-nav
    ═══════════════════════════════════════════════════ */
-/* ═══ PAGE TRANSITIONS ═══ */
+/* ═══ PAGE CONTENT TRANSITIONS ═══ */
 .page { display: none; }
 .page.active {
   display: block;
-  animation: pageEnter 0.25s ease-out both;
+  animation: pageContentEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-@keyframes pageEnter {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes pageContentEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Animasi masuk saat halaman pertama kali dimuat (MPA cross-document fallback).
-   Hanya opacity — TIDAK pakai translateX agar tidak terasa aneh. */
-body {
-  animation: bodyFadeIn 0.22s ease-out both;
+/* ═══ TOP NAVIGATION PROGRESS BAR (Feedback Instan Saat Menu Diklik) ═══ */
+#nav-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, #0088CC, #32ADE6);
+  box-shadow: 0 0 8px rgba(50, 173, 230, 0.7);
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
 }
-@keyframes bodyFadeIn {
+#nav-progress-bar.nav-progress-active {
+  opacity: 1;
+  width: 72%;
+  transition: width 0.35s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease;
+}
+#nav-progress-bar.nav-progress-done {
+  width: 100%;
+  opacity: 0;
+  transition: width 0.15s ease, opacity 0.2s 0.05s ease;
+}
+
+/* ═══ SIDEBAR SHELL SIZING (Mencegah Layout Shift / FOUC saat navigasi) ═══ */
+app-sidebar {
+  display: block;
+  flex-shrink: 0;
+}
+@media (min-width: 1024px) {
+  app-sidebar {
+    width: 16rem;
+    min-width: 16rem;
+    height: 100vh;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  app-sidebar {
+    width: 72px;
+    min-width: 72px;
+    height: 100vh;
+  }
+}
+
+/* ═══ VIEW TRANSITION (Pure Cross-Fade Tanpa Bouncing Layar/Sidebar) ═══ */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root) {
+  animation: 0.14s ease-out both vtFadeOut;
+}
+::view-transition-new(root) {
+  animation: 0.2s ease-in both vtFadeIn;
+}
+@keyframes vtFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes vtFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* ═══ VIEW TRANSITION API — Cross-Document MPA (Chrome 126+, Edge 126+) ═══
-   Cara kerja: browser otomatis intercept navigasi antar halaman,
-   screenshot halaman lama, load halaman baru, lalu jalankan animasi ini.
-   Tidak perlu JS sama sekali — cukup CSS ini di semua halaman. */
-@view-transition {
-  navigation: auto;
-}
-
-/* Halaman LAMA — fade out sambil sedikit naik */
-::view-transition-old(root) {
-  animation: vt-out 0.18s ease-in both;
-}
-/* Halaman BARU — fade in sambil sedikit turun ke posisi */
-::view-transition-new(root) {
-  animation: vt-in 0.26s ease-out both;
-}
-
-@keyframes vt-out {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-6px); }
-}
-@keyframes vt-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 /* Respek preferensi reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  body,
   .page.active,
+  #nav-progress-bar,
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none !important;
