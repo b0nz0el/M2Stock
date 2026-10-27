@@ -41,6 +41,12 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(htmlContent).toContain('id="in-stock-preview"');
       expect(htmlContent).toContain('id="in-stock-preview-text"');
     });
+
+    it('contains clear mode switch tabs in modal-in and stock warning banner in modal-item', () => {
+      expect(htmlContent).toContain('id="tab-in-existing"');
+      expect(htmlContent).toContain('id="tab-in-new"');
+      expect(htmlContent).toContain('id="item-stock-warning-banner"');
+    });
   });
 
   describe('Api.items.adjustStock', () => {
@@ -135,12 +141,12 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
             <select id="item-unit"><option value="1">pack</option></select>
             <input id="item-stock" value="1">
             <span id="item-stock-label"></span>
-            <p id="item-stock-help"></p>
             <div id="item-supplier-wrap">
               <select id="item-supplier-id">
                 <option value="5" selected>BOS Sarno</option>
               </select>
             </div>
+            <div id="item-stock-warning-banner" class="hidden"></div>
             <input id="item-cost-price" value="45000">
             <input id="item-sell-price" value="55000">
             <input id="item-min-stock" value="3">
@@ -265,6 +271,58 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
         'Koreksi Salah Input / Dobel',
         'Koreksi dari 2 menjadi 1 pack'
       );
+    });
+
+    it('toggles item-stock-warning-banner when stok awal > 0 in modal-item', () => {
+      document.getElementById('item-stock').value = '0';
+      window.handleItemStockInput();
+      expect(document.getElementById('item-stock-warning-banner').classList.contains('hidden')).toBe(true);
+
+      document.getElementById('item-stock').value = '2';
+      window.handleItemStockInput();
+      expect(document.getElementById('item-stock-warning-banner').classList.contains('hidden')).toBe(false);
+
+      document.getElementById('item-stock').value = '0';
+      window.handleItemStockInput();
+      expect(document.getElementById('item-stock-warning-banner').classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('in.js mode switching tabs (Barang Lama vs Produk Baru)', () => {
+    beforeEach(() => {
+      document.body.innerHTML = `
+        <div id="modal-in">
+          <button id="tab-in-existing"></button>
+          <button id="tab-in-new"></button>
+          <div id="in-barcode-wrap"></div>
+          <input type="text" id="in-product-search">
+          <label id="in-product-label"></label>
+          <span id="in-product-badge"></span>
+          <input type="hidden" id="in-product-id">
+          <button id="in-clear-product"></button>
+          <div id="in-new-product-fields" class="hidden"></div>
+          <div id="in-product-suggestions" class="hidden"></div>
+          <input type="number" id="in-qty" value="1">
+          <input type="number" id="in-price" value="0">
+          <span id="in-total-preview"></span>
+          <div id="in-stock-preview" class="hidden">
+            <span id="in-stock-preview-text"></span>
+          </div>
+        </div>
+      `;
+      const inScript = readFileSync(resolve(process.cwd(), 'public/dashboard/in.js'), 'utf8');
+      new Function(inScript)();
+    });
+
+    it('switches to new product mode and existing mode correctly', () => {
+      window.switchInMode('new');
+      expect(document.getElementById('in-new-product-fields').classList.contains('hidden')).toBe(false);
+      expect(document.getElementById('in-barcode-wrap').classList.contains('hidden')).toBe(true);
+      expect(document.getElementById('in-product-badge').textContent).toContain('1x Kerja');
+
+      window.switchInMode('existing');
+      expect(document.getElementById('in-barcode-wrap').classList.contains('hidden')).toBe(false);
+      expect(document.getElementById('in-product-search').placeholder).toContain('Ketik nama barang lama');
     });
   });
 });

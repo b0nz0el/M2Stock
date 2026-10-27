@@ -348,9 +348,90 @@
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
   }
 
+  let inCurrentMode = 'existing';
+
+  function switchInMode(mode) {
+    inCurrentMode = mode || 'existing';
+    const tabExisting = document.getElementById('tab-in-existing');
+    const tabNew = document.getElementById('tab-in-new');
+    const searchInput = document.getElementById('in-product-search');
+    const searchLabel = document.getElementById('in-product-label');
+    const badge = document.getElementById('in-product-badge');
+    const newFields = document.getElementById('in-new-product-fields');
+    const clearBtn = document.getElementById('in-clear-product');
+    const barcodeWrap = document.getElementById('in-barcode-wrap');
+    const suggestionsEl = document.getElementById('in-product-suggestions');
+
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+
+    if (mode === 'new') {
+      if (tabNew) {
+        tabNew.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition bg-[#0088CC] text-white shadow-sm border border-transparent';
+      }
+      if (tabExisting) {
+        tabExisting.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition text-[#A0A0A5] hover:text-white hover:bg-white/5 border border-transparent';
+      }
+      selectedExistingProduct = null;
+      resetInImageForm();
+      const prodId = document.getElementById('in-product-id');
+      if (prodId) prodId.value = '';
+
+      if (searchLabel) searchLabel.innerHTML = 'Nama Produk Baru <span class="text-[#FF3B30]">*</span>';
+      if (searchInput) {
+        searchInput.placeholder = 'Ketik nama lengkap produk baru...';
+        searchInput.readOnly = false;
+      }
+      if (badge) {
+        badge.textContent = '✨ 1x Kerja (Langsung Masuk Katalog & Stok)';
+        badge.className = 'text-[11px] font-medium text-[#32ADE6]';
+      }
+      if (newFields) newFields.classList.remove('hidden');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      if (barcodeWrap) barcodeWrap.classList.add('hidden');
+
+      autoUpdateInSkuPlaceholder();
+      renderInPhotoGallery();
+      calculateInTotal();
+      setTimeout(() => searchInput?.focus(), 50);
+    } else {
+      if (tabExisting) {
+        tabExisting.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition bg-[#0088CC] text-white shadow-sm border border-transparent';
+      }
+      if (tabNew) {
+        tabNew.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition text-[#A0A0A5] hover:text-white hover:bg-white/5 border border-transparent';
+      }
+      if (searchLabel) searchLabel.innerHTML = 'Nama Produk <span class="text-[#FF3B30]">*</span>';
+      if (searchInput) {
+        searchInput.placeholder = 'Ketik nama barang lama atau ketik barcode...';
+        searchInput.readOnly = false;
+      }
+      if (barcodeWrap) barcodeWrap.classList.remove('hidden');
+      clearInProductSelection();
+      setTimeout(() => searchInput?.focus(), 50);
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
   function selectInProduct(productId) {
     const prod = availableProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
+
+    inCurrentMode = 'existing';
+    const tabExisting = document.getElementById('tab-in-existing');
+    const tabNew = document.getElementById('tab-in-new');
+    if (tabExisting) {
+      tabExisting.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition bg-[#0088CC] text-white shadow-sm border border-transparent';
+    }
+    if (tabNew) {
+      tabNew.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition text-[#A0A0A5] hover:text-white hover:bg-white/5 border border-transparent';
+    }
+    const searchLabel = document.getElementById('in-product-label');
+    if (searchLabel) searchLabel.innerHTML = 'Nama Produk <span class="text-[#FF3B30]">*</span>';
+    const barcodeWrap = document.getElementById('in-barcode-wrap');
+    if (barcodeWrap) barcodeWrap.classList.remove('hidden');
 
     selectedExistingProduct = prod;
     resetInImageForm();
@@ -411,40 +492,11 @@
   }
 
   function selectNewProduct(name) {
-    selectedExistingProduct = null;
-    resetInImageForm();
-    const prodInput = document.getElementById('in-product-id');
-    if (prodInput) {
-      prodInput.value = '';
-      prodInput.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+    switchInMode('new');
     const searchInput = document.getElementById('in-product-search');
-    if (searchInput) {
-      searchInput.value = name || searchInput.value;
-      searchInput.readOnly = false;
+    if (searchInput && name) {
+      searchInput.value = name;
     }
-    const clearBtn = document.getElementById('in-clear-product');
-    if (clearBtn) clearBtn.classList.remove('hidden');
-
-    const badge = document.getElementById('in-product-badge');
-    if (badge) {
-      badge.textContent = '✨ Produk Baru (Akan didaftarkan)';
-      badge.className = 'text-[11px] font-medium text-[#32ADE6]';
-    }
-
-    const newFields = document.getElementById('in-new-product-fields');
-    if (newFields) newFields.classList.remove('hidden');
-
-    const suggestionsEl = document.getElementById('in-product-suggestions');
-    if (suggestionsEl) {
-      suggestionsEl.classList.add('hidden');
-      suggestionsEl.innerHTML = '';
-    }
-
-    autoUpdateInSkuPlaceholder();
-    renderInPhotoGallery();
-    if (typeof window.refreshIcons === 'function') window.refreshIcons();
-    document.getElementById('in-price')?.focus();
   }
 
   function clearInProductSelection() {
@@ -466,8 +518,13 @@
 
     const badge = document.getElementById('in-product-badge');
     if (badge) {
-      badge.textContent = '';
-      badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
+      if (inCurrentMode === 'new') {
+        badge.textContent = '✨ 1x Kerja (Langsung Masuk Katalog & Stok)';
+        badge.className = 'text-[11px] font-medium text-[#32ADE6]';
+      } else {
+        badge.textContent = '';
+        badge.className = 'text-[11px] font-medium text-[#A0A0A5]';
+      }
     }
 
     const brandInput = document.getElementById('in-brand');
@@ -479,7 +536,9 @@
     }
 
     const newFields = document.getElementById('in-new-product-fields');
-    if (newFields) newFields.classList.add('hidden');
+    if (newFields && inCurrentMode !== 'new') {
+      newFields.classList.add('hidden');
+    }
 
     const suggestionsEl = document.getElementById('in-product-suggestions');
     if (suggestionsEl) {
@@ -596,7 +655,11 @@
       const qty = Number(document.getElementById('in-qty')?.value || 0);
       const unit = selectedExistingProduct.unit || 'pcs';
       const totalNew = curStock + qty;
-      previewText.textContent = `Stok Saat Ini: ${curStock} + Masuk: ${qty} = Total Baru: ${totalNew} ${unit}`;
+      let text = `Stok Saat Ini: ${curStock} + Masuk: ${qty} = Total Baru: ${totalNew} ${unit}`;
+      if (curStock > 0 && qty > 0) {
+        text += ` • Pastikan bukan faktur yang sudah dicatat saat daftar barang`;
+      }
+      previewText.textContent = text;
       previewBox.classList.remove('hidden');
     } else {
       previewBox.classList.add('hidden');
@@ -618,6 +681,7 @@
     const form = document.getElementById('form-in');
     if (form) form.reset();
     clearInProductSelection();
+    switchInMode('existing');
     calculateInTotal();
     loadDropdowns();
     const modal = document.getElementById('modal-in');
@@ -1188,6 +1252,7 @@
   window.selectInProduct = selectInProduct;
   window.selectNewProduct = selectNewProduct;
   window.clearInProductSelection = clearInProductSelection;
+  window.switchInMode = switchInMode;
   window.autoUpdateInSkuPlaceholder = autoUpdateInSkuPlaceholder;
   window.applyInAutoSku = applyInAutoSku;
   window.getLastProductSequence = getLastProductSequence;

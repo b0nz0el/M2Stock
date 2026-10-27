@@ -2915,7 +2915,7 @@
         </div>
         <div>
           <label for="item-stock" id="item-stock-label" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Awal <span class="text-[#FF3B30]">*</span></label>
-          <input type="number" id="item-stock" min="0" value="0" required="" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <input type="number" id="item-stock" min="0" value="0" required="" oninput="handleItemStockInput()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
           <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Stok awal fisik toko.</p>
         </div>
         <div id="item-supplier-wrap">
@@ -2924,6 +2924,15 @@
             <option value="">Umum / Saldo Awal Toko</option>
           </select>
           <p class="mt-1 text-[11px] text-[#A0A0A5]">Otomatis catat Barang Masuk jika stok &gt; 0.</p>
+        </div>
+      </div>
+
+      <!-- Warning Banner Anti Dobel Input -->
+      <div id="item-stock-warning-banner" class="hidden p-3 rounded-xl bg-[#FF9500]/10 border border-[#FF9500]/30 text-[#FF9500] text-xs flex items-start gap-2.5">
+        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true"></i>
+        <div>
+          <strong class="font-semibold text-[#FF9500]">Cukup 1x Kerja (Anti-Dobel):</strong>
+          <p class="mt-0.5 text-white/90">Stok awal ini sudah <u>otomatis tercatat</u> sebagai transaksi Barang Masuk. Anda <strong>tidak perlu lagi menginput ulang</strong> di menu Barang Masuk agar stok tidak terhitung ganda.</p>
         </div>
       </div>
 
@@ -3096,7 +3105,19 @@
     </div>
 
     <form id="form-in" class="space-y-4" onsubmit="handleInSubmit(event)">
-      <div>
+      <!-- Tab Pilihan: Barang Lama vs Produk Baru (1x Kerja) -->
+      <div class="grid grid-cols-2 gap-2 p-1 bg-black/50 border border-white/10 rounded-xl">
+        <button type="button" id="tab-in-existing" onclick="switchInMode('existing')" class="py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition bg-[#0088CC] text-white shadow-sm border border-transparent">
+          <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Barang yang Sudah Ada</span>
+        </button>
+        <button type="button" id="tab-in-new" onclick="switchInMode('new')" class="py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition text-[#A0A0A5] hover:text-white hover:bg-white/5 border border-transparent">
+          <i data-lucide="sparkles" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i>
+          <span>+ Produk Baru (1x Kerja)</span>
+        </button>
+      </div>
+
+      <div id="in-barcode-wrap">
         <label for="in-barcode" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Barcode Produk</label>
         <div class="flex gap-2">
           <input type="text" id="in-barcode" inputmode="text" autocomplete="off" placeholder="Pindai atau masukkan barcode" onchange="handleInBarcodeLookup()" onkeydown="if (event.key === 'Enter') { event.preventDefault(); handleInBarcodeLookup(); }" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:border-[#0088CC] focus:outline-none">
@@ -3109,7 +3130,7 @@
 
       <div class="relative">
         <div class="flex items-center justify-between mb-1.5">
-          <label for="in-product-search" class="block text-xs font-medium text-[#A0A0A5]">Nama Produk <span class="text-[#FF3B30]">*</span></label>
+          <label for="in-product-search" id="in-product-label" class="block text-xs font-medium text-[#A0A0A5]">Nama Produk <span class="text-[#FF3B30]">*</span></label>
           <span id="in-product-badge" class="text-[11px] font-medium text-[#A0A0A5]"></span>
         </div>
         <div class="relative">

@@ -369,6 +369,10 @@
     const supSel = document.getElementById('item-supplier-id');
     if (supSel) supSel.value = '';
 
+    const warnBanner = document.getElementById('item-stock-warning-banner');
+    if (warnBanner) warnBanner.classList.add('hidden');
+    handleItemStockInput();
+
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
     if (submitBtn) {
@@ -431,6 +435,8 @@
     document.getElementById('item-stock-help').innerHTML = 'Stok hanya berubah melalui mutasi. Untuk koreksi stok fisik toko, gunakan tombol <button type="button" onclick="closeItemModal(); openStockAdjustmentModal(\'' + item.id + '\')" class="text-[#FF9500] hover:underline font-semibold inline-flex items-center gap-1"><i data-lucide=\"sliders-horizontal\" class=\"w-3 h-3\"></i> Penyesuaian Stok (Stock Opname)</button>.';
     const supWrap = document.getElementById('item-supplier-wrap');
     if (supWrap) supWrap.classList.add('hidden');
+    const warnBanner = document.getElementById('item-stock-warning-banner');
+    if (warnBanner) warnBanner.classList.add('hidden');
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
@@ -1914,7 +1920,20 @@
     }
   }
 
+  function handleItemStockInput() {
+    const val = Number(document.getElementById('item-stock')?.value || 0);
+    const warnBanner = document.getElementById('item-stock-warning-banner');
+    if (warnBanner) {
+      if (val > 0) {
+        warnBanner.classList.remove('hidden');
+      } else {
+        warnBanner.classList.add('hidden');
+      }
+    }
+  }
+
   // Ekspos fungsi ke global window
+  window.handleItemStockInput = handleItemStockInput;
   window.openAddItemModal = openAddItemModal;
   window.openEditItemModal = openEditItemModal;
   window.closeItemModal = closeItemModal;
