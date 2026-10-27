@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    Aquastock Pro — image-utils.js
    Client-Side Image Compression (Canvas API native)
-   Target: WebP < 500 KB, Max 1200x1200 px
+   Target: WebP 500 KB – 1 MB (Maks. 1 MB), Max 1600x1600 px
    ═══════════════════════════════════════════════════ */
 
 (function (root, factory) {
@@ -13,10 +13,11 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const MAX_WIDTH = 1200;
-  const MAX_HEIGHT = 1200;
-  const MAX_RAW_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-  const TARGET_SIZE_BYTES = 500 * 1024;       // 500 KB
+  const MAX_WIDTH = 1600;
+  const MAX_HEIGHT = 1600;
+  const MAX_RAW_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB batas unggah mentah
+  const TARGET_SIZE_BYTES = 1024 * 1024;       // 1 MB batas maksimal target kompresi (500 KB – 1 MB)
+  const MIN_TARGET_SIZE_BYTES = 500 * 1024;   // 500 KB batas bawah optimal kualitas
   const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
   function formatFileSize(bytes) {
@@ -32,7 +33,7 @@
       throw new Error('Tidak ada file gambar yang dipilih');
     }
     if (file.size > MAX_RAW_SIZE_BYTES) {
-      throw new Error(`Ukuran file melebihi batas 5 MB (${formatFileSize(file.size)})`);
+      throw new Error(`Ukuran file melebihi batas 10 MB (${formatFileSize(file.size)})`);
     }
     const type = (file.type || '').toLowerCase();
     const isAllowed = ALLOWED_MIME_TYPES.some(t => type.includes(t)) ||
@@ -43,7 +44,7 @@
     return true;
   }
 
-  function calculateTargetDimensions(width, height, maxW, maxH) {
+  function calculateTargetDimensions(width, height, maxW = MAX_WIDTH, maxH = MAX_HEIGHT) {
     let targetW = width;
     let targetH = height;
 
@@ -93,6 +94,7 @@
 
   /**
    * Mengompresi file gambar secara adaptif ke format WebP
+   * Target ukuran: 500 KB – 1 MB (maksimum 1 MB)
    * @param {File|Blob} file File gambar asli
    * @returns {Promise<{ blob: Blob, previewUrl: string, originalSize: number, compressedSize: number, width: number, height: number }>}
    */
@@ -118,13 +120,14 @@
     // Gambar ke canvas dengan dimensi terhitung
     ctx.drawImage(img, 0, 0, width, height);
 
-    // Kompresi iteratif hingga ukuran < 500 KB (atau minimal quality 0.5)
-    let quality = 0.90;
+    // Kompresi adaptif: mulai dari kualitas sangat tinggi (0.92)
+    // Turunkan bertahap hanya jika ukuran melebihi TARGET_SIZE_BYTES (1 MB)
+    let quality = 0.92;
     let blob = await canvasToBlob(canvas, quality);
 
-    while (blob.size > TARGET_SIZE_BYTES && quality > 0.5) {
-      quality -= 0.10;
-      blob = await canvasToBlob(canvas, Math.max(0.5, quality));
+    while (blob.size > TARGET_SIZE_BYTES && quality > 0.55) {
+      quality -= 0.08;
+      blob = await canvasToBlob(canvas, Math.max(0.55, quality));
     }
 
     const previewUrl = URL.createObjectURL(blob);
@@ -150,6 +153,7 @@
     MAX_WIDTH: MAX_WIDTH,
     MAX_HEIGHT: MAX_HEIGHT,
     MAX_RAW_SIZE_BYTES: MAX_RAW_SIZE_BYTES,
-    TARGET_SIZE_BYTES: TARGET_SIZE_BYTES
+    TARGET_SIZE_BYTES: TARGET_SIZE_BYTES,
+    MIN_TARGET_SIZE_BYTES: MIN_TARGET_SIZE_BYTES
   };
 });

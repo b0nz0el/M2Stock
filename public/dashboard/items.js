@@ -322,7 +322,7 @@
       if (successCount > 0) {
         const lastPhoto = productPhotos[productPhotos.length - 1];
         compText.textContent = successCount > 1 
-          ? `${successCount} foto siap diunggah (WebP < 500 KB)` 
+          ? `${successCount} foto siap diunggah (WebP ≤ 1 MB)` 
           : `${lastPhoto.sizeText} (WebP)`;
         compInfo.classList.remove('hidden');
       } else {

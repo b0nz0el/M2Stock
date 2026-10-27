@@ -89,7 +89,7 @@ Seluruh kode frontend berada di direktori `public/assets/js/` dan diorganisasika
    - Subset mandiri 74 ikon Lucide SVG pilihan tanpa perlu memuat pustaka CDN 1.1 MB. Fungsi `refreshIcons()` menginjeksi SVG ke elemen `<i data-lucide="...">`.
 
 9. **`image-utils.js`**:
-   - Kompresi gambar pada sisi klien menggunakan HTML5 Canvas API. Foto produk otomatis diperkecil ke resolusi proporsional (maks. 1200px) dan dikonversi ke WebP terkompresi dengan target ukuran ketat di bawah 500 KB sebelum diunggah ke storage.
+   - Kompresi gambar pada sisi klien menggunakan HTML5 Canvas API. Foto produk otomatis diperkecil ke resolusi proporsional (maks. 1600px) dan dikonversi ke WebP terkompresi dengan target ukuran optimal 500 KB – 1 MB sebelum diunggah ke storage.
 
 ---
 

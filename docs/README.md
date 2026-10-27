@@ -46,7 +46,7 @@ Semua script klien dimuat dengan atribut `defer` agar perenderan awal DOM tidak 
 | `public/assets/js/supabase-client.js` | Menginisialisasi klien resmi Supabase SDK (`@supabase/supabase-js@2` via ESM) menggunakan kredensial anon key publik dan menempelkannya ke `window.supabase`. |
 | `public/assets/js/api.js` | Lapisan data terpusat (*Single Source of Truth*). Menangani CRUD Supabase untuk produk, transaksi masuk/keluar, supplier, customer, RPC role manajemen, pembatalan request via `AbortController`, dan response envelope `{ ok, data, error, meta }`. |
 | `public/assets/js/auth.js` | Wrapper otentikasi Supabase Auth: login email/password, registrasi akun baru, sign out, pengecekan sesi aktif, proteksi rute halaman dashboard, serta auto-redirect jika belum login. |
-| `public/assets/js/image-utils.js` | Utilitas kompresi foto produk berbasis HTML5 Canvas API pada sisi klien. Mengonversi gambar apapun menjadi format WebP berdimensi maksimum 1200px dengan batas ukuran ketat < 500 KB sebelum diunggah ke Supabase Storage. |
+| `public/assets/js/image-utils.js` | Utilitas kompresi foto produk berbasis HTML5 Canvas API pada sisi klien. Mengonversi gambar apapun menjadi format WebP berdimensi maksimum 1600px dengan batas ukuran optimal 500 KB – 1 MB sebelum diunggah ke Supabase Storage. |
 | `public/assets/js/icons.js` | Subset mandiri berisikan 74 SVG ikon Lucide aktif. Menyediakan fungsi global `window.refreshIcons(container)` untuk merender ikon tanpa dependensi CDN runtime berukuran besar. |
 | `public/assets/js/components/app-sidebar.js` | Web component sidebar navigasi aplikasi yang konsisten di semua halaman dashboard, menangani status tautan aktif dan informasi profil login. |
 | `public/assets/js/utils.js` | Helper global aplikasi: `showToast()` dengan dot status & ikon Lucide, `parseIndonesianNumber()`, `formatRupiah()`, `syncTableLabels()`, dan ekspor data ke file CSV (`exportToCSV()`). |
@@ -73,7 +73,7 @@ Semua script klien dimuat dengan atribut `defer` agar perenderan awal DOM tidak 
 ### 3. Fase 4.x: Integrasi Layanan Supabase
 - **Otentikasi Pengguna:** Menggunakan Supabase Auth (Email Provider) dengan pembagian role bertingkat: `OWNER`, `STAFF`, dan `VIEWER`.
 - **Single Source of Truth (`api.js`):** Semua panggilan data dikapsulasi di dalam modul `Api.*` dan menggunakan Supabase atau endpoint API yang dikonfigurasi. Jika layanan tidak tersedia atau permintaan gagal, aplikasi menampilkan error alih-alih mengembalikan data simulasi.
-- **Kompresi Gambar Klien (`image-utils.js`):** Mengurangi beban kuota bandwidth dan storage Supabase dengan memproses foto produk sebelum transfer; resolusi dibatasi maksimum 1200px dan dikonversi ke format WebP terkompresi (< 500 KB).
+- **Kompresi Gambar Klien (`image-utils.js`):** Mengurangi beban kuota bandwidth dan storage Supabase dengan memproses foto produk sebelum transfer; resolusi dibatasi maksimum 1600px dan dikonversi ke format WebP terkompresi (500 KB – 1 MB).
 - **Auto-Update Stok Transaksi:** Pembaruan saldo stok produk saat barang masuk atau keluar ditangani di level database via PostgreSQL Trigger Function (`handle_transaction_stock_update()`), mencegah race condition transaksi kasir simultan.
 
 ### 4. RLS (Row Level Security) Policies
