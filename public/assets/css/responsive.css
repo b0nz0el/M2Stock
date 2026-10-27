@@ -712,12 +712,24 @@
     display: block;
   }
 
-  /* Tap target 44px */
-  button:not(.bottom-nav-item):not(.menu-item):not(.card table button) {
+  /* Tap target 44px (Apple HIG & Material Design 3) */
+  button:not(.bottom-nav-item):not(.menu-item) {
     min-height: 44px;
   }
   .menu-item {
     min-height: 44px;
+  }
+
+  /* Mobile Toast: natural thumb zone, floating above bottom navigation */
+  #toast-container,
+  .toast-container {
+    top: auto !important;
+    bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    left: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    z-index: 100 !important;
   }
 
   /* Tombol header wrap */
@@ -803,25 +815,53 @@
     display: none !important;
   }
 
-  /* Checkbox cell: tanpa label */
+  /* Checkbox cell: tanpa label & touch target diperbesar */
+  .card table tbody td:first-child:has(input[type="checkbox"]) {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
   .card table tbody td:first-child:has(input[type="checkbox"])::before {
     display: none !important;
+  }
+  .card table tbody td:first-child input[type="checkbox"] {
+    min-width: 22px;
+    min-height: 22px;
+    cursor: pointer;
   }
 
   /* Aksi cell (tombol): pojok kanan atas — HANYA jika berisi tombol */
   .card table tbody td:last-child:has(button) {
     position: absolute !important;
-    top: 14px;
-    right: 14px;
+    top: 12px;
+    right: 12px;
     padding: 0 !important;
     border: none !important;
     margin: 0 !important;
     width: auto;
     justify-content: flex-end !important;
     display: flex !important;
+    align-items: center !important;
   }
   .card table tbody td:last-child:has(button)::before {
     display: none !important;
+  }
+
+  /* Tombol aksi dalam kartu tabel: Standar sentuh 44x44px (Apple HIG & Material Design) */
+  .card table tbody td:last-child:has(button) button,
+  .card table tbody td:last-child button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px !important;
+    border-radius: 10px !important;
+    touch-action: manipulation;
+  }
+  .card table tbody td:last-child:has(button) .flex,
+  .card table tbody td:last-child .flex {
+    gap: 6px !important;
   }
 
   /* Empty State row override: full width, center, no card styling, no absolute action button */

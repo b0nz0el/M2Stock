@@ -13,6 +13,13 @@ html, body {
   min-height: 100vh;
   background-color: #000;
 }
+
+/* ═══ TOUCH-ACTION & ERGONOMICS (PWA Standards) ═══ */
+/* Menghilangkan delay 300ms pada tap tanpa mematikan pinch-to-zoom */
+html, body, button, a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 body {
   font-family: 'InterVariable', -apple-system, BlinkMacSystemFont,
                'SF Pro Display', 'Segoe UI', Roboto, sans-serif;

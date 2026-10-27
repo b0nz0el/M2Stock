@@ -1,0 +1,74 @@
+import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+
+describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
+  const rootDir = path.resolve(__dirname, '..');
+
+  describe('Meta Viewport Standard (WCAG 2.1 SC 1.4.4 & Lighthouse)', () => {
+    it('verifies public/dashboard/index.html viewport permits zooming and covers notches', () => {
+      const htmlPath = path.join(rootDir, 'public/dashboard/index.html');
+      const html = fs.readFileSync(htmlPath, 'utf8');
+      
+      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
+      expect(html).not.toContain('user-scalable=no');
+      expect(html).not.toContain('maximum-scale=1.0');
+    });
+
+    it('verifies login and 404 pages have compliant viewport tags', () => {
+      const loginHtml = fs.readFileSync(path.join(rootDir, 'public/login/index.html'), 'utf8');
+      const errorHtml = fs.readFileSync(path.join(rootDir, 'public/404.html'), 'utf8');
+
+      expect(loginHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
+      expect(loginHtml).not.toContain('user-scalable=no');
+
+      expect(errorHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
+      expect(errorHtml).not.toContain('user-scalable=no');
+    });
+  });
+
+  describe('Touch-Action and Tap Delay Elimination', () => {
+    it('defines touch-action: manipulation in base.css', () => {
+      const baseCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/base.css'), 'utf8');
+      expect(baseCss).toContain('touch-action: manipulation;');
+      expect(baseCss).toContain('-webkit-tap-highlight-color: transparent;');
+    });
+  });
+
+  describe('Header Touch Targets (Apple HIG & Material Design 3)', () => {
+    it('enforces 44px min touch target on mobile header buttons (hamburger, notif, logout)', () => {
+      const html = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      
+      // Hamburger button: w-11 h-11 (44px x 44px)
+      expect(html).toMatch(/data-action="toggle-sidebar"[^>]*class="[^"]*w-11 h-11/);
+      
+      // Notif button: w-11 h-11
+      expect(html).toMatch(/data-action="notif"[^>]*class="[^"]*w-11 h-11/);
+
+      // Logout button: w-11 h-11
+      expect(html).toMatch(/data-action="logout"[^>]*class="[^"]*w-11 h-11/);
+    });
+  });
+
+  describe('Bottom Navigation & Mobile Ergonomics', () => {
+    it('ensures bottom-nav-item typography is 11px (0.6875rem) semi-bold with 44px height', () => {
+      const componentsCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/components.css'), 'utf8');
+      expect(componentsCss).toContain('font-size: 0.6875rem;');
+      expect(componentsCss).toContain('font-weight: 600;');
+      expect(componentsCss).toContain('min-height: 44px;');
+    });
+
+    it('positions mobile toast container above bottom navigation', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('#toast-container');
+      expect(responsiveCss).toContain('bottom: calc(76px + env(safe-area-inset-bottom))');
+    });
+
+    it('enforces 44x44px touch targets on table card action buttons in responsive.css', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('.card table tbody td:last-child:has(button) button');
+      expect(responsiveCss).toContain('min-width: 44px !important;');
+      expect(responsiveCss).toContain('min-height: 44px !important;');
+    });
+  });
+});

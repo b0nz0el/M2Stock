@@ -235,10 +235,18 @@ button:disabled:active {
   .toast {
     width: 100%;
   }
-  .toast-container {
-    top: calc(0.75rem + env(safe-area-inset-top));
-    right: calc(0.75rem + env(safe-area-inset-right));
-    width: calc(100vw - 1.5rem);
+  .toast-container,
+  #toast-container {
+    top: auto !important;
+    bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    right: 16px !important;
+    left: 16px !important;
+    width: calc(100vw - 32px) !important;
+  }
+  .toast__close {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
   }
 }
 @keyframes toastIn {
@@ -500,8 +508,9 @@ tbody tr:nth-child(5) {
   justify-content: center;
   gap: 3px;
   color: #a0a0a5;
-  font-size: 0.625rem;
-  font-weight: 500;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   transition: color 0.2s;
   cursor: pointer;
   position: relative;

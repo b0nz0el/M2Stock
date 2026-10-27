@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>aQuaStock Pro - Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="/assets/images/logo.svg">
 <link rel="manifest" href="/manifest.json">
@@ -62,7 +62,7 @@
 
     <header class="sticky top-0 bg-black/70 backdrop-blur-xl border-b border-white/5 px-6 py-3.5 flex items-center gap-4 z-10">
 
-      <button onclick="toggleSidebar()" data-action="toggle-sidebar" aria-expanded="false" aria-label="Buka menu" class="md:hidden text-white p-1">
+      <button onclick="toggleSidebar()" data-action="toggle-sidebar" aria-expanded="false" aria-label="Buka menu" class="md:hidden text-white w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/5 active:scale-95 transition">
         <i data-lucide="menu" class="w-5 h-5" aria-hidden="true"></i>
       </button>
 
@@ -80,11 +80,11 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
-        <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 p-2.5 rounded-xl relative border border-white/5 transition">
+        <button data-action="notif" aria-label="Notifikasi" class="bg-[#1C1C1E] hover:bg-white/5 w-11 h-11 flex items-center justify-center rounded-xl relative border border-white/5 transition">
           <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
           <span id="header-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-[#FF3B30] text-white text-[10px] font-bold rounded-full px-1 flex items-center justify-center shadow-lg shadow-[#FF3B30]/40"></span>
         </button>
-        <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout" class="bg-[#1C1C1E] hover:bg-[#FF3B30]/15 text-[#A0A0A5] hover:text-[#FF3B30] p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+        <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout" class="bg-[#1C1C1E] hover:bg-[#FF3B30]/15 text-[#A0A0A5] hover:text-[#FF3B30] w-11 h-11 rounded-xl border border-white/5 transition flex items-center justify-center">
           <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
         </button>
       </div>
@@ -3375,7 +3375,6 @@
         <div class="text-center text-[9px] text-gray-600 pt-2 border-t border-dashed border-gray-400 space-y-0.5">
           <p id="receipt-store-footer" class="font-semibold text-black">Terima Kasih Atas Kunjungan Anda!</p>
           <p>Barang dapat ditukar maks 2 hari dgn nota fisik.</p>
-          <p class="text-[8px] text-gray-400 pt-1">JTMaquarium POS</p>
         </div>
       </div>
     </div>
