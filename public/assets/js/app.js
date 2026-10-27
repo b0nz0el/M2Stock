@@ -541,7 +541,7 @@ if (typeof window !== 'undefined') {
       }
 
       if (typeof showToast === 'function') {
-        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.3)!', 'success');
+        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.4)!', 'success');
       }
       setTimeout(() => {
         window.location.reload();
@@ -672,6 +672,13 @@ if (typeof window !== 'undefined') {
       openImageViewer(target.src, title, sku);
     }
   });
+}
+
+// Lock pinch-to-zoom on iOS WebKit to enforce solid native-app ergonomics
+if (typeof document !== 'undefined') {
+  document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
 }
 
 if (typeof module !== 'undefined' && module.exports) {

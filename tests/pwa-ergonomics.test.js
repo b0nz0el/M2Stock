@@ -5,25 +5,25 @@ import path from 'path';
 describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
   const rootDir = path.resolve(__dirname, '..');
 
-  describe('Meta Viewport Standard (WCAG 2.1 SC 1.4.4 & Lighthouse)', () => {
-    it('verifies public/dashboard/index.html viewport permits zooming and covers notches', () => {
+  describe('Meta Viewport Standard (Apple HIG Native App Solid Ergonomics)', () => {
+    it('verifies public/dashboard/index.html locks viewport zoom to guarantee native app stability', () => {
       const htmlPath = path.join(rootDir, 'public/dashboard/index.html');
       const html = fs.readFileSync(htmlPath, 'utf8');
       
-      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
-      expect(html).not.toContain('user-scalable=no');
-      expect(html).not.toContain('maximum-scale=1.0');
+      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
+      expect(html).toContain('user-scalable=no');
+      expect(html).toContain('maximum-scale=1.0');
     });
 
-    it('verifies login and 404 pages have compliant viewport tags', () => {
+    it('verifies login and 404 pages have compliant locked viewport tags', () => {
       const loginHtml = fs.readFileSync(path.join(rootDir, 'public/login/index.html'), 'utf8');
       const errorHtml = fs.readFileSync(path.join(rootDir, 'public/404.html'), 'utf8');
 
-      expect(loginHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
-      expect(loginHtml).not.toContain('user-scalable=no');
+      expect(loginHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
+      expect(loginHtml).toContain('user-scalable=no');
 
-      expect(errorHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
-      expect(errorHtml).not.toContain('user-scalable=no');
+      expect(errorHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
+      expect(errorHtml).toContain('user-scalable=no');
     });
   });
 
@@ -210,12 +210,18 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('linear-gradient(135deg, #0088CC 0%, #32ADE6 100%)');
     });
 
-    it('verifies service worker and components are bumped to v3.4.3', () => {
+    it('verifies iOS pinch-to-zoom gestures are prevented in app.js', () => {
+      const appJs = fs.readFileSync(path.join(rootDir, 'public/assets/js/app.js'), 'utf8');
+      expect(appJs).toContain('gesturestart');
+      expect(appJs).toContain('e.preventDefault()');
+    });
+
+    it('verifies service worker and components are bumped to v3.4.4', () => {
       const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
-      expect(sw).toContain('aquastock-v3.4.3-pwa');
+      expect(sw).toContain('aquastock-v3.4.4-pwa');
 
       const appSidebar = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
-      expect(appSidebar).toContain('v3.4.3');
+      expect(appSidebar).toContain('v3.4.4');
     });
   });
 });
