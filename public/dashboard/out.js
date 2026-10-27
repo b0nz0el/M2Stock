@@ -737,7 +737,8 @@
       const tTime = new Date(tx.created_at).getTime();
       const qty = tx.qty || 0;
       const sellPrice = tx.price || 0;
-      const costPrice = tx.products?.cost_price || 0;
+      // Prioritaskan snapshot modal saat transaksi terjadi (IAS 2: Historical Costing)
+      const costPrice = Number(tx.cost_price ?? tx.products?.cost_price ?? 0);
       const amount = qty * sellPrice;
 
       if (tTime >= startToday) {

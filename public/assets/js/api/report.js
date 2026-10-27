@@ -23,6 +23,7 @@ export const report = {
           type,
           qty,
           price,
+          cost_price,
           channel,
           created_by,
           created_at,
@@ -118,7 +119,8 @@ export const report = {
     outTransactions.forEach(t => {
       const qty = Number(t.qty) || 0;
       const sellPrice = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const costPrice = Number(t.products?.cost_price) || 0;
+      // Prioritaskan snapshot HPP transaksi historis (IAS 2)
+      const costPrice = Number(t.cost_price ?? t.products?.cost_price ?? 0);
 
       const subtotal = qty * sellPrice;
       const subCogs = qty * costPrice;
@@ -162,7 +164,7 @@ export const report = {
       const category = t.products?.categories?.name || 'Umum';
       const qty = Number(t.qty) || 0;
       const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.products?.cost_price) || 0;
+      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
       const revenue = qty * price;
       const profit = revenue - (qty * cost);
 
@@ -196,7 +198,7 @@ export const report = {
       if (!dateKey) return;
       const qty = Number(t.qty) || 0;
       const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.products?.cost_price) || 0;
+      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
       const revenue = qty * price;
       const profit = revenue - (qty * cost);
 
@@ -216,7 +218,7 @@ export const report = {
       const catName = t.products?.categories?.name || 'Umum';
       const qty = Number(t.qty) || 0;
       const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.products?.cost_price) || 0;
+      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
       const revenue = qty * price;
       const profit = revenue - (qty * cost);
 
@@ -242,7 +244,7 @@ export const report = {
       const chName = (t.channel || 'offline').toUpperCase();
       const qty = Number(t.qty) || 0;
       const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.products?.cost_price) || 0;
+      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
       const revenue = qty * price;
       const profit = revenue - (qty * cost);
 

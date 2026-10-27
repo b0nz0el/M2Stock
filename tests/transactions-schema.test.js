@@ -51,6 +51,7 @@ describe('transaction Supabase schema mapping', () => {
       product_id: 12,
       qty: 4,
       price: 12500,
+      cost_price: 12500,
       customer_id: null,
       supplier_id: 5,
       channel: 'Offline',

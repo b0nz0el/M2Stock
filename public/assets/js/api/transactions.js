@@ -143,11 +143,78 @@ export const transactions = {
       const datePart = now.toISOString().slice(2, 10).replace(/-/g, '');
       const randomPart = Math.floor(1000 + Math.random() * 9000);
       const invoiceNo = commonData.invoice_no || `INV-${datePart}-${randomPart}`;
+      const payloadCommon = { ...commonData, invoice_no: invoiceNo };
 
+      // PRIORITAS 1: Eksekusi Atomik via Database RPC PostgreSQL (process_pos_checkout)
+      if (isSupabaseAvailable() && typeof window !== 'undefined' && window.supabase && typeof window.supabase.rpc === 'function') {
+        try {
+          const rpcItems = cartItems.map(it => ({
+            product_id: String(it.product_id),
+            qty: Number(it.qty ?? it.quantity),
+            price: Number(it.price ?? it.unit_price),
+            note: it.note || ''
+          }));
+
+          const { data: rpcData, error: rpcErr } = await window.supabase.rpc('process_pos_checkout', {
+            p_items: rpcItems,
+            p_common: payloadCommon
+          });
+
+          if (!rpcErr && rpcData && rpcData.ok) {
+            // Sukses atomik dari database
+            try {
+              if (typeof logAudit === 'function') {
+                logAudit('CREATE', `Penjualan Kasir POS Atomik (${invoiceNo}): ${cartItems.length} item, Total Rp ${Number(rpcData.total_amount || 0).toLocaleString('id-ID')}`);
+              }
+              if (typeof notifyOwner === 'function') {
+                notifyOwner({
+                  tipe: 'success',
+                  judul: 'Penjualan Kasir Baru',
+                  pesan: `Transaksi kasir (${invoiceNo}) berhasil dicatat secara atomik: ${cartItems.length} item.`,
+                  link: '/dashboard/out/'
+                });
+              }
+            } catch (_) {}
+
+            if (typeof window !== 'undefined' && typeof window.syncNotificationBadge === 'function') {
+              setTimeout(window.syncNotificationBadge, 500);
+            }
+
+            return formatResponse({
+              ok: true,
+              data: {
+                invoice_no: invoiceNo,
+                total_amount: rpcData.total_amount,
+                items_count: cartItems.length,
+                transactions: rpcData.transactions || [],
+                items: rpcData.transactions || []
+              },
+              meta: { message: `Penjualan kasir (${invoiceNo}) berhasil dicatat secara atomik!` }
+            });
+          }
+
+          // Jika error adalah validasi bisnis (misal: stok kurang), lempar error langsung tanpa rollback fallback
+          if (rpcErr && (rpcErr.code === '23514' || rpcErr.message?.includes('Stok tidak mencukupi'))) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: 'INSUFFICIENT_STOCK',
+                message: rpcErr.message || 'Stok tidak mencukupi untuk salah satu item.',
+                details: rpcErr
+              }
+            });
+          }
+        } catch (rpcCatchErr) {
+          console.warn('RPC process_pos_checkout fallback ke klien resilient loop:', rpcCatchErr);
+        }
+      }
+
+      // PRIORITAS 2 (Fallback): Client-side Loop dengan ATOMIC COMPENSATION ROLLBACK
       const createdTxs = [];
       let totalAmount = 0;
 
-      for (const item of cartItems) {
+      for (let i = 0; i < cartItems.length; i++) {
+        const item = cartItems[i];
         const qty = Number(item.qty ?? item.quantity);
         const price = Number(item.price ?? item.unit_price);
         totalAmount += qty * price;
@@ -159,20 +226,34 @@ export const transactions = {
           product_id: item.product_id,
           qty: qty,
           price: price,
+          cost_price: Number(item.cost_price || 0),
           channel: commonData.channel || 'Offline',
           customer_id: commonData.customer_id || null,
           payment_method: commonData.payment_method || 'Cash',
           payment_status: commonData.payment_status || (commonData.payment_method === 'Tempo' ? 'Belum Lunas' : 'Lunas'),
           note: itemNote,
-          created_by: commonData.created_by || null
+          created_by: commonData.created_by || null,
+          idempotency_key: commonData.idempotency_key ? `${commonData.idempotency_key}-${item.product_id}` : null
         }, opts);
 
         if (!res.ok) {
+          // KOMPENSASI ROLLBACK ATOMIK: Batalkan seluruh item yang sempat tersimpan sebelumnya
+          console.error(`Item ke-${i + 1} gagal (${item.name || item.product_id}). Membatalkan ${createdTxs.length} item sebelumnya...`);
+          for (const savedTx of createdTxs) {
+            try {
+              if (savedTx?.id) {
+                await transactions.delete(savedTx.id);
+              }
+            } catch (rbErr) {
+              console.warn('Gagal membatalkan transaksi parsial:', rbErr);
+            }
+          }
+
           return formatResponse({
             ok: false,
             error: {
               code: res.error?.code || 'BATCH_ITEM_ERROR',
-              message: `Gagal memproses item ${item.name || item.product_id}: ${res.error?.message || 'Kesalahan database'}`,
+              message: `Gagal memproses item "${item.name || item.product_id}": ${res.error?.message || 'Kesalahan database'}. Seluruh transaksi invoice dibatalkan secara atomik agar tidak terjadi data parsial.`,
               details: res.error
             }
           });
@@ -283,23 +364,32 @@ export const transactions = {
             baseRow.return_id = data.return_id;
           }
 
-          // Ambil stok produk sebelum transaksi untuk verifikasi mutasi stok
+          // Ambil stok dan harga modal produk sebelum transaksi untuk verifikasi mutasi dan snapshot HPP
           let productBefore = null;
           try {
             if (typeof window.supabase.from === 'function') {
               const { data: pData } = await window.supabase
                 .from('products')
-                .select('id, stock')
+                .select('id, stock, cost_price, name')
                 .eq('id', productId)
                 .maybeSingle();
               if (pData) productBefore = pData;
             }
           } catch (_) {}
 
+          // Snapshot HPP Historis (IAS 2: Costing Snapshot)
+          const snapshotCost = data.cost_price !== undefined
+            ? Number(data.cost_price)
+            : (data.type === 'in' ? unitPrice : Number(productBefore?.cost_price || 0));
+
+          baseRow.cost_price = snapshotCost;
+          if (data.idempotency_key) baseRow.idempotency_key = data.idempotency_key;
+          if (data.reversal_of_id) baseRow.reversal_of_id = data.reversal_of_id;
+
           let query = window.supabase
             .from('transactions')
             .insert([baseRow])
-            .select('*, products(id, name, sku, brand, stock), suppliers(id, name), customers(id, name)');
+            .select('*, products(id, name, sku, brand, stock, cost_price), suppliers(id, name), customers(id, name)');
 
           if (opts && opts.signal) {
             query = query.abortSignal(opts.signal);
@@ -308,13 +398,14 @@ export const transactions = {
           let { data: inserted, error } = await query;
 
           // If the schema expects modern column names (quantity, unit_price, notes, user_id, total_price)
-          if (error && (error.code === 'PGRST204' || error.message?.includes('total_price') || error.message?.includes('notes') || error.message?.includes('quantity'))) {
+          if (error && (error.code === 'PGRST204' || error.message?.includes('total_price') || error.message?.includes('notes') || error.message?.includes('quantity') || error.message?.includes('cost_price'))) {
             const modernRow = {
               type: data.type,
               product_id: productId,
               quantity,
               unit_price: unitPrice,
               total_price: quantity * unitPrice,
+              cost_price: snapshotCost,
               customer_id: customerId,
               supplier_id: supplierId,
               channel: data.channel || 'Offline',
@@ -327,6 +418,8 @@ export const transactions = {
             if (data.debt_id) modernRow.debt_id = data.debt_id;
             if (data.po_id) modernRow.po_id = data.po_id;
             if (data.return_id) modernRow.return_id = data.return_id;
+            if (data.idempotency_key) modernRow.idempotency_key = data.idempotency_key;
+            if (data.reversal_of_id) modernRow.reversal_of_id = data.reversal_of_id;
 
             let retryQuery = window.supabase
               .from('transactions')

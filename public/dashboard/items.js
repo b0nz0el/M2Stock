@@ -2190,6 +2190,8 @@
             const existing = prodMapBySku.get(skuKey);
 
             if (existing) {
+              const targetStock = Number(r.initial_stock) || 0;
+              const currentStock = Number(existing.stock || 0);
               toUpdate.push({
                 id: existing.id,
                 sku: r.sku.trim(),
@@ -2197,10 +2199,11 @@
                 name: r.name.trim(),
                 brand: r.brand ? r.brand.trim() : '-',
                 category_id: categoryId,
-                stock: Number(r.initial_stock) || 0,
                 min_stock: Number(r.min_stock) || 3,
                 cost_price: Number(r.cost_price) || 0,
                 sell_price: Number(r.sell_price) || 0,
+                target_stock: targetStock,
+                current_stock: currentStock,
                 updated_at: new Date().toISOString()
               });
             } else {
@@ -2221,10 +2224,10 @@
             }
           });
 
-          // 2. Eksekusi UPDATE untuk produk yang sudah ada (sinkronisasi stok & harga secara presisi)
+          // 2. Eksekusi UPDATE untuk produk yang sudah ada (metadata & penyesuaian stok ber-ledger)
           if (toUpdate.length > 0) {
             for (const item of toUpdate) {
-              const { id, ...updateFields } = item;
+              const { id, target_stock, current_stock, ...updateFields } = item;
               const { error: updErr } = await window.supabase
                 .from('products')
                 .update(updateFields)
@@ -2232,16 +2235,57 @@
               if (updErr) {
                 console.warn(`Gagal menyinkronkan produk ${item.sku}:`, updErr);
               }
+
+              // Jika ada selisih stok, wajib rekam melalui transaksi ledger koreksi stok
+              if (typeof target_stock === 'number' && target_stock !== current_stock && typeof Api.items?.adjustStock === 'function') {
+                try {
+                  await Api.items.adjustStock(
+                    id,
+                    target_stock,
+                    'Sinkronisasi Impor CSV',
+                    `Penyesuaian stok via impor CSV dari ${current_stock} menjadi ${target_stock}`
+                  );
+                } catch (adjErr) {
+                  console.warn(`Gagal mencatat mutasi stok opname untuk ${item.sku}:`, adjErr);
+                }
+              }
             }
           }
 
-          // 3. Eksekusi INSERT untuk produk baru
+          // 3. Eksekusi INSERT untuk produk baru dengan stok awal terkunci 0
           if (toInsert.length > 0) {
-            const { error: insErr } = await window.supabase
+            const rowsToInsert = toInsert.map(p => ({
+              ...p,
+              stock: 0 // Selalu 0 di awal, penambahan fisik melalui mutasi penerimaan awal
+            }));
+
+            const { data: createdProds, error: insErr } = await window.supabase
               .from('products')
-              .insert(toInsert);
+              .insert(rowsToInsert)
+              .select('id, sku, cost_price');
+
             if (insErr) {
               throw new Error(`Gagal menyimpan produk baru: ${insErr.message || 'Kesalahan database'}`);
+            }
+
+            // Catat penerimaan stok awal ber-ledger untuk produk baru yang memiliki stok awal > 0
+            if (Array.isArray(createdProds)) {
+              for (const cp of createdProds) {
+                const origRow = toInsert.find(r => (r.sku || '').toLowerCase() === (cp.sku || '').toLowerCase());
+                const initStock = Number(origRow?.stock || 0);
+                if (initStock > 0 && typeof Api.transactions?.createIn === 'function') {
+                  try {
+                    await Api.transactions.createIn({
+                      product_id: cp.id,
+                      qty: initStock,
+                      price: Number(cp.cost_price || 0),
+                      note: 'Stok awal dari impor produk baru'
+                    });
+                  } catch (inErr) {
+                    console.warn(`Gagal mencatat transaksi masuk awal untuk ${cp.sku}:`, inErr);
+                  }
+                }
+              }
             }
           }
 

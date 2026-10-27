@@ -759,13 +759,26 @@
         return;
       }
 
-      // Validasi anti-duplikasi: Jika belum ada productId tapi nama produk sudah ada di database/katalog
+      // Validasi anti-duplikasi cerdas (GS1 Barcode, SKU, dan Nama Produk)
       if (!productId) {
+        const barcodeVal = document.getElementById('in-barcode')?.value.trim() || null;
+        const skuVal = document.getElementById('in-sku')?.value.trim() || null;
         const trimmedNameLower = productName.toLowerCase();
-        const existingProd = availableProducts.find(p => (p.name || '').trim().toLowerCase() === trimmedNameLower);
+
+        let existingProd = null;
+        if (barcodeVal) {
+          existingProd = availableProducts.find(p => (p.barcode || '').trim().toLowerCase() === barcodeVal.toLowerCase());
+        }
+        if (!existingProd && skuVal) {
+          existingProd = availableProducts.find(p => (p.sku || '').trim().toLowerCase() === skuVal.toLowerCase());
+        }
+        if (!existingProd) {
+          existingProd = availableProducts.find(p => (p.name || '').trim().toLowerCase() === trimmedNameLower);
+        }
+
         if (existingProd) {
           if (typeof showToast === 'function') {
-            showToast(`Produk "${existingProd.name}" sudah ada di katalog. Dialihkan ke Barang Lama agar tidak terjadi duplikasi barang.`, 'warning');
+            showToast(`Produk "${existingProd.name}" sudah terdaftar (SKU: ${existingProd.sku || '-'}). Dialihkan ke Barang Lama agar tidak terjadi duplikasi katalog.`, 'warning');
           }
           selectInProduct(existingProd.id);
           return;
@@ -777,6 +790,8 @@
         const user = await window.Auth.getCurrentUser();
         currentUserId = user?.id || null;
       }
+
+      let isNewProductCreated = false;
 
       // Jika belum ada productId, berarti ini PRODUK BARU!
       if (!productId) {
@@ -846,19 +861,34 @@
         }
 
         productId = createRes.data.id;
+        isNewProductCreated = true;
       }
 
-      const res = await Api.transactions.createIn({
-        product_id: productId,
-        supplier_id: supplierId || null,
-        qty: qty,
-        price: price,
-        note: note || null,
-        created_by: currentUserId
-      });
+      let res;
+      try {
+        res = await Api.transactions.createIn({
+          product_id: productId,
+          supplier_id: supplierId || null,
+          qty: qty,
+          price: price,
+          cost_price: price,
+          note: note || null,
+          created_by: currentUserId
+        });
 
-      if (!res.ok) {
-        throw new Error(res.error?.message || 'Gagal menyimpan barang masuk');
+        if (!res.ok) {
+          throw new Error(res.error?.message || 'Gagal menyimpan barang masuk');
+        }
+      } catch (inTxErr) {
+        // Rollback kompensasi: jika produk baru dibuat tapi transaksi masuk gagal, bersihkan master yatim piatu
+        if (isNewProductCreated && productId) {
+          try {
+            await Api.items.delete(productId);
+          } catch (cleanErr) {
+            console.warn('Gagal membersihkan produk baru setelah transaksi masuk gagal:', cleanErr);
+          }
+        }
+        throw inTxErr;
       }
 
       if (typeof showToast === 'function') {

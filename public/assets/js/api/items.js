@@ -314,6 +314,44 @@ export const items = {
             });
           }
 
+          let currentUserId = null;
+          try {
+            if (window.supabase?.auth) {
+              const uRes = await window.supabase.auth.getUser();
+              currentUserId = uRes?.data?.user?.id || null;
+            }
+          } catch (_) {}
+
+          // PRIORITAS 1: Eksekusi Atomik via Database RPC PostgreSQL (perform_stock_opname)
+          if (typeof window.supabase.rpc === 'function') {
+            try {
+              const { data: rpcRes, error: rpcErr } = await window.supabase.rpc('perform_stock_opname', {
+                p_product_id: String(id),
+                p_actual_stock: targetStock,
+                p_reason: reason,
+                p_notes: notes || '',
+                p_user_id: currentUserId
+              });
+
+              if (!rpcErr && rpcRes && rpcRes.ok) {
+                try {
+                  if (typeof logAudit === 'function') {
+                    logAudit('UPDATE', `Stock Opname Atomik: Produk ID ${id} disesuaikan menjadi ${targetStock}. Alasan: ${reason}`);
+                  }
+                } catch (_) {}
+
+                return formatResponse({
+                  ok: true,
+                  data: { id: id, stock: targetStock },
+                  meta: { message: rpcRes.message || `Stok berhasil disesuaikan menjadi ${targetStock}` }
+                });
+              }
+            } catch (rpcErr) {
+              console.warn('RPC perform_stock_opname fallback ke client strict-ledger:', rpcErr);
+            }
+          }
+
+          // PRIORITAS 2 (Fallback Strict-Ledger): Ambil data produk & pastikan mutasi tercatat di ledger sebelum saldo diubah
           const { data: prod, error: pErr } = await window.supabase
             .from('products')
             .select('id, name, sku, stock, cost_price')
@@ -338,42 +376,36 @@ export const items = {
             });
           }
 
-          let currentUserId = null;
-          try {
-            if (window.supabase?.auth) {
-              const uRes = await window.supabase.auth.getUser();
-              currentUserId = uRes?.data?.user?.id || null;
-            }
-          } catch (_) {}
-
           const noteText = `[STOCK OPNAME] ${reason}${notes ? ' - ' + notes : ''} (Koreksi ${diff > 0 ? '+' : ''}${diff})`;
+          const targetProductId = (typeof id === 'string' && id.includes('-')) ? id : (isNaN(Number(id)) ? id : Number(id));
 
-          if (diff > 0) {
-            await window.supabase
-              .from('transactions')
-              .insert([{
-                type: 'in',
-                product_id: Number(id),
-                qty: diff,
-                price: Number(prod.cost_price || 0),
-                channel: 'Offline',
-                note: noteText,
-                created_by: currentUserId
-              }]);
-          } else {
-            await window.supabase
-              .from('transactions')
-              .insert([{
-                type: 'out',
-                product_id: Number(id),
-                qty: Math.abs(diff),
-                price: Number(prod.cost_price || 0),
-                channel: 'Offline',
-                note: noteText,
-                created_by: currentUserId
-              }]);
+          // 1. Wajib catat mutasi koreksi di ledger transaksi terlebih dahulu
+          const { error: txErr } = await window.supabase
+            .from('transactions')
+            .insert([{
+              type: diff > 0 ? 'in' : 'out',
+              product_id: targetProductId,
+              qty: Math.abs(diff),
+              price: Number(prod.cost_price || 0),
+              cost_price: Number(prod.cost_price || 0),
+              channel: 'Offline',
+              note: noteText,
+              created_by: currentUserId
+            }]);
+
+          if (txErr) {
+            console.error('Gagal mencatat mutasi opname di ledger transaksi:', txErr);
+            return formatResponse({
+              ok: false,
+              error: {
+                code: txErr.code || 'LEDGER_INSERT_ERROR',
+                message: `Gagal mencatat mutasi koreksi di ledger: ${txErr.message || 'Kesalahan database'}. Saldo produk tidak diubah untuk menjaga integritas data.`,
+                details: txErr
+              }
+            });
           }
 
+          // 2. Saldo produk baru diperbarui setelah entri ledger berhasil dicatat
           const { data: updated, error: uErr } = await window.supabase
             .from('products')
             .update({ stock: targetStock, updated_at: new Date().toISOString() })
