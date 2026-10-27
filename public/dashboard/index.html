@@ -2914,11 +2914,11 @@
           </select>
         </div>
         <div>
-          <label for="item-stock" id="item-stock-label" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Awal <span class="text-[#FF3B30]">*</span></label>
-          <input type="number" id="item-stock" min="0" value="0" required="" oninput="handleItemStockInput()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
-          <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Stok awal fisik toko.</p>
+          <label for="item-stock" id="item-stock-label" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Awal (0)</label>
+          <input type="number" id="item-stock" min="0" value="0" readonly class="w-full bg-white/5 text-[#A0A0A5] border border-white/10 rounded-xl px-3.5 py-2 text-sm cursor-not-allowed focus:outline-none">
+          <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Stok awal fisik toko dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.</p>
         </div>
-        <div id="item-supplier-wrap">
+        <div id="item-supplier-wrap" class="hidden">
           <label for="item-supplier-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Supplier (Faktur Awal)</label>
           <select id="item-supplier-id" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
             <option value="">Umum / Saldo Awal Toko</option>

@@ -20,7 +20,7 @@ describe('Barang Masuk New Product Photo & Camera Feature', () => {
     });
 
     it('clarifies initial stock guidance in modal-item to prevent double counting invoice purchases', () => {
-      expect(htmlContent).toContain('Stok awal fisik toko.');
+      expect(htmlContent).toContain('Stok awal fisik toko');
       expect(htmlContent).toContain('id="item-supplier-id"');
       expect(htmlContent).toContain('Otomatis catat Barang Masuk jika stok &gt; 0.');
     });

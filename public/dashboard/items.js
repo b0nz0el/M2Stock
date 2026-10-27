@@ -362,17 +362,23 @@
     if (unitSelect && defaultUnit) unitSelect.value = String(defaultUnit.id);
     resetImageForm();
     document.getElementById('item-id').value = '';
-    document.getElementById('item-stock').disabled = false;
-    document.getElementById('item-stock-label').innerHTML = 'Stok Awal <span class="text-[#FF3B30]">*</span>';
-    document.getElementById('item-stock-help').textContent = 'Stok awal fisik toko. Pilih supplier di samping jika berasal dari faktur pembelian baru agar otomatis tercatat di Barang Masuk.';
+    const stockInput = document.getElementById('item-stock');
+    if (stockInput) {
+      stockInput.value = '0';
+      stockInput.readOnly = true;
+      stockInput.disabled = false;
+    }
+    const stockLabel = document.getElementById('item-stock-label');
+    if (stockLabel) stockLabel.textContent = 'Stok Awal (0)';
+    const stockHelp = document.getElementById('item-stock-help');
+    if (stockHelp) stockHelp.textContent = 'Stok awal produk baru selalu dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.';
     const supWrap = document.getElementById('item-supplier-wrap');
-    if (supWrap) supWrap.classList.remove('hidden');
+    if (supWrap) supWrap.classList.add('hidden');
     const supSel = document.getElementById('item-supplier-id');
     if (supSel) supSel.value = '';
 
     const warnBanner = document.getElementById('item-stock-warning-banner');
     if (warnBanner) warnBanner.classList.add('hidden');
-    handleItemStockInput();
 
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
@@ -629,35 +635,10 @@
       if (id) {
         res = await Api.items.update(id, payload);
       } else {
-        const supplierIdVal = document.getElementById('item-supplier-id')?.value || null;
-        if (stock > 0 && typeof Api.transactions?.createIn === 'function') {
-          payload.stock = 0;
-          res = await Api.items.create(payload);
-          if (res.ok && res.data?.id) {
-            const newProdId = res.data.id;
-            let currentUserId = null;
-            if (typeof window.Auth !== 'undefined') {
-              const u = await window.Auth.getCurrentUser();
-              currentUserId = u?.id || null;
-            }
-            try {
-              await Api.transactions.createIn({
-                product_id: newProdId,
-                supplier_id: supplierIdVal || null,
-                qty: stock,
-                price: cost_price,
-                note: supplierIdVal ? 'Penerimaan Faktur Awal Produk Baru' : 'Saldo Awal Fisik Toko',
-                created_by: currentUserId
-              });
-            } catch (txErr) {
-              console.warn('Gagal mencatat transaksi masuk otomatis untuk stok awal:', txErr);
-              await window.supabase?.from('products').update({ stock: stock }).eq('id', newProdId);
-            }
-          }
-        } else {
-          payload.stock = stock;
-          res = await Api.items.create(payload);
-        }
+        // Master Barang (katalog): Stok produk baru selalu berawal dari 0
+        // Penambahan stok fisik dilakukan melalui menu Barang Masuk untuk menghindari dobel stok
+        payload.stock = 0;
+        res = await Api.items.create(payload);
       }
 
       if (!res.ok) {

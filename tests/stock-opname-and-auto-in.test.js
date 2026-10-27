@@ -209,12 +209,12 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       vi.clearAllMocks();
     });
 
-    it('automatically calls Api.transactions.createIn when registering new item with stock > 0', async () => {
+    it('registers new item in catalog with stock 0 without auto-creating transactions to prevent double counting', async () => {
       const form = document.getElementById('form-item');
       const submitEvent = new Event('submit', { cancelable: true });
       await window.handleItemSubmit(submitEvent);
 
-      // Pastikan produk dibuat dengan stok 0 agar transaksi masuk tidak terhitung ganda
+      // Pastikan produk dibuat dengan stok 0 agar penambahan stok murni dari Barang Masuk
       expect(window.Api.items.create).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Amara Busa 8D Besar',
@@ -224,15 +224,8 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
         })
       );
 
-      // Pastikan transaksi masuk otomatis dibuat atas nama BOS Sarno dengan qty = 1
-      expect(window.Api.transactions.createIn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          product_id: 101,
-          supplier_id: '5',
-          qty: 1,
-          price: 45000
-        })
-      );
+      // Pastikan TIDAK membuat transaksi masuk otomatis dari katalog agar tidak dobel dengan Barang Masuk
+      expect(window.Api.transactions.createIn).not.toHaveBeenCalled();
     });
 
     it('opens stock adjustment modal and calculates difference correctly', async () => {
