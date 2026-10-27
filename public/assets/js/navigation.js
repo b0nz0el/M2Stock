@@ -95,9 +95,37 @@ function pageUrl(pageId) {
   return dashboardBase() + (slug ? slug + '/' : '');
 }
 
-/* Navigasi: multi-page clean URL → arahkan ke /dashboard/<slug>/ */
+/* Navigasi: multi-page clean URL → arahkan ke /dashboard/<slug>/
+   Menggunakan View Transition API (Chrome 111+) dengan CSS fade-out fallback */
 function showPage(pageId) {
-  window.location.href = pageUrl(pageId);
+  const url = pageUrl(pageId);
+
+  // Cegah navigasi ke halaman yang sama
+  const currentId = currentPageId();
+  if (currentId === pageId) return;
+
+  // Tutup sidebar mobile jika terbuka
+  closeSidebar();
+
+  // ─── View Transition API (Chrome 111+, Edge 111+) ───
+  if (document.startViewTransition) {
+    document.startViewTransition(() => {
+      window.location.href = url;
+    });
+    return;
+  }
+
+  // ─── CSS Fallback: fade-out body lalu navigate ───
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) {
+    window.location.href = url;
+    return;
+  }
+
+  document.documentElement.classList.add('page-exiting');
+  setTimeout(() => {
+    window.location.href = url;
+  }, 220);
 }
 
 function bottomNavTap(tab, event) {

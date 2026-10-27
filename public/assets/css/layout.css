@@ -6,23 +6,71 @@
   .page { display: none; }
   .page.active {
     display: block;
-    animation: pageEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pageEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
   @keyframes pageEnter {
-    from { 
-      opacity: 0; 
-      transform: translateY(12px); 
-      filter: blur(2px);
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
-      filter: blur(0);
-    }
+    from { opacity: 0; transform: translateY(10px) scale(0.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   main {
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ═══ VIEW TRANSITION API (Chrome 111+, Edge 111+) ═══ */
+  @view-transition {
+    navigation: auto;
+  }
+
+  /* Halaman LAMA — slide ke kiri + fade out */
+  ::view-transition-old(root) {
+    animation: vt-slide-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+  /* Halaman BARU — slide masuk dari kanan + fade in */
+  ::view-transition-new(root) {
+    animation: vt-slide-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes vt-slide-out {
+    from { opacity: 1; transform: translateX(0) scale(1); }
+    to   { opacity: 0; transform: translateX(-18px) scale(0.985); }
+  }
+  @keyframes vt-slide-in {
+    from { opacity: 0; transform: translateX(18px) scale(0.985); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  /* ═══ CSS FALLBACK: page-exiting (browser tanpa View Transition API) ═══ */
+  html.page-exiting,
+  html.page-exiting body {
+    pointer-events: none;
+  }
+  html.page-exiting body {
+    animation: pageExitFallback 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+  @keyframes pageExitFallback {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-14px); }
+  }
+
+  /* Animasi masuk body untuk semua browser (termasuk yang tidak support VT API) */
+  body {
+    animation: pageEnterBody 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes pageEnterBody {
+    from { opacity: 0; transform: translateX(14px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Respek preferensi reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root),
+    body,
+    .page.active {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 
   /* ═══ BOTTOM NAV (default hidden, tampil di mobile) ═══ */
