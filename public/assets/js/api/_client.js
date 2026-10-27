@@ -18,6 +18,55 @@ export function isSupabaseAvailable() {
 }
 
 /**
+ * Helper pencatatan audit log aman (non-blocking)
+ */
+export function logAudit(action, target) {
+  try {
+    if (typeof window === 'undefined') return;
+    if (window.Api?.audit?.log) {
+      window.Api.audit.log({ action, target });
+    } else if (window.supabase && typeof window.supabase.from === 'function') {
+      window.supabase.auth.getUser().then(({ data }) => {
+        window.supabase.from('audit_logs').insert([{
+          action: (action || 'CREATE').toUpperCase(),
+          target: target || null,
+          user_id: data?.user?.id || null,
+          user_email: data?.user?.email || null,
+          created_at: new Date().toISOString()
+        }]).then(() => {}).catch(() => {});
+      }).catch(() => {});
+    }
+  } catch (_) {}
+}
+
+/**
+ * Helper pengiriman notifikasi otomatis ke Owner (non-blocking)
+ */
+export function notifyOwner(payload) {
+  try {
+    if (typeof window === 'undefined') return;
+    if (window.Api?.notif?.notifyOwner) {
+      window.Api.notif.notifyOwner(payload);
+    } else if (window.supabase && typeof window.supabase.from === 'function') {
+      window.supabase.from('profiles').select('id').ilike('role', 'owner').then(({ data: owners }) => {
+        const ownerIds = (owners && owners.length > 0) ? owners.map(o => o.id) : [];
+        if (ownerIds.length === 0) return;
+        const rows = ownerIds.map(uid => ({
+          user_id: uid,
+          tipe: payload.tipe || 'info',
+          judul: (payload.judul || '').trim(),
+          pesan: (payload.pesan || '').trim(),
+          link: payload.link ? payload.link.trim() : null,
+          is_read: false,
+          created_at: new Date().toISOString()
+        }));
+        window.supabase.from('notifications').insert(rows).then(() => {}).catch(() => {});
+      }).catch(() => {});
+    }
+  } catch (_) {}
+}
+
+/**
  * Helper pembuat AbortController baru
  */
 export function createAbortController() {

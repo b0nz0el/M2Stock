@@ -218,7 +218,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const unreadCount = notificationsList.filter(n => !n.is_read).length;
     const badgeAll = document.getElementById('count-notif-all');
     const badgeUnread = document.getElementById('count-notif-unread');
-    const headerNotifDot = document.querySelector('header [data-action="notif"] span');
+    const headerNotifBadge = document.getElementById('header-notif-badge') || document.querySelector('header [data-action="notif"] span');
 
     if (badgeAll) badgeAll.textContent = notificationsList.length;
     if (badgeUnread) badgeUnread.textContent = unreadCount;
@@ -230,7 +230,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const sidebarNotifBadge = document.querySelector('#sidebar-notif-badge') || document.querySelector('.menu-item[data-page="notif"] span');
     if (sidebarNotifBadge) {
       if (unreadCount > 0) {
-        sidebarNotifBadge.textContent = unreadCount;
+        sidebarNotifBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
         sidebarNotifBadge.classList.remove('hidden');
         sidebarNotifBadge.style.display = '';
       } else {
@@ -239,11 +239,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       }
     }
 
-    if (headerNotifDot) {
+    if (headerNotifBadge) {
       if (unreadCount > 0) {
-        headerNotifDot.classList.remove('hidden');
+        headerNotifBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        headerNotifBadge.classList.remove('hidden');
       } else {
-        headerNotifDot.classList.add('hidden');
+        headerNotifBadge.textContent = '';
+        headerNotifBadge.classList.add('hidden');
       }
     }
   }

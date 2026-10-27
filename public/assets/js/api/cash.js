@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError } from './_client.js';
+import { formatResponse, handleError, logAudit } from './_client.js';
 
 export const cash = {
   /**
@@ -149,6 +149,17 @@ export const cash = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
+
+      try {
+        if (typeof logAudit === 'function') {
+          const inVal = Number(pemasukan) || 0;
+          const outVal = Number(pengeluaran) || 0;
+          const nominal = inVal > 0 ? inVal : outVal;
+          const tipeKas = inVal > 0 ? 'Pemasukan' : 'Pengeluaran';
+          logAudit('CREATE', `Catat Kas (${tipeKas}): ${(keterangan || '').slice(0, 40)} (Rp ${nominal.toLocaleString('id-ID')})`);
+        }
+      } catch (_) {}
+
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -185,6 +196,13 @@ export const cash = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
+
+      try {
+        if (typeof logAudit === 'function') {
+          logAudit('DELETE', `Hapus Entri Kas ID: ${id}`);
+        }
+      } catch (_) {}
+
       return formatResponse({ ok: true, data: { id } });
     } catch (err) {
       return handleError(err);

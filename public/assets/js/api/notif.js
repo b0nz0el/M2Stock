@@ -194,6 +194,69 @@ export const notif = {
     } catch (err) {
       return handleError(err);
     }
+  },
+
+  /**
+   * Mengirim notifikasi otomatis ke seluruh akun dengan role OWNER
+   */
+  async notifyOwner({ tipe = 'info', judul, pesan = '', link = null }) {
+    try {
+      if (!supabase) return formatResponse({ ok: false, error: { message: 'Database client tidak tersedia' } });
+
+      let ownerIds = [];
+      try {
+        const profileTable = supabase?.from?.('profiles');
+        if (profileTable && typeof profileTable.select === 'function') {
+          const { data: owners } = await profileTable
+            .select('id')
+            .ilike('role', 'owner');
+          if (owners && owners.length > 0) {
+            ownerIds = owners.map(o => o.id);
+          }
+        }
+      } catch (_) {}
+
+      // Fallback ke user aktif saat ini jika profiles tidak dapat dibaca
+      if (ownerIds.length === 0) {
+        try {
+          const authData = await supabase?.auth?.getUser?.();
+          if (authData?.data?.user?.id) ownerIds = [authData.data.user.id];
+        } catch (_) {}
+      }
+
+      if (ownerIds.length === 0) {
+        return formatResponse({ ok: false, error: { message: 'Owner ID tidak ditemukan' } });
+      }
+
+      const rows = ownerIds.map(uid => ({
+        user_id: uid,
+        tipe: tipe || 'info',
+        judul: (judul || '').trim(),
+        pesan: (pesan || '').trim(),
+        link: link ? link.trim() : null,
+        is_read: false,
+        created_at: new Date().toISOString()
+      }));
+
+      const notifTable = supabase?.from?.('notifications');
+      if (!notifTable || typeof notifTable.insert !== 'function') {
+        return formatResponse({ ok: false, error: { message: 'Tabel notifications tidak dapat diakses' } });
+      }
+
+      const { data, error } = await notifTable
+        .insert(rows)
+        .select();
+
+      if (error) {
+        console.warn('[NotifApi] notifyOwner insert error:', error.message);
+        return formatResponse({ ok: false, error: { message: error.message } });
+      }
+
+      return formatResponse({ ok: true, data });
+    } catch (err) {
+      console.warn('[NotifApi] notifyOwner exception:', err);
+      return handleError(err);
+    }
   }
 };
 

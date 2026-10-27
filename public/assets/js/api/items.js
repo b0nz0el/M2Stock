@@ -3,7 +3,7 @@
    Domain Items / Master Barang
    ═══════════════════════════════════════════════════ */
 
-import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit } from './_client.js';
 
 export const items = {
     getAll: async (params, opts) => {
@@ -180,9 +180,16 @@ export const items = {
             });
           }
 
+          const newProd = inserted && inserted[0] ? inserted[0] : null;
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('CREATE', `Tambah Produk Baru: ${newProd?.name || data.name || 'Produk'} (SKU: ${newProd?.sku || data.sku || '-'})`);
+            }
+          } catch (_) {}
+
           return formatResponse({
             ok: true,
-            data: inserted && inserted[0] ? inserted[0] : null,
+            data: newProd,
             meta: { message: 'Produk berhasil ditambahkan' }
           });
         } catch (err) {
@@ -237,9 +244,16 @@ export const items = {
             });
           }
 
+          const updatedProd = updated && updated[0] ? updated[0] : null;
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('UPDATE', `Update Produk: ${updatedProd?.name || data.name || id}`);
+            }
+          } catch (_) {}
+
           return formatResponse({
             ok: true,
-            data: updated && updated[0] ? updated[0] : null,
+            data: updatedProd,
             meta: { message: 'Produk berhasil diperbarui' }
           });
         } catch (err) {
@@ -295,6 +309,12 @@ export const items = {
             });
           }
 
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('DELETE', `Hapus Produk ID: ${id}`);
+            }
+          } catch (_) {}
+
           return formatResponse({
             ok: true,
             data: { success: true, id },
@@ -337,6 +357,12 @@ export const items = {
               }
             });
           }
+
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('DELETE', `Force Hapus Produk ID: ${id}`);
+            }
+          } catch (_) {}
 
           return formatResponse({
             ok: true,

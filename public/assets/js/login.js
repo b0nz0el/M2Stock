@@ -149,6 +149,20 @@
         refreshIcons();
       }
 
+      // Catat Jejak Audit Login (untuk semua role: Owner & Staff)
+      try {
+        if (window.supabase) {
+          const userObj = res.data?.user || (await window.supabase.auth.getUser())?.data?.user;
+          window.supabase.from('audit_logs').insert([{
+            user_id: userObj?.id || null,
+            user_email: userObj?.email || email,
+            action: 'LOGIN',
+            target: 'Login ke sistem via web browser',
+            created_at: new Date().toISOString()
+          }]).then(() => {}).catch(() => {});
+        }
+      } catch (_) {}
+
       // 3. Fade out card + toast
       setTimeout(() => {
         if (card) card.classList.add('fade-out');

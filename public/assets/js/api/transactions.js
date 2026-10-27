@@ -3,7 +3,7 @@
    Domain Transaksi Barang Masuk & Keluar, PO, & Retur
    ═══════════════════════════════════════════════════ */
 
-import { isSupabaseAvailable, formatResponse, handleError, apiRequest } from './_client.js';
+import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit, notifyOwner } from './_client.js';
 
 function mapTransaction(row) {
   const qty = Number(row.qty ?? row.quantity) || 0;
@@ -180,6 +180,30 @@ export const transactions = {
         createdTxs.push(res.data);
       }
 
+      // 1. Catat Audit Log
+      try {
+        if (typeof logAudit === 'function') {
+          logAudit('CREATE', `Penjualan Kasir POS (${invoiceNo}): ${cartItems.length} item, Total Rp ${Number(totalAmount || 0).toLocaleString('id-ID')}`);
+        }
+      } catch (_) {}
+
+      // 2. Kirim Notifikasi ke Owner
+      try {
+        if (typeof notifyOwner === 'function') {
+          notifyOwner({
+            tipe: 'success',
+            judul: 'Penjualan Kasir Baru',
+            pesan: `Transaksi kasir (${invoiceNo}) berhasil dicatat: ${cartItems.length} item dengan total Rp ${Number(totalAmount || 0).toLocaleString('id-ID')}.`,
+            link: '/out'
+          });
+        }
+      } catch (_) {}
+
+      // 3. Sinkronkan Badge Lonceng
+      if (typeof window !== 'undefined' && typeof window.syncNotificationBadge === 'function') {
+        setTimeout(window.syncNotificationBadge, 500);
+      }
+
       return formatResponse({
         ok: true,
         data: {
@@ -199,11 +223,11 @@ export const transactions = {
           let userId = data.created_by || data.user_id || null;
           if (!userId) {
             try {
-              const userRes = await window.supabase.auth.getUser();
-              userId = userRes?.data?.user?.id || null;
-            } catch (error) {
-              console.warn('Pengguna transaksi tidak dapat diverifikasi:', error);
-            }
+              if (window.supabase?.auth && typeof window.supabase.auth.getUser === 'function') {
+                const userRes = await window.supabase.auth.getUser();
+                userId = userRes?.data?.user?.id || null;
+              }
+            } catch (_) {}
           }
 
           const quantity = Number(data.qty ?? data.quantity);
@@ -358,6 +382,48 @@ export const transactions = {
             }
           }
 
+          // Catat audit log dan notifikasi jika bukan bagian dari transaksi kasir multi-item (batch POS)
+          const isPosBatchItem = Boolean((data.note || '').includes('[INV-'));
+          if (!isPosBatchItem) {
+            try {
+              const txTypeLabel = data.type === 'in' ? 'Barang Masuk' : 'Barang Keluar';
+              const prodName = productBefore?.name ? `(${productBefore.name})` : '';
+              if (typeof logAudit === 'function') {
+                logAudit('CREATE', `${txTypeLabel}: Produk ID ${productId} ${prodName} sebanyak ${quantity} item`);
+              }
+
+              if (typeof notifyOwner === 'function') {
+                notifyOwner({
+                  tipe: data.type === 'in' ? 'info' : 'success',
+                  judul: `${txTypeLabel} Tercatat`,
+                  pesan: `Transaksi ${txTypeLabel.toLowerCase()} produk ID ${productId} ${prodName} sebanyak ${quantity} item telah dicatat.`,
+                  link: data.type === 'in' ? '/in' : '/out'
+                });
+              }
+            } catch (_) {}
+          }
+
+          // Periksa apakah sisa stok berada di bawah batas minimum (Stok Kritis)
+          if (data.type === 'out' && productBefore && typeof productBefore.min_stock === 'number') {
+            try {
+              const remainingStock = Number(productBefore.stock || 0) - quantity;
+              if (remainingStock <= Number(productBefore.min_stock || 0)) {
+                if (typeof notifyOwner === 'function') {
+                  notifyOwner({
+                    tipe: 'warning',
+                    judul: 'Peringatan Stok Kritis!',
+                    pesan: `Stok produk ${productBefore.name || productId} kini tersisa ${remainingStock} (batas minimum: ${productBefore.min_stock}). Segera lakukan restock!`,
+                    link: '/items'
+                  });
+                }
+              }
+            } catch (_) {}
+          }
+
+          if (typeof window !== 'undefined' && typeof window.syncNotificationBadge === 'function') {
+            setTimeout(window.syncNotificationBadge, 500);
+          }
+
           return formatResponse({
             ok: true,
             data: inserted && inserted[0] ? mapTransaction(inserted[0]) : null,
@@ -449,6 +515,12 @@ export const transactions = {
               console.warn('Fallback delete stock sync warning:', delSyncErr);
             }
           }
+
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('DELETE', `Hapus Transaksi ID: ${targetId}`);
+            }
+          } catch (_) {}
 
           return formatResponse({
             ok: true,

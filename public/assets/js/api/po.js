@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError } from './_client.js';
+import { formatResponse, handleError, logAudit, notifyOwner } from './_client.js';
 
 export const po = {
   /**
@@ -270,6 +270,20 @@ export const po = {
         }
       }
 
+      try {
+        if (typeof logAudit === 'function') {
+          logAudit('CREATE', `Buat Purchase Order: ${no_po} (Supplier: ${supplier_nama || '-'})`);
+        }
+        if (typeof notifyOwner === 'function') {
+          notifyOwner({
+            tipe: 'info',
+            judul: 'Purchase Order Baru',
+            pesan: `PO ${no_po} telah dibuat untuk supplier ${supplier_nama || '-'}.`,
+            link: '/po'
+          });
+        }
+      } catch (_) {}
+
       return formatResponse({
         ok: true,
         data: { ...insertedPO, items: formattedItems, supplier_nama }
@@ -479,6 +493,12 @@ export const po = {
           error: { code: 'NOT_FOUND', message: 'Purchase Order tidak ditemukan atau tidak dapat dihapus' }
         });
       }
+      try {
+        if (typeof logAudit === 'function') {
+          logAudit('DELETE', `Hapus Purchase Order ID: ${id}`);
+        }
+      } catch (_) {}
+
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);

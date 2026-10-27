@@ -145,6 +145,52 @@ document.addEventListener('keydown', (e) => {
 /* ═══════════════════════════════════════════════
    NOTIFICATION DROPDOWN PANEL
    ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   GLOBAL NOTIFICATION BADGE SYNC
+   ═══════════════════════════════════════════════ */
+window.syncNotificationBadge = async function() {
+  try {
+    let unreadCount = 0;
+    if (window.Api && window.Api.notif && typeof window.Api.notif.getUnreadCount === 'function') {
+      unreadCount = await window.Api.notif.getUnreadCount();
+    } else if (window.supabase) {
+      const { count } = await window.supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false);
+      unreadCount = count || 0;
+    }
+
+    const headerBadge = document.getElementById('header-notif-badge');
+    if (headerBadge) {
+      if (unreadCount > 0) {
+        headerBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        headerBadge.classList.remove('hidden');
+      } else {
+        headerBadge.textContent = '';
+        headerBadge.classList.add('hidden');
+      }
+    }
+
+    const sidebarBadge = document.getElementById('sidebar-notif-badge') || document.querySelector('.menu-item[data-page="notif"] span');
+    if (sidebarBadge) {
+      if (unreadCount > 0) {
+        sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        sidebarBadge.classList.remove('hidden');
+        sidebarBadge.style.display = '';
+      } else {
+        sidebarBadge.classList.add('hidden');
+        sidebarBadge.style.display = 'none';
+      }
+    }
+  } catch (err) {
+    console.debug('[NotifSync] Error checking unread count:', err);
+  }
+};
+
+/* ═══════════════════════════════════════════════
+   NOTIFICATION DROPDOWN PANEL (LIVE DATA)
+   ═══════════════════════════════════════════════ */
 function initNotificationDropdown() {
   document.addEventListener('click', function(e) {
     const notifBtn = e.target.closest && e.target.closest('[data-action="notif"]');
@@ -162,7 +208,7 @@ function initNotificationDropdown() {
       const rect = notifBtn.getBoundingClientRect();
       const panel = document.createElement('div');
       panel.id = 'notif-dropdown-panel';
-      panel.className = 'fixed z-50 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl p-4 w-80 max-w-[calc(100vw-32px)] backdrop-blur-xl';
+      panel.className = 'fixed z-50 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl p-4 w-88 max-w-[calc(100vw-32px)] backdrop-blur-xl';
       
       const rightOffset = Math.max(16, window.innerWidth - rect.right);
       panel.style.top = `${rect.bottom + 8}px`;
@@ -172,25 +218,14 @@ function initNotificationDropdown() {
         <div class="flex items-center justify-between pb-3 border-b border-white/5">
           <div class="flex items-center gap-2">
             <h4 class="text-sm font-bold text-white">Notifikasi</h4>
-            <span class="text-[10px] font-semibold bg-[#0088CC]/20 text-[#32ADE6] px-2 py-0.5 rounded-full">0 Baru</span>
+            <span id="notif-panel-badge" class="text-[10px] font-semibold bg-[#0088CC]/20 text-[#32ADE6] px-2 py-0.5 rounded-full">Memuat...</span>
           </div>
           <button type="button" id="btn-close-notif-panel" aria-label="Tutup notifikasi" class="p-1 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
-        <div class="py-7 text-center space-y-2">
-          <div class="w-11 h-11 rounded-full bg-white/5 grid place-items-center mx-auto text-[#A0A0A5]">
-            <i data-lucide="bell" class="w-5 h-5 opacity-60"></i>
-          </div>
-          <p class="text-sm font-semibold text-white">Belum ada notifikasi</p>
-          <p class="text-xs text-[#A0A0A5] max-w-[220px] mx-auto leading-relaxed">
-            Notifikasi penting seputar transaksi, stok kritis, dan aktivitas akun akan muncul di sini.
-          </p>
-        </div>
-        <div class="pt-3 border-t border-white/5 text-center">
-          <a href="/dashboard/notif/" class="text-xs font-semibold text-[#32ADE6] hover:underline inline-flex items-center gap-1">
-            Lihat Semua Notifikasi <i data-lucide="arrow-right" class="w-3 h-3"></i>
-          </a>
+        <div id="notif-panel-content" class="py-6 text-center text-[#A0A0A5] text-xs">
+          <span class="inline-block animate-spin mr-1">⌛</span> Memuat notifikasi...
         </div>
       `;
 
@@ -201,6 +236,111 @@ function initNotificationDropdown() {
       if (closeBtn) {
         closeBtn.onclick = () => panel.remove();
       }
+
+      // Fetch notifikasi riil dari Supabase
+      (async () => {
+        try {
+          let list = [];
+          if (window.Api?.notif?.getAll) {
+            const res = await window.Api.notif.getAll({ limit: 5 });
+            if (res.ok) list = res.data || [];
+          } else if (window.supabase) {
+            const { data } = await window.supabase
+              .from('notifications')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(5);
+            list = data || [];
+          }
+
+          const unreadCount = list.filter(n => !n.is_read).length;
+          const badgeEl = panel.querySelector('#notif-panel-badge');
+          if (badgeEl) badgeEl.textContent = `${unreadCount} Baru`;
+
+          const contentEl = panel.querySelector('#notif-panel-content');
+          if (!contentEl) return;
+
+          if (list.length === 0) {
+            contentEl.innerHTML = `
+              <div class="w-11 h-11 rounded-full bg-white/5 grid place-items-center mx-auto text-[#A0A0A5] mb-2">
+                <i data-lucide="bell" class="w-5 h-5 opacity-60"></i>
+              </div>
+              <p class="text-sm font-semibold text-white">Belum ada notifikasi</p>
+              <p class="text-xs text-[#A0A0A5] max-w-[220px] mx-auto mt-1 leading-relaxed">
+                Notifikasi seputar transaksi kasir, stok kritis, dan aktivitas akun akan muncul di sini.
+              </p>
+            `;
+          } else {
+            contentEl.className = 'py-2 divide-y divide-white/5 max-h-72 overflow-y-auto';
+            contentEl.innerHTML = list.map(item => {
+              const isUnread = !item.is_read;
+              const typeColor = item.tipe === 'warning' ? '#FF9F0A' : (item.tipe === 'success' ? '#34C759' : '#0088CC');
+              const typeIcon = item.tipe === 'warning' ? 'alert-triangle' : (item.tipe === 'success' ? 'check-circle-2' : 'info');
+              const timeStr = item.created_at ? new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+
+              return `
+                <div class="py-2.5 px-2 hover:bg-white/5 rounded-xl transition flex gap-3 text-left ${isUnread ? 'bg-white/[0.03]' : ''}">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style="background: ${typeColor}20; color: ${typeColor};">
+                    <i data-lucide="${typeIcon}" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1">
+                      <p class="text-xs font-semibold text-white truncate">${item.judul || 'Notifikasi'}</p>
+                      <span class="text-[10px] text-[#A0A0A5] shrink-0">${timeStr}</span>
+                    </div>
+                    <p class="text-[11px] text-[#A0A0A5] mt-0.5 leading-snug line-clamp-2">${item.pesan || ''}</p>
+                  </div>
+                  ${isUnread ? '<span class="w-1.5 h-1.5 rounded-full bg-[#0088CC] shrink-0 mt-2"></span>' : ''}
+                </div>
+              `;
+            }).join('');
+          }
+
+          // Footer link & action
+          const footerDiv = document.createElement('div');
+          footerDiv.className = 'pt-3 border-t border-white/5 flex items-center justify-between';
+          footerDiv.innerHTML = `
+            <button type="button" id="btn-mark-all-read" class="text-[11px] text-[#A0A0A5] hover:text-white transition">
+              Tandai dibaca
+            </button>
+            <a href="#notif" id="link-view-all-notif" class="text-xs font-semibold text-[#32ADE6] hover:underline inline-flex items-center gap-1">
+              Lihat Semua <i data-lucide="arrow-right" class="w-3 h-3"></i>
+            </a>
+          `;
+          panel.appendChild(footerDiv);
+
+          const markAllBtn = panel.querySelector('#btn-mark-all-read');
+          if (markAllBtn) {
+            markAllBtn.onclick = async () => {
+              if (window.Api?.notif?.markAllAsRead) {
+                await window.Api.notif.markAllAsRead();
+              }
+              panel.remove();
+              if (typeof window.syncNotificationBadge === 'function') {
+                window.syncNotificationBadge();
+              }
+            };
+          }
+
+          const viewAllLink = panel.querySelector('#link-view-all-notif');
+          if (viewAllLink) {
+            viewAllLink.onclick = (e) => {
+              e.preventDefault();
+              panel.remove();
+              if (typeof window.showPage === 'function') {
+                window.showPage('notif');
+              } else {
+                window.location.href = '/dashboard/notif/';
+              }
+            };
+          }
+
+          if (typeof window.refreshIcons === 'function') window.refreshIcons(panel);
+        } catch (fetchErr) {
+          console.warn('[NotifPanel] Load error:', fetchErr);
+        }
+      })();
+
       return;
     }
 
@@ -211,10 +351,21 @@ function initNotificationDropdown() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initNotificationDropdown);
+  document.addEventListener('DOMContentLoaded', () => {
+    initNotificationDropdown();
+    setTimeout(window.syncNotificationBadge, 500);
+  });
 } else {
   initNotificationDropdown();
+  setTimeout(window.syncNotificationBadge, 500);
 }
+
+// Polling badge setiap 30 detik
+setInterval(() => {
+  if (typeof window.syncNotificationBadge === 'function') {
+    window.syncNotificationBadge();
+  }
+}, 30000);
 
 /* Card hover lift */
 document.querySelectorAll('.card').forEach(card => card.classList.add('card-hover'));

@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError } from './_client.js';
+import { formatResponse, handleError, logAudit, notifyOwner } from './_client.js';
 
 export const returnApi = {
   /**
@@ -189,6 +189,21 @@ export const returnApi = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
+
+      try {
+        if (typeof logAudit === 'function') {
+          logAudit('CREATE', `Catat Retur Barang: ${autoNo} (${tipe === 'ke_supplier' ? 'Ke Supplier' : 'Dari Customer'}, Qty: ${qty})`);
+        }
+        if (typeof notifyOwner === 'function') {
+          notifyOwner({
+            tipe: 'info',
+            judul: 'Retur Barang Baru',
+            pesan: `Retur ${autoNo} (${tipe === 'ke_supplier' ? 'Ke Supplier' : 'Dari Customer'}) dicatat sebanyak ${qty} item.`,
+            link: '/return'
+          });
+        }
+      } catch (_) {}
+
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
