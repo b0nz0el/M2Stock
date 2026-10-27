@@ -879,6 +879,23 @@
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
   }
 
+  function formatCashierName(userId) {
+    if (!userId) return 'Admin';
+    if (typeof userId === 'string' && userId.length > 20 && userId.includes('-')) {
+      try {
+        const rawAuth = localStorage.getItem('auth_user') || localStorage.getItem('sb-user');
+        if (rawAuth) {
+          const u = JSON.parse(rawAuth);
+          if (u.id === userId || u.sub === userId) {
+            return u.full_name || u.name || u.email?.split('@')[0] || 'Kasir (Anda)';
+          }
+        }
+      } catch (_) {}
+      return 'Kasir';
+    }
+    return userId;
+  }
+
   function renderOutTable() {
     const tbody = document.getElementById('out-tbody');
     if (!tbody) return;
@@ -901,7 +918,7 @@
         const prodName = resolveProductName(tx).toLowerCase();
         const custName = (tx.customers?.name || 'umum').toLowerCase();
         const channel = (tx.channel || 'offline').toLowerCase();
-        const kasir = (tx.created_by || '').toLowerCase();
+        const kasir = (formatCashierName(tx.created_by) || '').toLowerCase();
         const note = (tx.note || tx.notes || '').toLowerCase();
 
         if (!code.includes(searchQuery) &&
@@ -956,7 +973,7 @@
       const prodName = resolveProductName(tx);
       const channelBadge = getChannelBadge(tx.channel);
       const custName = tx.customers?.name || 'Umum';
-      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const kasir = formatCashierName(tx.created_by);
       const qty = tx.qty || 0;
       const price = tx.price || 0;
       const total = qty * price;
@@ -1154,7 +1171,7 @@
         invoiceNo = invCode;
         dateStr = formatTxDate(tx.created_at);
         customerName = tx.customers?.name || 'Umum';
-        cashierName = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+        cashierName = formatCashierName(tx.created_by);
         method = tx.payment_method || 'Cash';
         status = (tx.payment_status || 'Lunas').toUpperCase();
         items = siblingTxs.map(t => ({
@@ -1170,7 +1187,7 @@
           : `OUT-${String(tx.id).padStart(6, '0')}`;
         dateStr = formatTxDate(tx.created_at);
         customerName = tx.customers?.name || 'Umum';
-        cashierName = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+        cashierName = formatCashierName(tx.created_by);
         method = tx.payment_method || 'Cash';
         status = (tx.payment_status || 'Lunas').toUpperCase();
         const qty = tx.qty || 0;
@@ -1396,7 +1413,7 @@
       const prodName = tx.products?.name || ('Produk #' + tx.product_id);
       const channel = tx.channel || 'Offline';
       const custName = tx.customers?.name || 'Umum';
-      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const kasir = formatCashierName(tx.created_by);
       const qty = tx.qty || 0;
       const price = tx.price || 0;
       const total = qty * price;

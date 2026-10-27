@@ -588,6 +588,10 @@ class AppSidebar extends HTMLElement {
           <a href="${getUrl('settings')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="settings">
             <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i> Settings
           </a>
+          <button type="button" onclick="window.checkForPwaUpdate()" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#32ADE6] hover:bg-[#32ADE6]/10 transition cursor-pointer" data-action="check-update" title="Periksa dan update pembaruan PWA">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Cek Pembaruan
+            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold">v3.4.1</span>
+          </button>
 
           <!-- Tombol Keluar Langsung di Drawer Mobile -->
           <button type="button" data-action="logout" class="md:hidden w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#FF453A] hover:bg-[#FF453A]/10 border border-[#FF453A]/20 transition mt-4 mb-2">

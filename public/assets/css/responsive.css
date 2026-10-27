@@ -544,29 +544,31 @@
     padding-left: 0 !important;
     max-width: 100vw !important;
     overflow-x: clip; /* clip avoids creating an overflow scroll container that cancels position: sticky on iOS */
+    overflow-y: visible !important;
   }
   body > div.flex {
     display: block !important;
   }
 
-  /* Page padding + ruang untuk bottom nav */
+  /* Page padding + ruang aman untuk bottom nav */
   .page {
     padding: 16px !important;
-    padding-bottom: calc(120px + env(safe-area-inset-bottom, 24px)) !important;
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px)) !important;
   }
 
   /* Header sticky & safe area support for iOS Notch / Dynamic Island */
   header {
-    padding-top: max(14px, calc(14px + env(safe-area-inset-top, 0px))) !important;
+    padding-top: max(16px, calc(16px + env(safe-area-inset-top, 0px))) !important;
     padding-bottom: 12px !important;
     padding-left: max(16px, calc(16px + env(safe-area-inset-left, 0px))) !important;
     padding-right: max(16px, calc(16px + env(safe-area-inset-right, 0px))) !important;
     position: sticky !important;
     top: 0 !important;
-    z-index: 40 !important;
-    background: rgba(0, 0, 0, 0.88) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
+    z-index: 50 !important;
+    background: rgba(0, 0, 0, 0.94) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
   header > div:first-child > span:first-child,
   header > div:first-child > svg:first-child {
@@ -870,6 +872,10 @@
     min-width: unset !important;
   }
   .card:has(table) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
     overflow: visible !important;
   }
 
@@ -879,23 +885,30 @@
 
   .card table tbody tr {
     display: block !important;
-    background: var(--aq-surface-soft);
-    border: 1px solid var(--aq-border-soft);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 10px;
-    position: relative;
-    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    background: #1C1C1E !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    margin-bottom: 14px !important;
+    position: relative !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   /* tr tanpa padding ekstra */
   .card table tbody tr:has(td:last-child button) {
-    padding-right: 14px;
+    padding-right: 16px !important;
   }
 
-  /* HANYA baris pertama (yang bertemu tombol) punya padding ekstra */
-  .card table tbody tr:has(td:last-child button) td:first-child {
-    padding-right: 130px !important;
+  /* Header Baris Kartu (NO. TRANSAKSI, KODE BARANG, NO. PO, dll) */
+  .card table tbody tr:has(td:last-child button) td:first-child,
+  .card table tbody tr td:first-child {
+    padding-right: 92px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 8px !important;
+    padding-top: 2px !important;
+    font-weight: 600 !important;
   }
   .card table tbody td {
     display: flex !important;
@@ -904,15 +917,16 @@
     gap: 12px;
     padding: 5px 0 !important;
     border: none !important;
-    font-size: 0.875rem;
+    font-size: 0.8125rem !important;
     text-align: right;
     background: transparent !important;
+    line-height: 1.4 !important;
   }
 
   .card table tbody td::before {
     content: attr(data-label) !important;
-    color: var(--aq-text-muted) !important;
-    font-size: 0.75rem !important;
+    color: #8E8E93 !important;
+    font-size: 0.6875rem !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px;
@@ -940,24 +954,36 @@
     cursor: pointer;
   }
 
-  /* Aksi cell (tombol): pojok kanan atas — HANYA jika berisi tombol */
+  /* Aksi cell (tombol): pojok kanan atas — di dalam pill container */
   .card table tbody td:last-child:has(button) {
     position: absolute !important;
-    top: 12px;
-    right: 12px;
+    top: 10px !important;
+    right: 12px !important;
     padding: 0 !important;
     border: none !important;
     margin: 0 !important;
-    width: auto;
+    width: auto !important;
     justify-content: flex-end !important;
     display: flex !important;
     align-items: center !important;
+    z-index: 2 !important;
   }
   .card table tbody td:last-child:has(button)::before {
     display: none !important;
   }
 
-  /* Tombol aksi dalam kartu tabel: Standar sentuh 44x44px (Apple HIG & Material Design) */
+  /* Tombol aksi dalam kartu tabel: Standar sentuh ergonomis Apple HIG */
+  .card table tbody td:last-child:has(button) .flex,
+  .card table tbody td:last-child .flex {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  }
   .card table tbody td:last-child:has(button) button,
   .card table tbody td:last-child button {
     min-width: 44px !important;
@@ -968,10 +994,12 @@
     padding: 10px !important;
     border-radius: 10px !important;
     touch-action: manipulation;
+    transition: all 0.15s ease !important;
   }
-  .card table tbody td:last-child:has(button) .flex,
-  .card table tbody td:last-child .flex {
-    gap: 6px !important;
+  .card table tbody td:last-child:has(button) button:active,
+  .card table tbody td:last-child button:active {
+    transform: scale(0.92) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
   }
 
   /* Empty State row override: full width, center, no card styling, no absolute action button */
@@ -1024,28 +1052,73 @@
   .card table tbody td[data-label="SKU"],
   .card table tbody td[data-label="KATEGORI"],
   .card table tbody td[data-label="KASIR"],
+  .card table tbody td[data-label="CUSTOMER"],
   .card table tbody td[data-label="CHANNEL"] {
-    font-size: 0.75rem !important;
-    color: var(--aq-text-muted);
+    font-size: 0.8125rem !important;
+    color: #A0A0A5 !important;
   }
 
-  /* Field tersier — cegah wrap & kecilkan */
+  /* Header Kartu — Kode ID & Nomor Dokumen */
   .card table tbody td[data-label="NO. TRANSAKSI"],
   .card table tbody td[data-label="NO. RESI"],
   .card table tbody td[data-label="NO. PO"],
-  .card table tbody td[data-label="NO. RETUR"] {
-    font-size: 0.75rem !important;
-    color: var(--aq-text-subtle);
+  .card table tbody td[data-label="NO. RETUR"],
+  .card table tbody td[data-label="KODE BARANG"] {
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    color: #FFFFFF !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
     white-space: nowrap !important;
-    gap: 6px !important;
+    gap: 8px !important;
   }
-  /* Label lebih kecil untuk field ini */
   .card table tbody td[data-label="NO. TRANSAKSI"]::before,
   .card table tbody td[data-label="NO. RESI"]::before,
   .card table tbody td[data-label="NO. PO"]::before,
-  .card table tbody td[data-label="NO. RETUR"]::before {
+  .card table tbody td[data-label="NO. RETUR"]::before,
+  .card table tbody td[data-label="KODE BARANG"]::before {
     font-size: 0.6875rem !important;
-    letter-spacing: 0.3px !important;
+    letter-spacing: 0.5px !important;
+    color: #8E8E93 !important;
+  }
+
+  /* Field Utama (Hero Item) — Nama Barang / Produk */
+  .card table tbody td[data-label="BARANG"],
+  .card table tbody td[data-label="NAMA BARANG"],
+  .card table tbody td[data-label="NAMA PRODUK"] {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    color: #FFFFFF !important;
+    padding: 6px 0 !important;
+  }
+  .card table tbody td[data-label="BARANG"]::before,
+  .card table tbody td[data-label="NAMA BARANG"]::before,
+  .card table tbody td[data-label="NAMA PRODUK"]::before {
+    color: #A0A0A5 !important;
+  }
+
+  /* Field Finansial / Total — divider garis putus-putus dan warna aksen hijau Apple */
+  .card table tbody td[data-label="TOTAL"],
+  .card table tbody td[data-label="TOTAL HARGA"],
+  .card table tbody td[data-label="SUBTOTAL"],
+  .card table tbody td[data-label="SISA HUTANG"],
+  .card table tbody td[data-label="TOTAL RETUR"] {
+    border-top: 1px dashed rgba(255, 255, 255, 0.12) !important;
+    margin-top: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 2px !important;
+    font-weight: 700 !important;
+    font-size: 1.0625rem !important;
+    color: #34C759 !important;
+  }
+  .card table tbody td[data-label="TOTAL"]::before,
+  .card table tbody td[data-label="TOTAL HARGA"]::before,
+  .card table tbody td[data-label="SUBTOTAL"]::before,
+  .card table tbody td[data-label="SISA HUTANG"]::before,
+  .card table tbody td[data-label="TOTAL RETUR"]::before {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    color: #FFFFFF !important;
+    letter-spacing: 0.5px !important;
   }
 
   /* ═══ Supplier Mobile Card Optimization (International SaaS Standard) ═══ */

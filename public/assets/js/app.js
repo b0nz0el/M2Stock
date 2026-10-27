@@ -514,32 +514,38 @@ if (typeof window !== 'undefined') {
 
   // Tombol bantuan manual untuk memeriksa pembaruan di UI
   window.checkForPwaUpdate = async function () {
-    if (!('serviceWorker' in navigator)) {
-      if (typeof showToast === 'function') showToast('Pemeriksaan pembaruan selesai. Halaman dimuat ulang...', 'info');
-      window.location.reload();
-      return;
+    if (typeof showToast === 'function') {
+      showToast('Memeriksa versi terbaru ke server Cloudflare...', 'info');
     }
     try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (reg) {
-        if (typeof showToast === 'function') showToast('Memeriksa versi terbaru ke server...', 'info');
-        await reg.update();
-        if (reg.waiting) {
-          promptAndActivate(reg.waiting);
-        } else {
-          // Bersihkan cache lama dan reload untuk menjamin aset teranyar
-          if ('caches' in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-          }
-          if (typeof showToast === 'function') {
-            showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.0)!', 'success');
-          }
-          setTimeout(() => window.location.reload(), 600);
-        }
-      } else {
-        window.location.reload();
+      // 1. Bersihkan semua cache Service Worker lama
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
       }
+
+      // 2. Jika serviceWorker aktif, periksa update registrasi
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          await reg.update();
+          if (reg.waiting) {
+            promptAndActivate(reg.waiting);
+            return;
+          }
+          if (reg.installing) {
+            promptAndActivate(reg.installing);
+            return;
+          }
+        }
+      }
+
+      if (typeof showToast === 'function') {
+        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.1)!', 'success');
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (e) {
       console.warn('[PWA] Manual update check error:', e);
       window.location.reload();

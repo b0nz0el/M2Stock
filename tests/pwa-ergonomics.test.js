@@ -116,6 +116,25 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(appJs).toContain("navigator.serviceWorker.addEventListener('controllerchange'");
       expect(appJs).toContain('window.checkForPwaUpdate');
     });
+
+    it('verifies prominent PWA update banner in Settings and Cek Pembaruan in Sidebar', () => {
+      const indexHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      expect(indexHtml).toContain('btn-check-pwa-update');
+      expect(indexHtml).toContain('Pembaruan &amp; Sinkronisasi Sistem');
+
+      const sidebarJs = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
+      expect(sidebarJs).toContain('data-action="check-update"');
+      expect(sidebarJs).toContain('Cek Pembaruan');
+    });
+
+    it('verifies card view visual hierarchy in responsive.css (header divider, hero item, green total)', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;');
+      expect(responsiveCss).toContain('.card table tbody td[data-label="TOTAL"]');
+      expect(responsiveCss).toContain('color: #34C759 !important;');
+      expect(responsiveCss).toContain('.card table tbody td[data-label="BARANG"]');
+    });
   });
 });
+
 
