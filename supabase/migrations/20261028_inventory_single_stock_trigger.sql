@@ -1,5 +1,5 @@
--- Recreate the stock trigger idempotently so duplicate legacy triggers cannot
--- apply the same transaction movement more than once.
+-- Recreate one canonical stock trigger and remove legacy triggers that apply
+-- the same transaction movement a second time.
 DO $$
 DECLARE
   existing_trigger RECORD;
@@ -10,8 +10,14 @@ BEGIN
     WHERE t.tgrelid = 'public.transactions'::regclass
       AND NOT t.tgisinternal
       AND (
-        t.tgname = 'trg_transaction_stock_update'
-        OR t.tgfoid = 'public.handle_transaction_stock_update()'::regprocedure
+        t.tgname IN (
+          'trg_transaction_stock_update',
+          'trg_transactions_auto_stock'
+        )
+        OR t.tgfoid IN (
+          to_regprocedure('public.handle_transaction_stock_update()'),
+          to_regprocedure('public.trg_update_stock_on_transaction()')
+        )
       )
   LOOP
     EXECUTE format(
