@@ -4,6 +4,7 @@
   "description": "aQuaStock Pro — sistem manajemen stok peralatan aquarium (static frontend, siap dihubungkan ke backend)",
   "private": true,
   "scripts": {
+    "build": "tailwindcss -i tailwind/input.css -o public/assets/css/tailwind.static.css --minify",
     "start": "npx serve public",
     "dev": "npx serve public --listen 8000",
     "test": "vitest run",
