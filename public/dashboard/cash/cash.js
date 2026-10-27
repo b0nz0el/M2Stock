@@ -334,8 +334,15 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   // Setup Event Listeners
-  document.addEventListener('DOMContentLoaded', async () => {
+  let cashInitialized = false;
+  async function initCash() {
     applyReadOnlyUI();
+
+    if (cashInitialized) {
+      await loadCashData();
+      return;
+    }
+    cashInitialized = true;
 
     // Modal Trigger
     const openBtn = document.getElementById('btn-open-cash-modal');
@@ -476,5 +483,15 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     // Initial Load
     await loadCashData();
-  });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.initCash = initCash;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCash);
+  } else {
+    initCash();
+  }
 })();

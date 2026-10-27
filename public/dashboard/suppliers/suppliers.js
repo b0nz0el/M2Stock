@@ -417,7 +417,35 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initSuppliers() {
   setupSearchListeners();
   loadSuppliers();
-});
+}
+
+if (typeof window !== 'undefined') {
+  window.loadSuppliers = loadSuppliers;
+  window.initSuppliers = initSuppliers;
+  window.updateSupplierMetrics = updateSupplierMetrics;
+  window.goToSuppliersPage = goToSuppliersPage;
+  window.renderSuppliersPagination = renderSuppliersPagination;
+  window.renderSuppliers = renderSuppliers;
+  window.filterByStatus = filterByStatus;
+  window.handleSearch = handleSearch;
+  window.handleSearchSuppliers = handleSearch;
+  window.setupSearchListeners = setupSearchListeners;
+  window.handleRefreshSuppliers = handleRefreshSuppliers;
+  window.handleExportSuppliers = handleExportSuppliers;
+  window.openSupplierModal = openSupplierModal;
+  window.closeSupplierModal = closeSupplierModal;
+  window.editSupplier = editSupplier;
+  window.handleSupplierSubmit = handleSupplierSubmit;
+  window.confirmDeleteSupplier = confirmDeleteSupplier;
+  window.closeDeleteSupplierModal = closeDeleteSupplierModal;
+  window.executeDeleteSupplier = executeDeleteSupplier;
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSuppliers);
+} else {
+  initSuppliers();
+}

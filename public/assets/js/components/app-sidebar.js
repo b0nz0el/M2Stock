@@ -311,6 +311,7 @@ class AppSidebar extends HTMLElement {
     // 2. Aksi navigasi menu item
     const menuItem = e.target.closest('.menu-item[data-page]');
     if (menuItem) {
+      e.preventDefault();
       const pageId = menuItem.getAttribute('data-page');
       if (window.innerWidth <= 1024) {
         this.close();
@@ -320,27 +321,10 @@ class AppSidebar extends HTMLElement {
         detail: { pageId }
       }));
 
-      // Feedback visual instan: highlight langsung menu yang diklik & munculkan progress bar
+      // Feedback visual instan: highlight langsung menu yang diklik
       this._highlightActiveMenu(pageId);
-      if (typeof document !== 'undefined') {
-        let bar = document.getElementById('nav-progress-bar');
-        if (!bar) {
-          bar = document.createElement('div');
-          bar.id = 'nav-progress-bar';
-          document.body.appendChild(bar);
-        }
-        void bar.offsetWidth;
-        bar.className = 'nav-progress-active';
 
-        const mainContent = document.getElementById('main-content') || document.querySelector('main');
-        if (mainContent) {
-          mainContent.style.transition = 'opacity 0.15s ease-out';
-          mainContent.style.opacity = '0.7';
-        }
-      }
-
-      // Jika elemen bukan link <a> (misal <button>), panggil window.showPage sebagai fallback
-      if (menuItem.tagName !== 'A' && typeof window !== 'undefined' && typeof window.showPage === 'function') {
+      if (typeof window !== 'undefined' && typeof window.showPage === 'function') {
         window.showPage(pageId);
       }
       return;

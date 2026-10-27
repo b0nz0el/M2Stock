@@ -376,8 +376,15 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
   }
 
   // Setup Event Listeners
-  document.addEventListener('DOMContentLoaded', async () => {
+  let backupEventsSetup = false;
+  async function initBackup() {
     applyReadOnlyUI();
+
+    if (backupEventsSetup) {
+      await loadBackupLogs();
+      return;
+    }
+    backupEventsSetup = true;
 
     // Populate Select Table Dropdown
     const selectEl = document.getElementById('select-export-table');
@@ -455,5 +462,16 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
 
     // Initial Load
     await loadBackupLogs();
-  });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.initBackup = initBackup;
+    window.loadBackupLogs = loadBackupLogs;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBackup);
+  } else {
+    initBackup();
+  }
 })();

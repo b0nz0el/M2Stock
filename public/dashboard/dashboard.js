@@ -250,6 +250,14 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  if (typeof window !== 'undefined') {
+    window.loadDashboardData = loadDashboardData;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      loadDashboardData();
+    });
+  } else {
     loadDashboardData();
-  });
+  }

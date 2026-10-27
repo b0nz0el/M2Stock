@@ -255,9 +255,15 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   // Event Listeners
-  document.addEventListener('DOMContentLoaded', async () => {
-    // 1. RBAC View Check
+  let auditEventsSetup = false;
+  async function initAudit() {
     applyReadOnlyUI();
+
+    if (auditEventsSetup) {
+      await loadAuditLogs();
+      return;
+    }
+    auditEventsSetup = true;
 
     // 2. Setup Filter Action Buttons
     const filterButtons = document.querySelectorAll('[data-action-filter]');
@@ -327,5 +333,16 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
     // Initial Load
     await loadAuditLogs();
-  });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.initAudit = initAudit;
+    window.loadAuditLogs = loadAuditLogs;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAudit);
+  } else {
+    initAudit();
+  }
 })();

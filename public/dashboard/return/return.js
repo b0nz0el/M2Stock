@@ -380,8 +380,8 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
 
   function renderPagination() {
     const elInfo = document.getElementById('return-pagination-info');
-    const btnPrev = document.getElementById('btn-prev-page');
-    const btnNext = document.getElementById('btn-next-page');
+    const btnPrev = document.getElementById('btn-return-prev-page') || document.querySelector('#page-return #btn-prev-page') || document.getElementById('btn-prev-page');
+    const btnNext = document.getElementById('btn-return-next-page') || document.querySelector('#page-return #btn-next-page') || document.getElementById('btn-next-page');
 
     if (elInfo) {
       if (totalRecords === 0) {
@@ -940,7 +940,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     if (form) form.addEventListener('submit', handleSubmitForm);
 
     // Pagination buttons
-    const btnPrev = document.getElementById('btn-prev-page');
+    const btnPrev = document.getElementById('btn-return-prev-page') || document.querySelector('#page-return #btn-prev-page') || document.getElementById('btn-prev-page');
     if (btnPrev) {
       btnPrev.addEventListener('click', () => {
         if (currentPage > 1) {
@@ -950,7 +950,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
       });
     }
 
-    const btnNext = document.getElementById('btn-next-page');
+    const btnNext = document.getElementById('btn-return-next-page') || document.querySelector('#page-return #btn-next-page') || document.getElementById('btn-next-page');
     if (btnNext) {
       btnNext.addEventListener('click', () => {
         if (currentPage < totalPages) {
@@ -1031,7 +1031,7 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     }
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  async function initReturn() {
     try {
       userRole = await getUserRole();
     } catch (_) {}
@@ -1039,6 +1039,16 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     setupEvents();
     await loadProducts();
     await loadData();
-  });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.initReturn = initReturn;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReturn);
+  } else {
+    initReturn();
+  }
 
 })();

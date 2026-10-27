@@ -168,3 +168,70 @@ main, #main-content {
     display: none !important;
   }
 
+/* ═══ PRINT STYLES (RECEIPT, PACKING LIST, PO & RETURN) ═══ */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  body.print-mode-receipt #receipt-paper,
+  body.print-mode-receipt #receipt-paper * {
+    visibility: visible !important;
+  }
+  body.print-mode-receipt #receipt-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 3mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  body.print-mode-packing #modal-packing-list,
+  body.print-mode-packing #modal-packing-list * {
+    visibility: visible !important;
+  }
+  body.print-mode-packing #modal-packing-list {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  #po-document-paper,
+  #po-document-paper * {
+    visibility: visible !important;
+  }
+  #po-document-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  #return-document-paper,
+  #return-document-paper * {
+    visibility: visible !important;
+  }
+  #return-document-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

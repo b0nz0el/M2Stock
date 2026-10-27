@@ -446,15 +446,26 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
   }
 
   // Inisialisasi saat DOM siap
-  document.addEventListener('DOMContentLoaded', async () => {
-    setupEventHandlers();
+  let reportEventsSetup = false;
+  async function initReport() {
+    if (!reportEventsSetup) {
+      setupEventHandlers();
+      reportEventsSetup = true;
+    }
     await applyReadOnlyUI();
     await loadReport();
-  });
+  }
 
   // Ekspor ke window untuk akses eksternal bila diperlukan
   if (typeof window !== 'undefined') {
     window.loadReport = loadReport;
+    window.initReport = initReport;
     window.exportReportCSV = exportReportCSV;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReport);
+  } else {
+    initReport();
   }
 })();

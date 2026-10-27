@@ -308,7 +308,16 @@ window.openCreateUserModal = openCreateUserModal;
 window.closeCreateUserModal = closeCreateUserModal;
 window.handleCreateUserSubmit = handleCreateUserSubmit;
 window.loadUsersFromBackend = loadUsersFromBackend;
+window.loadUsers = loadUsers;
+window.openRoleModal = openRoleModal;
+window.closeRoleModal = closeRoleModal;
+window.handleSaveRole = handleSaveRole;
+window.handleSearch = handleSearch;
+window.handleSearchUsers = handleSearch;
+window.initUsers = loadUsers;
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadUsers);
+} else {
   loadUsers();
-});
+}

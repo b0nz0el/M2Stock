@@ -442,7 +442,34 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initCustomers() {
   setupSearchListeners();
   loadCustomers();
-});
+}
+
+if (typeof window !== 'undefined') {
+  window.loadCustomers = loadCustomers;
+  window.initCustomers = initCustomers;
+  window.updateCustomerMetrics = updateCustomerMetrics;
+  window.goToCustomersPage = goToCustomersPage;
+  window.renderCustomersPagination = renderCustomersPagination;
+  window.renderCustomers = renderCustomers;
+  window.handleSearch = handleSearch;
+  window.handleSearchCustomers = handleSearch;
+  window.setupSearchListeners = setupSearchListeners;
+  window.handleRefreshCustomers = handleRefreshCustomers;
+  window.handleExportCustomers = handleExportCustomers;
+  window.openCustomerModal = openCustomerModal;
+  window.closeCustomerModal = closeCustomerModal;
+  window.editCustomer = editCustomer;
+  window.handleCustomerSubmit = handleCustomerSubmit;
+  window.confirmDeleteCustomer = confirmDeleteCustomer;
+  window.closeDeleteCustomerModal = closeDeleteCustomerModal;
+  window.executeDeleteCustomer = executeDeleteCustomer;
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCustomers);
+} else {
+  initCustomers();
+}

@@ -97,9 +97,134 @@ function pageUrl(pageId) {
 
 let isNavigating = false;
 
-/* Navigasi: multi-page clean URL → arahkan ke /dashboard/<slug>/
-   Menyediakan feedback visual instan (highlight menu aktif + top progress bar) sebelum halaman berpindah */
-function showPage(pageId) {
+/* Trigger inisialisasi / muat ulang data untuk halaman target */
+function triggerPageInit(pageId) {
+  if (typeof window === 'undefined') return;
+  switch (pageId) {
+    case 'dashboard':
+      if (typeof window.loadDashboardData === 'function') window.loadDashboardData();
+      break;
+    case 'items':
+      if (typeof window.initItems === 'function') window.initItems();
+      else if (typeof window.loadItemsFromBackend === 'function') window.loadItemsFromBackend();
+      break;
+    case 'in':
+      if (typeof window.loadInTransactions === 'function') window.loadInTransactions();
+      if (typeof window.loadDropdowns === 'function') window.loadDropdowns();
+      break;
+    case 'out':
+      if (typeof window.loadOutTransactions === 'function') window.loadOutTransactions();
+      if (typeof window.loadDropdowns === 'function') window.loadDropdowns();
+      break;
+    case 'po':
+      if (typeof window.initPo === 'function') window.initPo();
+      break;
+    case 'return':
+      if (typeof window.initReturn === 'function') window.initReturn();
+      break;
+    case 'suppliers':
+      if (typeof window.loadSuppliers === 'function') window.loadSuppliers();
+      break;
+    case 'customers':
+      if (typeof window.loadCustomers === 'function') window.loadCustomers();
+      break;
+    case 'cash':
+      if (typeof window.initCash === 'function') window.initCash();
+      break;
+    case 'debt':
+      if (typeof window.initDebt === 'function') window.initDebt();
+      break;
+    case 'report':
+      if (typeof window.loadReport === 'function') window.loadReport();
+      break;
+    case 'users':
+      if (typeof window.loadUsers === 'function') window.loadUsers();
+      break;
+    case 'audit':
+      if (typeof window.initAudit === 'function') window.initAudit();
+      break;
+    case 'backup':
+      if (typeof window.initBackup === 'function') window.initBackup();
+      break;
+    case 'settings':
+      if (typeof window.initSettings === 'function') window.initSettings();
+      break;
+    case 'notif':
+      if (typeof window.initNotif === 'function') window.initNotif();
+      break;
+  }
+  if (typeof window.refreshIcons === 'function') {
+    window.refreshIcons();
+  } else if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+/* Navigasi: SPA client routing (0ms transition) dengan fallback MPA clean URL */
+function showPage(pageId, pushState = true) {
+  if (!pageId) pageId = 'dashboard';
+
+  const targetPageEl = document.getElementById('page-' + pageId);
+  const isSpaMode = typeof document !== 'undefined' && document.querySelectorAll('.page').length > 1;
+
+  // Mode SPA: jika ada container halaman target di dokumen
+  if (isSpaMode && targetPageEl) {
+    // 1. Matikan semua container halaman dan aktifkan target
+    document.querySelectorAll('.page').forEach(function(p) {
+      p.classList.remove('active');
+    });
+    targetPageEl.classList.add('active');
+
+    // 2. Tandai item menu aktif di sidebar & bottom nav
+    const appSidebar = document.querySelector('app-sidebar');
+    if (appSidebar && typeof appSidebar._highlightActiveMenu === 'function') {
+      appSidebar._highlightActiveMenu(pageId);
+    }
+    document.querySelectorAll('.bottom-nav-item').forEach(function(b) {
+      const isActive = b.dataset.tab === pageId;
+      b.classList.toggle('active', isActive);
+      if (isActive) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
+    activeBottomTab = BOTTOM_TABS.indexOf(pageId) !== -1 ? pageId : 'menu';
+
+    // 3. Update breadcrumb dan judul dokumen
+    const bc = document.getElementById('breadcrumb');
+    if (bc && pageTitles[pageId]) bc.textContent = pageTitles[pageId];
+    if (typeof document !== 'undefined') {
+      document.title = 'aQuaStock Pro - ' + (pageTitles[pageId] || pageId);
+    }
+
+    // 4. Update riwayat peramban tanpa hard reload
+    const url = pageUrl(pageId);
+    if (pushState && typeof window !== 'undefined' && window.history && typeof window.history.pushState === 'function') {
+      if (window.location.pathname !== url) {
+        window.history.pushState({ pageId: pageId }, '', url);
+      }
+    }
+
+    // 5. Tutup sidebar mobile jika terbuka
+    if (typeof window !== 'undefined' && window.innerWidth <= (typeof MOBILE_BREAKPOINT !== 'undefined' ? MOBILE_BREAKPOINT : 1024)) {
+      closeSidebar();
+    }
+
+    // 6. Jalankan pemuatan data untuk halaman target
+    triggerPageInit(pageId);
+
+    // 7. A11y: pindahkan fokus ke heading halaman baru
+    const heading = targetPageEl.querySelector('h1, h2');
+    if (heading) {
+      heading.setAttribute('tabindex', '-1');
+      if (typeof focusProgrammatically === 'function') {
+        focusProgrammatically(heading);
+      } else {
+        heading.focus();
+      }
+    }
+    return;
+  }
+
+  // Mode Fallback MPA (jika halaman dibuka standalone)
   if (isNavigating) return;
   const currentId = currentPageId();
   if (currentId === pageId) return;
@@ -107,7 +232,6 @@ function showPage(pageId) {
   const url = pageUrl(pageId);
   isNavigating = true;
 
-  // 1. Feedback instan: tandai item menu yang diklik langsung aktif
   const appSidebar = document.querySelector('app-sidebar');
   if (appSidebar && typeof appSidebar._highlightActiveMenu === 'function') {
     appSidebar._highlightActiveMenu(pageId);
@@ -119,31 +243,10 @@ function showPage(pageId) {
     else b.removeAttribute('aria-current');
   });
 
-  // 2. Munculkan top progress bar tipis Linear-style
-  if (typeof document !== 'undefined') {
-    let bar = document.getElementById('nav-progress-bar');
-    if (!bar) {
-      bar = document.createElement('div');
-      bar.id = 'nav-progress-bar';
-      document.body.appendChild(bar);
-    }
-    void bar.offsetWidth; // force reflow untuk trigger CSS transition
-    bar.className = 'nav-progress-active';
-
-    // 3. Haluskan keluar konten: redupkan <main> secara halus (sidebar & header tetap solid)
-    const mainContent = document.getElementById('main-content') || document.querySelector('main');
-    if (mainContent) {
-      mainContent.style.transition = 'opacity 0.15s ease-out';
-      mainContent.style.opacity = '0.7';
-    }
-  }
-
-  // 4. Tutup drawer mobile jika navigasi dilakukan dari drawer mobile
   if (typeof window !== 'undefined' && window.innerWidth <= (typeof MOBILE_BREAKPOINT !== 'undefined' ? MOBILE_BREAKPOINT : 1024)) {
     closeSidebar();
   }
 
-  // 5. Arahkan peramban ke halaman baru
   window.location.href = url;
 }
 
@@ -348,7 +451,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Sinkronkan tab aktif dengan halaman yang sedang dibuka
-  syncActiveState();
+  if (document.querySelectorAll('.page').length > 1) {
+    const initialPage = currentPageId();
+    showPage(initialPage, false);
+  } else {
+    syncActiveState();
+  }
 
   // Selesaikan animasi progress bar & reset state navigasi
   isNavigating = false;
@@ -371,6 +479,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+
+// Penanganan Back/Forward navigasi peramban (SPA routing)
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', function(e) {
+    const pageId = (e.state && e.state.pageId) || currentPageId();
+    showPage(pageId, false);
+  });
+}
 
 // Penanganan Back/Forward cache (bfcache) pada peramban
 window.addEventListener('pageshow', function() {

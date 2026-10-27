@@ -513,13 +513,23 @@ import { getUserRole } from '../../assets/js/utils/rbac.js';
     });
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  async function initDebt() {
     try {
       userRole = await getUserRole();
     } catch (_) {}
 
     setupEvents();
     await loadData();
-  });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.initDebt = initDebt;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDebt);
+  } else {
+    initDebt();
+  }
 
 })();

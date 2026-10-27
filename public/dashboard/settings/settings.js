@@ -539,7 +539,7 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
     }
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  async function initSettings() {
     applyReadOnlyUI();
 
     // Tab buttons event listeners
@@ -606,5 +606,12 @@ import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
       renderCatalogList('setting-category-list', [], 'Kategori gagal dimuat.');
       renderCatalogList('setting-unit-list', [], 'Satuan gagal dimuat.');
     }
-  });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.initSettings = initSettings;
+    window.loadSettings = loadSettings;
+  }
+
+  document.addEventListener('DOMContentLoaded', initSettings);
 })();
