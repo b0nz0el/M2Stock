@@ -344,7 +344,7 @@
     document.getElementById('item-id').value = '';
     document.getElementById('item-stock').disabled = false;
     document.getElementById('item-stock-label').innerHTML = 'Stok Awal <span class="text-[#FF3B30]">*</span>';
-    document.getElementById('item-stock-help').textContent = 'Untuk mengubah stok setelah produk dibuat, gunakan transaksi barang masuk atau barang keluar.';
+    document.getElementById('item-stock-help').textContent = 'Stok awal fisik toko. Jika barang ini dari faktur supplier, isi 0 lalu catat di menu Barang Masuk agar tidak terhitung ganda.';
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
     if (submitBtn) {

@@ -42,6 +42,184 @@
   let unitsData = [];
   let selectedExistingProduct = null;
 
+  // Manajemen Galeri Foto Produk Baru di Barang Masuk
+  let inProductPhotos = [];
+  const MAX_IN_PRODUCT_PHOTOS = 6;
+
+  function renderInPhotoGallery() {
+    const container = document.getElementById('in-gallery-container');
+    const badge = document.getElementById('in-photo-count-badge');
+    if (badge) {
+      badge.textContent = `(${inProductPhotos.length}/${MAX_IN_PRODUCT_PHOTOS})`;
+    }
+
+    if (!container) return;
+
+    if (inProductPhotos.length === 0) {
+      container.innerHTML = `
+        <div class="w-full flex flex-col items-center justify-center p-3 border border-dashed border-white/15 rounded-xl text-center bg-black/20">
+          <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[#A0A0A5] mb-1">
+            <i data-lucide="image" class="w-4 h-4 opacity-60"></i>
+          </div>
+          <p class="text-xs font-medium text-white/80">Belum ada foto produk</p>
+          <p class="text-[11px] text-[#A0A0A5] mt-0.5">Ambil kamera atau pilih hingga ${MAX_IN_PRODUCT_PHOTOS} foto</p>
+        </div>
+      `;
+    } else {
+      let cardsHtml = inProductPhotos.map((photo, idx) => {
+        const isPrimary = idx === 0;
+        return `
+          <div class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-black/40 border ${isPrimary ? 'border-[#0088CC] shadow-[0_0_12px_rgba(0,136,204,0.35)]' : 'border-white/10'} flex items-center justify-center overflow-hidden flex-shrink-0 group">
+            <img src="${escapeHtml(photo.previewUrl)}" alt="Foto ${idx + 1}" class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-200" title="Klik untuk lihat ukuran penuh" onclick="previewInGalleryPhoto(${idx})">
+            
+            ${isPrimary ? `
+              <span class="absolute top-1 left-1 bg-[#0088CC] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow pointer-events-none">
+                <i data-lucide="star" class="w-2.5 h-2.5 fill-current"></i> Utama
+              </span>
+            ` : `
+              <button type="button" onclick="setInPhotoAsPrimary(${idx})" title="Jadikan Foto Utama" class="opacity-0 group-hover:opacity-100 focus:opacity-100 absolute top-1 left-1 bg-black/80 hover:bg-[#0088CC] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center gap-1 transition shadow cursor-pointer">
+                <i data-lucide="star" class="w-2.5 h-2.5"></i> Utama
+              </button>
+            `}
+
+            <button type="button" onclick="removeInPhotoByIndex(${idx})" title="Hapus foto ini" aria-label="Hapus foto ${idx + 1}" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-[#FF3B30] text-white flex items-center justify-center transition shadow opacity-90 hover:opacity-100 z-10 cursor-pointer">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+
+            <span class="absolute bottom-1 right-1 bg-black/75 text-white/80 text-[9px] px-1.5 py-0.2 rounded font-mono pointer-events-none">
+              ${idx + 1}
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      if (inProductPhotos.length < MAX_IN_PRODUCT_PHOTOS) {
+        cardsHtml += `
+          <div onclick="document.getElementById('in-image-file').click()" class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-white/20 hover:border-[#0088CC]/60 bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center gap-1 cursor-pointer transition active:scale-95 flex-shrink-0 group" title="Tambah foto lagi">
+            <i data-lucide="plus" class="w-4 h-4 text-[#32ADE6] group-hover:scale-110 transition"></i>
+            <span class="text-[10px] text-white/70 font-medium">+ Foto</span>
+          </div>
+        `;
+      }
+
+      container.innerHTML = cardsHtml;
+    }
+
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons(container);
+    }
+  }
+
+  function setInPhotoAsPrimary(index) {
+    if (index > 0 && index < inProductPhotos.length) {
+      const [photo] = inProductPhotos.splice(index, 1);
+      inProductPhotos.unshift(photo);
+      renderInPhotoGallery();
+      if (typeof showToast === 'function') {
+        showToast('Foto utama berhasil diubah', 'info');
+      }
+    }
+  }
+
+  function removeInPhotoByIndex(index) {
+    if (index >= 0 && index < inProductPhotos.length) {
+      inProductPhotos.splice(index, 1);
+      renderInPhotoGallery();
+    }
+  }
+
+  function previewInGalleryPhoto(index) {
+    const urls = inProductPhotos.map(p => p.previewUrl);
+    const name = document.getElementById('in-product-search')?.value || 'Foto Produk Baru';
+    const sku = document.getElementById('in-sku')?.value || '';
+    if (typeof window.openImageViewer === 'function') {
+      window.openImageViewer(urls, name, sku, index);
+    }
+  }
+
+  function resetInImageForm() {
+    inProductPhotos = [];
+    const fileInput = document.getElementById('in-image-file');
+    const camInput = document.getElementById('in-image-camera');
+    const compInfo = document.getElementById('in-compression-info');
+
+    if (fileInput) fileInput.value = '';
+    if (camInput) camInput.value = '';
+    if (compInfo) compInfo.classList.add('hidden');
+    renderInPhotoGallery();
+  }
+
+  async function handleInImageSelection(e) {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+
+    if (typeof ImageUtils === 'undefined') {
+      if (typeof showToast === 'function') showToast('Modul kompresi gambar (ImageUtils) belum siap', 'error');
+      return;
+    }
+
+    const availableSlots = MAX_IN_PRODUCT_PHOTOS - inProductPhotos.length;
+    if (availableSlots <= 0) {
+      if (typeof showToast === 'function') {
+        showToast(`Maksimal ${MAX_IN_PRODUCT_PHOTOS} foto produk telah tercapai`, 'warning');
+      }
+      e.target.value = '';
+      return;
+    }
+
+    const filesToProcess = files.slice(0, availableSlots);
+    if (files.length > availableSlots && typeof showToast === 'function') {
+      showToast(`Hanya ${availableSlots} foto yang ditambahkan (batas maksimal ${MAX_IN_PRODUCT_PHOTOS} foto)`, 'info');
+    }
+
+    const compInfo = document.getElementById('in-compression-info');
+    const compText = document.getElementById('in-compression-info-text');
+    if (compInfo && compText) {
+      compText.textContent = filesToProcess.length > 1 
+        ? `Mengompresi ${filesToProcess.length} foto ke WebP...` 
+        : 'Mengompresi ke WebP...';
+      compInfo.classList.remove('hidden');
+    }
+
+    let successCount = 0;
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const file = filesToProcess[i];
+      try {
+        if (compText && filesToProcess.length > 1) {
+          compText.textContent = `Mengompresi foto ${i + 1}/${filesToProcess.length}...`;
+        }
+        const result = await ImageUtils.compressImage(file);
+        inProductPhotos.push({
+          id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          blob: result.blob,
+          previewUrl: result.previewUrl,
+          sizeText: `${result.originalSizeText} → ${result.compressedSizeText}`
+        });
+        successCount++;
+      } catch (err) {
+        console.error('Compress error for file:', file.name, err);
+        if (typeof showToast === 'function') {
+          showToast(`Gagal memproses ${file.name}: ${err.message}`, 'error');
+        }
+      }
+    }
+
+    if (compInfo && compText) {
+      if (successCount > 0) {
+        const lastPhoto = inProductPhotos[inProductPhotos.length - 1];
+        compText.textContent = successCount > 1 
+          ? `${successCount} foto siap diunggah (WebP ≤ 1 MB)` 
+          : `${lastPhoto.sizeText} (WebP)`;
+        compInfo.classList.remove('hidden');
+      } else {
+        compInfo.classList.add('hidden');
+      }
+    }
+
+    e.target.value = '';
+    renderInPhotoGallery();
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return String(str)
@@ -175,6 +353,7 @@
     if (!prod) return;
 
     selectedExistingProduct = prod;
+    resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
     if (prodInput) {
       if (prodInput.tagName === 'SELECT' && !prodInput.querySelector(`option[value="${prod.id}"]`)) {
@@ -233,6 +412,7 @@
 
   function selectNewProduct(name) {
     selectedExistingProduct = null;
+    resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
     if (prodInput) {
       prodInput.value = '';
@@ -262,12 +442,14 @@
     }
 
     autoUpdateInSkuPlaceholder();
+    renderInPhotoGallery();
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     document.getElementById('in-price')?.focus();
   }
 
   function clearInProductSelection() {
     selectedExistingProduct = null;
+    resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
     if (prodInput) {
       prodInput.value = '';
@@ -514,6 +696,33 @@
           }
         }
 
+        // Upload foto jika ada
+        let finalImageUrl = null;
+        const finalUrls = [];
+        if (inProductPhotos.length > 0 && typeof Api.storage?.uploadImage === 'function') {
+          for (let i = 0; i < inProductPhotos.length; i++) {
+            const photo = inProductPhotos[i];
+            submitBtn.innerHTML = `<span>Mengunggah Foto (${i + 1}/${inProductPhotos.length})...</span>`;
+            const cleanSku = (skuVal || productName || 'item').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+            const imagePath = `${cleanSku}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}.webp`;
+            try {
+              const uploadRes = await Api.storage.uploadImage(photo.blob, imagePath);
+              if (uploadRes && uploadRes.ok && uploadRes.data?.publicUrl) {
+                finalUrls.push(uploadRes.data.publicUrl);
+              }
+            } catch (upErr) {
+              console.warn('Gagal upload foto produk masuk:', upErr);
+            }
+          }
+        }
+        if (finalUrls.length === 1) {
+          finalImageUrl = finalUrls[0];
+        } else if (finalUrls.length > 1) {
+          finalImageUrl = JSON.stringify(finalUrls);
+        }
+
+        submitBtn.innerHTML = '<span>Mendaftarkan Produk...</span>';
+
         const createRes = await Api.items.create({
           name: productName,
           brand: brandVal,
@@ -524,7 +733,9 @@
           cost_price: price,
           sell_price: sellPrice,
           stock: 0,
-          min_stock: 3
+          min_stock: 3,
+          image_url: finalImageUrl,
+          images: finalUrls
         });
 
         if (!createRes.ok || !createRes.data) {
@@ -550,6 +761,7 @@
       if (typeof showToast === 'function') {
         showToast('Barang masuk berhasil dicatat! Stok diperbarui.', 'success');
       }
+      resetInImageForm();
       closeInModal();
       await loadInTransactions();
       await loadDropdowns();
@@ -959,6 +1171,11 @@
   window.autoUpdateInSkuPlaceholder = autoUpdateInSkuPlaceholder;
   window.applyInAutoSku = applyInAutoSku;
   window.getLastProductSequence = getLastProductSequence;
+  window.setInPhotoAsPrimary = setInPhotoAsPrimary;
+  window.removeInPhotoByIndex = removeInPhotoByIndex;
+  window.previewInGalleryPhoto = previewInGalleryPhoto;
+  window.handleInImageSelection = handleInImageSelection;
+  window.resetInImageForm = resetInImageForm;
 
   document.addEventListener('DOMContentLoaded', function () {
     setupSearchListeners();

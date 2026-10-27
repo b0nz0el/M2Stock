@@ -14,6 +14,28 @@
   align-items: center;
 }
 
+/* ═══ RESPONSIVE TEXT UTILITIES: Eliminasi Teks Ganda (sm:hidden vs sm:inline) ═══ */
+@media (min-width: 640px) {
+  .sm\:hidden {
+    display: none !important;
+  }
+  .hidden.sm\:inline {
+    display: inline !important;
+  }
+  .hidden.sm\:inline-flex {
+    display: inline-flex !important;
+  }
+}
+@media (max-width: 639px) {
+  .hidden.sm\:inline,
+  .hidden.sm\:inline-flex {
+    display: none !important;
+  }
+  .sm\:hidden {
+    display: inline !important;
+  }
+}
+
 #page-suppliers .suppliers-page-actions > button {
   min-height: 44px;
 }

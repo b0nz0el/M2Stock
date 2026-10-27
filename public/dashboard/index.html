@@ -2916,7 +2916,7 @@
         <div>
           <label for="item-stock" id="item-stock-label" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Awal <span class="text-[#FF3B30]">*</span></label>
           <input type="number" id="item-stock" min="0" value="0" required="" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
-          <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Untuk mengubah stok setelah produk dibuat, gunakan transaksi barang masuk atau barang keluar.</p>
+          <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Stok awal fisik toko. Jika barang ini dari faktur supplier, isi 0 lalu catat di menu Barang Masuk agar tidak terhitung ganda.</p>
         </div>
       </div>
 
@@ -3071,6 +3071,44 @@
               <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
               <span>Auto SKU</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Upload & Preview Galeri Foto Produk Baru (Multi-Foto & Kamera) -->
+        <div class="pt-2 border-t border-white/5 space-y-2">
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-medium text-[#A0A0A5]">Foto Produk Baru <span id="in-photo-count-badge" class="text-white/60 font-mono text-[11px]">(0/6)</span></label>
+            <span class="text-[11px] text-[#A0A0A5]">Bisa &gt;1 foto • WebP ≤ 1 MB</span>
+          </div>
+
+          <div class="p-2.5 bg-black/40 border border-white/10 rounded-xl space-y-2.5">
+            <!-- Gallery List / Horizontal Scroll Cards -->
+            <div id="in-gallery-container" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+              <!-- Diisi secara dinamis oleh renderInPhotoGallery() -->
+            </div>
+
+            <!-- Controls & Compression Info -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-white/5">
+              <input type="file" id="in-image-camera" accept="image/*" capture="environment" class="hidden" onchange="handleInImageSelection(event)">
+              <input type="file" id="in-image-file" accept="image/*,image/heic" multiple class="hidden" onchange="handleInImageSelection(event)">
+              
+              <div class="flex items-center gap-2">
+                <button type="button" id="btn-in-capture-camera" onclick="document.getElementById('in-image-camera').click()" class="bg-[#0088CC]/20 hover:bg-[#0088CC]/30 border border-[#0088CC]/40 text-[#32ADE6] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+                  <i data-lucide="camera" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                  <span>Ambil Kamera</span>
+                </button>
+                <button type="button" id="btn-in-pick-photo" onclick="document.getElementById('in-image-file').click()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition active:scale-95">
+                  <i data-lucide="image" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                  <span>Pilih Galeri</span>
+                </button>
+              </div>
+
+              <!-- Info Ukuran Kompresi -->
+              <div id="in-compression-info" class="hidden text-[11px] text-[#34C759] flex items-center gap-1.5 font-mono">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#34C759] flex-shrink-0" aria-hidden="true"></i>
+                <span id="in-compression-info-text">WebP ≤ 1 MB</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
