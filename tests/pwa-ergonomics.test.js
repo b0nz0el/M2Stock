@@ -28,9 +28,9 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
   });
 
   describe('Touch-Action and Tap Delay Elimination', () => {
-    it('defines touch-action: manipulation in base.css', () => {
+    it('defines touch-action: pan-x pan-y !important in base.css to lock pinch-zoom while enabling smooth scrolling', () => {
       const baseCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/base.css'), 'utf8');
-      expect(baseCss).toContain('touch-action: manipulation;');
+      expect(baseCss).toContain('touch-action: pan-x pan-y !important;');
       expect(baseCss).toContain('-webkit-tap-highlight-color: transparent;');
     });
   });
@@ -195,9 +195,23 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(scannerJs).toContain('facingMode: { ideal:');
     });
 
-    it('verifies photo product picker accepts universal image format for Android and iOS', () => {
+    it('verifies photo product picker provides dual camera and gallery options for all mobile devices', () => {
       const modalHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
       expect(modalHtml).toContain('id="item-image-file" accept="image/*,image/heic"');
+      expect(modalHtml).toContain('id="item-image-camera" accept="image/*" capture="environment"');
+      expect(modalHtml).toContain('id="btn-capture-camera"');
+      expect(modalHtml).toContain('id="btn-pick-photo"');
+    });
+
+    it('verifies Google Drive cloud backup provides dedicated auth dialog and connection flow', () => {
+      const modalHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      expect(modalHtml).toContain('id="modal-gdrive-auth"');
+      expect(modalHtml).toContain('id="btn-sync-gdrive"');
+      expect(modalHtml).toContain('id="btn-disconnect-gdrive"');
+
+      const backupJs = fs.readFileSync(path.join(rootDir, 'public/dashboard/backup.js'), 'utf8');
+      expect(backupJs).toContain('handleGoogleDriveLogin');
+      expect(backupJs).toContain('aquastock_gdrive_auth');
     });
 
     it('verifies Barang Masuk add button has modern gradient styling', () => {
@@ -210,18 +224,19 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('linear-gradient(135deg, #0088CC 0%, #32ADE6 100%)');
     });
 
-    it('verifies iOS pinch-to-zoom gestures are prevented in app.js', () => {
+    it('verifies multi-touch pinch-to-zoom and gesture events are prevented in app.js', () => {
       const appJs = fs.readFileSync(path.join(rootDir, 'public/assets/js/app.js'), 'utf8');
       expect(appJs).toContain('gesturestart');
       expect(appJs).toContain('e.preventDefault()');
+      expect(appJs).toContain('e.touches.length > 1');
     });
 
-    it('verifies service worker and components are bumped to v3.4.4', () => {
+    it('verifies service worker and components are bumped to v3.4.5', () => {
       const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
-      expect(sw).toContain('aquastock-v3.4.4-pwa');
+      expect(sw).toContain('aquastock-v3.4.5-pwa');
 
       const appSidebar = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
-      expect(appSidebar).toContain('v3.4.4');
+      expect(appSidebar).toContain('v3.4.5');
     });
   });
 });

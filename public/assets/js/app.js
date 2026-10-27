@@ -541,7 +541,7 @@ if (typeof window !== 'undefined') {
       }
 
       if (typeof showToast === 'function') {
-        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.4)!', 'success');
+        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.5)!', 'success');
       }
       setTimeout(() => {
         window.location.reload();
@@ -674,11 +674,32 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Lock pinch-to-zoom on iOS WebKit to enforce solid native-app ergonomics
-if (typeof document !== 'undefined') {
-  document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
-  document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
-  document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+// Lock pinch-to-zoom on Android & iOS to enforce solid native-app ergonomics
+if (typeof window !== 'undefined') {
+  // 1. Cegah pinch-to-zoom 2 jari pada Android & iOS
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // 2. Cegah zoom gestur iOS Safari
+  window.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+  window.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+  window.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+
+  // 3. Cegah Ctrl + Wheel / Trackpad zoom
+  window.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 }
 
 if (typeof module !== 'undefined' && module.exports) {

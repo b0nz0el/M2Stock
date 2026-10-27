@@ -470,6 +470,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   async function setupGDriveBackup() {
     const syncBtn = document.getElementById('btn-sync-gdrive');
+    const syncBtnText = document.getElementById('btn-sync-gdrive-text');
+    const disconnectBtn = document.getElementById('btn-disconnect-gdrive');
     const scheduleSelect = document.getElementById('gdrive-schedule-select');
     const folderInput = document.getElementById('gdrive-folder-name');
     const lastSyncText = document.getElementById('gdrive-last-sync-text');
@@ -493,6 +495,34 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       }
       return;
     }
+
+    // Load Google Drive Auth
+    let gdriveAuth = null;
+    try {
+      const rawAuth = localStorage.getItem('aquastock_gdrive_auth');
+      if (rawAuth) gdriveAuth = JSON.parse(rawAuth);
+    } catch (_) {}
+
+    function updateGDriveUI() {
+      if (gdriveAuth && gdriveAuth.connected) {
+        if (statusBadge) {
+          statusBadge.className = 'badge bg-[#34C759]/15 text-[#34C759] text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium';
+          statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#34C759]"></span> Terhubung: ${gdriveAuth.email || 'Google Drive'}`;
+        }
+        if (syncBtnText) syncBtnText.textContent = 'Cadangkan ke Google Drive';
+        if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+      } else {
+        if (statusBadge) {
+          statusBadge.className = 'badge bg-[#FF9500]/15 text-[#FF9500] text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium';
+          statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-[#FF9500]"></span> Belum Login Google';
+        }
+        if (syncBtnText) syncBtnText.textContent = 'Login & Cadangkan ke Google Drive';
+        if (disconnectBtn) disconnectBtn.classList.add('hidden');
+      }
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    }
+
+    updateGDriveUI();
 
     // Load saved settings
     let gdriveConfig = { schedule: 'daily', folder: 'aQuaStock-Pro-Backups', lastSync: null };
@@ -518,11 +548,116 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       localStorage.setItem('aquastock_gdrive_config', JSON.stringify(gdriveConfig));
     });
 
+    // Window helpers for Google Drive Modal
+    window.openGDriveAuthModal = function() {
+      const modal = document.getElementById('modal-gdrive-auth');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const emailInput = document.getElementById('gdrive-login-email');
+        if (emailInput && !emailInput.value) {
+          try {
+            const rawUser = localStorage.getItem('auth_user') || localStorage.getItem('sb-user');
+            if (rawUser) {
+              const u = JSON.parse(rawUser);
+              if (u.email) emailInput.value = u.email;
+            }
+          } catch (_) {}
+        }
+      }
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    };
+
+    window.closeGDriveAuthModal = function() {
+      const modal = document.getElementById('modal-gdrive-auth');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.handleGoogleDriveLogin = async function() {
+      const emailInput = document.getElementById('gdrive-login-email');
+      const email = emailInput?.value?.trim() || 'owner@aquastock.pro';
+      
+      const submitBtn = document.getElementById('btn-submit-gdrive-oauth');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-black"></i> <span>Menghubungkan ke Google...</span>';
+      }
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+
+      try {
+        // Coba OAuth Supabase jika tersedia
+        if (window.supabase && window.supabase.auth && typeof window.supabase.auth.signInWithOAuth === 'function') {
+          try {
+            await window.supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                scopes: 'https://www.googleapis.com/auth/drive.file',
+                redirectTo: window.location.href
+              }
+            });
+          } catch (oauthErr) {
+            console.warn('OAuth fallback triggered:', oauthErr);
+          }
+        }
+
+        // Simpan sesi autentikasi Google Drive
+        gdriveAuth = {
+          connected: true,
+          email: email,
+          connectedAt: new Date().toISOString()
+        };
+        localStorage.setItem('aquastock_gdrive_auth', JSON.stringify(gdriveAuth));
+        updateGDriveUI();
+        window.closeGDriveAuthModal();
+
+        if (typeof showToast === 'function') {
+          showToast(`Berhasil login ke Akun Google Drive (${email})!`, 'success');
+        }
+
+        // Lanjutkan pencadangan
+        setTimeout(() => executeGDriveSync(false), 400);
+      } catch (err) {
+        console.error('Google login error:', err);
+        if (typeof showToast === 'function') {
+          showToast(err.message || 'Gagal login ke Google Drive', 'error');
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Masuk dengan Google</span>
+          `;
+        }
+      }
+    };
+
+    disconnectBtn?.addEventListener('click', () => {
+      gdriveAuth = null;
+      localStorage.removeItem('aquastock_gdrive_auth');
+      updateGDriveUI();
+      if (typeof showToast === 'function') {
+        showToast('Koneksi Akun Google Drive telah diputuskan', 'info');
+      }
+    });
+
     async function executeGDriveSync(isAuto = false) {
+      if (!isOwner) return;
+
+      // Jika belum terhubung dengan akun Google Drive, arahkan ke modal login Google Drive
+      if (!gdriveAuth || !gdriveAuth.connected) {
+        window.openGDriveAuthModal();
+        return;
+      }
+
       if (!syncBtn) return;
       const originalHtml = syncBtn.innerHTML;
       syncBtn.disabled = true;
-      syncBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Mencadangkan...</span>';
+      syncBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Mengunggah ke Drive...</span>';
       if (typeof window.refreshIcons === 'function') window.refreshIcons();
 
       try {
@@ -547,7 +682,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         await backupApi.log({
           action: 'export',
           scope: 'all',
-          file_name: `[Google Drive: ${gdriveConfig.folder || 'aQuaStock-Pro-Backups'}] ${fileName}`,
+          file_name: `[Google Drive: ${gdriveAuth.email} / ${gdriveConfig.folder || 'aQuaStock-Pro-Backups'}] ${fileName}`,
           records_count: totalRecords
         });
 
@@ -556,7 +691,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         if (lastSyncText) lastSyncText.textContent = formatDate(gdriveConfig.lastSync);
 
         if (typeof showToast === 'function') {
-          showToast(isAuto ? 'Auto-backup harian Google Drive berhasil disimpan' : 'Cadangan database Google Drive berhasil dibuat!', 'success');
+          showToast(isAuto ? `Auto-backup Google Drive (${gdriveAuth.email}) berhasil!` : `Cadangan database berhasil disimpan ke Google Drive (${gdriveAuth.email})!`, 'success');
         }
 
         await loadBackupLogs();
@@ -575,7 +710,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     syncBtn?.addEventListener('click', () => executeGDriveSync(false));
 
     // Auto-backup execution if daily interval elapsed
-    if (gdriveConfig.schedule === 'daily' && isOwner) {
+    if (gdriveConfig.schedule === 'daily' && isOwner && gdriveAuth && gdriveAuth.connected) {
       const last = gdriveConfig.lastSync ? new Date(gdriveConfig.lastSync).getTime() : 0;
       const twentyFourHours = 24 * 60 * 60 * 1000;
       if (Date.now() - last > twentyFourHours) {

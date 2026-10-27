@@ -1,3 +1,13 @@
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function formatRupiahVal(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
   }
@@ -123,7 +133,7 @@
               : getChannelBadge(tx.channel);
             const kasir = (typeof window.resolveUserName === 'function')
               ? window.resolveUserName(tx.created_by)
-              : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'David');
+              : (typeof tx.created_by === 'string' && !tx.created_by.includes('-') ? tx.created_by : 'David');
             const isOut = tx.type === 'out';
             const qtyStr = isOut ? `-${tx.qty}` : `+${tx.qty}`;
             const qtyClass = isOut ? 'text-[#FF3B30]' : 'text-[#34C759]';
@@ -255,8 +265,12 @@
       }
 
       // Update sales bar chart ALWAYS
-      if (typeof window.updateDashboardSalesChart === 'function') {
-        window.updateDashboardSalesChart(chartLabels, salesDaily, profitDaily);
+      try {
+        if (typeof window.updateDashboardSalesChart === 'function') {
+          window.updateDashboardSalesChart(chartLabels, salesDaily, profitDaily);
+        }
+      } catch (chartErr) {
+        console.warn('Could not update sales chart:', chartErr);
       }
 
       // D. Channel Chart (sesuai periode terpilih)
@@ -270,20 +284,24 @@
       });
 
       const totalChannelQty = Object.values(channelCounts).reduce((a, b) => a + b, 0);
-      if (typeof window.updateDashboardChannelChart === 'function') {
-        if (totalChannelQty > 0) {
-          window.updateDashboardChannelChart(
-            Object.keys(channelCounts),
-            Object.values(channelCounts),
-            ['#EE4D2D', '#42B549', '#00F2FE', '#0088CC']
-          );
-        } else {
-          window.updateDashboardChannelChart(
-            ['Belum ada data'],
-            [1],
-            ['rgba(255,255,255,0.08)']
-          );
+      try {
+        if (typeof window.updateDashboardChannelChart === 'function') {
+          if (totalChannelQty > 0) {
+            window.updateDashboardChannelChart(
+              Object.keys(channelCounts),
+              Object.values(channelCounts),
+              ['#EE4D2D', '#42B549', '#00F2FE', '#0088CC']
+            );
+          } else {
+            window.updateDashboardChannelChart(
+              ['Belum ada data'],
+              [1],
+              ['rgba(255,255,255,0.08)']
+            );
+          }
         }
+      } catch (channelErr) {
+        console.warn('Could not update channel chart:', channelErr);
       }
 
       if (typeof window.refreshIcons === 'function') window.refreshIcons();

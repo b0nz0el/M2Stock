@@ -14,9 +14,14 @@ html, body {
   background-color: #000;
 }
 
-/* ═══ TOUCH-ACTION & ERGONOMICS (PWA Standards) ═══ */
-/* Menghilangkan delay 300ms pada tap tanpa mematikan pinch-to-zoom */
-html, body, button, a, input, select, textarea {
+/* ═══ TOUCH-ACTION & ERGONOMICS (Native App PWA - Zoom Locked) ═══ */
+/* Mengunci pinch-to-zoom di seluruh layar agar kokoh seperti aplikasi native */
+html, body, #app, main, .page, .card, table {
+  touch-action: pan-x pan-y !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input, select, textarea {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

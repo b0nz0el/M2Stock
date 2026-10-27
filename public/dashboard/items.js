@@ -85,7 +85,9 @@
     const removeBtn = document.getElementById('btn-remove-photo');
     const compInfo = document.getElementById('image-compression-info');
 
+    const camInput = document.getElementById('item-image-camera');
     if (fileInput) fileInput.value = '';
+    if (camInput) camInput.value = '';
     if (urlInput) urlInput.value = '';
     if (previewImg) {
       previewImg.src = '';

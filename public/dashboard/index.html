@@ -1966,13 +1966,16 @@
               <p class="text-xs text-[#A0A0A5] mt-0.5">Otomatisasi pencadangan data toko langsung ke folder Google Drive pribadi Owner</p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span id="gdrive-status-badge" class="badge bg-[#34C759]/15 text-[#34C759] text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium">
-              <span class="w-2 h-2 rounded-full bg-[#34C759]"></span> Cloud Ready
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="gdrive-status-badge" class="badge bg-[#FF9500]/15 text-[#FF9500] text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-[#FF9500]"></span> Belum Login Google
             </span>
-            <button type="button" id="btn-sync-gdrive" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition">
+            <button type="button" id="btn-sync-gdrive" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition cursor-pointer">
               <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-              <span>Cadangkan ke Google Drive</span>
+              <span id="btn-sync-gdrive-text">Cadangkan ke Google Drive</span>
+            </button>
+            <button type="button" id="btn-disconnect-gdrive" class="hidden bg-white/5 hover:bg-[#FF3B30]/15 text-[#A0A0A5] hover:text-[#FF3B30] border border-white/10 px-3 py-2 rounded-xl text-xs font-medium transition cursor-pointer" title="Putuskan akun Google Drive">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </div>
@@ -2000,6 +2003,67 @@
             <p class="text-[10px] text-[#34C759] flex items-center gap-1">
               <i data-lucide="check" class="w-3 h-3"></i> Terverifikasi terenkripsi JSON
             </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL GOOGLE DRIVE AUTH / LOGIN -->
+      <div id="modal-gdrive-auth" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+        <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 grid place-items-center shrink-0">
+                <svg class="w-7 h-7" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+                  <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+                  <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/>
+                  <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15z" fill="#ea4335"/>
+                  <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+                  <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+                  <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-base text-white">Login ke Akun Google Drive</h4>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Otorisasi pencadangan cloud otomatis</p>
+              </div>
+            </div>
+            <button type="button" onclick="closeGDriveAuthModal()" class="text-[#A0A0A5] hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="bg-black/40 border border-white/5 rounded-xl p-3.5 space-y-2 text-xs text-[#A0A0A5]">
+            <p class="text-white font-medium flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-[#34C759]"></i>
+              Pencadangan Cloud Terenkripsi
+            </p>
+            <p>Untuk mengamankan database toko, sistem akan menyimpan snapshot JSON terenkripsi langsung ke folder pribadi Google Drive Anda.</p>
+            <div class="flex items-center gap-2 pt-1 text-[11px] text-[#32ADE6]">
+              <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
+              <span>Izin: Membuat &amp; mengelola file cadangan (drive.file)</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Akun Google / Email Owner</label>
+            <div class="flex gap-2">
+              <input type="email" id="gdrive-login-email" placeholder="nama@gmail.com" class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#4285F4]">
+            </div>
+          </div>
+
+          <div class="space-y-2.5 pt-1">
+            <button type="button" id="btn-submit-gdrive-oauth" onclick="handleGoogleDriveLogin()" class="w-full bg-white hover:bg-white/90 text-black px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 shadow-lg transition cursor-pointer active:scale-95">
+              <svg class="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Masuk dengan Google</span>
+            </button>
+            <button type="button" onclick="closeGDriveAuthModal()" class="w-full py-2.5 text-xs text-[#A0A0A5] hover:text-white transition cursor-pointer">
+              Batal
+            </button>
           </div>
         </div>
       </div>
@@ -2082,7 +2146,7 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="font-bold text-base text-white">Pembaruan &amp; Sinkronisasi Sistem</h3>
-                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30">v3.4.4 (Terkini)</span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30">v3.4.5 (Terkini)</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-[#A0A0A5] border border-white/10">PWA Standalone</span>
               </div>
               <p class="text-xs text-[#A0A0A5] mt-1">Aplikasi PWA ini otomatis tersinkronisasi. Klik periksa pembaruan untuk mengambil aset dan tampilan terbaru secara instan tanpa perlu menginstal ulang aplikasi.</p>
@@ -2420,7 +2484,7 @@
               </div>
               <div>
                 <h3 class="font-semibold text-base sm:text-lg text-white">Pembaruan &amp; Sinkronisasi Sistem PWA</h3>
-                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white">aQuaStock Pro v3.4.4 (PWA Local-First)</span></p>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white">aQuaStock Pro v3.4.5 (PWA Local-First)</span></p>
               </div>
             </div>
             <button type="button" onclick="window.checkForPwaUpdate()" class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-md">
@@ -2774,13 +2838,18 @@
 
           <!-- Controls & Compression Info -->
           <div class="flex-1 min-w-0 space-y-1.5">
+            <input type="file" id="item-image-camera" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(event)">
             <input type="file" id="item-image-file" accept="image/*,image/heic" class="hidden" onchange="handleImageSelection(event)">
             <div class="flex flex-wrap items-center gap-2">
-              <button type="button" onclick="document.getElementById('item-image-file').click()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition">
-                <i data-lucide="upload" class="w-3.5 h-3.5" aria-hidden="true"></i>
-                <span>Pilih Foto</span>
+              <button type="button" id="btn-capture-camera" onclick="document.getElementById('item-image-camera').click()" class="bg-[#0088CC]/20 hover:bg-[#0088CC]/30 border border-[#0088CC]/40 text-[#32ADE6] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+                <i data-lucide="camera" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                <span>Ambil Kamera</span>
               </button>
-              <span class="text-[11px] text-[#A0A0A5]">JPG, PNG, WebP (Maks. 5 MB)</span>
+              <button type="button" id="btn-pick-photo" onclick="document.getElementById('item-image-file').click()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition active:scale-95">
+                <i data-lucide="image" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                <span>Pilih Galeri</span>
+              </button>
+              <span class="text-[11px] text-[#A0A0A5]">WebP &lt; 500 KB</span>
             </div>
             <!-- Info Ukuran Kompresi -->
             <div id="image-compression-info" class="hidden text-[11px] text-[#34C759] flex items-center gap-1.5 font-mono">
