@@ -470,4 +470,22 @@ if (typeof window !== 'undefined') {
   });
 })();
 
+/* ═══ Global Logout Event Delegation ═══ */
+document.addEventListener('click', function handleGlobalLogout(e) {
+  const logoutBtn = e.target.closest('[data-action="logout"]');
+  if (!logoutBtn) return;
+  e.preventDefault();
+  try { localStorage.removeItem('auth_user'); } catch (_) {}
+  try { sessionStorage.removeItem('rbac_user_role'); } catch (_) {}
+  if (window.Auth && typeof window.Auth.logout === 'function') {
+    window.Auth.logout().then(() => {
+      window.location.replace('/login/');
+    }).catch(() => {
+      window.location.replace('/login/');
+    });
+  } else {
+    window.location.replace('/login/');
+  }
+});
+
 

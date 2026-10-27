@@ -537,6 +537,12 @@ class AppSidebar extends HTMLElement {
           <a href="${getUrl('settings')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="settings">
             <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i> Settings
           </a>
+
+          <!-- Tombol Keluar Langsung di Drawer Mobile -->
+          <button type="button" data-action="logout" class="md:hidden w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#FF453A] hover:bg-[#FF453A]/10 border border-[#FF453A]/20 transition mt-4 mb-2">
+            <i data-lucide="log-out" class="w-4 h-4 text-[#FF453A]" aria-hidden="true"></i>
+            <span>Keluar dari Akun</span>
+          </button>
         </nav>
 
         <!-- User Profile Footer -->
@@ -547,7 +553,7 @@ class AppSidebar extends HTMLElement {
             <span id="sidebar-user-role" class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
           </div>
           <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout"
-                  class="p-2 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] transition flex-shrink-0">
+                  class="p-2 hover:bg-[#FF3B30]/15 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] transition flex-shrink-0">
             <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
           </button>
         </div>

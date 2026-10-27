@@ -410,9 +410,11 @@
     z-index: 60;
     transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     height: 100vh;
+    height: 100dvh;
     width: var(--aq-mobile-drawer-width);
     display: flex;
     flex-direction: column;
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
   }
   aside.open {
     left: 0;
@@ -1025,9 +1027,22 @@
   }
 
   app-sidebar aside #sidebar-user-email,
-  app-sidebar aside #sidebar-user-role,
-  app-sidebar aside button[data-action="logout"] {
+  app-sidebar aside #sidebar-user-role {
     display: none !important;
+  }
+
+  app-sidebar aside button[data-action="logout"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    margin: 4px auto 0 !important;
+    color: #A0A0A5 !important;
+  }
+  app-sidebar aside button[data-action="logout"]:hover {
+    color: #FF3B30 !important;
+    background: rgba(255, 59, 48, 0.15) !important;
   }
 
   #page-customers .customers-metrics {

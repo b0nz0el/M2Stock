@@ -87,6 +87,9 @@
           <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
           <span class="hidden md:inline">Tambah</span>
         </button>
+        <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout" class="bg-[#1C1C1E] hover:bg-[#FF3B30]/15 text-[#A0A0A5] hover:text-[#FF3B30] p-2.5 rounded-xl border border-white/5 transition flex items-center justify-center">
+          <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
       </div>
     </header>
 
@@ -2297,8 +2300,12 @@
               </div>
             </div>
 
-            <div class="pt-4 border-t border-white/5 flex justify-end">
-              <button type="submit" id="btn-save-account" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
+            <div class="pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button type="button" data-action="logout" class="w-full sm:w-auto bg-[#FF3B30]/15 hover:bg-[#FF3B30]/25 text-[#FF3B30] border border-[#FF3B30]/30 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span>Keluar dari Akun</span>
+              </button>
+              <button type="submit" id="btn-save-account" class="w-full sm:w-auto bg-[#0088CC] hover:bg-[#0077BB] text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
                 <i data-lucide="save" class="w-4 h-4"></i>
                 <span>Perbarui Profil Akun</span>
               </button>
