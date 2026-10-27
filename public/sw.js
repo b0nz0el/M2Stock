@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.4.8-pwa';
+const CACHE_NAME = 'aquastock-v3.4.9-pwa';
 
 const STATIC_PRECACHE = [
   '/',
@@ -108,7 +108,7 @@ self.addEventListener('fetch', (event) => {
 
   // Critical Assets (CSS & JS): Network-First dengan Cache Fallback
   // Menjamin pembaruan layout dan skrip langsung aktif saat online tanpa tertahan cache basi
-  if (url.pathname.startsWith('/assets/css/') || url.pathname.startsWith('/assets/js/')) {
+  if (url.pathname.startsWith('/assets/css/') || url.pathname.startsWith('/assets/js/') || (url.pathname.startsWith('/dashboard/') && url.pathname.endsWith('.js'))) {
     event.respondWith(
       fetch(req)
         .then((networkRes) => {
