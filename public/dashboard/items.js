@@ -439,7 +439,14 @@
     document.getElementById('item-stock').value = item.stock || 0;
     document.getElementById('item-stock').disabled = true;
     document.getElementById('item-stock-label').textContent = 'Stok Saat Ini';
-    document.getElementById('item-stock-help').innerHTML = 'Stok hanya berubah melalui mutasi. Untuk koreksi stok fisik toko, gunakan tombol <button type="button" onclick="closeItemModal(); openStockAdjustmentModal(\'' + item.id + '\')" class="text-[#FF9500] hover:underline font-semibold inline-flex items-center gap-1"><i data-lucide=\"sliders-horizontal\" class=\"w-3 h-3\"></i> Penyesuaian Stok (Stock Opname)</button>.';
+    document.getElementById('item-stock-help').innerHTML = `
+      <div class="mt-2 p-2.5 rounded-xl bg-[#FF9500]/10 border border-[#FF9500]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span class="text-xs text-white/90">Koreksi / sesuaikan stok fisik?</span>
+        <button type="button" onclick="closeItemModal(); openStockAdjustmentModal('${item.id}')" class="bg-[#FF9500] hover:bg-[#E08500] text-black font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition shadow">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Koreksi Stok (Stock Opname)
+        </button>
+      </div>
+    `;
     const supWrap = document.getElementById('item-supplier-wrap');
     if (supWrap) supWrap.classList.add('hidden');
     const warnBanner = document.getElementById('item-stock-warning-banner');
