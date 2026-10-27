@@ -79,9 +79,6 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       renderKPI();
       renderChart();
       renderTabTable();
-      if (showFeedback && typeof showToast === 'function') {
-        showToast('Laporan berhasil diperbarui', 'info');
-      }
     } catch (err) {
       console.error('Error loadReport:', err);
       if (typeof showToast === 'function') {

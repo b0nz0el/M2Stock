@@ -881,7 +881,6 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         if (icon) icon.classList.add('animate-spin');
         try {
           await loadData();
-          if (typeof showToast === 'function') showToast('Data retur berhasil dimuat ulang', 'info');
         } finally {
           setTimeout(() => {
             if (icon) icon.classList.remove('animate-spin');

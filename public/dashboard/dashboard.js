@@ -37,7 +37,7 @@
     loadDashboardData(currentDashboardPeriod, false);
   }
 
-  async function loadDashboardData(period = null, showFeedback = true) {
+  async function loadDashboardData(period = null, showFeedback = false) {
     const activePeriod = period || document.getElementById('dashboard-period-filter')?.value || currentDashboardPeriod || '30d';
     currentDashboardPeriod = activePeriod;
 
@@ -282,10 +282,6 @@
       }
 
       if (typeof window.refreshIcons === 'function') window.refreshIcons();
-
-      if (showFeedback && typeof window.showToast === 'function') {
-        window.showToast('Data dashboard berhasil dimuat ulang', 'info');
-      }
     } catch (err) {
       console.error('Error loading dashboard data:', err);
       if (typeof window.showToast === 'function') {
