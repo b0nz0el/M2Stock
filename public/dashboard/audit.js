@@ -4,6 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { audit as auditApi } from '../assets/js/api/audit.js';
+import { getClientIp } from '../assets/js/api/_client.js';
 import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 import { getUserRole } from '../assets/js/utils/rbac.js';
 
@@ -17,6 +18,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   let totalRecords = 0;
   let totalPages = 1;
   let currentLogs = [];
+  let detectedCurrentIp = null;
+
+  if (typeof getClientIp === 'function') {
+    getClientIp().then(ip => {
+      detectedCurrentIp = ip;
+      if (currentLogs && currentLogs.length > 0) renderTable();
+    }).catch(() => {});
+  }
 
   function formatDateTime(isoString) {
     if (!isoString) return '-';
@@ -130,7 +139,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (emptyState) emptyState.classList.add('hidden');
 
     tbody.innerHTML = currentLogs.map(log => {
-      const userDisplay = log.user_email || log.profiles?.full_name || 'System / Guest';
+      let userDisplay = log.user_email || log.profiles?.full_name || 'System / Guest';
+      if (typeof window.resolveUserName === 'function') {
+        const resolved = window.resolveUserName(log.user_id, log.user_email);
+        if (resolved && !resolved.startsWith('User-')) {
+          userDisplay = resolved;
+        }
+      }
+      const rawIp = log.ip && log.ip !== '-' ? log.ip : (detectedCurrentIp || '-');
       return `
         <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition-colors">
           <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">
@@ -141,7 +157,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
               <span class="w-6 h-6 rounded-full bg-white/10 text-white flex items-center justify-center text-[10px] font-bold">
                 ${userDisplay.charAt(0).toUpperCase()}
               </span>
-              <span class="truncate max-w-[180px]" title="${userDisplay}">${userDisplay}</span>
+              <span class="truncate max-w-[180px]" title="${escapeHtml(userDisplay)}">${escapeHtml(userDisplay)}</span>
             </div>
           </td>
           <td class="px-5 py-3.5 whitespace-nowrap">
@@ -151,7 +167,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
             <span class="font-medium text-white">${escapeHtml(log.target || '-')}</span>
           </td>
           <td class="px-5 py-3.5 text-[#A0A0A5] font-mono text-xs whitespace-nowrap">
-            <span class="bg-black/30 px-2 py-1 rounded border border-white/5">${escapeHtml(log.ip || '-')}</span>
+            <span class="bg-black/30 px-2 py-1 rounded border border-white/5 text-[11px]">${escapeHtml(rawIp)}</span>
           </td>
         </tr>
       `;

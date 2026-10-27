@@ -134,6 +134,37 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('color: #34C759 !important;');
       expect(responsiveCss).toContain('.card table tbody td[data-label="BARANG"]');
     });
+
+    it('verifies card action buttons are rendered as an ergonomic bottom footer without overlapping', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('position: static !important;');
+      expect(responsiveCss).toContain('border-top: 1px solid rgba(255, 255, 255, 0.08) !important;');
+      expect(responsiveCss).toContain('justify-content: flex-end !important;');
+      expect(responsiveCss).toContain('min-height: 44px !important;');
+    });
+
+    it('verifies user directory resolver exists and maps user IDs to human-readable names', () => {
+      const resolverPath = path.join(rootDir, 'public/assets/js/utils/user-resolver.js');
+      expect(fs.existsSync(resolverPath)).toBe(true);
+      const resolverCode = fs.readFileSync(resolverPath, 'utf8');
+      expect(resolverCode).toContain('resolveUserName');
+      expect(resolverCode).toContain('loadUserDirectory');
+
+      const indexHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      expect(indexHtml).toContain('user-resolver.js');
+    });
+
+    it('verifies client IP address resolution via Cloudflare trace with fallback', () => {
+      const clientCode = fs.readFileSync(path.join(rootDir, 'public/assets/js/api/_client.js'), 'utf8');
+      expect(clientCode).toContain('getClientIp');
+      expect(clientCode).toContain('/cdn-cgi/trace');
+
+      const auditCode = fs.readFileSync(path.join(rootDir, 'public/assets/js/api/audit.js'), 'utf8');
+      expect(auditCode).toContain('getClientIp');
+
+      const loginCode = fs.readFileSync(path.join(rootDir, 'public/assets/js/login.js'), 'utf8');
+      expect(loginCode).toContain('ip: clientIp || null');
+    });
   });
 });
 

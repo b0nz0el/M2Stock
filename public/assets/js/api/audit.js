@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { supabase } from '../supabase-client.js';
-import { formatResponse, handleError } from './_client.js';
+import { formatResponse, handleError, getClientIp } from './_client.js';
 
 export const audit = {
   /**
@@ -94,6 +94,13 @@ export const audit = {
    */
   async log({ action, target, ip = null, user_id = null, user_email = null }) {
     try {
+      // Auto-resolve IP publik pengguna jika tidak disediakan
+      if (!ip) {
+        try {
+          ip = await getClientIp();
+        } catch (_) {}
+      }
+
       // Ambil user auth saat ini jika tidak disediakan
       if (!user_id || !user_email) {
         try {

@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.4.1-pwa';
+const CACHE_NAME = 'aquastock-v3.4.2-pwa';
 
 const STATIC_PRECACHE = [
   '/',
@@ -43,7 +43,8 @@ const STATIC_PRECACHE = [
   '/assets/js/components/app-sidebar.js',
   '/assets/js/components/command-palette.js',
   '/assets/js/components/barcode-scanner.js',
-  '/assets/js/utils/offline-sync.js'
+  '/assets/js/utils/offline-sync.js',
+  '/assets/js/utils/user-resolver.js'
 ];
 
 self.addEventListener('message', (event) => {

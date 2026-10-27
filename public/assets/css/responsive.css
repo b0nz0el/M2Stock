@@ -900,10 +900,10 @@
     padding-right: 16px !important;
   }
 
-  /* Header Baris Kartu (NO. TRANSAKSI, KODE BARANG, NO. PO, dll) */
+  /* Header Baris Kartu (NO. TRANSAKSI, KODE BARANG, NO. PO, dll) — Lebar Penuh */
   .card table tbody tr:has(td:last-child button) td:first-child,
   .card table tbody tr td:first-child {
-    padding-right: 92px !important;
+    padding-right: 0 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     padding-bottom: 10px !important;
     margin-bottom: 8px !important;
@@ -954,19 +954,20 @@
     cursor: pointer;
   }
 
-  /* Aksi cell (tombol): pojok kanan atas — di dalam pill container */
+  /* Aksi cell (tombol): Card Action Footer di bagian bawah kartu — nyaman & tidak over */
   .card table tbody td:last-child:has(button) {
-    position: absolute !important;
-    top: 10px !important;
-    right: 12px !important;
-    padding: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-    width: auto !important;
-    justify-content: flex-end !important;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    width: 100% !important;
     display: flex !important;
+    justify-content: flex-end !important;
     align-items: center !important;
-    z-index: 2 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+    padding-bottom: 0 !important;
+    z-index: 1 !important;
   }
   .card table tbody td:last-child:has(button)::before {
     display: none !important;
@@ -977,12 +978,12 @@
   .card table tbody td:last-child .flex {
     display: inline-flex !important;
     align-items: center !important;
-    background: rgba(255, 255, 255, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 12px !important;
-    padding: 2px !important;
-    gap: 2px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    gap: 8px !important;
+    box-shadow: none !important;
   }
   .card table tbody td:last-child:has(button) button,
   .card table tbody td:last-child button {
@@ -991,15 +992,21 @@
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 10px !important;
+    padding: 8px 12px !important;
     border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     touch-action: manipulation;
     transition: all 0.15s ease !important;
   }
+  .card table tbody td:last-child:has(button) button:hover,
+  .card table tbody td:last-child button:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+  }
   .card table tbody td:last-child:has(button) button:active,
   .card table tbody td:last-child button:active {
-    transform: scale(0.92) !important;
-    background: rgba(255, 255, 255, 0.12) !important;
+    transform: scale(0.94) !important;
+    background: rgba(255, 255, 255, 0.16) !important;
   }
 
   /* Empty State row override: full width, center, no card styling, no absolute action button */

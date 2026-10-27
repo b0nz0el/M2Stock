@@ -278,7 +278,9 @@ export const report = {
     // 7. Tab Kasir
     const cashierMap = {};
     outTransactions.forEach(t => {
-      const kasir = t.created_by ? (t.created_by.slice(0, 8) + '...') : 'Admin';
+      const kasir = (typeof window !== 'undefined' && typeof window.resolveUserName === 'function')
+        ? window.resolveUserName(t.created_by)
+        : (t.created_by && !t.created_by.includes('-') ? t.created_by : 'Kasir');
       const qty = Number(t.qty) || 0;
       const price = Number(t.price) || Number(t.products?.sell_price) || 0;
       const revenue = qty * price;

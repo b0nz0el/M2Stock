@@ -118,7 +118,9 @@
             const channelBadge = tx.type === 'in' 
               ? `<span class="badge bg-[#34C759]/15 text-[#34C759]">Masuk (${tx.suppliers?.name || 'Supplier'})</span>`
               : getChannelBadge(tx.channel);
-            const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+            const kasir = (typeof window.resolveUserName === 'function')
+              ? window.resolveUserName(tx.created_by)
+              : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'Kasir');
             const isOut = tx.type === 'out';
             const qtyStr = isOut ? `-${tx.qty}` : `+${tx.qty}`;
             const qtyClass = isOut ? 'text-[#FF3B30]' : 'text-[#34C759]';

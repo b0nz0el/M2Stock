@@ -17,19 +17,77 @@ export function isSupabaseAvailable() {
   return typeof window !== 'undefined' && Boolean(window.supabase);
 }
 
+let cachedClientIp = null;
+let clientIpPromise = null;
+
 /**
- * Helper pencatatan audit log aman (non-blocking)
+ * Mendapatkan IP Address publik pengguna secara akurat (via Cloudflare Edge / cdn-cgi)
  */
-export function logAudit(action, target) {
+export async function getClientIp() {
+  if (cachedClientIp) return cachedClientIp;
+  try {
+    const stored = sessionStorage.getItem('cached_client_ip');
+    if (stored) {
+      cachedClientIp = stored;
+      return stored;
+    }
+  } catch (_) {}
+
+  if (clientIpPromise) return clientIpPromise;
+
+  clientIpPromise = (async () => {
+    // 1. Ambil dari Cloudflare edge /cdn-cgi/trace (same-origin, zero-latency)
+    try {
+      const res = await fetch('/cdn-cgi/trace', { cache: 'no-store' });
+      if (res.ok) {
+        const text = await res.text();
+        const match = text.match(/^ip=(.+)$/m);
+        if (match && match[1]) {
+          cachedClientIp = match[1].trim();
+          try { sessionStorage.setItem('cached_client_ip', cachedClientIp); } catch (_) {}
+          return cachedClientIp;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fallback ipify jika di localhost
+    try {
+      const res2 = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2500) });
+      if (res2.ok) {
+        const data = await res2.json();
+        if (data && data.ip) {
+          cachedClientIp = data.ip.trim();
+          try { sessionStorage.setItem('cached_client_ip', cachedClientIp); } catch (_) {}
+          return cachedClientIp;
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  })();
+
+  return clientIpPromise;
+}
+
+if (typeof window !== 'undefined') {
+  window.getClientIp = getClientIp;
+}
+
+/**
+ * Helper pencatatan audit log aman (non-blocking) dengan IP valid
+ */
+export async function logAudit(action, target) {
   try {
     if (typeof window === 'undefined') return;
+    const ip = await getClientIp();
     if (window.Api?.audit?.log) {
-      window.Api.audit.log({ action, target });
+      window.Api.audit.log({ action, target, ip });
     } else if (window.supabase && typeof window.supabase.from === 'function') {
       window.supabase.auth.getUser().then(({ data }) => {
         window.supabase.from('audit_logs').insert([{
           action: (action || 'CREATE').toUpperCase(),
           target: target || null,
+          ip: ip || null,
           user_id: data?.user?.id || null,
           user_email: data?.user?.email || null,
           created_at: new Date().toISOString()

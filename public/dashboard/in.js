@@ -822,7 +822,9 @@
       const dateStr = formatTxDate(tx.created_at);
       const prodName = resolveProductName(tx);
       const supName = tx.suppliers?.name || 'Umum';
-      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const kasir = (typeof window.resolveUserName === 'function')
+        ? window.resolveUserName(tx.created_by)
+        : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'Kasir');
       const qty = tx.qty || 0;
       const price = tx.price || 0;
       const total = qty * price;
@@ -887,7 +889,9 @@
       const dateStr = formatTxDate(tx.created_at);
       const prodName = tx.products?.name || ('Produk #' + tx.product_id);
       const supName = tx.suppliers?.name || 'Umum';
-      const kasir = tx.created_by ? (tx.created_by.slice(0, 8) + '...') : 'Admin';
+      const kasir = (typeof window.resolveUserName === 'function')
+        ? window.resolveUserName(tx.created_by)
+        : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'Kasir');
       const qty = tx.qty || 0;
       const price = tx.price || 0;
       const total = qty * price;

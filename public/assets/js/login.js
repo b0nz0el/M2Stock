@@ -153,11 +153,26 @@
       try {
         if (window.supabase) {
           const userObj = res.data?.user || (await window.supabase.auth.getUser())?.data?.user;
+          let clientIp = null;
+          if (typeof window.getClientIp === 'function') {
+            try { clientIp = await window.getClientIp(); } catch (_) {}
+          }
+          if (!clientIp) {
+            try {
+              const traceRes = await fetch('/cdn-cgi/trace', { cache: 'no-store' });
+              if (traceRes.ok) {
+                const match = (await traceRes.text()).match(/^ip=(.+)$/m);
+                if (match && match[1]) clientIp = match[1].trim();
+              }
+            } catch (_) {}
+          }
+
           window.supabase.from('audit_logs').insert([{
             user_id: userObj?.id || null,
             user_email: userObj?.email || email,
             action: 'LOGIN',
             target: 'Login ke sistem via web browser',
+            ip: clientIp || null,
             created_at: new Date().toISOString()
           }]).then(() => {}).catch(() => {});
         }
