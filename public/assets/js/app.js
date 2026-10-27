@@ -604,24 +604,119 @@ if (typeof window !== 'undefined') {
 }
 
 /* ═══ UNIVERSAL IMAGE VIEWER (LIGHTBOX) ═══ */
-function openImageViewer(src, title = '', sku = '') {
-  if (!src || typeof document === 'undefined') return;
-  const modal = document.getElementById('modal-image-viewer');
+let viewerImageList = [];
+let viewerImageIndex = 0;
+let viewerTitle = '';
+let viewerSku = '';
+
+function updateImageViewerDisplay() {
+  if (typeof document === 'undefined') return;
   const img = document.getElementById('image-viewer-img');
-  const titleEl = document.getElementById('image-viewer-title');
-  const skuEl = document.getElementById('image-viewer-sku');
+  const counterEl = document.getElementById('image-viewer-counter');
+  const prevBtn = document.getElementById('btn-viewer-prev');
+  const nextBtn = document.getElementById('btn-viewer-next');
+  const thumbsContainer = document.getElementById('image-viewer-thumbs');
   const downloadLink = document.getElementById('image-viewer-download');
 
-  if (!modal || !img) return;
+  const currentSrc = viewerImageList[viewerImageIndex];
+  if (!currentSrc || !img) return;
 
-  img.src = src;
-  img.alt = title || 'Foto Produk';
-  if (titleEl) titleEl.textContent = title || 'Foto Produk';
-  if (skuEl) skuEl.textContent = sku ? `SKU: ${sku}` : '';
+  img.src = currentSrc;
+  img.alt = viewerTitle || 'Foto Produk';
+
   if (downloadLink) {
-    downloadLink.href = src;
-    downloadLink.download = (sku || title || 'foto-produk').toLowerCase().replace(/\s+/g, '-') + '.webp';
+    downloadLink.href = currentSrc;
+    const namePart = (viewerSku || viewerTitle || 'foto-produk').toLowerCase().replace(/\s+/g, '-');
+    downloadLink.download = `${namePart}-${viewerImageIndex + 1}.webp`;
   }
+
+  const isMulti = viewerImageList.length > 1;
+  if (counterEl) {
+    if (isMulti) {
+      counterEl.textContent = `Foto ${viewerImageIndex + 1} / ${viewerImageList.length}`;
+      counterEl.classList.remove('hidden');
+    } else {
+      counterEl.classList.add('hidden');
+    }
+  }
+
+  if (prevBtn) {
+    if (isMulti) {
+      prevBtn.classList.remove('hidden');
+    } else {
+      prevBtn.classList.add('hidden');
+    }
+  }
+
+  if (nextBtn) {
+    if (isMulti) {
+      nextBtn.classList.remove('hidden');
+    } else {
+      nextBtn.classList.add('hidden');
+    }
+  }
+
+  if (thumbsContainer) {
+    if (isMulti) {
+      thumbsContainer.innerHTML = viewerImageList.map((src, idx) => `
+        <button type="button" onclick="window.setImageViewerIndex ? window.setImageViewerIndex(${idx}) : null" class="w-11 h-11 rounded-lg overflow-hidden border-2 transition ${idx === viewerImageIndex ? 'border-[#0088CC] scale-105 shadow-md' : 'border-white/20 opacity-50 hover:opacity-100'} flex-shrink-0 cursor-pointer" title="Foto ${idx + 1}">
+          <img src="${src}" alt="Thumb ${idx + 1}" class="w-full h-full object-cover">
+        </button>
+      `).join('');
+      thumbsContainer.classList.remove('hidden');
+    } else {
+      thumbsContainer.innerHTML = '';
+      thumbsContainer.classList.add('hidden');
+    }
+  }
+
+  if (typeof window.refreshIcons === 'function') window.refreshIcons();
+}
+
+function navigateImageViewer(direction) {
+  if (viewerImageList.length <= 1) return;
+  viewerImageIndex = (viewerImageIndex + direction + viewerImageList.length) % viewerImageList.length;
+  updateImageViewerDisplay();
+}
+
+function setImageViewerIndex(index) {
+  if (index >= 0 && index < viewerImageList.length) {
+    viewerImageIndex = index;
+    updateImageViewerDisplay();
+  }
+}
+
+function openImageViewer(srcOrList, title = '', sku = '', initialIndex = 0) {
+  if (!srcOrList || typeof document === 'undefined') return;
+  const modal = document.getElementById('modal-image-viewer');
+  const titleEl = document.getElementById('image-viewer-title');
+  const skuEl = document.getElementById('image-viewer-sku');
+
+  if (!modal) return;
+
+  if (Array.isArray(srcOrList)) {
+    viewerImageList = srcOrList.filter(Boolean);
+  } else if (typeof srcOrList === 'string' && srcOrList.trim().startsWith('[') && srcOrList.trim().endsWith(']')) {
+    try {
+      const parsed = JSON.parse(srcOrList);
+      viewerImageList = Array.isArray(parsed) ? parsed.filter(Boolean) : [srcOrList];
+    } catch (_) {
+      viewerImageList = [srcOrList];
+    }
+  } else {
+    viewerImageList = [srcOrList];
+  }
+
+  if (viewerImageList.length === 0) return;
+
+  viewerImageIndex = Math.max(0, Math.min(Number(initialIndex) || 0, viewerImageList.length - 1));
+  viewerTitle = title || 'Foto Produk';
+  viewerSku = sku || '';
+
+  if (titleEl) titleEl.textContent = viewerTitle;
+  if (skuEl) skuEl.textContent = viewerSku ? `SKU: ${viewerSku}` : '';
+
+  updateImageViewerDisplay();
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
@@ -638,11 +733,15 @@ function closeImageViewer() {
   document.body.style.overflow = '';
   const img = document.getElementById('image-viewer-img');
   if (img) img.src = '';
+  viewerImageList = [];
+  viewerImageIndex = 0;
 }
 
 if (typeof window !== 'undefined') {
   window.openImageViewer = openImageViewer;
   window.closeImageViewer = closeImageViewer;
+  window.navigateImageViewer = navigateImageViewer;
+  window.setImageViewerIndex = setImageViewerIndex;
 
   // Tutup saat backdrop diklik
   document.addEventListener('click', (e) => {
@@ -652,13 +751,17 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Tutup dengan tombol Esc
+  // Tutup dengan tombol Esc & navigasi panah kiri/kanan
   document.addEventListener('keydown', (e) => {
+    const modal = document.getElementById('modal-image-viewer');
+    if (!modal || modal.classList.contains('hidden')) return;
+
     if (e.key === 'Escape') {
-      const modal = document.getElementById('modal-image-viewer');
-      if (modal && !modal.classList.contains('hidden')) {
-        closeImageViewer();
-      }
+      closeImageViewer();
+    } else if (e.key === 'ArrowLeft') {
+      navigateImageViewer(-1);
+    } else if (e.key === 'ArrowRight') {
+      navigateImageViewer(1);
     }
   });
 
@@ -669,6 +772,16 @@ if (typeof window !== 'undefined') {
       e.stopPropagation();
       const title = target.getAttribute('data-title') || target.alt || '';
       const sku = target.getAttribute('data-sku') || '';
+      const rawGallery = target.getAttribute('data-gallery');
+      if (rawGallery) {
+        try {
+          const list = JSON.parse(rawGallery);
+          if (Array.isArray(list) && list.length > 0) {
+            openImageViewer(list, title, sku);
+            return;
+          }
+        } catch (_) {}
+      }
       openImageViewer(target.src, title, sku);
     }
   });
@@ -707,7 +820,9 @@ if (typeof module !== 'undefined' && module.exports) {
     syncTableLabels,
     applyAppearance,
     openImageViewer,
-    closeImageViewer
+    closeImageViewer,
+    navigateImageViewer,
+    setImageViewerIndex
   };
 }
 

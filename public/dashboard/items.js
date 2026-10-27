@@ -72,30 +72,181 @@
     }
   }
 
-  let selectedImageBlob = null;
+  let productPhotos = []; // array of { id, type: 'existing'|'new', url?: string, blob?: Blob, previewUrl: string, sizeText?: string }
   let isImageChanged = false;
+  const MAX_PRODUCT_PHOTOS = 6;
+
+  function parseProductImages(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (!trimmed) return [];
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch (_) {}
+      }
+      if (trimmed.includes('|||')) {
+        return trimmed.split('|||').map(s => s.trim()).filter(Boolean);
+      }
+      return [trimmed];
+    }
+    return [];
+  }
+
+  function renderPhotoGallery() {
+    const container = document.getElementById('product-gallery-container');
+    const badge = document.getElementById('photo-count-badge');
+    const hiddenPreview = document.getElementById('item-image-preview');
+    const hiddenPlaceholder = document.getElementById('item-image-placeholder');
+    const hiddenRemoveBtn = document.getElementById('btn-remove-photo');
+    const hiddenUrlInput = document.getElementById('item-image-url');
+
+    if (badge) {
+      badge.textContent = `(${productPhotos.length}/${MAX_PRODUCT_PHOTOS})`;
+    }
+
+    // Sinkronkan ke input legacy untuk backward compatibility
+    if (hiddenUrlInput) {
+      const existingUrls = productPhotos.filter(p => p.url).map(p => p.url);
+      hiddenUrlInput.value = existingUrls[0] || (productPhotos[0]?.previewUrl || '');
+    }
+    if (hiddenPreview) {
+      if (productPhotos.length > 0) {
+        hiddenPreview.src = productPhotos[0].previewUrl;
+        hiddenPreview.classList.remove('hidden');
+      } else {
+        hiddenPreview.src = '';
+        hiddenPreview.classList.add('hidden');
+      }
+    }
+    if (hiddenPlaceholder) {
+      if (productPhotos.length > 0) {
+        hiddenPlaceholder.classList.add('hidden');
+      } else {
+        hiddenPlaceholder.classList.remove('hidden');
+      }
+    }
+    if (hiddenRemoveBtn) {
+      if (productPhotos.length > 0) {
+        hiddenRemoveBtn.classList.remove('hidden');
+      } else {
+        hiddenRemoveBtn.classList.add('hidden');
+      }
+    }
+
+    if (!container) return;
+
+    if (productPhotos.length === 0) {
+      container.innerHTML = `
+        <div class="w-full flex flex-col items-center justify-center p-4 border border-dashed border-white/15 rounded-xl text-center bg-black/20">
+          <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#A0A0A5] mb-1.5">
+            <i data-lucide="image" class="w-5 h-5 opacity-60"></i>
+          </div>
+          <p class="text-xs font-medium text-white/80">Belum ada foto produk</p>
+          <p class="text-[11px] text-[#A0A0A5] mt-0.5">Ambil kamera atau pilih hingga ${MAX_PRODUCT_PHOTOS} foto dari galeri</p>
+        </div>
+      `;
+    } else {
+      let cardsHtml = productPhotos.map((photo, idx) => {
+        const isPrimary = idx === 0;
+        return `
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-black/40 border ${isPrimary ? 'border-[#0088CC] shadow-[0_0_12px_rgba(0,136,204,0.35)]' : 'border-white/10'} flex items-center justify-center overflow-hidden flex-shrink-0 group">
+            <img src="${escapeHtml(photo.previewUrl)}" alt="Foto ${idx + 1}" class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-200" title="Klik untuk lihat ukuran penuh" onclick="previewGalleryPhoto(${idx})">
+            
+            ${isPrimary ? `
+              <span class="absolute top-1 left-1 bg-[#0088CC] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow pointer-events-none">
+                <i data-lucide="star" class="w-2.5 h-2.5 fill-current"></i> Utama
+              </span>
+            ` : `
+              <button type="button" onclick="setPhotoAsPrimary(${idx})" title="Jadikan Foto Utama" class="opacity-0 group-hover:opacity-100 focus:opacity-100 absolute top-1 left-1 bg-black/80 hover:bg-[#0088CC] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center gap-1 transition shadow cursor-pointer">
+                <i data-lucide="star" class="w-2.5 h-2.5"></i> Utama
+              </button>
+            `}
+
+            <button type="button" onclick="removePhotoByIndex(${idx})" title="Hapus foto ini" aria-label="Hapus foto ${idx + 1}" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-[#FF3B30] text-white flex items-center justify-center transition shadow opacity-90 hover:opacity-100 z-10 cursor-pointer">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+
+            <span class="absolute bottom-1 right-1 bg-black/75 text-white/80 text-[9px] px-1.5 py-0.2 rounded font-mono pointer-events-none">
+              ${idx + 1}
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      if (productPhotos.length < MAX_PRODUCT_PHOTOS) {
+        cardsHtml += `
+          <div onclick="document.getElementById('item-image-file').click()" class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border-2 border-dashed border-white/20 hover:border-[#0088CC]/60 bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center gap-1 cursor-pointer transition active:scale-95 flex-shrink-0 group" title="Tambah foto lagi">
+            <i data-lucide="plus" class="w-5 h-5 text-[#32ADE6] group-hover:scale-110 transition"></i>
+            <span class="text-[10px] text-white/70 font-medium">+ Foto</span>
+          </div>
+        `;
+      }
+
+      container.innerHTML = cardsHtml;
+    }
+
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons(container);
+    }
+  }
+
+  function setPhotoAsPrimary(index) {
+    if (index > 0 && index < productPhotos.length) {
+      const [photo] = productPhotos.splice(index, 1);
+      productPhotos.unshift(photo);
+      isImageChanged = true;
+      renderPhotoGallery();
+      if (typeof showToast === 'function') {
+        showToast('Foto utama berhasil diubah', 'info');
+      }
+    }
+  }
+
+  function removePhotoByIndex(index) {
+    if (index >= 0 && index < productPhotos.length) {
+      productPhotos.splice(index, 1);
+      isImageChanged = true;
+      renderPhotoGallery();
+    }
+  }
+
+  function previewGalleryPhoto(index) {
+    const urls = productPhotos.map(p => p.previewUrl);
+    const name = document.getElementById('item-name')?.value || 'Foto Produk';
+    const sku = document.getElementById('item-sku')?.value || '';
+    if (typeof window.openImageViewer === 'function') {
+      window.openImageViewer(urls, name, sku, index);
+    }
+  }
+
+  function removeSelectedPhoto() {
+    productPhotos = [];
+    isImageChanged = true;
+    renderPhotoGallery();
+  }
 
   function resetImageForm() {
-    selectedImageBlob = null;
+    productPhotos = [];
     isImageChanged = false;
     const fileInput = document.getElementById('item-image-file');
-    const urlInput = document.getElementById('item-image-url');
-    const previewImg = document.getElementById('item-image-preview');
-    const placeholder = document.getElementById('item-image-placeholder');
-    const removeBtn = document.getElementById('btn-remove-photo');
+    const camInput = document.getElementById('item-image-camera');
     const compInfo = document.getElementById('image-compression-info');
 
-    const camInput = document.getElementById('item-image-camera');
     if (fileInput) fileInput.value = '';
     if (camInput) camInput.value = '';
-    if (urlInput) urlInput.value = '';
-    if (previewImg) {
-      previewImg.src = '';
-      previewImg.classList.add('hidden');
-    }
-    if (placeholder) placeholder.classList.remove('hidden');
-    if (removeBtn) removeBtn.classList.add('hidden');
     if (compInfo) compInfo.classList.add('hidden');
+    renderPhotoGallery();
+  }
+
+  if (typeof window !== 'undefined') {
+    window.setPhotoAsPrimary = setPhotoAsPrimary;
+    window.removePhotoByIndex = removePhotoByIndex;
+    window.previewGalleryPhoto = previewGalleryPhoto;
+    window.removeSelectedPhoto = removeSelectedPhoto;
   }
 
   function escapeHtml(value) {
@@ -111,59 +262,76 @@
   }
 
   async function handleImageSelection(e) {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
-    try {
-      if (typeof ImageUtils === 'undefined') {
-        throw new Error('Modul kompresi gambar (ImageUtils) belum siap');
-      }
+    if (typeof ImageUtils === 'undefined') {
+      if (typeof showToast === 'function') showToast('Modul kompresi gambar (ImageUtils) belum siap', 'error');
+      return;
+    }
 
-      const compInfo = document.getElementById('image-compression-info');
-      const compText = document.getElementById('compression-info-text');
-      if (compInfo && compText) {
-        compText.textContent = 'Mengompresi ke WebP...';
-        compInfo.classList.remove('hidden');
-      }
-
-      const result = await ImageUtils.compressImage(file);
-      selectedImageBlob = result.blob;
-      isImageChanged = true;
-
-      const previewImg = document.getElementById('item-image-preview');
-      const placeholder = document.getElementById('item-image-placeholder');
-      const removeBtn = document.getElementById('btn-remove-photo');
-
-      if (previewImg) {
-        previewImg.src = result.previewUrl;
-        previewImg.classList.remove('hidden');
-      }
-      if (placeholder) placeholder.classList.add('hidden');
-      if (removeBtn) removeBtn.classList.remove('hidden');
-
-      if (compInfo && compText) {
-        compText.textContent = `${result.originalSizeText} → ${result.compressedSizeText} (WebP)`;
-        compInfo.classList.remove('hidden');
-      }
-
-      if (typeof window.refreshIcons === 'function') {
-        window.refreshIcons();
-      }
-    } catch (err) {
-      console.error('Image selection error:', err);
+    const availableSlots = MAX_PRODUCT_PHOTOS - productPhotos.length;
+    if (availableSlots <= 0) {
       if (typeof showToast === 'function') {
-        showToast(err.message || 'Gagal memproses gambar', 'error');
+        showToast(`Maksimal ${MAX_PRODUCT_PHOTOS} foto produk telah tercapai`, 'warning');
       }
-      resetImageForm();
+      e.target.value = '';
+      return;
     }
-  }
 
-  function removeSelectedPhoto() {
-    resetImageForm();
-    isImageChanged = true;
-    if (typeof window.refreshIcons === 'function') {
-      window.refreshIcons();
+    const filesToProcess = files.slice(0, availableSlots);
+    if (files.length > availableSlots && typeof showToast === 'function') {
+      showToast(`Hanya ${availableSlots} foto yang ditambahkan (batas maksimal ${MAX_PRODUCT_PHOTOS} foto)`, 'info');
     }
+
+    const compInfo = document.getElementById('image-compression-info');
+    const compText = document.getElementById('compression-info-text');
+    if (compInfo && compText) {
+      compText.textContent = filesToProcess.length > 1 
+        ? `Mengompresi ${filesToProcess.length} foto ke WebP...` 
+        : 'Mengompresi ke WebP...';
+      compInfo.classList.remove('hidden');
+    }
+
+    let successCount = 0;
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const file = filesToProcess[i];
+      try {
+        if (compText && filesToProcess.length > 1) {
+          compText.textContent = `Mengompresi foto ${i + 1}/${filesToProcess.length}...`;
+        }
+        const result = await ImageUtils.compressImage(file);
+        productPhotos.push({
+          id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          type: 'new',
+          blob: result.blob,
+          previewUrl: result.previewUrl,
+          sizeText: `${result.originalSizeText} → ${result.compressedSizeText}`
+        });
+        isImageChanged = true;
+        successCount++;
+      } catch (err) {
+        console.error('Compress error for file:', file.name, err);
+        if (typeof showToast === 'function') {
+          showToast(`Gagal memproses ${file.name}: ${err.message}`, 'error');
+        }
+      }
+    }
+
+    if (compInfo && compText) {
+      if (successCount > 0) {
+        const lastPhoto = productPhotos[productPhotos.length - 1];
+        compText.textContent = successCount > 1 
+          ? `${successCount} foto siap diunggah (WebP < 500 KB)` 
+          : `${lastPhoto.sizeText} (WebP)`;
+        compInfo.classList.remove('hidden');
+      } else {
+        compInfo.classList.add('hidden');
+      }
+    }
+
+    e.target.value = ''; // Reset input agar pengguna bisa memilih file/kamera berulang kali
+    renderPhotoGallery();
   }
 
   function openAddItemModal() {
@@ -241,17 +409,17 @@
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
 
-    if (item.image_url) {
-      document.getElementById('item-image-url').value = item.image_url;
-      const previewImg = document.getElementById('item-image-preview');
-      const placeholder = document.getElementById('item-image-placeholder');
-      const removeBtn = document.getElementById('btn-remove-photo');
-      if (previewImg) {
-        previewImg.src = item.image_url;
-        previewImg.classList.remove('hidden');
-      }
-      if (placeholder) placeholder.classList.add('hidden');
-      if (removeBtn) removeBtn.classList.remove('hidden');
+    const existingImages = parseProductImages(item.images || item.image_url);
+    if (existingImages.length > 0) {
+      existingImages.forEach((url, i) => {
+        productPhotos.push({
+          id: 'existing_' + i + '_' + Math.random().toString(36).substr(2, 6),
+          type: 'existing',
+          url: url,
+          previewUrl: url
+        });
+      });
+      renderPhotoGallery();
     }
     isImageChanged = false;
 
@@ -355,25 +523,42 @@
 
     try {
       // 1. Upload foto ke Storage jika ada foto baru
-      let finalImageUrl = document.getElementById('item-image-url').value || null;
+      btnSubmit.innerHTML = '<span>Menyiapkan Foto...</span>';
 
-      if (selectedImageBlob) {
-        btnSubmit.innerHTML = '<span>Mengunggah Foto...</span>';
-        const cleanSku = (sku || 'item').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-        const imagePath = `${cleanSku}-${Date.now()}.webp`;
+      const finalUrls = [];
+      const newPhotos = productPhotos.filter(p => p.type === 'new');
+      let uploadedCount = 0;
 
-        const uploadRes = await Api.storage.uploadImage(selectedImageBlob, imagePath);
-        if (!uploadRes.ok) {
-          if (typeof showToast === 'function') {
-            showToast(uploadRes.error?.message || 'Gagal mengunggah foto ke storage', 'error');
+      for (let i = 0; i < productPhotos.length; i++) {
+        const photo = productPhotos[i];
+        if (photo.type === 'existing' && photo.url) {
+          finalUrls.push(photo.url);
+        } else if (photo.type === 'new' && photo.blob) {
+          uploadedCount++;
+          btnSubmit.innerHTML = `<span>Mengunggah Foto (${uploadedCount}/${newPhotos.length})...</span>`;
+          const cleanSku = (sku || 'item').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+          const imagePath = `${cleanSku}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}.webp`;
+
+          const uploadRes = await Api.storage.uploadImage(photo.blob, imagePath);
+          if (!uploadRes.ok) {
+            if (typeof showToast === 'function') {
+              showToast(uploadRes.error?.message || 'Gagal mengunggah foto ke storage', 'error');
+            }
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalBtnContent;
+            return;
           }
-          btnSubmit.disabled = false;
-          btnSubmit.innerHTML = originalBtnContent;
-          return;
+          photo.url = uploadRes.data.publicUrl;
+          photo.type = 'existing';
+          finalUrls.push(uploadRes.data.publicUrl);
         }
-        finalImageUrl = uploadRes.data.publicUrl;
-      } else if (isImageChanged && !selectedImageBlob) {
-        finalImageUrl = null;
+      }
+
+      let finalImageUrl = null;
+      if (finalUrls.length === 1) {
+        finalImageUrl = finalUrls[0];
+      } else if (finalUrls.length > 1) {
+        finalImageUrl = JSON.stringify(finalUrls);
       }
 
       btnSubmit.innerHTML = '<span>Menyimpan Produk...</span>';
@@ -388,7 +573,8 @@
         cost_price: cost_price,
         sell_price: sell_price,
         min_stock: min_stock,
-        image_url: finalImageUrl
+        image_url: finalImageUrl,
+        images: finalUrls
       };
       if (!id) payload.stock = stock;
 
@@ -757,6 +943,11 @@
         return 'Rp ' + Number(num).toLocaleString('id-ID');
       };
 
+      const itemImages = parseProductImages(item.images || item.image_url);
+      const coverImage = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
+      const hasMultipleImages = itemImages.length > 1;
+      const imagesAttr = escapeHtml(JSON.stringify(itemImages.length > 0 ? itemImages : (coverImage ? [coverImage] : [])));
+
       const tr = document.createElement('tr');
       tr.className = `table-row border-b border-white/5 transition ${isChecked ? 'bg-[#0088CC]/5' : ''}`;
       tr.innerHTML = `
@@ -768,12 +959,18 @@
                  class="item-checkbox accent-[#0088CC] w-4 h-4 cursor-pointer">
         </td>
         <td class="px-4 py-3.5">
-          ${item.image_url ? `
-            <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0 cursor-pointer group relative" title="Klik untuk lihat foto ukuran penuh" onclick="window.openImageViewer('${escapeHtml(item.image_url)}', '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.sku || '').replace(/'/g, "\\'")}')">
-              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover group-hover:scale-110 transition duration-200 product-thumbnail-img" data-zoomable data-title="${escapeHtml(item.name)}" data-sku="${escapeHtml(item.sku || '')}" loading="lazy">
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white">
-                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
-              </div>
+          ${coverImage ? `
+            <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0 cursor-pointer group relative" title="Klik untuk lihat ${hasMultipleImages ? itemImages.length + ' foto produk' : 'foto ukuran penuh'}" onclick="window.openImageViewer(${imagesAttr}, '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.sku || '').replace(/'/g, "\\'")}', 0)">
+              <img src="${escapeHtml(coverImage)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover group-hover:scale-110 transition duration-200 product-thumbnail-img" data-zoomable data-title="${escapeHtml(item.name)}" data-sku="${escapeHtml(item.sku || '')}" data-gallery="${imagesAttr}" loading="lazy">
+              ${hasMultipleImages ? `
+                <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] font-semibold text-white flex items-center gap-1 shadow pointer-events-none">
+                  <i data-lucide="layers" class="w-2.5 h-2.5"></i> ${itemImages.length}
+                </span>
+              ` : `
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white">
+                  <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                </div>
+              `}
             </div>
           ` : `
             <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg bg-[#0088CC]/15 grid place-items-center flex-shrink-0">

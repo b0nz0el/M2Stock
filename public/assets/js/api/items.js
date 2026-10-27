@@ -5,6 +5,29 @@
 
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit } from './_client.js';
 
+export function parseItemImages(rawImageUrl, rawImages) {
+  if (Array.isArray(rawImages) && rawImages.length > 0) {
+    return rawImages.filter(Boolean);
+  }
+  if (!rawImageUrl) return [];
+  if (Array.isArray(rawImageUrl)) return rawImageUrl.filter(Boolean);
+  if (typeof rawImageUrl === 'string') {
+    const trimmed = rawImageUrl.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+      } catch (_) {}
+    }
+    if (trimmed.includes('|||')) {
+      return trimmed.split('|||').map(s => s.trim()).filter(Boolean);
+    }
+    return [trimmed];
+  }
+  return [];
+}
+
 export const items = {
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
@@ -39,6 +62,8 @@ export const items = {
           }
 
           const mapped = (data || []).map(function (item) {
+            const itemImages = parseItemImages(item.image_url, item.images);
+            const primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
             return {
               id: item.id,
               sku: item.sku || '',
@@ -57,7 +82,8 @@ export const items = {
               sellPrice: Number(item.sell_price) || 0,
               sell_price: Number(item.sell_price) || 0,
               unitPrice: Number(item.sell_price) || 0,
-              image_url: item.image_url || null,
+              image_url: primaryImageUrl,
+              images: itemImages,
               created_at: item.created_at,
               updated_at: item.updated_at
             };
@@ -107,6 +133,8 @@ export const items = {
             });
           }
 
+          const itemImages = parseItemImages(data.image_url, data.images);
+          const primaryImageUrl = itemImages[0] || (typeof data.image_url === 'string' && !data.image_url.startsWith('[') ? data.image_url : null);
           const mapped = {
             id: data.id,
             sku: data.sku || '',
@@ -125,7 +153,8 @@ export const items = {
             sellPrice: Number(data.sell_price) || 0,
             sell_price: Number(data.sell_price) || 0,
             unitPrice: Number(data.sell_price) || 0,
-            image_url: data.image_url || null,
+            image_url: primaryImageUrl,
+            images: itemImages,
             created_at: data.created_at,
             updated_at: data.updated_at
           };
@@ -145,6 +174,11 @@ export const items = {
     create: async (data, opts) => {
       if (isSupabaseAvailable()) {
         try {
+          let resolvedImageUrl = data.image_url !== undefined ? data.image_url : null;
+          if (!resolvedImageUrl && Array.isArray(data.images) && data.images.length > 0) {
+            resolvedImageUrl = data.images.length === 1 ? data.images[0] : JSON.stringify(data.images);
+          }
+
           const row = {
             name: data.name,
             sku: data.sku || data.code || null,
@@ -156,7 +190,7 @@ export const items = {
             min_stock: (data.min_stock !== undefined ? data.min_stock : data.minStock) !== undefined ? Number(data.min_stock || data.minStock) : 0,
             cost_price: (data.cost_price !== undefined ? data.cost_price : data.costPrice) !== undefined ? Number(data.cost_price || data.costPrice) : 0,
             sell_price: (data.sell_price !== undefined ? data.sell_price : (data.sellPrice || data.unitPrice)) !== undefined ? Number(data.sell_price || data.sellPrice || data.unitPrice) : 0,
-            image_url: data.image_url || null
+            image_url: resolvedImageUrl
           };
 
           let query = window.supabase
@@ -214,6 +248,12 @@ export const items = {
           if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
           if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
           if (row.unit_id !== undefined) row.unit_id = Number(row.unit_id);
+          if (row.images !== undefined) {
+            if (!row.image_url && Array.isArray(row.images)) {
+              row.image_url = row.images.length === 1 ? row.images[0] : JSON.stringify(row.images);
+            }
+            delete row.images;
+          }
           delete row.id;
           delete row.categories;
           delete row.units;

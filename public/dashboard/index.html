@@ -2823,28 +2823,32 @@
       <input type="hidden" id="item-id">
       <input type="hidden" id="item-image-url">
 
-      <!-- Upload & Preview Foto Produk -->
+      <!-- Upload & Preview Galeri Foto Produk (Multi-Foto) -->
       <div>
-        <label class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Foto Produk</label>
-        <div class="flex items-center gap-4 p-3 bg-black/30 border border-white/5 rounded-2xl">
-          <!-- Thumbnail Preview Container -->
-          <div class="relative w-20 h-20 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 group">
-            <img id="item-image-preview" src="" alt="Preview Foto" class="hidden w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-200" title="Klik untuk lihat foto ukuran penuh" onclick="if (this.src) window.openImageViewer(this.src, document.getElementById('item-name')?.value || 'Foto Produk', document.getElementById('item-sku')?.value || '')">
-            <div id="item-image-placeholder" class="text-center text-[#A0A0A5]">
-              <i data-lucide="image" class="w-6 h-6 mx-auto opacity-40" aria-hidden="true"></i>
-              <span class="text-[10px] block mt-1">Belum ada</span>
-            </div>
-            <!-- Tombol Hapus Foto -->
-            <button type="button" id="btn-remove-photo" onclick="event.stopPropagation(); removeSelectedPhoto()" title="Hapus Foto" aria-label="Hapus Foto" class="hidden absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-[#FF3B30] text-white flex items-center justify-center transition shadow z-10">
-              <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
-            </button>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block text-xs font-medium text-[#A0A0A5]">Foto Produk <span id="photo-count-badge" class="text-white/60 font-mono text-[11px]">(0/6)</span></label>
+          <span class="text-[11px] text-[#A0A0A5]">Bisa lebih dari 1 foto • WebP &lt; 500 KB</span>
+        </div>
+
+        <div class="p-3 bg-black/30 border border-white/5 rounded-2xl space-y-3">
+          <!-- Gallery List / Horizontal Scroll Cards -->
+          <div id="product-gallery-container" class="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+            <!-- Diisi secara dinamis oleh renderPhotoGallery() -->
+          </div>
+
+          <!-- Legacy hidden elements untuk kompatibilitas penuh dengan skrip lama -->
+          <div class="hidden">
+            <img id="item-image-preview" src="" alt="Preview Foto">
+            <div id="item-image-placeholder"></div>
+            <button type="button" id="btn-remove-photo" onclick="removeSelectedPhoto()"></button>
           </div>
 
           <!-- Controls & Compression Info -->
-          <div class="flex-1 min-w-0 space-y-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
             <input type="file" id="item-image-camera" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(event)">
-            <input type="file" id="item-image-file" accept="image/*,image/heic" class="hidden" onchange="handleImageSelection(event)">
-            <div class="flex flex-wrap items-center gap-2">
+            <input type="file" id="item-image-file" accept="image/*,image/heic" multiple class="hidden" onchange="handleImageSelection(event)">
+            
+            <div class="flex items-center gap-2">
               <button type="button" id="btn-capture-camera" onclick="document.getElementById('item-image-camera').click()" class="bg-[#0088CC]/20 hover:bg-[#0088CC]/30 border border-[#0088CC]/40 text-[#32ADE6] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
                 <i data-lucide="camera" class="w-3.5 h-3.5" aria-hidden="true"></i>
                 <span>Ambil Kamera</span>
@@ -2853,8 +2857,8 @@
                 <i data-lucide="image" class="w-3.5 h-3.5" aria-hidden="true"></i>
                 <span>Pilih Galeri</span>
               </button>
-              <span class="text-[11px] text-[#A0A0A5]">WebP &lt; 500 KB</span>
             </div>
+
             <!-- Info Ukuran Kompresi -->
             <div id="image-compression-info" class="hidden text-[11px] text-[#34C759] flex items-center gap-1.5 font-mono">
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#34C759] flex-shrink-0" aria-hidden="true"></i>
@@ -4444,11 +4448,14 @@
 
 <!-- ═══════════ UNIVERSAL IMAGE VIEWER (LIGHTBOX) ═══════════ -->
 <div id="modal-image-viewer" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-[110] items-center justify-center p-4 transition-all duration-200" role="dialog" aria-modal="true" aria-label="Lihat Foto Produk">
-  <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center select-none my-auto">
+  <div class="relative max-w-4xl max-h-[92vh] flex flex-col items-center select-none my-auto w-full">
     <div class="w-full flex items-center justify-between pb-2 mb-2 border-b border-white/10">
       <div class="min-w-0 pr-4">
         <h4 id="image-viewer-title" class="text-sm md:text-base font-semibold text-white truncate">Foto Produk</h4>
-        <p id="image-viewer-sku" class="text-xs text-[#A0A0A5] font-mono"></p>
+        <div class="flex items-center gap-2 mt-0.5">
+          <p id="image-viewer-sku" class="text-xs text-[#A0A0A5] font-mono"></p>
+          <span id="image-viewer-counter" class="hidden text-[11px] bg-white/10 text-white px-2 py-0.5 rounded-full font-mono font-medium"></span>
+        </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <a id="image-viewer-download" href="" target="_blank" class="p-2 text-[#A0A0A5] hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition" title="Buka gambar ukuran asli" aria-label="Buka gambar ukuran asli">
@@ -4459,9 +4466,21 @@
         </button>
       </div>
     </div>
-    <div class="overflow-hidden rounded-2xl border border-white/15 bg-black/60 shadow-2xl flex items-center justify-center max-h-[75vh]">
-      <img id="image-viewer-img" src="" alt="Foto Produk" class="max-h-[75vh] max-w-full object-contain">
+    <div class="relative overflow-hidden rounded-2xl border border-white/15 bg-black/60 shadow-2xl flex items-center justify-center max-h-[70vh] w-full group">
+      <!-- Tombol Navigasi Carousel -->
+      <button type="button" id="btn-viewer-prev" onclick="navigateImageViewer(-1)" class="hidden absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center border border-white/20 transition active:scale-95 z-20 shadow-lg cursor-pointer" title="Foto Sebelumnya" aria-label="Foto Sebelumnya">
+        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      </button>
+
+      <img id="image-viewer-img" src="" alt="Foto Produk" class="max-h-[70vh] max-w-full object-contain">
+
+      <button type="button" id="btn-viewer-next" onclick="navigateImageViewer(1)" class="hidden absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center border border-white/20 transition active:scale-95 z-20 shadow-lg cursor-pointer" title="Foto Selanjutnya" aria-label="Foto Selanjutnya">
+        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+      </button>
     </div>
+
+    <!-- Thumbnails Strip Bawah -->
+    <div id="image-viewer-thumbs" class="hidden flex items-center justify-center gap-2 mt-2.5 overflow-x-auto max-w-full py-1"></div>
   </div>
 </div>
 
