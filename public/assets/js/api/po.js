@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/po.js
+   Aquastock Pro — api/po.js
    Layer API untuk Modul Purchase Order & PO Items
    ═══════════════════════════════════════════════════ */
 

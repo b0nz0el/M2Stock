@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — report.js
+   Aquastock Pro — report.js
    Controller Modul Laporan & Visualisasi Agregasi
    ═══════════════════════════════════════════════════ */
 

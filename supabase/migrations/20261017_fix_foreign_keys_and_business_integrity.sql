@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Foreign Keys & Relational Integrity Fix
+-- Aquastock Pro — Migration: Foreign Keys & Relational Integrity Fix
 -- File: supabase/migrations/20261017_fix_foreign_keys_and_business_integrity.sql
 -- =========================================================
 

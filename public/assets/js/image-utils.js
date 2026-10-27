@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — image-utils.js
+   Aquastock Pro — image-utils.js
    Client-Side Image Compression (Canvas API native)
    Target: WebP < 500 KB, Max 1200x1200 px
    ═══════════════════════════════════════════════════ */

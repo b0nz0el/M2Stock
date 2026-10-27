@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════
-# aQuaStock Pro — deploy.sh (placeholder)
+# Aquastock Pro — deploy.sh (placeholder)
 # Deploy folder `public/` ke hosting statis.
 #
 #   scripts/deploy.sh netlify
@@ -19,7 +19,7 @@ if [[ -z "$TARGET" ]]; then
   exit 1
 fi
 
-echo "🚀 Deploy aQuaStock Pro dari ${PUBLIC_DIR} → ${TARGET}"
+echo "🚀 Deploy Aquastock Pro dari ${PUBLIC_DIR} → ${TARGET}"
 
 case "$TARGET" in
   netlify)

@@ -1,9 +1,9 @@
-# Changelog — aQuaStock Pro
+# Changelog — Aquastock Pro
 
 ## [2.0.0] - 2026-10-17
 ### Major Release: Local-First PWA & International Adaptive UI/UX Overhaul
 
-Rilis ini meningkatkan arsitektur **aQuaStock Pro** menjadi **Local-First Progressive Web App (PWA)** berstandar internasional (terinspirasi dari Linear & Material Design 3) yang mendukung operasional kasir dan manajemen stok secara *offline* maupun *online* di Desktop, Tablet, dan Mobile.
+Rilis ini meningkatkan arsitektur **Aquastock Pro** menjadi **Local-First Progressive Web App (PWA)** berstandar internasional (terinspirasi dari Linear & Material Design 3) yang mendukung operasional kasir dan manajemen stok secara *offline* maupun *online* di Desktop, Tablet, dan Mobile.
 
 ---
 

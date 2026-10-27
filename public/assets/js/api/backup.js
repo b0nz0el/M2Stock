@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/backup.js
+   Aquastock Pro — api/backup.js
    Layer API untuk Backup, Export/Import & Backup Logs
    Integrasi backup dengan Supabase
    ═══════════════════════════════════════════════════ */
@@ -117,7 +117,7 @@ export const backup = {
       const timestamp = new Date().toISOString();
       const exportPayload = {
         meta: {
-          app: 'aQuaStock Pro',
+          app: 'Aquastock Pro',
           version: '3.0',
           created_at: timestamp,
           total_records: totalRecords,
@@ -218,7 +218,7 @@ export const backup = {
         throw new Error('Format file backup JSON tidak valid.');
       }
 
-      // Format backup aQuaStock memiliki properti .data atau merupakan objek key-value tabel langsung
+      // Format backup Aquastock memiliki properti .data atau merupakan objek key-value tabel langsung
       const tablesData = parsedData.data && typeof parsedData.data === 'object'
         ? parsedData.data
         : parsedData;

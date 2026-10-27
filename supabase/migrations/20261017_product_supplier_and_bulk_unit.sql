@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Add supplier_id to products
+-- Aquastock Pro — Migration: Add supplier_id to products
 -- File: supabase/migrations/20261017_product_supplier_and_bulk_unit.sql
 -- =========================================================
 

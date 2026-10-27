@@ -1,6 +1,6 @@
-# Roadmap & Rencana Pengembangan Lanjutan (Next Plan) — aQuaStock Pro
+# Roadmap & Rencana Pengembangan Lanjutan (Next Plan) — Aquastock Pro
 
-Dokumen ini memuat rencana kerja terstruktur untuk fase pengembangan berikutnya pada sistem **aQuaStock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi"). Rencana ini disusun berdasarkan kebutuhan operasional riil toko fisik dan online, menyambung fondasi inventaris, Purchase Order (PO), dan Retur yang telah di-hardening.
+Dokumen ini memuat rencana kerja terstruktur untuk fase pengembangan berikutnya pada sistem **Aquastock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi"). Rencana ini disusun berdasarkan kebutuhan operasional riil toko fisik dan online, menyambung fondasi inventaris, Purchase Order (PO), dan Retur yang telah di-hardening.
 
 ---
 
@@ -130,7 +130,7 @@ Staff kasir di toko Jaquris sering menggunakan tablet Android/iPad atau smartpho
 
 **Solusi & Spesifikasi Teknis:**
 1. **Web App Manifest (`public/manifest.json`)**:
-   - Definisi nama aplikasi "aQuaStock Pro", display `standalone`, background theme color `#0B0F17`, dan ikon berbagai resolusi (192px, 512px).
+   - Definisi nama aplikasi "Aquastock Pro", display `standalone`, background theme color `#0B0F17`, dan ikon berbagai resolusi (192px, 512px).
 2. **Service Worker (`public/sw.js`)**:
    - Caching untuk aset statis (CSS, JS, Font, Logo) sehingga aplikasi memuat instan (< 1 detik).
    - Penanganan offline banner yang ramah saat koneksi Wi-Fi toko terputus sesaat.

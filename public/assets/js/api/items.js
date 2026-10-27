@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/items.js
+   Aquastock Pro — api/items.js
    Domain Items / Master Barang
    ═══════════════════════════════════════════════════ */
 

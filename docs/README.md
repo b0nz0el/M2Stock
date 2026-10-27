@@ -1,6 +1,6 @@
-# Dokumentasi Arsitektur Modul & Keputusan Teknis — aQuaStock Pro
+# Dokumentasi Arsitektur Modul & Keputusan Teknis — Aquastock Pro
 
-Direktori ini memuat dokumentasi teknis dan referensi arsitektur mendalam untuk proyek **aQuaStock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi").
+Direktori ini memuat dokumentasi teknis dan referensi arsitektur mendalam untuk proyek **Aquastock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi").
 
 ---
 

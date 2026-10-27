@@ -1,4 +1,4 @@
-# aQuaStock Pro — Production Inventory & POS System
+# Aquastock Pro — Production Inventory & POS System
 > **Versi Terbaru:** `v3.2.0` (Local-First PWA, Modern Kasir POS Split-View, & Offline Sync)  
 > **Sistem:** Multi-Page Application (MPA) Inventory & Point of Sale  
 > **Toko:** JTMaquarium (Jatimakmur Aquarium Aksesoris, Pondok Gede, Bekasi)  
@@ -9,7 +9,7 @@
 
 ## 🌟 Ikhtisar Proyek
 
-**aQuaStock Pro** adalah sistem manajemen inventaris barang, kasir multi-item (Point of Sale / POS), manajemen pesanan pembelian (PO), pencatatan arus kas, dan pelacakan hutang/piutang yang dirancang khusus untuk toko perlengkapan dan aksesoris akuarium skala ritel dan grosir.
+**Aquastock Pro** adalah sistem manajemen inventaris barang, kasir multi-item (Point of Sale / POS), manajemen pesanan pembelian (PO), pencatatan arus kas, dan pelacakan hutang/piutang yang dirancang khusus untuk toko perlengkapan dan aksesoris akuarium skala ritel dan grosir.
 
 Dibangun dengan arsitektur **Local-First Progressive Web App (PWA)**, sistem ini menggabungkan kecepatan kilat *Vanilla JavaScript (ES Modules)*, keandalan *Tailwind CSS* teroptimasi, serta keamanan berlapis *Supabase PostgreSQL Row Level Security (RLS)*. Sistem ini dapat diinstal langsung di perangkat desktop (Windows/Mac) maupun smartphone (Android/iOS) dan tetap dapat melayani transaksi kasir sekalipun koneksi internet terputus.
 
@@ -125,7 +125,7 @@ aquastock-pro/
 │       │       ├── rbac.js               # Role-based access control guard
 │       │       └── rbac-ui.js            # UI read-only renderer untuk Viewer
 │       ├── images/                       # Logo toko & ikon PWA
-│       │   ├── logo.svg                  # Vektor logo aQuaStock Pro
+│       │   ├── logo.svg                  # Vektor logo Aquastock Pro
 │       │   └── icons/                    # PWA App Icons (192x192 & 512x512)
 │       └── fonts/                        # Font InterVariable (woff2)
 ├── supabase/                             # Skema & Migrasi Database

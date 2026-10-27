@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/audit.js
+   Aquastock Pro — api/audit.js
    Layer API untuk Audit Logs
    ═══════════════════════════════════════════════════ */
 

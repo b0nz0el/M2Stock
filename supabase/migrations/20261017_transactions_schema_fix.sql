@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Transactions Schema Synchronization & Fix
+-- Aquastock Pro — Migration: Transactions Schema Synchronization & Fix
 -- Harmonize column naming (notes <-> note, quantity <-> qty, unit_price <-> price, user_id <-> created_by, total_price)
 -- File: supabase/migrations/20261017_transactions_schema_fix.sql
 -- =========================================================

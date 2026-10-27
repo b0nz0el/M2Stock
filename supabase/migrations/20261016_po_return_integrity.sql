@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: PO & Return Workflows, Stock Safety, and Low Stock Auto-PO
+-- Aquastock Pro — Migration: PO & Return Workflows, Stock Safety, and Low Stock Auto-PO
 -- File: supabase/migrations/20261016_po_return_integrity.sql
 -- =========================================================
 

@@ -1,7 +1,7 @@
 /**
  * tailwind.config.js
  * -----------------------------------------------------------------------------
- * aQuaStock Pro saat ini memakai Tailwind via CDN (https://cdn.tailwindcss.com),
+ * Aquastock Pro saat ini memakai Tailwind via CDN (https://cdn.tailwindcss.com),
  * jadi file ini OPSIONAL dan belum dipakai oleh halaman karena memakai CDN.
  *
  * File ini disiapkan untuk migrasi ke Tailwind CLI/build step di masa depan:
@@ -18,7 +18,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Palet aQuaStock Pro (dipakai via arbitrary values di HTML)
+        // Palet Aquastock Pro (dipakai via arbitrary values di HTML)
         brand: {
           DEFAULT: '#0088CC',
           light: '#32ADE6',

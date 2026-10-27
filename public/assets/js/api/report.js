@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/report.js
+   Aquastock Pro — api/report.js
    Domain Laporan & Agregasi Data Transaksi / Produk
    ═══════════════════════════════════════════════════ */
 

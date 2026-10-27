@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — offline-sync.js
+   Aquastock Pro — offline-sync.js
    Local-First IndexedDB Offline Catalog & POS Queue Engine
    ═══════════════════════════════════════════════════ */
 

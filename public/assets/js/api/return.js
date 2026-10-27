@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/return.js
+   Aquastock Pro — api/return.js
    Layer API untuk Modul Retur Barang (returns)
    ═══════════════════════════════════════════════════ */
 

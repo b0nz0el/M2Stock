@@ -1,6 +1,6 @@
-# Kontrak API Frontend & Backend — aQuaStock Pro
+# Kontrak API Frontend & Backend — Aquastock Pro
 
-Dokumen ini mendefinisikan kontrak antarmuka komunikasi antara frontend (Vanilla JS) dan backend Supabase (PostgreSQL, Auth, Storage, & RPC) untuk sistem **aQuaStock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi").
+Dokumen ini mendefinisikan kontrak antarmuka komunikasi antara frontend (Vanilla JS) dan backend Supabase (PostgreSQL, Auth, Storage, & RPC) untuk sistem **Aquastock Pro** (Toko "Jaquris — Jatimakmur Aquarium Aksesoris, Bekasi").
 
 ---
 

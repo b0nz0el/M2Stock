@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — rbac-ui.js
+   Aquastock Pro — rbac-ui.js
    Read-Only UI Enforcement for VIEWER Role
    ═══════════════════════════════════════════════════ */
 

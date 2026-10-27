@@ -1,6 +1,6 @@
 -- Migration: Create app_settings table with RLS and default seed
 -- Date: 2026-10-15
--- Author: aQuaStock Pro Engineering Team
+-- Author: Aquastock Pro Engineering Team
 
 CREATE TABLE IF NOT EXISTS public.app_settings (
     key TEXT PRIMARY KEY,

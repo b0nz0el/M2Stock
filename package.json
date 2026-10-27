@@ -1,7 +1,7 @@
 {
   "name": "aquastock-pro",
   "version": "3.0.0",
-  "description": "aQuaStock Pro — sistem manajemen stok peralatan aquarium (static frontend, siap dihubungkan ke backend)",
+  "description": "Aquastock Pro — sistem manajemen stok peralatan aquarium (static frontend, siap dihubungkan ke backend)",
   "private": true,
   "scripts": {
     "build": "echo 'AquaStock Pro static assets ready'",

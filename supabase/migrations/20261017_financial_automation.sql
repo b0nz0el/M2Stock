@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Automated Financial Sync
+-- Aquastock Pro — Migration: Automated Financial Sync
 -- Integrasi Transaksi (Penjualan / Pembelian / PO / Retur) ke Buku Kas & Hutang-Piutang
 -- File: supabase/migrations/20261017_financial_automation.sql
 -- =========================================================

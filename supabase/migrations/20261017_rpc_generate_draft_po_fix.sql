@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Fix RPC generate_draft_po_from_low_stock & Related Workflow RPCs
+-- Aquastock Pro — Migration: Fix RPC generate_draft_po_from_low_stock & Related Workflow RPCs
 -- File: supabase/migrations/20261017_rpc_generate_draft_po_fix.sql
 -- =========================================================
 

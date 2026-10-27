@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — navigation.js
+   Aquastock Pro — navigation.js
    Routing antar halaman, sidebar drawer & sinkronisasi tab aktif
    ═══════════════════════════════════════════════════ */
 const pageTitles = {
@@ -192,7 +192,7 @@ function showPage(pageId, pushState = true) {
     const bc = document.getElementById('breadcrumb');
     if (bc && pageTitles[pageId]) bc.textContent = pageTitles[pageId];
     if (typeof document !== 'undefined') {
-      document.title = 'aQuaStock Pro - ' + (pageTitles[pageId] || pageId);
+      document.title = 'Aquastock Pro - ' + (pageTitles[pageId] || pageId);
     }
 
     // 4. Update riwayat peramban tanpa hard reload

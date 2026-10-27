@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/_client.js
+   Aquastock Pro — api/_client.js
    Wrapper fetch terpusat, envelope standar, error handling, & AbortController
    ═══════════════════════════════════════════════════ */
 

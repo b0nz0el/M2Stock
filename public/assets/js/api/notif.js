@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/notif.js
+   Aquastock Pro — api/notif.js
    Layer API untuk Modul Notifikasi (notifications)
    Data notifikasi langsung dari Supabase
    ═══════════════════════════════════════════════════ */

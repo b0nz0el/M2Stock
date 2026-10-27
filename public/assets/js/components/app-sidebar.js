@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — app-sidebar.js
+   Aquastock Pro — app-sidebar.js
    Web Component <app-sidebar> (Light DOM)
    ═══════════════════════════════════════════════════ */
 
@@ -511,7 +511,7 @@ class AppSidebar extends HTMLElement {
           </div>
           
           <div class="min-w-0">
-            <span class="text-base font-bold block truncate">aQuaStock</span>
+            <span class="text-base font-bold block truncate">Aquastock</span>
             <span class="text-[10px] text-[#A0A0A5] flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-[#34C759] rounded-full"></span>
               <span id="sidebar-store-name" class="truncate max-w-[130px]">JTMaquarium</span>

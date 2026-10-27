@@ -43,7 +43,7 @@ const iconsList = [
   await browser.close();
 
   const code = `/* ═══════════════════════════════════════════════════
-   aQuaStock Pro — icons.js
+   Aquastock Pro — icons.js
    Local Lucide SVG Subset (${Object.keys(extracted).length} icons)
    ═══════════════════════════════════════════════════ */
 (function() {

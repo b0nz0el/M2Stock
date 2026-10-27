@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — po.js
+   Aquastock Pro — po.js
    Controller Modul Purchase Order & PO Items
    ═══════════════════════════════════════════════════ */
 

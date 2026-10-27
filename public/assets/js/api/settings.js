@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — settings.js (API Layer)
+   Aquastock Pro — settings.js (API Layer)
    Koneksi langsung ke Supabase 'app_settings'
    Pengaturan toko dari database
    ═══════════════════════════════════════════════════ */

@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Returns (Retur Barang)
+-- Aquastock Pro — Migration: Returns (Retur Barang)
 -- File: supabase/migrations/20261015_returns.sql
 -- =========================================================
 

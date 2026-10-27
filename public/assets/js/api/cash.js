@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/cash.js
+   Aquastock Pro — api/cash.js
    Layer API untuk Modul Kas & Keuangan (cash_flow)
    ═══════════════════════════════════════════════════ */
 

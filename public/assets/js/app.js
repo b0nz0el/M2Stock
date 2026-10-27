@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — app.js
+   Aquastock Pro — app.js
    Inisialisasi aplikasi, konversi tabel→card, bulk selection, shortcut
    ═══════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════
@@ -379,11 +379,11 @@ if (typeof animateActivePage === 'function') {
 if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem('welcomeShown')) {
   sessionStorage.setItem('welcomeShown', 'true');
   if (typeof showToast === 'function') {
-    setTimeout(() => showToast('Selamat datang di aQuaStock Pro 3.0', 'success'), 500);
+    setTimeout(() => showToast('Selamat datang di Aquastock Pro 3.0', 'success'), 500);
   }
 }
 
-console.info('aQuaStock Pro v3.0 — Fully Responsive');
+console.info('Aquastock Pro v3.0 — Fully Responsive');
 
 /* ═══ Set Welcome Name dari Profile ═══ */
 (async function setWelcomeName() {
@@ -500,7 +500,7 @@ if (typeof window !== 'undefined') {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               if (typeof showToast === 'function') {
-                showToast('Versi terbaru aQuaStock Pro terpasang! Memperbarui...', 'info');
+                showToast('Versi terbaru Aquastock Pro terpasang! Memperbarui...', 'info');
               }
               promptAndActivate(newWorker);
             }

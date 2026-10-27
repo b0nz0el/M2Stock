@@ -1,6 +1,6 @@
-# Panduan Setup Database Supabase — aQuaStock Pro
+# Panduan Setup Database Supabase — Aquastock Pro
 
-Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yang dibutuhkan untuk menginisialisasi basis data **aQuaStock Pro** dari nol (*fresh install*) pada instance Supabase baru.
+Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yang dibutuhkan untuk menginisialisasi basis data **Aquastock Pro** dari nol (*fresh install*) pada instance Supabase baru.
 
 ---
 
@@ -21,7 +21,7 @@ Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yan
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════
--- aQuaStock Pro — Master Database Setup Script
+-- Aquastock Pro — Master Database Setup Script
 -- Target Database: PostgreSQL 15+ (Supabase)
 -- ═══════════════════════════════════════════════════════════════════
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — icons.js
+   Aquastock Pro — icons.js
    Local Lucide SVG Subset (74 icons)
    ═══════════════════════════════════════════════════ */
 (function() {

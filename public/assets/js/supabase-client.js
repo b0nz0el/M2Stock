@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — supabase-client.js
+   Aquastock Pro — supabase-client.js
    Inisialisasi klien Supabase via ESM CDN (vanilla JS)
    ═══════════════════════════════════════════════════ */
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/users.js
+   Aquastock Pro — api/users.js
    Domain Users Management via Supabase RPC
    ═══════════════════════════════════════════════════ */
 

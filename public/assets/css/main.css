@@ -1,6 +1,6 @@
 @import './base.css';
 
-/* aQuaStock Pro — main.css (dashboard shell only)
+/* Aquastock Pro — main.css (dashboard shell only)
    Universal rules di base.css (di-import di atas).
    @import dipakai untuk backward compat 16 dashboard HTML.
    Akan dihapus di Fase 3 (Tailwind static migration). */

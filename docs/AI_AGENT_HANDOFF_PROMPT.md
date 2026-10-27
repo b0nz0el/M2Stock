@@ -1,11 +1,11 @@
-# Handoff Prompt untuk AI Agent — aQuaStock Pro
+# Handoff Prompt untuk AI Agent — Aquastock Pro
 
 Salin bagian **Prompt untuk agent berikutnya** di bawah ini ke AI agent yang akan melanjutkan pekerjaan. File ini adalah catatan handoff proyek yang bisa dibaca ulang; jangan mengandalkan ingatan percakapan sebelumnya sebagai satu-satunya sumber konteks.
 
 ## Prompt untuk agent berikutnya
 
 ```text
-Anda melanjutkan pengembangan repository aQuaStock Pro. Bertindaklah sebagai senior software engineer yang mengutamakan integritas data, aturan bisnis yang eksplisit, keamanan, dan UX yang konsisten.
+Anda melanjutkan pengembangan repository Aquastock Pro. Bertindaklah sebagai senior software engineer yang mengutamakan integritas data, aturan bisnis yang eksplisit, keamanan, dan UX yang konsisten.
 
 ## Tujuan
 

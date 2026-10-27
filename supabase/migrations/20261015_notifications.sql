@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Notifications
+-- Aquastock Pro — Migration: Notifications
 -- File: supabase/migrations/20261015_notifications.sql
 -- =========================================================
 

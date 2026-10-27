@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/suppliers.js
+   Aquastock Pro — api/suppliers.js
    Domain Suppliers / Master Supplier
    ═══════════════════════════════════════════════════ */
 

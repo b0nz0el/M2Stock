@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — utils.js
+   Aquastock Pro — utils.js
    Helper global (toast, format/parse angka, animasi angka)
    ═══════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════

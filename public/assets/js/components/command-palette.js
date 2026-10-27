@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — command-palette.js
+   Aquastock Pro — command-palette.js
    Linear/MD3 Standard Global Command Palette (⌘K / Ctrl+K)
    Navigasi instan, aksi cepat kasir & pencarian produk/barcode
    ═══════════════════════════════════════════════════ */
@@ -82,7 +82,7 @@
             <span>·</span>
             <span><kbd class="px-1 py-0.5 bg-white/5 rounded border border-white/10 text-[9px]">↵</kbd> untuk buka</span>
           </span>
-          <span class="text-[#0088CC] font-semibold">aQuaStock Pro</span>
+          <span class="text-[#0088CC] font-semibold">Aquastock Pro</span>
         </div>
       </div>
     `;

@@ -1,6 +1,6 @@
-# Arsitektur Sistem — aQuaStock Pro
+# Arsitektur Sistem — Aquastock Pro
 
-Dokumen ini menjelaskan gambaran arsitektur teknis, diagram aliran data, modularisasi frontend, konfigurasi layanan backend Supabase, model keamanan berlapis, serta alokasi performa untuk **aQuaStock Pro**.
+Dokumen ini menjelaskan gambaran arsitektur teknis, diagram aliran data, modularisasi frontend, konfigurasi layanan backend Supabase, model keamanan berlapis, serta alokasi performa untuk **Aquastock Pro**.
 
 ---
 

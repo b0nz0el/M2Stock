@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/index.js
+   Aquastock Pro — api/index.js
    Barrel entry point for modular API client
    ═══════════════════════════════════════════════════ */
 

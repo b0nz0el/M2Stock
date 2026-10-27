@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — notif.js
+   Aquastock Pro — notif.js
    Controller Modul Notifikasi (notifications)
    Data notifikasi langsung dari Supabase
    ═══════════════════════════════════════════════════ */

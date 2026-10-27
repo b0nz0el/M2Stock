@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — settings.js
+   Aquastock Pro — settings.js
    Controller Modul Pengaturan (/dashboard/settings/)
    Pengaturan dari Supabase app_settings & profiles
    ═══════════════════════════════════════════════════ */

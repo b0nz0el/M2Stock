@@ -1,12 +1,12 @@
-# Panduan Deployment — aQuaStock Pro
+# Panduan Deployment — Aquastock Pro
 
-Dokumen ini memuat panduan komprehensif untuk mendeploy sistem **aQuaStock Pro** ke lingkungan produksi berbasis arsitektur **Jamstack Statis** dan backend cloud Supabase (disiapkan untuk realisasi **Fase 5: Production Deployment & CI/CD**).
+Dokumen ini memuat panduan komprehensif untuk mendeploy sistem **Aquastock Pro** ke lingkungan produksi berbasis arsitektur **Jamstack Statis** dan backend cloud Supabase (disiapkan untuk realisasi **Fase 5: Production Deployment & CI/CD**).
 
 ---
 
 ## 1. Ikhtisar Arsitektur Deployment
 
-aQuaStock Pro tidak memerlukan server backend khusus (seperti Node.js server, Python, atau PHP). Seluruh antarmuka terdiri dari file statis murni (HTML, CSS, JS, aset gambar/font) yang dapat dilayani oleh CDN statis global (*Edge Network*), sementara seluruh komputasi dinamis, database, otentikasi, dan penyimpanan file dikelola oleh Supabase Cloud.
+Aquastock Pro tidak memerlukan server backend khusus (seperti Node.js server, Python, atau PHP). Seluruh antarmuka terdiri dari file statis murni (HTML, CSS, JS, aset gambar/font) yang dapat dilayani oleh CDN statis global (*Edge Network*), sementara seluruh komputasi dinamis, database, otentikasi, dan penyimpanan file dikelola oleh Supabase Cloud.
 
 ```
                   ┌──────────────────────────────────────────────┐
@@ -35,7 +35,7 @@ aQuaStock Pro tidak memerlukan server backend khusus (seperti Node.js server, Py
 
 ## 2. Platform Deployment Aktif (Cloudflare Pages)
 
-Aplikasi **aQuaStock Pro** saat ini telah aktif di-deploy ke lingkungan produksi menggunakan **Cloudflare Pages** pada domain:
+Aplikasi **Aquastock Pro** saat ini telah aktif di-deploy ke lingkungan produksi menggunakan **Cloudflare Pages** pada domain:
 **`https://aquastock-pro.pages.dev`**
 
 ### 2.1 Konfigurasi Cloudflare Pages

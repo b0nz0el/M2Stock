@@ -1,6 +1,6 @@
 {
-  "name": "aQuaStock Pro - Inventory & POS System",
-  "short_name": "aQuaStock",
+  "name": "Aquastock Pro - Inventory & POS System",
+  "short_name": "Aquastock",
   "description": "Sistem Manajemen Inventori dan Kasir POS Akuarium Modern",
   "start_url": "/dashboard/",
   "scope": "/",

@@ -1,5 +1,5 @@
 -- =========================================================
--- aQuaStock Pro — Migration: Purchase Orders & Items
+-- Aquastock Pro — Migration: Purchase Orders & Items
 -- File: supabase/migrations/20261015_purchase_orders.sql
 -- =========================================================
 

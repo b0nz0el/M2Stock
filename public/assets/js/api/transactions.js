@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   aQuaStock Pro — api/transactions.js
+   Aquastock Pro — api/transactions.js
    Domain Transaksi Barang Masuk & Keluar, PO, & Retur
    ═══════════════════════════════════════════════════ */
 

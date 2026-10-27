@@ -1,5 +1,5 @@
 -- ==============================================================================
--- aQuaStock Pro — Migration: Module 1 Report (Laporan)
+-- Aquastock Pro — Migration: Module 1 Report (Laporan)
 -- File: supabase/migrations/20261015_report.sql
 -- Description: Performance indexes and aggregation views/policies for Report module
 -- ==============================================================================
