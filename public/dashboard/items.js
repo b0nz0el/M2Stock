@@ -2,6 +2,7 @@
   let itemToDeleteId = null;
   let categoriesData = [];
   let unitsData = [];
+  let isSubmittingItem = false;
 
   async function loadCategories() {
     if (typeof window.supabase === 'undefined') return;
@@ -494,68 +495,86 @@
   }
 
   async function handleItemSubmit(e) {
-    e.preventDefault();
-    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
-    if (role === 'VIEWER') {
-      alert('Anda tidak punya akses untuk mengubah data.');
-      return;
-    }
-
-    const id = document.getElementById('item-id').value;
-    let sku = document.getElementById('item-sku').value.trim();
-    const barcode = document.getElementById('item-barcode').value.trim();
-    const name = document.getElementById('item-name').value.trim();
-    const brand = document.getElementById('item-brand').value.trim();
-    const category_id = document.getElementById('item-category').value;
-    const unit_id = document.getElementById('item-unit').value;
-    const stock = Number(document.getElementById('item-stock').value);
-    const cost_price = Number(document.getElementById('item-cost-price').value);
-    const sell_price = Number(document.getElementById('item-sell-price').value);
-    const min_stock = Number(document.getElementById('item-min-stock').value);
-
-    if (!name) {
-      if (typeof showToast === 'function') showToast('Nama barang tidak boleh kosong', 'error');
-      return;
-    }
-    if (!sku) {
-      sku = autoGenerateSkuForItem();
-    }
-    if (!sku) {
-      if (typeof showToast === 'function') showToast('SKU barang wajib diisi', 'error');
-      return;
-    }
-    if (cost_price < 0 || sell_price < 0) {
-      if (typeof showToast === 'function') showToast('Harga beli dan harga jual harus >= 0', 'error');
-      return;
-    }
-    if (!id && stock < 0) {
-      if (typeof showToast === 'function') showToast('Stok harus >= 0', 'error');
-      return;
-    }
-
-    const duplicate = currentItems.find(function (i) {
-      return String(i.sku || '').toLowerCase() === sku.toLowerCase() && (!id || String(i.id) !== String(id));
-    });
-    if (duplicate) {
-      if (typeof showToast === 'function') showToast('SKU "' + sku + '" sudah digunakan oleh produk lain', 'error');
-      return;
-    }
-
-    const duplicateBarcode = barcode && currentItems.find(function (i) {
-      return (i.barcode || '').trim() === barcode && (!id || String(i.id) !== String(id));
-    });
-    if (duplicateBarcode) {
-      if (typeof showToast === 'function') showToast('Barcode "' + barcode + '" sudah digunakan oleh produk lain', 'error');
-      return;
-    }
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (isSubmittingItem) return;
+    isSubmittingItem = true;
 
     const btnSubmit = document.getElementById('btn-submit-item');
-    const originalBtnContent = btnSubmit.innerHTML;
-    btnSubmit.disabled = true;
+    const originalBtnContent = btnSubmit ? btnSubmit.innerHTML : '';
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+    }
 
     try {
+      const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
+      if (role === 'VIEWER') {
+        alert('Anda tidak punya akses untuk mengubah data.');
+        return;
+      }
+
+      const id = document.getElementById('item-id').value;
+      let sku = document.getElementById('item-sku').value.trim();
+      const barcode = document.getElementById('item-barcode').value.trim();
+      const name = document.getElementById('item-name').value.trim();
+      const brand = document.getElementById('item-brand').value.trim();
+      const category_id = document.getElementById('item-category').value;
+      const unit_id = document.getElementById('item-unit').value;
+      const stock = Number(document.getElementById('item-stock').value);
+      const cost_price = Number(document.getElementById('item-cost-price').value);
+      const sell_price = Number(document.getElementById('item-sell-price').value);
+      const min_stock = Number(document.getElementById('item-min-stock').value);
+
+      if (!name) {
+        if (typeof showToast === 'function') showToast('Nama barang tidak boleh kosong', 'error');
+        return;
+      }
+
+      // Validasi Anti-Duplikasi Nama Produk (cegah double input / barang ganda)
+      const trimmedNameLower = name.toLowerCase();
+      const duplicateName = currentItems.find(function (i) {
+        return (i.name || '').trim().toLowerCase() === trimmedNameLower && (!id || String(i.id) !== String(id));
+      });
+      if (duplicateName) {
+        if (typeof showToast === 'function') {
+          showToast('Produk dengan nama "' + name + '" sudah terdaftar di sistem', 'error');
+        }
+        return;
+      }
+
+      if (!sku) {
+        sku = autoGenerateSkuForItem();
+      }
+      if (!sku) {
+        if (typeof showToast === 'function') showToast('SKU barang wajib diisi', 'error');
+        return;
+      }
+      if (cost_price < 0 || sell_price < 0) {
+        if (typeof showToast === 'function') showToast('Harga beli dan harga jual harus >= 0', 'error');
+        return;
+      }
+      if (!id && stock < 0) {
+        if (typeof showToast === 'function') showToast('Stok harus >= 0', 'error');
+        return;
+      }
+
+      const duplicate = currentItems.find(function (i) {
+        return String(i.sku || '').toLowerCase() === sku.toLowerCase() && (!id || String(i.id) !== String(id));
+      });
+      if (duplicate) {
+        if (typeof showToast === 'function') showToast('SKU "' + sku + '" sudah digunakan oleh produk lain', 'error');
+        return;
+      }
+
+      const duplicateBarcode = barcode && currentItems.find(function (i) {
+        return (i.barcode || '').trim() === barcode && (!id || String(i.id) !== String(id));
+      });
+      if (duplicateBarcode) {
+        if (typeof showToast === 'function') showToast('Barcode "' + barcode + '" sudah digunakan oleh produk lain', 'error');
+        return;
+      }
+
       // 1. Upload foto ke Storage jika ada foto baru
-      btnSubmit.innerHTML = '<span>Menyiapkan Foto...</span>';
+      if (btnSubmit) btnSubmit.innerHTML = '<span>Menyiapkan Foto...</span>';
 
       const finalUrls = [];
       const newPhotos = productPhotos.filter(p => p.type === 'new');
@@ -567,7 +586,7 @@
           finalUrls.push(photo.url);
         } else if (photo.type === 'new' && photo.blob) {
           uploadedCount++;
-          btnSubmit.innerHTML = `<span>Mengunggah Foto (${uploadedCount}/${newPhotos.length})...</span>`;
+          if (btnSubmit) btnSubmit.innerHTML = `<span>Mengunggah Foto (${uploadedCount}/${newPhotos.length})...</span>`;
           const cleanSku = (sku || 'item').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
           const imagePath = `${cleanSku}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}.webp`;
 
@@ -576,8 +595,6 @@
             if (typeof showToast === 'function') {
               showToast(uploadRes.error?.message || 'Gagal mengunggah foto ke storage', 'error');
             }
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = originalBtnContent;
             return;
           }
           photo.url = uploadRes.data.publicUrl;
@@ -593,7 +610,7 @@
         finalImageUrl = JSON.stringify(finalUrls);
       }
 
-      btnSubmit.innerHTML = '<span>Menyimpan Produk...</span>';
+      if (btnSubmit) btnSubmit.innerHTML = '<span>Menyimpan Produk...</span>';
 
       const payload = {
         sku: sku,
@@ -647,8 +664,6 @@
         if (typeof showToast === 'function') {
           showToast(res.error?.message || 'Gagal menyimpan data ke Supabase', 'error');
         }
-        btnSubmit.disabled = false;
-        btnSubmit.innerHTML = originalBtnContent;
         return;
       }
 
@@ -662,8 +677,11 @@
         showToast(err.message || 'Terjadi kesalahan sistem', 'error');
       }
     } finally {
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = originalBtnContent;
+      isSubmittingItem = false;
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnContent;
+      }
     }
   }
 
