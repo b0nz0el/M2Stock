@@ -930,6 +930,117 @@
     line-height: 1.4 !important;
   }
 
+  /* ═══ Customer Mobile Card Optimization (International SaaS Standard) ═══ */
+  #page-customers .card table tbody tr {
+    padding: 16px !important;
+  }
+
+  #page-customers .card table tbody tr:has(td:last-child button) td:first-child {
+    padding-right: 80px !important;
+  }
+
+  #page-customers .card table tbody td[data-label="NAMA"]::before,
+  #page-customers .card table tbody td[data-label="NAMA CUSTOMER"]::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #page-customers .card table tbody td[data-label="NAMA"],
+  #page-customers .card table tbody td[data-label="NAMA CUSTOMER"] {
+    justify-content: flex-start !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid var(--aq-border-subtle, rgba(255, 255, 255, 0.05)) !important;
+    margin-bottom: 8px !important;
+  }
+
+  #page-customers .card table tbody td[data-label="EMAIL"],
+  #page-customers .card table tbody td[data-label="KOTA"] {
+    max-width: 65% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-align: right !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ═══ User Management Mobile Card Optimization ═══ */
+  #page-users .card table tbody tr {
+    padding: 16px !important;
+  }
+
+  #page-users .card table tbody tr:has(td:last-child button) td:first-child {
+    padding-right: 50px !important;
+  }
+
+  #page-users .card table tbody td[data-label="USER"]::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #page-users .card table tbody td[data-label="USER"] {
+    justify-content: flex-start !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid var(--aq-border-subtle, rgba(255, 255, 255, 0.05)) !important;
+    margin-bottom: 8px !important;
+  }
+
+  #page-users .card table tbody td[data-label="EMAIL"] {
+    max-width: 65% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-align: right !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ═══ Items Mobile Card Optimization ═══ */
+  #page-items .card table tbody tr {
+    padding: 16px !important;
+  }
+
+  #page-items .card table tbody tr:has(td:last-child button) td:first-child {
+    padding-right: 80px !important;
+  }
+
+  #page-items .card table tbody td[data-label="FOTO"]::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #page-items .card table tbody td[data-label="FOTO"] {
+    justify-content: flex-start !important;
+    padding-top: 2px !important;
+    padding-bottom: 6px !important;
+  }
+
+  #page-items .card table tbody td[data-label="NAMA"]::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #page-items .card table tbody td[data-label="NAMA"] {
+    justify-content: flex-start !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid var(--aq-border-subtle, rgba(255, 255, 255, 0.05)) !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* ═══ Universal Long Text Wrapping for Mobile Cards ═══ */
+  .card table tbody td[data-label="TARGET"],
+  .card table tbody td[data-label="KETERANGAN"],
+  .card table tbody td[data-label="CATATAN"],
+  .card table tbody td[data-label="ALAMAT"] {
+    max-width: 65% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-align: right !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.4 !important;
+  }
+
   /* ═══ iOS < 15 fallback untuk :has() ═══ */
   @supports not (selector(:has(*))) {
     .card table tbody td:first-child::before {
@@ -1053,13 +1164,37 @@
     display: none !important;
   }
 
+  app-sidebar aside nav {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+  }
+
+  app-sidebar aside .sidebar-user-footer,
   app-sidebar aside .p-4.border-t {
-    padding: 12px 6px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
     justify-content: center !important;
+    gap: 8px !important;
+    padding: 12px 4px !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  app-sidebar aside #sidebar-user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 auto !important;
+    font-size: 0.8125rem !important;
+    flex-shrink: 0 !important;
   }
 
   app-sidebar aside #sidebar-user-email,
-  app-sidebar aside #sidebar-user-role {
+  app-sidebar aside #sidebar-user-role,
+  app-sidebar aside .sidebar-user-footer .min-w-0 {
     display: none !important;
   }
 
@@ -1067,10 +1202,13 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 44px !important;
-    height: 44px !important;
-    margin: 4px auto 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
     color: #A0A0A5 !important;
+    flex-shrink: 0 !important;
   }
   app-sidebar aside button[data-action="logout"]:hover {
     color: #FF3B30 !important;

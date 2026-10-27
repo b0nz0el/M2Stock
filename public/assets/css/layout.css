@@ -105,8 +105,8 @@ main, #main-content {
   .bottom-nav-items { display: flex; height: 64px; }
 
   /* ═══ SIDEBAR SCROLL (Desktop & Mobile) ═══ */
-  @media (min-width: 1025px) {
-    aside {
+  @media (min-width: 1024px) {
+    aside, app-sidebar aside {
       height: 100vh;
       max-height: 100vh;
       position: sticky;
@@ -116,9 +116,9 @@ main, #main-content {
     }
   }
 
-  aside nav {
+  aside nav, app-sidebar aside nav {
     overflow-y: auto;
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     min-height: 0;
     scrollbar-width: thin;
   }

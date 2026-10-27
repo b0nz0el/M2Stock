@@ -482,7 +482,7 @@ class AppSidebar extends HTMLElement {
     this.innerHTML = `
       <aside class="w-64 bg-[#1C1C1E] flex flex-col border-r border-white/5" aria-label="Sidebar navigasi">
         <!-- Brand Header -->
-        <div class="p-5 flex items-center gap-3 border-b border-white/5">
+        <div class="p-5 flex items-center gap-3 border-b border-white/5 shrink-0">
           <div class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center shadow-lg shadow-[#0088CC]/20">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-hidden="true">
               <defs>
@@ -514,7 +514,7 @@ class AppSidebar extends HTMLElement {
         </button>
 
         <!-- Navigasi Menu (data-page, semantic <a> links untuk View Transition API) -->
-        <nav class="flex-1 p-2 overflow-y-auto" aria-label="Menu utama">
+        <nav class="flex-1 p-2 overflow-y-auto min-h-0" aria-label="Menu utama">
           <div class="section-title">Utama</div>
           <a href="${getUrl('dashboard')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium" data-page="dashboard">
             <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i> Dashboard
@@ -585,7 +585,7 @@ class AppSidebar extends HTMLElement {
         </nav>
 
         <!-- User Profile Footer -->
-        <div class="p-4 border-t border-white/5 flex items-center gap-3">
+        <div class="sidebar-user-footer p-4 border-t border-white/5 flex items-center gap-3 shrink-0">
           <div id="sidebar-user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center font-bold text-sm shadow-lg flex-shrink-0">D</div>
           <div class="flex-1 min-w-0">
             <p id="sidebar-user-email" class="text-sm font-semibold truncate">User</p>

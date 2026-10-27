@@ -1188,38 +1188,45 @@
           <p class="text-sm text-[#A0A0A5] mt-1">Kelola arus kas masuk, pengeluaran operasional, dan mutasi saldo toko</p>
         </div>
 
-        <!-- Filter Dropdowns -->
-        <div class="cash-filter-controls flex items-center gap-2 flex-wrap text-xs">
-          <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
-            <select id="cash-filter-period" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
-              <option value="month" selected="" class="bg-[#1C1C1E]">Bulan Ini</option>
-              <option value="30d" class="bg-[#1C1C1E]">30 Hari Terakhir</option>
-              <option value="all" class="bg-[#1C1C1E]">Semua Waktu</option>
-            </select>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <!-- Filter Dropdowns -->
+          <div class="cash-filter-controls flex items-center gap-2 flex-wrap text-xs">
+            <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
+              <select id="cash-filter-period" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+                <option value="month" selected="" class="bg-[#1C1C1E]">Bulan Ini</option>
+                <option value="30d" class="bg-[#1C1C1E]">30 Hari Terakhir</option>
+                <option value="all" class="bg-[#1C1C1E]">Semua Waktu</option>
+              </select>
+            </div>
+
+            <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
+              <i data-lucide="tag" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
+              <select id="cash-filter-kategori" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+                <option value="ALL" selected="" class="bg-[#1C1C1E]">Semua Kategori</option>
+                <option value="Penjualan" class="bg-[#1C1C1E]">Penjualan</option>
+                <option value="Pembelian" class="bg-[#1C1C1E]">Pembelian</option>
+                <option value="Gaji" class="bg-[#1C1C1E]">Gaji</option>
+                <option value="Operasional" class="bg-[#1C1C1E]">Operasional</option>
+                <option value="Lainnya" class="bg-[#1C1C1E]">Lainnya</option>
+              </select>
+            </div>
+
+            <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
+              <select id="cash-filter-metode" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+                <option value="ALL" selected="" class="bg-[#1C1C1E]">Semua Metode</option>
+                <option value="Cash" class="bg-[#1C1C1E]">Cash / Tunai</option>
+                <option value="Transfer" class="bg-[#1C1C1E]">Transfer Bank</option>
+                <option value="QRIS" class="bg-[#1C1C1E]">QRIS</option>
+              </select>
+            </div>
           </div>
 
-          <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
-            <i data-lucide="tag" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
-            <select id="cash-filter-kategori" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
-              <option value="ALL" selected="" class="bg-[#1C1C1E]">Semua Kategori</option>
-              <option value="Penjualan" class="bg-[#1C1C1E]">Penjualan</option>
-              <option value="Pembelian" class="bg-[#1C1C1E]">Pembelian</option>
-              <option value="Gaji" class="bg-[#1C1C1E]">Gaji</option>
-              <option value="Operasional" class="bg-[#1C1C1E]">Operasional</option>
-              <option value="Lainnya" class="bg-[#1C1C1E]">Lainnya</option>
-            </select>
-          </div>
-
-          <div class="cash-filter-control bg-[#1C1C1E] border border-white/10 rounded-xl">
-            <i data-lucide="credit-card" class="w-3.5 h-3.5 text-[#A0A0A5]"></i>
-            <select id="cash-filter-metode" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
-              <option value="ALL" selected="" class="bg-[#1C1C1E]">Semua Metode</option>
-              <option value="Cash" class="bg-[#1C1C1E]">Cash / Tunai</option>
-              <option value="Transfer" class="bg-[#1C1C1E]">Transfer Bank</option>
-              <option value="QRIS" class="bg-[#1C1C1E]">QRIS</option>
-            </select>
-          </div>
+          <button type="button" id="btn-open-cash-modal" data-action="add" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/20 transition shrink-0">
+            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Catat Kas</span>
+          </button>
         </div>
       </div>
 
@@ -1463,6 +1470,7 @@
     </div>
 
     <!-- =========================== REPORT =========================== -->
+    <div id="page-report" class="page p-6 space-y-6">
       <div class="report-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Laporan</h2>
