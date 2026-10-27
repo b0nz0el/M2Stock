@@ -43,51 +43,48 @@
   transition: width 0.15s ease, opacity 0.2s 0.05s ease;
 }
 
-/* ═══ SIDEBAR SHELL SIZING (Mencegah Layout Shift / FOUC saat navigasi) ═══ */
-app-sidebar {
-  display: block;
-  flex-shrink: 0;
-}
-@media (min-width: 1024px) {
-  app-sidebar {
-    width: 16rem;
-    min-width: 16rem;
-    height: 100vh;
-  }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-  app-sidebar {
-    width: 72px;
-    min-width: 72px;
-    height: 100vh;
-  }
-}
-
-/* ═══ VIEW TRANSITION (Pure Cross-Fade Tanpa Bouncing Layar/Sidebar) ═══ */
+/* ═══ VIEW TRANSITION (W3C / Chrome Standard: Persistent Dashboard Shell) ═══
+   Berdasarkan spesifikasi resmi Chromium: Sidebar & Header diisolasi
+   menggunakan view-transition-name agar terkunci di tempat (tidak loncat/flicker),
+   hanya area konten utama (main) yang bertransisi halus. */
 @view-transition {
   navigation: auto;
 }
-::view-transition-old(root) {
-  animation: 0.14s ease-out both vtFadeOut;
+
+aside, app-sidebar aside {
+  view-transition-name: app-sidebar;
 }
-::view-transition-new(root) {
-  animation: 0.2s ease-in both vtFadeIn;
+
+header {
+  view-transition-name: app-header;
 }
-@keyframes vtFadeOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+
+main, #main-content {
+  view-transition-name: app-main;
 }
-@keyframes vtFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+
+::view-transition-old(app-main) {
+  animation: 0.12s ease-out both vtContentOut;
+}
+::view-transition-new(app-main) {
+  animation: 0.18s cubic-bezier(0.16, 1, 0.3, 1) both vtContentIn;
+}
+
+@keyframes vtContentOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-3px); }
+}
+@keyframes vtContentIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Respek preferensi reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .page.active,
   #nav-progress-bar,
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
+  ::view-transition-old(app-main),
+  ::view-transition-new(app-main) {
     animation: none !important;
     transition: none !important;
   }

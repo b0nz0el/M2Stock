@@ -11,6 +11,7 @@
   border: none;
   color: #8e8e93;
   font-family: inherit;
+  text-decoration: none !important;
 }
 .menu-item.active {
   background: #0088cc;

@@ -319,7 +319,28 @@ class AppSidebar extends HTMLElement {
         bubbles: true,
         detail: { pageId }
       }));
-      if (typeof window !== 'undefined' && typeof window.showPage === 'function') {
+
+      // Feedback visual instan: highlight langsung menu yang diklik & munculkan progress bar
+      this._highlightActiveMenu(pageId);
+      if (typeof document !== 'undefined') {
+        let bar = document.getElementById('nav-progress-bar');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'nav-progress-bar';
+          document.body.appendChild(bar);
+        }
+        void bar.offsetWidth;
+        bar.className = 'nav-progress-active';
+
+        const mainContent = document.getElementById('main-content') || document.querySelector('main');
+        if (mainContent) {
+          mainContent.style.transition = 'opacity 0.15s ease-out';
+          mainContent.style.opacity = '0.7';
+        }
+      }
+
+      // Jika elemen bukan link <a> (misal <button>), panggil window.showPage sebagai fallback
+      if (menuItem.tagName !== 'A' && typeof window !== 'undefined' && typeof window.showPage === 'function') {
         window.showPage(pageId);
       }
       return;
@@ -428,6 +449,13 @@ class AppSidebar extends HTMLElement {
   }
 
   render() {
+    const getUrl = (slug) => {
+      if (typeof window !== 'undefined' && typeof window.pageUrl === 'function') {
+        return window.pageUrl(slug);
+      }
+      return '/dashboard/' + (slug === 'dashboard' ? '' : slug + '/');
+    };
+
     this.innerHTML = `
       <aside class="w-64 bg-[#1C1C1E] flex flex-col border-r border-white/5" aria-label="Sidebar navigasi">
         <!-- Brand Header -->
@@ -462,69 +490,69 @@ class AppSidebar extends HTMLElement {
           <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
         </button>
 
-        <!-- Navigasi Menu (data-page, no inline onclick) -->
+        <!-- Navigasi Menu (data-page, semantic <a> links untuk View Transition API) -->
         <nav class="flex-1 p-2 overflow-y-auto" aria-label="Menu utama">
           <div class="section-title">Utama</div>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium" data-page="dashboard">
+          <a href="${getUrl('dashboard')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium" data-page="dashboard">
             <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i> Dashboard
-          </button>
+          </a>
 
           <div class="section-title">Inventori</div>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="items">
+          <a href="${getUrl('items')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="items">
             <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Barang
             <span id="sidebar-items-badge" class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">0</span>
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="in">
+          </a>
+          <a href="${getUrl('in')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="in">
             <i data-lucide="arrow-down-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Masuk
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="out">
+          </a>
+          <a href="${getUrl('out')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="out">
             <i data-lucide="arrow-up-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Keluar
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="po">
+          </a>
+          <a href="${getUrl('po')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="po">
             <i data-lucide="clipboard-list" class="w-4 h-4" aria-hidden="true"></i> Purchase Order
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="return">
+          </a>
+          <a href="${getUrl('return')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="return">
             <i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i> Retur
-          </button>
+          </a>
 
           <div class="section-title">Master Data</div>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="suppliers">
+          <a href="${getUrl('suppliers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="suppliers">
             <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i> Supplier
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="customers">
+          </a>
+          <a href="${getUrl('customers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="customers">
             <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i> Customer
-          </button>
+          </a>
 
           <div class="section-title">Keuangan</div>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="cash">
+          <a href="${getUrl('cash')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="cash">
             <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i> Kas & Keuangan
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="debt">
+          </a>
+          <a href="${getUrl('debt')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="debt">
             <i data-lucide="trending-down" class="w-4 h-4" aria-hidden="true"></i> Hutang & Piutang
-          </button>
+          </a>
 
           <div class="section-title">Laporan</div>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="report">
+          <a href="${getUrl('report')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="report">
             <i data-lucide="bar-chart-3" class="w-4 h-4" aria-hidden="true"></i> Laporan
-          </button>
+          </a>
 
           <div class="section-title">Sistem</div>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="users">
+          <a href="${getUrl('users')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="users">
             <i data-lucide="user-cog" class="w-4 h-4" aria-hidden="true"></i> Kelola User
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="audit">
+          </a>
+          <a href="${getUrl('audit')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="audit">
             <i data-lucide="scroll-text" class="w-4 h-4" aria-hidden="true"></i> Audit Log
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="notif">
+          </a>
+          <a href="${getUrl('notif')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="notif">
             <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i> Notifikasi
             <span id="sidebar-notif-badge" class="ml-auto text-xs bg-[#FF3B30] px-2 py-0.5 rounded-full font-semibold hidden">0</span>
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="backup">
+          </a>
+          <a href="${getUrl('backup')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="backup">
             <i data-lucide="database-backup" class="w-4 h-4" aria-hidden="true"></i> Backup
-          </button>
-          <button type="button" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="settings">
+          </a>
+          <a href="${getUrl('settings')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="settings">
             <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i> Settings
-          </button>
+          </a>
         </nav>
 
         <!-- User Profile Footer -->
