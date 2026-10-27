@@ -3,10 +3,10 @@
    Controller Modul Laporan & Visualisasi Agregasi
    ═══════════════════════════════════════════════════ */
 
-import { supabase } from '../../assets/js/supabase-client.js';
-import { report as reportApi } from '../../assets/js/api/report.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { supabase } from '../assets/js/supabase-client.js';
+import { report as reportApi } from '../assets/js/api/report.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';

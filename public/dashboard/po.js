@@ -3,12 +3,12 @@
    Controller Modul Purchase Order & PO Items
    ═══════════════════════════════════════════════════ */
 
-import { po as poApi } from '../../assets/js/api/po.js';
-import { suppliers as suppliersApi } from '../../assets/js/api/suppliers.js';
-import { items as itemsApi } from '../../assets/js/api/items.js';
-import { settings as settingsApi } from '../../assets/js/api/settings.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { po as poApi } from '../assets/js/api/po.js';
+import { suppliers as suppliersApi } from '../assets/js/api/suppliers.js';
+import { items as itemsApi } from '../assets/js/api/items.js';
+import { settings as settingsApi } from '../assets/js/api/settings.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';

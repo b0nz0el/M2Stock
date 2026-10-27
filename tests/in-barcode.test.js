@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const inScript = readFileSync(resolve(process.cwd(), 'public/dashboard/in/in.js'), 'utf8');
+const inScript = readFileSync(resolve(process.cwd(), 'public/dashboard/in.js'), 'utf8');
 const product = {
   id: 7,
   name: 'Filter Aquarium',

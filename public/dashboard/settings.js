@@ -4,9 +4,9 @@
    Pengaturan dari Supabase app_settings & profiles
    ═══════════════════════════════════════════════════ */
 
-import { settings as settingsApi } from '../../assets/js/api/settings.js';
-import { supabase } from '../../assets/js/supabase-client.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
+import { settings as settingsApi } from '../assets/js/api/settings.js';
+import { supabase } from '../assets/js/supabase-client.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 
 (function () {
   'use strict';

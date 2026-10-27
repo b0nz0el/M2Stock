@@ -3,9 +3,9 @@
    Controller Modul Hutang & Piutang (debts)
    ═══════════════════════════════════════════════════ */
 
-import { debt as debtApi } from '../../assets/js/api/debt.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { debt as debtApi } from '../assets/js/api/debt.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';

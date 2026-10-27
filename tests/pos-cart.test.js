@@ -34,7 +34,7 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     transactionsCode = fs.readFileSync(path.resolve(__dirname, '../public/assets/js/api/transactions.js'), 'utf8');
-    outJsCode = fs.readFileSync(path.resolve(__dirname, '../public/dashboard/out/out.js'), 'utf8');
+    outJsCode = fs.readFileSync(path.resolve(__dirname, '../public/dashboard/out.js'), 'utf8');
     outHtml = fs.readFileSync(path.resolve(__dirname, '../public/dashboard/index.html'), 'utf8');
   });
 

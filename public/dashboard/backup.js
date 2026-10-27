@@ -4,8 +4,8 @@
    Riwayat backup dari Supabase backup_logs
    ═══════════════════════════════════════════════════ */
 
-import { backup as backupApi, BACKUP_TABLES } from '../../assets/js/api/backup.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
+import { backup as backupApi, BACKUP_TABLES } from '../assets/js/api/backup.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 
 (function () {
   'use strict';

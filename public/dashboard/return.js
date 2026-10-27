@@ -3,11 +3,11 @@
    Controller Modul Retur Barang (returns)
    ═══════════════════════════════════════════════════ */
 
-import { returnApi } from '../../assets/js/api/return.js';
-import { items as itemsApi } from '../../assets/js/api/items.js';
-import { settings as settingsApi } from '../../assets/js/api/settings.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { returnApi } from '../assets/js/api/return.js';
+import { items as itemsApi } from '../assets/js/api/items.js';
+import { settings as settingsApi } from '../assets/js/api/settings.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';

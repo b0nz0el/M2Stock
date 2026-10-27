@@ -3,9 +3,9 @@
    Controller Modul Kas & Keuangan (cash_flow)
    ═══════════════════════════════════════════════════ */
 
-import { cash as cashApi } from '../../assets/js/api/cash.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { cash as cashApi } from '../assets/js/api/cash.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';

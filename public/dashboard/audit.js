@@ -3,9 +3,9 @@
    Controller Modul Audit Log & Jejak Aktivitas User
    ═══════════════════════════════════════════════════ */
 
-import { audit as auditApi } from '../../assets/js/api/audit.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { audit as auditApi } from '../assets/js/api/audit.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';

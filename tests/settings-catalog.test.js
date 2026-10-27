@@ -55,7 +55,7 @@ describe('settings catalog actions', () => {
     `;
     window.confirm = vi.fn(() => true);
     window.showToast = vi.fn();
-    await import('../public/dashboard/settings/settings.js');
+    await import('../public/dashboard/settings.js');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.waitFor(() => {
       expect(document.querySelector('#setting-category-list li button')).not.toBeNull();

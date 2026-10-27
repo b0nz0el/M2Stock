@@ -4,9 +4,9 @@
    Data notifikasi langsung dari Supabase
    ═══════════════════════════════════════════════════ */
 
-import { notif as notifApi } from '../../assets/js/api/notif.js';
-import { applyReadOnlyUI } from '../../assets/js/utils/rbac-ui.js';
-import { getUserRole } from '../../assets/js/utils/rbac.js';
+import { notif as notifApi } from '../assets/js/api/notif.js';
+import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
+import { getUserRole } from '../assets/js/utils/rbac.js';
 
 (function () {
   'use strict';
