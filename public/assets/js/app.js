@@ -541,7 +541,7 @@ if (typeof window !== 'undefined') {
       }
 
       if (typeof showToast === 'function') {
-        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.6)!', 'success');
+        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.7)!', 'success');
       }
       setTimeout(() => {
         window.location.reload();

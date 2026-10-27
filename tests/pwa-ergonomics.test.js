@@ -232,12 +232,14 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(appJs).toContain('e.touches.length > 1');
     });
 
-    it('verifies service worker and components are bumped to v3.4.6', () => {
+    it('verifies service worker and components are bumped to current version', () => {
+      const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+      const ver = pkg.version;
       const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
-      expect(sw).toContain('aquastock-v3.4.6-pwa');
+      expect(sw).toContain(`aquastock-v${ver}-pwa`);
 
       const appSidebar = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
-      expect(appSidebar).toContain('v3.4.6');
+      expect(appSidebar).toContain(`v${ver}`);
     });
   });
 });

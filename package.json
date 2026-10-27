@@ -1,6 +1,6 @@
 {
   "name": "aquastock-pro",
-  "version": "3.0.0",
+  "version": "3.4.7",
   "description": "Aquastock Pro — sistem manajemen stok peralatan aquarium (static frontend, siap dihubungkan ke backend)",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "size": "node scripts/check-size.js",
+    "bump": "node scripts/bump-version.mjs",
     "build:css": "tailwindcss -i tailwind/input.css -o public/assets/css/tailwind.static.css --minify"
   },
   "keywords": [
