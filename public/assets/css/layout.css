@@ -2,76 +2,63 @@
    aQuaStock Pro — layout.css
    Page transition, page/aside/header, struktur bottom-nav
    ═══════════════════════════════════════════════════ */
-  /* ═══ PAGE TRANSITIONS ═══ */
-  .page { display: none; }
-  .page.active {
-    display: block;
-    animation: pageEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  @keyframes pageEnter {
-    from { opacity: 0; transform: translateY(10px) scale(0.99); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
+/* ═══ PAGE TRANSITIONS ═══ */
+.page { display: none; }
+.page.active {
+  display: block;
+  animation: pageEnter 0.25s ease-out both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  main {
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+/* Animasi masuk saat halaman pertama kali dimuat (MPA cross-document fallback).
+   Hanya opacity — TIDAK pakai translateX agar tidak terasa aneh. */
+body {
+  animation: bodyFadeIn 0.22s ease-out both;
+}
+@keyframes bodyFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
-  /* ═══ VIEW TRANSITION API (Chrome 111+, Edge 111+) ═══ */
-  @view-transition {
-    navigation: auto;
-  }
+/* ═══ VIEW TRANSITION API — Cross-Document MPA (Chrome 126+, Edge 126+) ═══
+   Cara kerja: browser otomatis intercept navigasi antar halaman,
+   screenshot halaman lama, load halaman baru, lalu jalankan animasi ini.
+   Tidak perlu JS sama sekali — cukup CSS ini di semua halaman. */
+@view-transition {
+  navigation: auto;
+}
 
-  /* Halaman LAMA — slide ke kiri + fade out */
-  ::view-transition-old(root) {
-    animation: vt-slide-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
-  }
-  /* Halaman BARU — slide masuk dari kanan + fade in */
+/* Halaman LAMA — fade out sambil sedikit naik */
+::view-transition-old(root) {
+  animation: vt-out 0.18s ease-in both;
+}
+/* Halaman BARU — fade in sambil sedikit turun ke posisi */
+::view-transition-new(root) {
+  animation: vt-in 0.26s ease-out both;
+}
+
+@keyframes vt-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Respek preferensi reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .page.active,
+  ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation: vt-slide-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: none !important;
+    transition: none !important;
   }
-
-  @keyframes vt-slide-out {
-    from { opacity: 1; transform: translateX(0) scale(1); }
-    to   { opacity: 0; transform: translateX(-18px) scale(0.985); }
-  }
-  @keyframes vt-slide-in {
-    from { opacity: 0; transform: translateX(18px) scale(0.985); }
-    to   { opacity: 1; transform: translateX(0) scale(1); }
-  }
-
-  /* ═══ CSS FALLBACK: page-exiting (browser tanpa View Transition API) ═══ */
-  html.page-exiting,
-  html.page-exiting body {
-    pointer-events: none;
-  }
-  html.page-exiting body {
-    animation: pageExitFallback 0.22s cubic-bezier(0.4, 0, 1, 1) both;
-  }
-  @keyframes pageExitFallback {
-    from { opacity: 1; transform: translateX(0); }
-    to   { opacity: 0; transform: translateX(-14px); }
-  }
-
-  /* Animasi masuk body untuk semua browser (termasuk yang tidak support VT API) */
-  body {
-    animation: pageEnterBody 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  @keyframes pageEnterBody {
-    from { opacity: 0; transform: translateX(14px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-
-  /* Respek preferensi reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    ::view-transition-old(root),
-    ::view-transition-new(root),
-    body,
-    .page.active {
-      animation: none !important;
-      transition: none !important;
-    }
-  }
+}
 
   /* ═══ BOTTOM NAV (default hidden, tampil di mobile) ═══ */
   .bottom-nav {
