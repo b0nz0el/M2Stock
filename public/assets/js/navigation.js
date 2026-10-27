@@ -35,8 +35,32 @@ function dashboardBase() {
   return './';
 }
 
-/* Tentukan id halaman dari URL saat ini (clean URL) */
+/* Tentukan id halaman dari URL saat ini (clean URL, query param ?page=, atau hash) */
 function currentPageId() {
+  if (typeof window !== 'undefined' && window.location) {
+    // 1. Cek query parameter (?page=in atau ?tab=in)
+    if (window.location.search) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const p = params.get('page') || params.get('tab');
+        if (p && (PAGE_SLUGS[p] !== undefined || (typeof document !== 'undefined' && document.getElementById('page-' + p)))) {
+          return p;
+        }
+      } catch (e) {}
+    }
+
+    // 2. Cek sessionStorage dari 404 recovery
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('spa_redirect');
+        if (saved && (PAGE_SLUGS[saved] !== undefined || (typeof document !== 'undefined' && document.getElementById('page-' + saved)))) {
+          sessionStorage.removeItem('spa_redirect');
+          return saved;
+        }
+      } catch (e) {}
+    }
+  }
+
   let rest = window.location.pathname.slice(dashboardBase().length);
   rest = rest.replace(/\.html$/, '').replace(/\/+$/, '');
   if (!rest) return 'dashboard';

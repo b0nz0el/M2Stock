@@ -214,14 +214,15 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(backupJs).toContain('aquastock_gdrive_auth');
     });
 
-    it('verifies Barang Masuk add button has modern gradient styling', () => {
+    it('verifies Barang Masuk and items add button has sleek professional styling and responsive labels', () => {
       const modalHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
       expect(modalHtml).toContain('Catat Barang Masuk');
+      expect(modalHtml).toContain('Catat Masuk');
       expect(modalHtml).toContain('package-plus');
 
       const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
       expect(responsiveCss).toContain('#page-in > div:first-child .flex.gap-2 > button[data-action="add"]');
-      expect(responsiveCss).toContain('linear-gradient(135deg, #0088CC 0%, #32ADE6 100%)');
+      expect(responsiveCss).toContain('background: #0088CC !important;');
     });
 
     it('verifies multi-touch pinch-to-zoom and gesture events are prevented in app.js', () => {
@@ -231,12 +232,12 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(appJs).toContain('e.touches.length > 1');
     });
 
-    it('verifies service worker and components are bumped to v3.4.5', () => {
+    it('verifies service worker and components are bumped to v3.4.6', () => {
       const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
-      expect(sw).toContain('aquastock-v3.4.5-pwa');
+      expect(sw).toContain('aquastock-v3.4.6-pwa');
 
       const appSidebar = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
-      expect(appSidebar).toContain('v3.4.5');
+      expect(appSidebar).toContain('v3.4.6');
     });
   });
 });
