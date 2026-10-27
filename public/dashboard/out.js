@@ -47,8 +47,46 @@
     return 'Produk #' + (tx.product_id || '-');
   }
 
+  async function loadChannelDropdown() {
+    const channelSelect = document.getElementById('out-channel');
+    if (!channelSelect) return;
+    try {
+      let channels = [];
+      if (typeof window !== 'undefined' && window.Api?.settings?.getChannels) {
+        channels = await window.Api.settings.getChannels();
+      } else {
+        const cached = localStorage.getItem('aquastock_channels');
+        if (cached) channels = JSON.parse(cached);
+      }
+      if (!Array.isArray(channels) || channels.length === 0) {
+        channels = ['Offline', 'Shopee', 'Tokopedia', 'TikTok', 'Lazada', 'WhatsApp'];
+      }
+
+      const currentVal = channelSelect.value || 'Offline';
+      channelSelect.innerHTML = '';
+      channels.forEach(ch => {
+        const name = typeof ch === 'string' ? ch : ch.name;
+        if (!name) return;
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name === 'Offline' ? 'Offline / Toko Fisik' : name;
+        channelSelect.appendChild(opt);
+      });
+
+      if (currentVal && Array.from(channelSelect.options).some(o => o.value === currentVal)) {
+        channelSelect.value = currentVal;
+      } else if (channelSelect.options.length > 0) {
+        channelSelect.selectedIndex = 0;
+      }
+    } catch (err) {
+      console.warn('Error loading channels in POS:', err);
+    }
+  }
+
   async function loadDropdowns() {
     try {
+      await loadChannelDropdown();
+
       const prodRes = await Api.items.getAll();
       if (prodRes && prodRes.ok) {
         availableProducts = prodRes.data || [];
@@ -1059,6 +1097,7 @@
       modal.classList.remove('flex');
     }
   }
+  window.closePackingListModal = closePackingListModal;
 
   let activeReceiptTx = null;
 
@@ -1965,6 +2004,7 @@ window.goToOutPage = goToOutPage;
 window.loadOutTransactions = loadOutTransactions;
 window.handleExportOut = handleExportOut;
 window.openPackingListModal = openPackingListModal;
+window.closePackingListModal = closePackingListModal;
 
 document.addEventListener('DOMContentLoaded', () => {
   const outSearchInput = document.getElementById('out-product-search');
@@ -2026,6 +2066,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (previewImg) previewImg.src = '';
     document.getElementById('photo-preview')?.classList.add('hidden');
   });
+
+  const packingModal = document.getElementById('modal-packing-list');
+  if (packingModal) {
+    packingModal.addEventListener('click', (e) => {
+      if (e.target === packingModal) closePackingListModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('modal-packing-list');
+      if (modal && !modal.classList.contains('hidden')) {
+        closePackingListModal();
+      }
+    }
+  });
+  window.addEventListener('aquastock:channels-updated', loadChannelDropdown);
   window.refreshIcons?.();
 });
 

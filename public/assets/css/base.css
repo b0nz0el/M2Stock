@@ -95,3 +95,86 @@ input:focus, select:focus, textarea:focus {
 /* Kontras teks lebih baik */
 .text-primary-accessible { color: #32ADE6; }
 .text-secondary-accessible { color: #A0A0A5; }
+
+/* ═══ THEME ACCENT SYSTEM ═══ */
+:root {
+  --app-accent: #0088CC;
+  --app-accent-hover: #0077BB;
+  --app-accent-subtle: #32ADE6;
+  --app-accent-glow: rgba(0, 136, 204, 0.25);
+  --app-accent-bg: rgba(0, 136, 204, 0.15);
+}
+
+:root[data-accent="#34C759"] {
+  --app-accent: #34C759;
+  --app-accent-hover: #2db84d;
+  --app-accent-subtle: #30D158;
+  --app-accent-glow: rgba(52, 199, 89, 0.25);
+  --app-accent-bg: rgba(52, 199, 89, 0.15);
+}
+
+:root[data-accent="#FF9500"] {
+  --app-accent: #FF9500;
+  --app-accent-hover: #e68600;
+  --app-accent-subtle: #FFCC00;
+  --app-accent-glow: rgba(255, 149, 0, 0.25);
+  --app-accent-bg: rgba(255, 149, 0, 0.15);
+}
+
+:root[data-accent="#5856D6"] {
+  --app-accent: #5856D6;
+  --app-accent-hover: #4b48c2;
+  --app-accent-subtle: #AF52DE;
+  --app-accent-glow: rgba(88, 86, 214, 0.25);
+  --app-accent-bg: rgba(88, 86, 214, 0.15);
+}
+
+/* Dynamic Accent Overrides */
+:root[data-accent] .bg-\[\#0088CC\],
+:root[data-accent] .menu-item.active,
+:root[data-accent] .bottom-nav-item.active .bottom-nav-icon-wrap,
+:root[data-accent] #header-avatar,
+:root[data-accent] #sidebar-user-avatar {
+  background-color: var(--app-accent) !important;
+}
+
+:root[data-accent] .hover\:bg-\[\#0077BB\]:hover {
+  background-color: var(--app-accent-hover) !important;
+}
+
+:root[data-accent] .text-\[\#0088CC\],
+:root[data-accent] .text-\[\#32ADE6\],
+:root[data-accent] .bottom-nav-item.active {
+  color: var(--app-accent-subtle) !important;
+}
+
+:root[data-accent] .border-\[\#0088CC\],
+:root[data-accent] input:focus,
+:root[data-accent] select:focus,
+:root[data-accent] textarea:focus {
+  border-color: var(--app-accent) !important;
+  box-shadow: 0 0 0 3px var(--app-accent-glow) !important;
+}
+
+:root[data-accent] .shadow-\[\#0088CC\]\/20 {
+  box-shadow: 0 10px 15px -3px var(--app-accent-glow) !important;
+}
+
+:root[data-accent] .bg-\[\#0088CC\]\/15,
+:root[data-accent] .bg-\[\#0088CC\]\/20 {
+  background-color: var(--app-accent-bg) !important;
+}
+
+:root[data-accent] #nav-progress-bar {
+  background: linear-gradient(90deg, var(--app-accent), var(--app-accent-subtle)) !important;
+  box-shadow: 0 0 8px var(--app-accent-glow) !important;
+}
+
+/* ═══ COMPACT TABLE MODE ═══ */
+:root[data-compact="true"] table td,
+:root[data-compact="true"] table th {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  font-size: 0.8125rem !important;
+}
+

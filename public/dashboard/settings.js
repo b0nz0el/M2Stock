@@ -39,6 +39,7 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
   let currentUserProfile = null;
   let catalogCategories = [];
   let catalogUnits = [];
+  let catalogChannels = [];
 
   function renderCatalogList(elementId, entries, emptyMessage) {
     const list = document.getElementById(elementId);
@@ -81,12 +82,16 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       deleteButton.textContent = 'Hapus';
       deleteButton.setAttribute('aria-label', `Hapus ${entry.name}`);
 
-      if (elementId === 'setting-unit-list' && entry.name.trim().toLowerCase() === 'pcs') {
+      const isProtectedUnit = elementId === 'setting-unit-list' && entry.name.trim().toLowerCase() === 'pcs';
+      const isProtectedChannel = elementId === 'setting-channel-list' && entry.name.trim().toLowerCase() === 'offline';
+
+      if (isProtectedUnit || isProtectedChannel) {
+        const itemType = isProtectedUnit ? 'Satuan' : 'Channel';
         editButton.disabled = true;
-        editButton.title = 'Satuan default tidak dapat diubah namanya.';
+        editButton.title = `${itemType} default tidak dapat diubah namanya.`;
         editButton.classList.add('cursor-not-allowed', 'opacity-40');
         deleteButton.disabled = true;
-        deleteButton.title = 'Satuan default tidak dapat dihapus.';
+        deleteButton.title = `${itemType} default tidak dapat dihapus.`;
         deleteButton.classList.add('cursor-not-allowed', 'opacity-40');
       }
 
@@ -97,21 +102,27 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
   }
 
   async function loadCatalogLists() {
-    const [categoryResult, unitResult] = await Promise.all([
+    const [categoryResult, unitResult, channelList] = await Promise.all([
       supabase.from('categories').select('id, name').order('name'),
-      supabase.from('units').select('id, name').order('name')
+      supabase.from('units').select('id, name').order('name'),
+      settingsApi.getChannels ? settingsApi.getChannels() : Promise.resolve([])
     ]);
     if (categoryResult.error) throw categoryResult.error;
     if (unitResult.error) throw unitResult.error;
 
     catalogCategories = categoryResult.data || [];
     catalogUnits = unitResult.data || [];
+    catalogChannels = channelList || [];
     renderCatalogList('setting-category-list', catalogCategories, 'Belum ada kategori.');
     renderCatalogList('setting-unit-list', catalogUnits, 'Belum ada satuan.');
+    renderCatalogList('setting-channel-list', catalogChannels, 'Belum ada saluran penjualan.');
   }
 
   function getCatalogEntries(table) {
-    return table === 'categories' ? catalogCategories : catalogUnits;
+    if (table === 'categories') return catalogCategories;
+    if (table === 'units') return catalogUnits;
+    if (table === 'channels') return catalogChannels;
+    return [];
   }
 
   function renderCatalogEntryEdit(row, entry, table, label) {
@@ -137,7 +148,7 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     cancelButton.textContent = 'Batal';
 
     const cancel = () => renderCatalogList(
-      table === 'categories' ? 'setting-category-list' : 'setting-unit-list',
+      table === 'categories' ? 'setting-category-list' : (table === 'units' ? 'setting-unit-list' : 'setting-channel-list'),
       getCatalogEntries(table),
       `Belum ada ${label.toLowerCase()}.`
     );
@@ -156,8 +167,27 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
         input.focus();
         return;
       }
+
       saveButton.disabled = true;
       cancelButton.disabled = true;
+
+      if (table === 'channels') {
+        try {
+          entry.name = name;
+          await settingsApi.saveChannels(catalogChannels);
+          await loadCatalogLists();
+          if (typeof showToast === 'function') showToast(`${label} berhasil diperbarui.`, 'success');
+        } catch (error) {
+          console.error(`Gagal mengubah ${label.toLowerCase()}:`, error);
+          if (typeof showToast === 'function') {
+            showToast(error.message || `Gagal mengubah ${label.toLowerCase()}.`, 'error');
+          }
+          saveButton.disabled = false;
+          cancelButton.disabled = false;
+        }
+        return;
+      }
+
       try {
         const { error } = await supabase.from(table).update({ name }).eq('id', entry.id);
         if (error) {
@@ -198,6 +228,36 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     const entries = getCatalogEntries(table);
     const entry = entries.find(item => String(item.id) === button.closest('li')?.dataset.catalogId);
     if (!entry) return;
+
+    if (table === 'channels') {
+      if (button.dataset.catalogAction === 'edit') {
+        if (entry.name.trim().toLowerCase() === 'offline') {
+          if (typeof showToast === 'function') showToast('Channel default "Offline" tidak dapat diubah namanya.', 'error');
+          return;
+        }
+        renderCatalogEntryEdit(button.closest('li'), entry, table, label);
+        return;
+      }
+
+      if (entry.name.trim().toLowerCase() === 'offline') {
+        if (typeof showToast === 'function') showToast('Channel default "Offline" tidak dapat dihapus.', 'error');
+        return;
+      }
+
+      if (!window.confirm(`Hapus saluran penjualan "${entry.name}"?`)) return;
+      button.disabled = true;
+      try {
+        catalogChannels = catalogChannels.filter(c => String(c.id) !== String(entry.id));
+        await settingsApi.saveChannels(catalogChannels);
+        await loadCatalogLists();
+        if (typeof showToast === 'function') showToast(`${label} "${entry.name}" berhasil dihapus.`, 'success');
+      } catch (error) {
+        console.error('Gagal menghapus saluran penjualan:', error);
+        if (typeof showToast === 'function') showToast('Gagal menghapus saluran penjualan.', 'error');
+        button.disabled = false;
+      }
+      return;
+    }
 
     if (button.dataset.catalogAction === 'edit') {
       if (table === 'units' && entry.name.trim().toLowerCase() === 'pcs') {
@@ -245,9 +305,26 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       return;
     }
 
-    const entries = table === 'categories' ? catalogCategories : catalogUnits;
+    const entries = getCatalogEntries(table);
     if (entries.some(entry => entry.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())) {
       if (typeof showToast === 'function') showToast(`${label} "${name}" sudah terdaftar.`, 'error');
+      return;
+    }
+
+    if (table === 'channels') {
+      if (button) button.disabled = true;
+      try {
+        catalogChannels.push({ id: Date.now(), name });
+        await settingsApi.saveChannels(catalogChannels);
+        if (input) input.value = '';
+        await loadCatalogLists();
+        if (typeof showToast === 'function') showToast(`${label} "${name}" berhasil ditambahkan.`, 'success');
+      } catch (error) {
+        console.error('Gagal menambahkan saluran penjualan:', error);
+        if (typeof showToast === 'function') showToast('Gagal menambahkan saluran penjualan.', 'error');
+      } finally {
+        if (button) button.disabled = false;
+      }
       return;
     }
 
@@ -325,6 +402,9 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       }
 
       populateForms();
+      if (currentSettings.appearance && typeof window.applyAppearance === 'function') {
+        window.applyAppearance(currentSettings.appearance);
+      }
     } catch (err) {
       console.error('Error loadSettings:', err);
       if (typeof showToast === 'function') {
@@ -491,6 +571,10 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
         compact_mode: Boolean(document.getElementById('setting-compact-mode')?.checked)
       };
 
+      if (typeof window.applyAppearance === 'function') {
+        window.applyAppearance(payload);
+      }
+
       const res = await settingsApi.save('appearance', payload);
       if (!res.ok) throw new Error(res.error?.message || 'Gagal menyimpan preferensi tampilan');
 
@@ -551,6 +635,30 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       });
     });
 
+    // Live preview perubahan tema & kepadatan tabel
+    const colorSelect = document.getElementById('setting-primary-color');
+    const compactCheck = document.getElementById('setting-compact-mode');
+    if (colorSelect) {
+      colorSelect.addEventListener('change', () => {
+        if (typeof window.applyAppearance === 'function') {
+          window.applyAppearance({
+            primary_color: colorSelect.value,
+            compact_mode: compactCheck ? compactCheck.checked : false
+          });
+        }
+      });
+    }
+    if (compactCheck) {
+      compactCheck.addEventListener('change', () => {
+        if (typeof window.applyAppearance === 'function') {
+          window.applyAppearance({
+            primary_color: colorSelect ? colorSelect.value : '#0088CC',
+            compact_mode: compactCheck.checked
+          });
+        }
+      });
+    }
+
     // Forms event listeners
     const formStore = document.getElementById('form-setting-store');
     if (formStore) formStore.addEventListener('submit', handleSaveStore);
@@ -587,11 +695,24 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       }));
     }
 
+    const formChannel = document.getElementById('form-add-channel');
+    if (formChannel) {
+      formChannel.addEventListener('submit', event => handleAddCatalogEntry(event, {
+        table: 'channels',
+        inputId: 'setting-channel-name',
+        buttonId: 'btn-add-channel',
+        label: 'Saluran Penjualan'
+      }));
+    }
+
     document.getElementById('setting-category-list')?.addEventListener('click', event => {
       handleCatalogAction(event, 'categories', 'Kategori');
     });
     document.getElementById('setting-unit-list')?.addEventListener('click', event => {
       handleCatalogAction(event, 'units', 'Satuan');
+    });
+    document.getElementById('setting-channel-list')?.addEventListener('click', event => {
+      handleCatalogAction(event, 'channels', 'Saluran Penjualan');
     });
 
     // Initial load
@@ -599,12 +720,13 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     try {
       await loadCatalogLists();
     } catch (error) {
-      console.error('Gagal memuat kategori dan satuan:', error);
+      console.error('Gagal memuat kategori, satuan, dan saluran:', error);
       if (typeof showToast === 'function') {
-        showToast('Kategori atau satuan gagal dimuat. Pastikan migrasi master satuan sudah diterapkan.', 'error');
+        showToast('Katalog master gagal dimuat.', 'error');
       }
       renderCatalogList('setting-category-list', [], 'Kategori gagal dimuat.');
       renderCatalogList('setting-unit-list', [], 'Satuan gagal dimuat.');
+      renderCatalogList('setting-channel-list', [], 'Saluran penjualan gagal dimuat.');
     }
   }
 

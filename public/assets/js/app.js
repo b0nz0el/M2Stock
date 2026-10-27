@@ -371,12 +371,16 @@ setInterval(() => {
 document.querySelectorAll('.card').forEach(card => card.classList.add('card-hover'));
 
 /* Initial animation */
-setTimeout(animateActivePage, 100);
+if (typeof animateActivePage === 'function') {
+  setTimeout(animateActivePage, 100);
+}
 
 /* Welcome toast — hanya 1x per session (pindah halaman tidak mengulang) */
-if (!sessionStorage.getItem('welcomeShown')) {
+if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem('welcomeShown')) {
   sessionStorage.setItem('welcomeShown', 'true');
-  setTimeout(() => showToast('Selamat datang di aQuaStock Pro 3.0', 'success'), 500);
+  if (typeof showToast === 'function') {
+    setTimeout(() => showToast('Selamat datang di aQuaStock Pro 3.0', 'success'), 500);
+  }
 }
 
 console.info('aQuaStock Pro v3.0 — Fully Responsive');
@@ -388,9 +392,9 @@ console.info('aQuaStock Pro v3.0 — Fully Responsive');
     if (!el) return;
     
     let client = (typeof window !== 'undefined' && window.supabase) ? window.supabase : null;
-    if (!client) {
+    if (!client && typeof window !== 'undefined') {
       try {
-        const mod = await import('/assets/js/supabase-client.js');
+        const mod = await import(/* @vite-ignore */ './supabase-client.js');
         client = mod?.supabase || window.supabase;
       } catch (_) {}
     }
@@ -487,5 +491,118 @@ document.addEventListener('click', function handleGlobalLogout(e) {
     window.location.replace('/login/');
   }
 });
+
+/* ═══ THEME ACCENT & COMPACT MODE ENGINE ═══ */
+function applyAppearance(settings) {
+  if (typeof document === 'undefined') return;
+  if (!settings) {
+    try {
+      settings = JSON.parse(localStorage.getItem('aquastock_appearance') || '{}');
+    } catch (_) {
+      settings = {};
+    }
+  }
+  const accent = settings.primary_color || '#0088CC';
+  const compact = Boolean(settings.compact_mode);
+
+  if (accent && accent !== '#0088CC') {
+    document.documentElement.setAttribute('data-accent', accent);
+  } else {
+    document.documentElement.removeAttribute('data-accent');
+  }
+
+  if (compact) {
+    document.documentElement.setAttribute('data-compact', 'true');
+  } else {
+    document.documentElement.removeAttribute('data-compact');
+  }
+}
+
+// Inisialisasi tema segera saat runtime dimulai
+if (typeof window !== 'undefined') {
+  window.applyAppearance = applyAppearance;
+  try { applyAppearance(); } catch (_) {}
+}
+
+/* ═══ UNIVERSAL IMAGE VIEWER (LIGHTBOX) ═══ */
+function openImageViewer(src, title = '', sku = '') {
+  if (!src || typeof document === 'undefined') return;
+  const modal = document.getElementById('modal-image-viewer');
+  const img = document.getElementById('image-viewer-img');
+  const titleEl = document.getElementById('image-viewer-title');
+  const skuEl = document.getElementById('image-viewer-sku');
+  const downloadLink = document.getElementById('image-viewer-download');
+
+  if (!modal || !img) return;
+
+  img.src = src;
+  img.alt = title || 'Foto Produk';
+  if (titleEl) titleEl.textContent = title || 'Foto Produk';
+  if (skuEl) skuEl.textContent = sku ? `SKU: ${sku}` : '';
+  if (downloadLink) {
+    downloadLink.href = src;
+    downloadLink.download = (sku || title || 'foto-produk').toLowerCase().replace(/\s+/g, '-') + '.webp';
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+  if (typeof window.refreshIcons === 'function') window.refreshIcons();
+}
+
+function closeImageViewer() {
+  if (typeof document === 'undefined') return;
+  const modal = document.getElementById('modal-image-viewer');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.style.overflow = '';
+  const img = document.getElementById('image-viewer-img');
+  if (img) img.src = '';
+}
+
+if (typeof window !== 'undefined') {
+  window.openImageViewer = openImageViewer;
+  window.closeImageViewer = closeImageViewer;
+
+  // Tutup saat backdrop diklik
+  document.addEventListener('click', (e) => {
+    const modal = document.getElementById('modal-image-viewer');
+    if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+      closeImageViewer();
+    }
+  });
+
+  // Tutup dengan tombol Esc
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('modal-image-viewer');
+      if (modal && !modal.classList.contains('hidden')) {
+        closeImageViewer();
+      }
+    }
+  });
+
+  // Delegasi klik untuk gambar dengan class .product-thumbnail-img atau atribut [data-zoomable]
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-zoomable], .product-thumbnail-img');
+    if (target && target.tagName === 'IMG' && target.src) {
+      e.stopPropagation();
+      const title = target.getAttribute('data-title') || target.alt || '';
+      const sku = target.getAttribute('data-sku') || '';
+      openImageViewer(target.src, title, sku);
+    }
+  });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    syncTableLabels,
+    applyAppearance,
+    openImageViewer,
+    closeImageViewer
+  };
+}
+
 
 

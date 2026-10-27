@@ -91,6 +91,32 @@ export const settings = {
         }
       }
 
+      if (key === 'appearance') {
+        if (typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem('aquastock_appearance', JSON.stringify(value));
+          } catch (_) {}
+        }
+        if (typeof window !== 'undefined' && typeof window.applyAppearance === 'function') {
+          try {
+            window.applyAppearance(value);
+          } catch (_) {}
+        }
+      }
+
+      if (key === 'sales_channels') {
+        if (typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem('aquastock_channels', JSON.stringify(value));
+          } catch (_) {}
+        }
+        if (typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(new CustomEvent('aquastock:channels-updated', { detail: value }));
+          } catch (_) {}
+        }
+      }
+
       return { ok: true, data: data ? data.value : value };
     } catch (err) {
       console.error(`settingsApi.save(${key}) error:`, err);
@@ -166,5 +192,62 @@ export const settings = {
       console.error('settingsApi.updateProfile error:', err);
       return { ok: false, error: err };
     }
+  },
+
+  /**
+   * Mengambil daftar saluran penjualan (channel) untuk POS & Laporan
+   * @returns {Promise<Array<{id: string|number, name: string}>>}
+   */
+  async getChannels() {
+    const DEFAULT_CHANNELS = ['Offline', 'Shopee', 'Tokopedia', 'TikTok', 'Lazada', 'WhatsApp'];
+
+    // 1. Coba dari app_settings key 'sales_channels'
+    try {
+      const res = await this.get('sales_channels');
+      if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+        return res.data.map((c, idx) => (typeof c === 'string' ? { id: idx + 1, name: c } : c));
+      }
+    } catch (_) {}
+
+    // 2. Coba dari cache localStorage
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('aquastock_channels');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map((c, idx) => (typeof c === 'string' ? { id: idx + 1, name: c } : c));
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. Fallback default channels
+    return DEFAULT_CHANNELS.map((name, idx) => ({ id: idx + 1, name }));
+  },
+
+  /**
+   * Menyimpan daftar saluran penjualan ke app_settings & localStorage
+   * @param {Array<{id: string|number, name: string}|string>} channels
+   */
+  async saveChannels(channels) {
+    const list = (channels || []).map(c => (typeof c === 'string' ? c.trim() : c.name.trim())).filter(Boolean);
+    // Pastikan Offline selalu ada
+    if (!list.some(n => n.toLowerCase() === 'offline')) {
+      list.unshift('Offline');
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('aquastock_channels', JSON.stringify(list));
+      } catch (_) {}
+    }
+
+    const res = await this.save('sales_channels', list);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aquastock:channels-updated', { detail: list }));
+    }
+    return res;
   }
 };
+

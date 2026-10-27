@@ -767,8 +767,11 @@
         </td>
         <td class="px-4 py-3.5">
           ${item.image_url ? `
-            <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0">
-              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover" loading="lazy">
+            <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0 cursor-pointer group relative" title="Klik untuk lihat foto ukuran penuh" onclick="window.openImageViewer('${escapeHtml(item.image_url)}', '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.sku || '').replace(/'/g, "\\'")}')">
+              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover group-hover:scale-110 transition duration-200 product-thumbnail-img" data-zoomable data-title="${escapeHtml(item.name)}" data-sku="${escapeHtml(item.sku || '')}" loading="lazy">
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+              </div>
             </div>
           ` : `
             <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg bg-[#0088CC]/15 grid place-items-center flex-shrink-0">

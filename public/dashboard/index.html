@@ -2072,7 +2072,7 @@
 
         <button type="button" data-tab="catalog" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
           <i data-lucide="tags" class="w-4 h-4 text-[#32ADE6]"></i>
-          <span>Kategori &amp; Satuan</span>
+          <span>Kategori, Satuan &amp; Saluran</span>
         </button>
 
         <button type="button" data-tab="appearance" class="settings-tab-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border border-transparent text-[#A0A0A5] hover:text-white hover:bg-white/5 transition whitespace-nowrap">
@@ -2237,37 +2237,37 @@
         </div>
       </div>
 
-      <!-- TAB 4: KATEGORI & SATUAN -->
+      <!-- TAB 4: KATEGORI, SATUAN & SALURAN -->
       <div id="tab-content-catalog" class="settings-tab-content space-y-6 hidden">
         <div>
-          <h3 class="text-lg font-semibold text-white">Master Barang</h3>
-          <p class="mt-1 text-sm text-[#A0A0A5]">Kelola kategori dan satuan untuk digunakan pada form tambah atau edit barang.</p>
+          <h3 class="text-lg font-semibold text-white">Master Barang &amp; Saluran Penjualan</h3>
+          <p class="mt-1 text-sm text-[#A0A0A5]">Kelola kategori produk, satuan stok, dan saluran transaksi kasir POS.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl flex flex-col">
             <div class="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
               <div class="w-10 h-10 rounded-xl bg-[#32ADE6]/10 text-[#32ADE6] grid place-items-center">
                 <i data-lucide="tag" class="w-5 h-5" aria-hidden="true"></i>
               </div>
               <div>
                 <h4 class="font-semibold text-white">Kategori Barang</h4>
-                <p class="text-xs text-[#A0A0A5]">Kelompokkan barang agar lebih mudah dicari.</p>
+                <p class="text-xs text-[#A0A0A5]">Kelompokkan barang agar mudah dicari.</p>
               </div>
             </div>
             <form id="form-add-category" class="flex flex-col sm:flex-row gap-2">
               <label for="setting-category-name" class="sr-only">Nama kategori baru</label>
               <input type="text" id="setting-category-name" maxlength="80" required="" placeholder="Contoh: Filter Aquarium" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-              <button type="submit" data-action="add" id="btn-add-category" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition">
+              <button type="submit" data-action="add" id="btn-add-category" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition shrink-0">
                 <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
               </button>
             </form>
-            <ul id="setting-category-list" class="mt-4 divide-y divide-white/5" aria-live="polite">
+            <ul id="setting-category-list" class="mt-4 divide-y divide-white/5 flex-1" aria-live="polite">
               <li class="py-3 text-sm text-[#A0A0A5]">Memuat kategori...</li>
             </ul>
           </section>
 
-          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl">
+          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl flex flex-col">
             <div class="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
               <div class="w-10 h-10 rounded-xl bg-[#34C759]/10 text-[#34C759] grid place-items-center">
                 <i data-lucide="package" class="w-5 h-5" aria-hidden="true"></i>
@@ -2280,14 +2280,37 @@
             <form id="form-add-unit" class="flex flex-col sm:flex-row gap-2">
               <label for="setting-unit-name" class="sr-only">Nama satuan baru</label>
               <input type="text" id="setting-unit-name" maxlength="30" required="" placeholder="Contoh: botol" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-              <button type="submit" data-action="add" id="btn-add-unit" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition">
+              <button type="submit" data-action="add" id="btn-add-unit" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition shrink-0">
                 <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
               </button>
             </form>
-            <ul id="setting-unit-list" class="mt-4 divide-y divide-white/5" aria-live="polite">
+            <ul id="setting-unit-list" class="mt-4 divide-y divide-white/5 flex-1" aria-live="polite">
               <li class="py-3 text-sm text-[#A0A0A5]">Memuat satuan...</li>
             </ul>
-            <p class="mt-3 text-xs text-[#A0A0A5]">Satuan default <strong class="font-medium text-white">pcs</strong> tidak dapat diubah atau dihapus karena digunakan sebagai satuan bawaan sistem.</p>
+            <p class="mt-3 text-xs text-[#A0A0A5]">Satuan default <strong class="font-medium text-white">pcs</strong> tidak dapat diubah atau dihapus.</p>
+          </section>
+
+          <section class="card p-6 bg-[#1C1C1E] border border-white/5 rounded-2xl flex flex-col">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
+              <div class="w-10 h-10 rounded-xl bg-[#FF9500]/10 text-[#FF9500] grid place-items-center">
+                <i data-lucide="shopping-bag" class="w-5 h-5" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-white">Saluran Penjualan (Channel)</h4>
+                <p class="text-xs text-[#A0A0A5]">Contoh: Offline, Shopee, Tokopedia, TikTok, WhatsApp.</p>
+              </div>
+            </div>
+            <form id="form-add-channel" class="flex flex-col sm:flex-row gap-2">
+              <label for="setting-channel-name" class="sr-only">Nama saluran baru</label>
+              <input type="text" id="setting-channel-name" maxlength="50" required="" placeholder="Contoh: Blibli" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+              <button type="submit" data-action="add" id="btn-add-channel" class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition shrink-0">
+                <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Tambah
+              </button>
+            </form>
+            <ul id="setting-channel-list" class="mt-4 divide-y divide-white/5 flex-1" aria-live="polite">
+              <li class="py-3 text-sm text-[#A0A0A5]">Memuat saluran penjualan...</li>
+            </ul>
+            <p class="mt-3 text-xs text-[#A0A0A5]">Channel default <strong class="font-medium text-white">Offline</strong> tidak dapat diubah atau dihapus.</p>
           </section>
         </div>
       </div>
@@ -2318,10 +2341,10 @@
               <div>
                 <label for="setting-primary-color" class="block text-xs text-[#A0A0A5] font-medium mb-1">Warna Aksen Utama</label>
                 <select id="setting-primary-color" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-                  <option value="#0088CC" selected="" class="bg-[#1C1C1E]">Cyan Aqua (#0088CC)</option>
-                  <option value="#34C759" class="bg-[#1C1C1E]">Emerald Green (#34C759)</option>
-                  <option value="#FF9500" class="bg-[#1C1C1E]">Amber Orange (#FF9500)</option>
-                  <option value="#5856D6" class="bg-[#1C1C1E]">Royal Purple (#5856D6)</option>
+                  <option value="#0088CC" selected="" class="bg-[#1C1C1E]">Cyan Aqua</option>
+                  <option value="#34C759" class="bg-[#1C1C1E]">Emerald Green</option>
+                  <option value="#FF9500" class="bg-[#1C1C1E]">Amber Orange</option>
+                  <option value="#5856D6" class="bg-[#1C1C1E]">Royal Purple</option>
                 </select>
               </div>
             </div>
@@ -2677,13 +2700,13 @@
         <div class="flex items-center gap-4 p-3 bg-black/30 border border-white/5 rounded-2xl">
           <!-- Thumbnail Preview Container -->
           <div class="relative w-20 h-20 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 group">
-            <img id="item-image-preview" src="" alt="Preview Foto" class="hidden w-full h-full object-cover">
+            <img id="item-image-preview" src="" alt="Preview Foto" class="hidden w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-200" title="Klik untuk lihat foto ukuran penuh" onclick="if (this.src) window.openImageViewer(this.src, document.getElementById('item-name')?.value || 'Foto Produk', document.getElementById('item-sku')?.value || '')">
             <div id="item-image-placeholder" class="text-center text-[#A0A0A5]">
               <i data-lucide="image" class="w-6 h-6 mx-auto opacity-40" aria-hidden="true"></i>
               <span class="text-[10px] block mt-1">Belum ada</span>
             </div>
             <!-- Tombol Hapus Foto -->
-            <button type="button" id="btn-remove-photo" onclick="removeSelectedPhoto()" title="Hapus Foto" aria-label="Hapus Foto" class="hidden absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-[#FF3B30] text-white flex items-center justify-center transition shadow">
+            <button type="button" id="btn-remove-photo" onclick="event.stopPropagation(); removeSelectedPhoto()" title="Hapus Foto" aria-label="Hapus Foto" class="hidden absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-[#FF3B30] text-white flex items-center justify-center transition shadow z-10">
               <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
             </button>
           </div>
@@ -4285,6 +4308,30 @@
     </form>
   </div>
 </div>
+
+<!-- ═══════════ UNIVERSAL IMAGE VIEWER (LIGHTBOX) ═══════════ -->
+<div id="modal-image-viewer" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-[110] items-center justify-center p-4 transition-all duration-200" role="dialog" aria-modal="true" aria-label="Lihat Foto Produk">
+  <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center select-none my-auto">
+    <div class="w-full flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+      <div class="min-w-0 pr-4">
+        <h4 id="image-viewer-title" class="text-sm md:text-base font-semibold text-white truncate">Foto Produk</h4>
+        <p id="image-viewer-sku" class="text-xs text-[#A0A0A5] font-mono"></p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a id="image-viewer-download" href="" target="_blank" class="p-2 text-[#A0A0A5] hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition" title="Buka gambar ukuran asli" aria-label="Buka gambar ukuran asli">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+        </a>
+        <button type="button" onclick="closeImageViewer()" class="p-2 text-[#A0A0A5] hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition" title="Tutup (Esc)" aria-label="Tutup">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+    <div class="overflow-hidden rounded-2xl border border-white/15 bg-black/60 shadow-2xl flex items-center justify-center max-h-[75vh]">
+      <img id="image-viewer-img" src="" alt="Foto Produk" class="max-h-[75vh] max-w-full object-contain">
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
 <div id="bulk-bar" class="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 right-4 bg-[#1C1C1E] border border-white/10 rounded-2xl p-3 shadow-2xl z-50 items-center gap-3" role="region" aria-label="Aksi massal">
   <span class="text-sm font-medium flex-1" id="bulk-count">0 dipilih</span>
