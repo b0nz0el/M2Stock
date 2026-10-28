@@ -172,14 +172,39 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(iconsContent).toContain('"message-circle":');
   });
 
-  it('HTML index.html memiliki opsi Offline murni tanpa embel-embel dan input URL dengan placeholder kosong lapang', () => {
+  it('HTML index.html memiliki opsi Offline murni tanpa embel-embel dan input URL bersih tanpa icon di dalamnya', () => {
     const htmlPath = path.resolve(__dirname, '../public/dashboard/index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
 
     expect(html).toContain('<option value="Offline">Offline</option>');
     expect(html).not.toContain('<option value="Offline">Offline / Toko Fisik</option>');
     expect(html).toContain('<input type="url" id="item-channel-link" placeholder=""');
-    expect(html).toContain('pl-10');
+    expect(html).toContain('px-3.5 py-2.5');
+    expect(html).not.toContain('<span class="absolute inset-y-0 left-0 pl-3.5');
+  });
+
+  it('Halaman Purchase Order memuat toolbar Draft Auto PO, Export pdf, dan Buat PO sesuai standar ERP', () => {
+    const htmlPath = path.resolve(__dirname, '../public/dashboard/index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    expect(html).toContain('id="btn-auto-restock-po"');
+    expect(html).toContain('Draft Auto PO');
+    expect(html).toContain('id="btn-export-po"');
+    expect(html).toContain('Export pdf');
+    expect(html).toContain('id="btn-add-po-header"');
+    expect(html).toContain('Buat PO');
+    expect(html).toContain('id="btn-auto-restock-empty"');
+    expect(html).toContain('id="po-auto-status-indicator"');
+  });
+
+  it('Master Barang menggunakan Icon Link Original (external-link) pada badge saluran dan aksi tabel', () => {
+    const itemsPath = path.resolve(__dirname, '../public/dashboard/items.js');
+    const itemsJs = fs.readFileSync(itemsPath, 'utf8');
+
+    // Memastikan aksi link di baris tabel menggunakan icon link original external-link
+    expect(itemsJs).toContain('<i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>');
+    // Memastikan badge saluran menggunakan icon link original external-link
+    expect(itemsJs).toContain('<i data-lucide="external-link" class="w-3 h-3 opacity-80" aria-hidden="true"></i>');
   });
 
   it('Dual-layer persistence: saveLocalChannelMeta dan getLocalChannelMeta menjaga data channel dan link tetap tersimpan', async () => {

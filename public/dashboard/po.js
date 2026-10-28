@@ -872,6 +872,89 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     }
   }
 
+  function exportPDF() {
+    if (!poEntries || poEntries.length === 0) {
+      showToast('Tidak ada data PO untuk diekspor', 'warning');
+      return;
+    }
+
+    const title = `Laporan Purchase Order (${currentStatus.toUpperCase()})`;
+    const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    const rowsHtml = poEntries.map((p, idx) => {
+      const itemsCount = (p.items && p.items.length) || (p.purchase_order_items && p.purchase_order_items.length) || 1;
+      const supplierName = p.supplier_nama || p.catatan?.replace('Supplier: ', '') || '-';
+      return `
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${idx + 1}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${p.no_po || '-'}</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">${formatDate(p.tanggal)}</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">${supplierName}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${itemsCount}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: center; text-transform: uppercase;">${p.status || '-'}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatRupiah(p.total || 0)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const grandTotal = poEntries.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #111; }
+          h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+          p { margin: 0 0 16px; color: #666; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
+          th { background: #f3f4f6; border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: 600; }
+          .total-row td { background: #fafafa; font-weight: bold; border-top: 2px solid #333; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <h2>Aquastock Pro — ${title}</h2>
+        <p>Dicetak pada: ${today} | Total: ${poEntries.length} Dokumen PO</p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">No</th>
+              <th>No. PO</th>
+              <th>Tanggal</th>
+              <th>Supplier</th>
+              <th style="text-align: center;">Item</th>
+              <th style="text-align: center;">Status</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+            <tr class="total-row">
+              <td colspan="6" style="padding: 10px; text-align: right;">TOTAL KESELURUHAN:</td>
+              <td style="padding: 10px; text-align: right;">${formatRupiah(grandTotal)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+    }, 250);
+  }
+
   function exportCSV() {
     if (!poEntries || poEntries.length === 0) {
       showToast('Tidak ada data PO untuk diekspor', 'warning');
@@ -933,12 +1016,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       });
     });
 
-    // Export CSV
+    // Export PDF
     const exportBtn = document.getElementById('btn-export-po');
-    if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+    if (exportBtn) exportBtn.addEventListener('click', exportPDF);
 
     // Restock Assistant (Stok Kritis)
     const autoRestockBtn = document.getElementById('btn-auto-restock-po');
+    const autoRestockEmptyBtn = document.getElementById('btn-auto-restock-empty');
+
     if (autoRestockBtn) {
       autoRestockBtn.addEventListener('click', async () => {
         autoRestockBtn.disabled = true;
@@ -952,6 +1037,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
               currentPage = 1;
               currentStatus = 'all';
               await loadData();
+              checkAutoPoConfigAndStock();
             } else {
               showToast(res.data.message || 'Semua barang dalam batas stok aman', 'info');
             }
@@ -964,6 +1050,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           autoRestockBtn.disabled = false;
           autoRestockBtn.classList.remove('opacity-50');
         }
+      });
+    }
+
+    if (autoRestockEmptyBtn) {
+      autoRestockEmptyBtn.addEventListener('click', () => {
+        if (autoRestockBtn) autoRestockBtn.click();
       });
     }
 
@@ -1125,6 +1217,38 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     }
   }
 
+  async function checkAutoPoConfigAndStock() {
+    try {
+      if (settingsApi && typeof settingsApi.get === 'function') {
+        const res = await settingsApi.get('stock_config');
+        const isAutoPoEnabled = Boolean(res?.ok && res?.data?.auto_po_enabled);
+        const indicator = document.getElementById('po-auto-status-indicator');
+        if (indicator) {
+          if (isAutoPoEnabled) {
+            indicator.classList.remove('hidden');
+            indicator.classList.add('flex');
+          } else {
+            indicator.classList.add('hidden');
+            indicator.classList.remove('flex');
+          }
+        }
+      }
+
+      if (availableProducts && availableProducts.length > 0) {
+        const lowStockCount = availableProducts.filter(p => {
+          const s = Number(p.stock) || 0;
+          const min = Number(p.min_stock) || 0;
+          return s <= min;
+        }).length;
+
+        const labelAuto = document.getElementById('label-auto-restock-po');
+        if (labelAuto) {
+          labelAuto.textContent = lowStockCount > 0 ? `Draft Auto PO (${lowStockCount})` : 'Draft Auto PO';
+        }
+      }
+    } catch (_) {}
+  }
+
   async function initPo() {
     try {
       userRole = await getUserRole();
@@ -1135,6 +1259,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       loadMasterData(),
       loadData()
     ]);
+    await checkAutoPoConfigAndStock();
   }
 
   if (typeof window !== 'undefined') {
