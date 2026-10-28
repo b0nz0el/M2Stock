@@ -440,7 +440,7 @@
     document.getElementById('item-stock').value = item.stock || 0;
     document.getElementById('item-stock').disabled = true;
     document.getElementById('item-stock-label').textContent = 'Stok Saat Ini';
-    document.getElementById('item-stock-help').textContent = 'Saldo stok dikelola melalui transaksi inventori. Untuk menyamakan dengan hitungan fisik, gunakan Stock Opname.';
+    document.getElementById('item-stock-help').textContent = 'Sesuaikan stok via Stock Opname.';
     document.getElementById('item-stock-adjustment-action')?.classList.remove('hidden');
     const supWrap = document.getElementById('item-supplier-wrap');
     if (supWrap) supWrap.classList.add('hidden');

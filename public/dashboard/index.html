@@ -1663,16 +1663,16 @@
             Semua
           </button>
           <button type="button" data-action-filter="CREATE" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
-            CREATE
+            Create
           </button>
           <button type="button" data-action-filter="UPDATE" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
-            UPDATE
+            Update
           </button>
           <button type="button" data-action-filter="DELETE" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
-            DELETE
+            Delete
           </button>
           <button type="button" data-action-filter="LOGIN" class="px-3.5 py-1.5 rounded-lg font-medium text-[#A0A0A5] hover:text-white transition-all">
-            LOGIN
+            Login
           </button>
         </div>
       </div>
@@ -1718,7 +1718,7 @@
           <p class="text-[11px] sm:text-xs text-[#A0A0A5] font-medium">Mutasi Data</p>
           <p id="kpi-mutations" class="text-xl sm:text-2xl font-bold text-[#32ADE6] tracking-tight">0</p>
           <p class="text-[10px] sm:text-xs text-[#A0A0A5] flex items-center gap-1">
-            <i data-lucide="edit-3" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#32ADE6]"></i> <span class="truncate">CREATE + UPDATE</span>
+            <i data-lucide="edit-3" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#32ADE6]"></i> <span class="truncate">Create & Update</span>
           </p>
         </div>
 
@@ -1726,7 +1726,7 @@
           <p class="text-[11px] sm:text-xs text-[#A0A0A5] font-medium">Aksi Kritis</p>
           <p id="kpi-delete-logs" class="text-xl sm:text-2xl font-bold text-[#FF3B30] tracking-tight">0</p>
           <p class="text-[10px] sm:text-xs text-[#A0A0A5] flex items-center gap-1">
-            <i data-lucide="trash-2" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FF3B30]"></i> <span class="truncate">DELETE</span>
+            <i data-lucide="trash-2" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FF3B30]"></i> <span class="truncate">Delete</span>
           </p>
         </div>
       </div>
@@ -2150,7 +2150,7 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="font-bold text-base text-white">Pembaruan &amp; Sinkronisasi Sistem</h3>
-                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30">v3.4.16 (Terkini)</span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30">v3.4.17 (Terkini)</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-[#A0A0A5] border border-white/10">PWA Standalone</span>
               </div>
               <p class="text-xs text-[#A0A0A5] mt-1">Aplikasi PWA ini otomatis tersinkronisasi. Klik periksa pembaruan untuk mengambil aset dan tampilan terbaru secara instan tanpa perlu menginstal ulang aplikasi.</p>
@@ -2488,7 +2488,7 @@
               </div>
               <div>
                 <h3 class="font-semibold text-base sm:text-lg text-white">Pembaruan &amp; Sinkronisasi Sistem PWA</h3>
-                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white">Aquastock Pro v3.4.16 (PWA Local-First)</span></p>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white">Aquastock Pro v3.4.17 (PWA Local-First)</span></p>
               </div>
             </div>
             <button type="button" onclick="window.checkForPwaUpdate()" class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-md">
@@ -2933,8 +2933,8 @@
             <i data-lucide="clipboard-check" class="w-5 h-5"></i>
           </div>
           <div class="min-w-0">
-            <h4 id="item-stock-adjustment-title" class="text-sm font-semibold text-white">Koreksi / sesuaikan stok fisik?</h4>
-            <p class="mt-1 text-xs leading-relaxed text-[#A0A0A5]">Gunakan Stock Opname jika hasil hitung fisik berbeda dari stok sistem. Koreksi dicatat di riwayat penyesuaian, bukan sebagai barang masuk atau keluar.</p>
+            <h4 id="item-stock-adjustment-title" class="text-sm font-semibold text-white">Koreksi Stok Fisik</h4>
+            <p class="mt-1 text-xs leading-relaxed text-[#A0A0A5]">Samakan stok sistem dengan hitungan fisik di toko.</p>
           </div>
         </div>
         <button type="button" id="btn-open-stock-opname" onclick="closeItemModal(); openStockAdjustmentModal(document.getElementById('item-id').value)" class="stock-adjustment-callout__button">
@@ -2991,7 +2991,7 @@
         </div>
         <div class="min-w-0">
           <p class="stock-opname-eyebrow">INVENTORI <span aria-hidden="true">/</span> STOCK OPNAME</p>
-          <h3 id="modal-stock-adjustment-title" class="stock-opname-title">Koreksi / sesuaikan stok fisik</h3>
+          <h3 id="modal-stock-adjustment-title" class="stock-opname-title">Koreksi Stok Fisik</h3>
           <p class="stock-opname-subtitle">Hitung stok aktual dan catat selisihnya dengan alasan yang jelas.</p>
         </div>
       </div>
