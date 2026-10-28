@@ -659,9 +659,10 @@
         </div>
 
         <div class="po-header-actions flex items-center gap-2 flex-wrap">
-          <button type="button" id="btn-auto-restock-po" class="bg-[#FF9F0A]/15 hover:bg-[#FF9F0A]/25 text-[#FF9F0A] border border-[#FF9F0A]/30 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition active:scale-95 shadow-sm" title="Otomatis membuat draft PO ke supplier terdaftar saat barang berstatus stok kritis">
+          <button type="button" id="btn-auto-restock-po" class="po-auto-restock-button bg-[#FF9F0A]/15 hover:bg-[#FF9F0A]/25 text-[#FF9F0A] border border-[#FF9F0A]/30 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition active:scale-95 shadow-sm" title="Otomatis membuat draft PO ke supplier terdaftar saat barang berstatus stok kritis">
             <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
-            <span id="label-auto-restock-po">Draft Auto PO</span>
+            <span id="label-auto-restock-po">Restock Otomatis</span>
+            <span id="auto-restock-po-count" class="po-auto-restock-count hidden" aria-label="Jumlah barang menipis">0</span>
           </button>
           <button type="button" id="btn-export-po" class="bg-[#1C1C1E] hover:bg-white/10 text-white border border-white/10 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-1.5 transition">
             <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>

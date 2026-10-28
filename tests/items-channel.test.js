@@ -183,12 +183,13 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(html).not.toContain('<span class="absolute inset-y-0 left-0 pl-3.5');
   });
 
-  it('Halaman Purchase Order memuat toolbar Draft Auto PO, Export pdf, dan Buat PO sesuai standar ERP', () => {
+  it('Halaman Purchase Order memuat toolbar Restock Otomatis, Export PDF, dan Buat PO', () => {
     const htmlPath = path.resolve(__dirname, '../public/dashboard/index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
 
     expect(html).toContain('id="btn-auto-restock-po"');
-    expect(html).toContain('Draft Auto PO');
+    expect(html).toContain('id="label-auto-restock-po">Restock Otomatis</span>');
+    expect(html).toContain('id="auto-restock-po-count"');
     expect(html).toContain('id="btn-export-po"');
     expect(html).toContain('Export pdf');
     expect(html).toContain('id="btn-add-po-header"');

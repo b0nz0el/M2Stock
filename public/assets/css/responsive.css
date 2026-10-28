@@ -330,6 +330,77 @@
     line-height: 1.5;
   }
 
+  #page-po .po-header-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  #page-po .po-header-actions > button {
+    justify-content: center !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  #page-po .po-header-actions > #btn-auto-restock-po {
+    grid-column: 1 / -1 !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    min-height: 52px !important;
+    padding: 10px 14px !important;
+    border-color: rgba(255, 159, 10, 0.34) !important;
+    background: linear-gradient(110deg, rgba(255, 159, 10, 0.16), rgba(255, 159, 10, 0.08)) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 16px rgba(0, 0, 0, 0.16) !important;
+    color: #ffbf5b !important;
+    font-size: 0.875rem !important;
+  }
+
+  #page-po .po-header-actions > #btn-auto-restock-po > i {
+    display: grid !important;
+    place-items: center !important;
+    width: 30px !important;
+    height: 30px !important;
+    flex: 0 0 30px !important;
+    border: 1px solid rgba(255, 191, 91, 0.2) !important;
+    border-radius: 9px !important;
+    background: rgba(255, 159, 10, 0.12) !important;
+  }
+
+  #page-po .po-header-actions > #btn-auto-restock-po > #label-auto-restock-po {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+  }
+
+  #page-po .po-header-actions .po-auto-restock-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 191, 91, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 159, 10, 0.16);
+    color: #ffd18a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  #page-po .po-header-actions .po-auto-restock-count.hidden {
+    display: none !important;
+  }
+
   #page-po .po-status-tabs {
     display: flex;
     flex-wrap: wrap;

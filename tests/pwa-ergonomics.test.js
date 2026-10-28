@@ -197,6 +197,20 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('button[data-action="close-sidebar"]');
     });
 
+    it('keeps PO mobile toolbar actions readable and touch-friendly', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      const poJs = fs.readFileSync(path.join(rootDir, 'public/dashboard/po.js'), 'utf8');
+      const indexHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+
+      expect(responsiveCss).toContain('#page-po .po-header-actions');
+      expect(responsiveCss).toContain('grid-column: 1 / -1 !important;');
+      expect(responsiveCss).toContain('min-height: 52px !important;');
+      expect(indexHtml).toContain('class="po-auto-restock-button');
+      expect(indexHtml).toContain('id="auto-restock-po-count"');
+      expect(poJs).toContain("restockCount.textContent = String(lowStockCount);");
+      expect(poJs).toContain("restockCount.classList.toggle('hidden', lowStockCount === 0);");
+    });
+
     it('verifies mobile audit log layout has responsive cards and toolbar', () => {
       const auditHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
       expect(auditHtml).toContain('audit-search-input');

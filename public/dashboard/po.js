@@ -1286,9 +1286,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           return s <= min;
         }).length;
 
-        const labelAuto = document.getElementById('label-auto-restock-po');
-        if (labelAuto) {
-          labelAuto.textContent = lowStockCount > 0 ? `Draft Auto PO (${lowStockCount})` : 'Draft Auto PO';
+        const restockCount = document.getElementById('auto-restock-po-count');
+        if (restockCount) {
+          restockCount.textContent = String(lowStockCount);
+          restockCount.classList.toggle('hidden', lowStockCount === 0);
         }
       }
     } catch (_) {}
