@@ -575,23 +575,41 @@
       `).join('');
 
       return `
-        <div class="channel-row p-2.5 bg-white/[0.02] border border-white/10 hover:border-white/20 rounded-xl flex flex-col sm:flex-row sm:items-center gap-2 transition" data-index="${idx}">
-          <div class="w-full sm:w-44 shrink-0">
-            <select class="item-channel-select w-full bg-[#1C1C1E] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-[#0088CC] focus:outline-none transition cursor-pointer" data-index="${idx}" aria-label="Pilih Saluran Penjualan">
-              ${optionsHtml}
-            </select>
+        <div class="channel-row p-3.5 bg-black/40 border border-white/10 hover:border-white/20 rounded-2xl space-y-2.5 transition shadow-sm" data-index="${idx}">
+          <div class="flex items-center justify-between gap-2.5 flex-wrap">
+            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-[#A0A0A5] shrink-0">Saluran:</span>
+              <select class="item-channel-select flex-1 bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:border-[#0088CC] focus:outline-none transition cursor-pointer" data-index="${idx}" aria-label="Pilih Saluran Penjualan">
+                ${optionsHtml}
+              </select>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a href="${hasValidLink ? escapeHtml(formattedLink) : '#'}" target="_blank" rel="noopener noreferrer" class="btn-channel-row-open ${hasValidLink ? 'inline-flex' : 'hidden'} px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white hover:text-[#32ADE6] rounded-xl text-xs font-medium items-center gap-1.5 transition active:scale-95 shadow-sm" title="Buka Link Produk" data-index="${idx}">
+                <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#32ADE6]" aria-hidden="true"></i>
+                <span class="text-[11px]">Buka Link</span>
+              </a>
+              <button type="button" class="btn-channel-row-delete inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FF453A] bg-[#FF453A]/10 hover:bg-[#FF453A]/20 border border-[#FF453A]/25 hover:border-[#FF453A]/45 transition active:scale-95 cursor-pointer shadow-sm" title="Hapus Saluran" data-index="${idx}" aria-label="Hapus Saluran">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                <span class="text-[11px]">Hapus</span>
+              </button>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <input type="url" class="item-channel-url w-full bg-[#1C1C1E] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-[#636366] focus:border-[#0088CC] focus:outline-none transition" placeholder="Masukkan URL produk (mis. shopee.co.id/...)" value="${escapeHtml(linkVal)}" data-index="${idx}" aria-label="URL Produk Saluran">
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0 justify-end sm:justify-start">
-            <a href="${hasValidLink ? escapeHtml(formattedLink) : '#'}" target="_blank" rel="noopener noreferrer" class="btn-channel-row-open ${hasValidLink ? 'inline-flex' : 'hidden'} px-2.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white hover:text-[#32ADE6] rounded-lg text-xs font-medium items-center gap-1 transition active:scale-95" title="Buka Link Produk" data-index="${idx}">
-              <i data-lucide="external-link" class="w-3.5 h-3.5" aria-hidden="true"></i>
-              <span class="hidden md:inline text-[11px]">Buka</span>
-            </a>
-            <button type="button" class="btn-channel-row-delete p-2 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] hover:bg-[#FF3B30]/10 border border-transparent hover:border-[#FF3B30]/20 transition cursor-pointer active:scale-95" title="Hapus Saluran" data-index="${idx}" aria-label="Hapus Saluran">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
-            </button>
+          <div>
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#A0A0A5] mb-1">Tautan / URL Produk Marketplace</label>
+            <div class="relative flex items-center">
+              <div class="absolute left-3 text-[#A0A0A5] pointer-events-none flex items-center">
+                <i data-lucide="link" class="w-3.5 h-3.5 text-[#32ADE6]" aria-hidden="true"></i>
+              </div>
+              <input 
+                type="url" 
+                class="item-channel-url w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-[#636366] focus:border-[#0088CC] focus:outline-none transition font-sans" 
+                placeholder="Tempel tautan/link produk di sini (mis. https://shopee.co.id/produk-...)" 
+                value="${escapeHtml(linkVal)}" 
+                data-index="${idx}" 
+                aria-label="URL Produk Saluran"
+              >
+            </div>
+            <p class="text-[10px] text-[#A0A0A5] mt-1">Masukkan URL lengkap agar produk dapat dibuka langsung ke marketplace terkait.</p>
           </div>
         </div>
       `;
@@ -1812,13 +1830,13 @@
                 </a>
               `).join('');
             })()}
-            <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]">
+            <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-[#FF9500]/15 hover:border-[#FF9500]/30 border border-transparent rounded-lg text-[#FF9500] transition active:scale-95">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" aria-label="Edit" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6]">
+            <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" title="Edit Produk" aria-label="Edit" class="p-1.5 hover:bg-[#32ADE6]/15 hover:border-[#32ADE6]/30 border border-transparent rounded-lg text-[#32ADE6] transition active:scale-95">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button type="button" data-action="delete" data-item-action="delete" data-item-id="${escapeHtml(String(item.id))}" aria-label="Hapus" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30]">
+            <button type="button" data-action="delete" data-item-action="delete" data-item-id="${escapeHtml(String(item.id))}" title="Hapus Produk" aria-label="Hapus" class="p-1.5 hover:bg-[#FF453A]/15 hover:border-[#FF453A]/30 border border-transparent rounded-lg text-[#FF453A] transition active:scale-95">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
           </div>

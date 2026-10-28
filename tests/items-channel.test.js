@@ -325,4 +325,20 @@ describe('Master Barang — Saluran & Link Channel', () => {
       })
     ]);
   });
+
+  it('items.js me-render input URL produk terdedikasi dan tombol hapus saluran profesional beraksen bahaya', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const itemsJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/items.js'), 'utf-8');
+
+    // Memastikan input URL produk memiliki kelas dan placeholder jelas
+    expect(itemsJs).toContain('class="item-channel-url');
+    expect(itemsJs).toContain('placeholder="Tempel tautan/link produk di sini');
+
+    // Memastikan tombol hapus saluran menggunakan styling danger profesional
+    expect(itemsJs).toContain('class="btn-channel-row-delete inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FF453A]');
+    expect(itemsJs).toContain('data-lucide="trash-2"');
+    expect(itemsJs).toContain('Hapus</span>');
+  });
 });
+
