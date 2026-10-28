@@ -389,18 +389,21 @@
     window.dispatchEvent(new CustomEvent('barcode:scanned', { detail: { barcode: code }, bubbles: true }));
 
     const path = window.location.pathname;
-    if (path.includes('/dashboard/out')) {
+    const queryPage = new URLSearchParams(window.location.search).get('page')
+      || new URLSearchParams(window.location.search).get('tab');
+    const pathPage = path.match(/\/dashboard\/([^/]+)/)?.[1];
+    const activePage = queryPage || pathPage;
+    if (activePage === 'out' || path.includes('/dashboard/out')) {
       if (typeof window.handleBarcodeDetected === 'function') {
         window.handleBarcodeDetected(code);
       } else if (typeof window.addToPosCart === 'function' && Array.isArray(window.availableProducts)) {
         const found = window.availableProducts.find(p => p.barcode === code || p.sku === code);
         if (found) window.addToPosCart(found);
       }
-    } else if (path.includes('/dashboard/in')) {
-      if (typeof window.handleInBarcodeDetected === 'function') {
-        window.handleInBarcodeDetected(code);
-      }
-    } else if (path.includes('/dashboard/items')) {
+    } else if (activePage === 'in' || path.includes('/dashboard/in')) {
+      const handleIncomingBarcode = window.handleInBarcodeDetected || window.handleInBarcodeLookup;
+      if (typeof handleIncomingBarcode === 'function') handleIncomingBarcode(code);
+    } else if (activePage === 'items' || path.includes('/dashboard/items')) {
       const searchInput = document.getElementById('search-item');
       if (searchInput) {
         searchInput.value = code;

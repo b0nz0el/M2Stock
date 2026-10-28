@@ -1,11 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const suppliersScript = readFileSync(resolve(process.cwd(), 'public/dashboard/suppliers.js'), 'utf8');
 
 describe('Supplier edit flow', () => {
-  afterEach(() => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(async () => {
+    await vi.runOnlyPendingTimersAsync();
+    vi.useRealTimers();
     delete window.Api;
     delete window.RBAC;
     delete window.showToast;

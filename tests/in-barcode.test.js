@@ -3,10 +3,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const inScript = readFileSync(resolve(process.cwd(), 'public/dashboard/in.js'), 'utf8');
+const barcodeScannerScript = readFileSync(resolve(process.cwd(), 'public/assets/js/components/barcode-scanner.js'), 'utf8');
 const product = {
   id: 7,
   name: 'Filter Aquarium',
   barcode: '0123456789012',
+  sku: 'FLT-007',
   stock: 3,
   cost_price: 25000
 };
@@ -15,7 +17,7 @@ function setupForm() {
   document.body.innerHTML = `
     <input id="in-barcode">
     <p id="in-barcode-status"></p>
-    <select id="in-product-id"></select>
+    <input type="hidden" id="in-product-id" value="">
     <input id="in-price" value="0">
     <input id="in-qty" value="1">
     <span id="in-total-preview"></span>
@@ -30,7 +32,6 @@ function setupForm() {
   };
   window.showToast = vi.fn();
   window.eval(inScript);
-  document.getElementById('in-product-id').addEventListener('change', window.handleInProductChange);
 }
 
 describe('Barang Masuk barcode lookup', () => {
@@ -52,6 +53,24 @@ describe('Barang Masuk barcode lookup', () => {
     expect(document.getElementById('in-product-id').value).toBe('7');
     expect(document.getElementById('in-price').value).toBe('25000');
     expect(document.getElementById('in-barcode-status').textContent).toContain('Filter Aquarium');
+  });
+
+  it('routes hardware barcode scans from the actual dashboard query URL to Barang Masuk', () => {
+    window.history.replaceState({}, '', '/dashboard/?page=in');
+    window.handleInBarcodeDetected = vi.fn();
+    window.eval(barcodeScannerScript);
+
+    window.dispatchGlobalBarcodeScan('0123456789012');
+
+    expect(window.handleInBarcodeDetected).toHaveBeenCalledWith('0123456789012');
+  });
+
+  it('matches scanned SKU without case sensitivity', async () => {
+    await window.loadDropdowns();
+    await window.handleInBarcodeLookup('flt-007');
+
+    expect(document.getElementById('in-product-id').value).toBe('7');
+    expect(document.getElementById('in-price').value).toBe('25000');
   });
 
   it('uses the latest master purchase price when selecting an existing product', async () => {
@@ -81,6 +100,24 @@ describe('Barang Masuk barcode lookup', () => {
     expect(window.Api.transactions.createIn).not.toHaveBeenCalled();
     expect(window.showToast).toHaveBeenCalledWith(
       'Barang masuk dibatalkan karena harga beli terbaru belum berhasil dimuat.',
+      'error'
+    );
+  });
+
+  it('does not allow using stale supplier data when supplier refresh fails', async () => {
+    window.Api.suppliers.getAll.mockResolvedValue({
+      ok: false,
+      error: { message: 'Akses supplier ditolak' }
+    });
+    window.Api.transactions = { createIn: vi.fn() };
+
+    const refreshed = await window.loadDropdowns();
+    await window.handleInSubmit({ preventDefault: vi.fn() });
+
+    expect(refreshed).toBe(false);
+    expect(window.Api.transactions.createIn).not.toHaveBeenCalled();
+    expect(window.showToast).toHaveBeenCalledWith(
+      'Data Barang Masuk gagal diperbarui: Akses supplier ditolak',
       'error'
     );
   });

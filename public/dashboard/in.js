@@ -76,6 +76,7 @@
   let selectedProductRefreshId = 0;
   let isRefreshingSelectedProduct = false;
   let selectedProductPriceError = null;
+  let inReferencesLoaded = false;
 
   // Manajemen Galeri Foto Produk Baru di Barang Masuk
   let inProductPhotos = [];
@@ -266,38 +267,43 @@
   }
 
   async function loadDropdowns() {
+    inReferencesLoaded = false;
+    productsLoaded = false;
     try {
       const prodRes = await Api.items.getAll();
-      if (prodRes && prodRes.ok) {
-        availableProducts = prodRes.data || [];
-        productsLoaded = true;
-        const prodSelect = document.getElementById('in-product-id');
-        if (prodSelect && prodSelect.tagName === 'SELECT') {
-          prodSelect.innerHTML = '<option value="">Pilih Produk</option>';
-          availableProducts.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = p.name;
-            prodSelect.appendChild(opt);
-          });
-        }
+      if (!prodRes?.ok) {
+        throw new Error(prodRes?.error?.message || 'Gagal memuat daftar produk.');
+      }
+      availableProducts = prodRes.data || [];
+      productsLoaded = true;
+      const prodSelect = document.getElementById('in-product-id');
+      if (prodSelect && prodSelect.tagName === 'SELECT') {
+        prodSelect.innerHTML = '<option value="">Pilih Produk</option>';
+        availableProducts.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name;
+          prodSelect.appendChild(opt);
+        });
       }
 
       const supRes = await Api.suppliers.getAll();
-      if (supRes && supRes.ok) {
-        const supSelect = document.getElementById('in-supplier-id');
-        if (supSelect) {
-          const currentSupVal = supSelect.value;
-          supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
-          (supRes.data || []).forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            supSelect.appendChild(opt);
-          });
-          if (currentSupVal) supSelect.value = currentSupVal;
-        }
+      if (!supRes?.ok) {
+        throw new Error(supRes?.error?.message || 'Gagal memuat daftar supplier.');
       }
+      const supSelect = document.getElementById('in-supplier-id');
+      if (supSelect) {
+        const currentSupVal = supSelect.value;
+        supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
+        (supRes.data || []).forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.name;
+          supSelect.appendChild(opt);
+        });
+        if (currentSupVal) supSelect.value = currentSupVal;
+      }
+      inReferencesLoaded = true;
 
       // Load categories & units for new product registration
       if (typeof window.supabase !== 'undefined') {
@@ -332,8 +338,13 @@
           }
         }
       }
+      return true;
     } catch (err) {
       console.error('Error loading dropdowns:', err);
+      if (typeof showToast === 'function') {
+        showToast(`Data Barang Masuk gagal diperbarui: ${err.message || 'Kesalahan saat memuat produk/supplier.'}`, 'error');
+      }
+      return false;
     }
   }
 
@@ -410,6 +421,9 @@
         tabExisting.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition text-[#A0A0A5] hover:text-white hover:bg-white/5 border border-transparent';
       }
       selectedExistingProduct = null;
+      selectedProductRefreshId += 1;
+      isRefreshingSelectedProduct = false;
+      selectedProductPriceError = null;
       resetInImageForm();
       const prodId = document.getElementById('in-product-id');
       if (prodId) prodId.value = '';
@@ -700,9 +714,13 @@
     }
 
     input.value = barcode;
-    if (!productsLoaded) await loadDropdowns();
+    if (!inReferencesLoaded && !await loadDropdowns()) return;
 
-    const product = availableProducts.find(p => String(p.barcode || '').trim() === barcode);
+    const normalizedBarcode = barcode.toLowerCase();
+    const product = availableProducts.find(p =>
+      String(p.barcode || '').trim().toLowerCase() === normalizedBarcode
+      || String(p.sku || '').trim().toLowerCase() === normalizedBarcode
+    );
     if (!product) {
       if (select) {
         select.value = '';
@@ -814,21 +832,6 @@
   async function handleInSubmit(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (isSubmittingIn) return;
-    if (isRefreshingSelectedProduct) {
-      if (typeof showToast === 'function') {
-        showToast('Sedang memuat harga beli terbaru. Tunggu sebentar lalu simpan kembali.', 'warning');
-      }
-      return;
-    }
-    if (selectedExistingProduct && selectedProductPriceError) {
-      const refreshed = await refreshSelectedProductPrice(selectedExistingProduct.id);
-      if (!refreshed) {
-        if (typeof showToast === 'function') {
-          showToast('Barang masuk dibatalkan karena harga beli terbaru belum berhasil dimuat.', 'error');
-        }
-        return;
-      }
-    }
     isSubmittingIn = true;
 
     const submitBtn = document.getElementById('btn-submit-in');
@@ -839,6 +842,25 @@
     }
 
     try {
+      if (!inReferencesLoaded && !await loadDropdowns()) {
+        return;
+      }
+      if (isRefreshingSelectedProduct) {
+        if (typeof showToast === 'function') {
+          showToast('Sedang memuat harga beli terbaru. Tunggu sebentar lalu simpan kembali.', 'warning');
+        }
+        return;
+      }
+      if (selectedExistingProduct && selectedProductPriceError) {
+        const refreshed = await refreshSelectedProductPrice(selectedExistingProduct.id);
+        if (!refreshed) {
+          if (typeof showToast === 'function') {
+            showToast('Barang masuk dibatalkan karena harga beli terbaru belum berhasil dimuat.', 'error');
+          }
+          return;
+        }
+      }
+
       const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
       if (role === 'VIEWER') {
         alert('Anda tidak punya akses untuk mengubah data.');
@@ -1395,6 +1417,7 @@
   window.handleExportIn = handleExportIn;
   window.loadDropdowns = loadDropdowns;
   window.handleInBarcodeLookup = handleInBarcodeLookup;
+  window.handleInBarcodeDetected = handleInBarcodeLookup;
   window.handleInProductChange = handleInProductChange;
   window.handleInSubmit = handleInSubmit;
   window.openAddInModal = openAddInModal;
