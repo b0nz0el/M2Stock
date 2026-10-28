@@ -246,4 +246,59 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(res.error.code).toBe('VALIDATION_ERROR');
     });
   });
+
+  describe('PO UI/UX & Print Resilience (Bug Fixes v3.4.31)', () => {
+    it('memastikan po.js memiliki eventsSetup guard dan isGeneratingAutoPo lock', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const poJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/po.js'), 'utf-8');
+
+      expect(poJs).toContain('let eventsSetup = false;');
+      expect(poJs).toContain('if (eventsSetup) return;');
+      expect(poJs).toContain('eventsSetup = true;');
+      expect(poJs).toContain('let isGeneratingAutoPo = false;');
+      expect(poJs).toContain('if (isGeneratingAutoPo) return;');
+      expect(poJs).toContain('deleteInProgress || !pendingDeleteId');
+    });
+
+    it('memastikan renderTable memanggil window.syncTableLabels untuk simetri kartu mobile', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const poJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/po.js'), 'utf-8');
+
+      expect(poJs).toContain("if (typeof window.syncTableLabels === 'function')");
+      expect(poJs).toContain('window.syncTableLabels();');
+    });
+
+    it('memastikan template index.html menggunakan po-signatures-grid flex row untuk 3 tanda tangan di A4', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const indexHtml = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/index.html'), 'utf-8');
+
+      expect(indexHtml).toContain('class="po-signatures-grid flex items-start justify-between gap-4 pt-3 text-center text-[10px] text-gray-700 w-full"');
+      expect(indexHtml).toContain('Dibuat Oleh (Admin):');
+      expect(indexHtml).toContain('Disetujui Oleh (Owner):');
+      expect(indexHtml).toContain('Diterima Oleh (Supplier):');
+      expect(indexHtml).toContain('po-kpi-grid grid grid-cols-2 lg:grid-cols-4');
+    });
+
+    it('memastikan responsive.css dan layout.css memiliki styling mobile pill dan A4 single-page print', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const responsiveCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/responsive.css'), 'utf-8');
+      const layoutCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/layout.css'), 'utf-8');
+
+      // Mobile tabs & KPI grid
+      expect(responsiveCss).toContain('#page-po .po-status-tabs');
+      expect(responsiveCss).toContain('overflow-x: auto !important;');
+      expect(responsiveCss).toContain('#page-po .po-kpi-grid');
+
+      // Print styles
+      expect(layoutCss).toContain('size: A4 portrait;');
+      expect(layoutCss).toContain('.po-signatures-grid');
+      expect(layoutCss).toContain('page-break-inside: avoid !important;');
+      expect(layoutCss).toContain('#modal-print-po:not(.hidden)');
+    });
+  });
 });
+

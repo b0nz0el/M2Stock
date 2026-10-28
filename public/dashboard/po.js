@@ -24,6 +24,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   let pendingDeleteId = null;
   let deleteTrigger = null;
   let deleteInProgress = false;
+  let isGeneratingAutoPo = false;
+  let eventsSetup = false;
   let availableSuppliers = [];
   let availableProducts = [];
 
@@ -284,6 +286,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       window.lucide.createIcons();
     } else if (window.refreshIcons && typeof window.refreshIcons === 'function') {
       window.refreshIcons();
+    }
+
+    if (typeof window.syncTableLabels === 'function') {
+      window.syncTableLabels();
     }
 
     applyReadOnlyUI();
@@ -985,6 +991,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function setupEvents() {
+    if (eventsSetup) return;
+    eventsSetup = true;
+
     // Search
     const searchInput = document.getElementById('po-search');
     let searchTimeout = null;
@@ -1026,6 +1035,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     if (autoRestockBtn) {
       autoRestockBtn.addEventListener('click', async () => {
+        if (isGeneratingAutoPo) return;
+        isGeneratingAutoPo = true;
         autoRestockBtn.disabled = true;
         autoRestockBtn.classList.add('opacity-50');
         showToast('Memindai stok menipis dan membuat draft PO...', 'info');
@@ -1047,6 +1058,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         } catch (err) {
           showToast('Terjadi kesalahan saat memproses restock', 'error');
         } finally {
+          isGeneratingAutoPo = false;
           autoRestockBtn.disabled = false;
           autoRestockBtn.classList.remove('opacity-50');
         }
@@ -1178,7 +1190,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteConfirmation);
     if (confirmDeleteBtn) {
       confirmDeleteBtn.addEventListener('click', () => {
-        if (!pendingDeleteId) return;
+        if (deleteInProgress || !pendingDeleteId) return;
         handleDelete(pendingDeleteId);
       });
     }

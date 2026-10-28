@@ -884,23 +884,39 @@
   }
 
   #page-po .po-status-tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px !important;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  #page-po .po-status-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   #page-po .po-status-tabs > button {
-    width: 100%;
+    flex: 0 0 auto;
+    width: auto !important;
     min-width: 0;
-    min-height: 48px;
-    padding: 10px 8px;
-    white-space: normal;
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    white-space: nowrap !important;
+    font-size: 0.8125rem !important;
   }
 
   #page-po .po-status-tabs > button:last-child {
-    grid-column: 1 / -1;
-    width: min(100%, calc(50% - 4px));
-    justify-self: center;
+    grid-column: auto !important;
+    width: auto !important;
+    justify-self: auto !important;
+  }
+
+  #page-po .po-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
   }
 
   .items-page-header {
@@ -1755,7 +1771,14 @@
   }
 
   #page-po .po-status-tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  #page-po .po-status-tabs > button {
+    flex: 0 0 auto !important;
+    width: auto !important;
   }
 
   #page-po .po-status-tabs > button:last-child {
