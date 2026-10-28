@@ -326,14 +326,16 @@ describe('Master Barang — Saluran & Link Channel', () => {
     ]);
   });
 
-  it('items.js me-render input URL produk terdedikasi dan tombol hapus saluran profesional beraksen bahaya', () => {
+  it('items.js me-render input URL tanpa placeholder atau ikon yang mengganggu dan tombol hapus profesional', () => {
     const fs = require('fs');
     const path = require('path');
     const itemsJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/items.js'), 'utf-8');
 
-    // Memastikan input URL produk memiliki kelas dan placeholder jelas
+    // Input URL tetap jelas melalui label, tanpa placeholder atau ikon di dalam field.
     expect(itemsJs).toContain('class="item-channel-url');
-    expect(itemsJs).toContain('placeholder="Tempel tautan/link produk di sini');
+    expect(itemsJs).not.toContain('placeholder=" "');
+    expect(itemsJs).not.toContain('data-lucide="link"');
+    expect(itemsJs).toContain('class="item-channel-url w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5');
 
     // Memastikan tombol hapus saluran menggunakan styling danger profesional
     expect(itemsJs).toContain('class="btn-channel-row-delete inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FF453A]');
@@ -341,4 +343,3 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(itemsJs).toContain('Hapus</span>');
   });
 });
-

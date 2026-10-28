@@ -595,20 +595,14 @@
             </div>
           </div>
           <div>
-            <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#A0A0A5] mb-1">Tautan / URL Produk Marketplace</label>
-            <div class="relative flex items-center">
-              <div class="absolute left-3 text-[#A0A0A5] pointer-events-none flex items-center">
-                <i data-lucide="link" class="w-3.5 h-3.5 text-[#32ADE6]" aria-hidden="true"></i>
-              </div>
-              <input 
-                type="url" 
-                class="item-channel-url w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-[#636366] focus:border-[#0088CC] focus:outline-none transition font-sans" 
-                placeholder="Tempel tautan/link produk di sini (mis. https://shopee.co.id/produk-...)" 
-                value="${escapeHtml(linkVal)}" 
-                data-index="${idx}" 
-                aria-label="URL Produk Saluran"
-              >
-            </div>
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#A0A0A5] mb-1">URL Produk Marketplace</label>
+            <input
+              type="url"
+              class="item-channel-url w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:border-[#0088CC] focus:outline-none transition font-sans"
+              value="${escapeHtml(linkVal)}"
+              data-index="${idx}"
+              aria-label="URL Produk Saluran"
+            >
             <p class="text-[10px] text-[#A0A0A5] mt-1">Masukkan URL lengkap agar produk dapat dibuka langsung ke marketplace terkait.</p>
           </div>
         </div>
