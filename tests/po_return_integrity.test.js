@@ -297,6 +297,7 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(poJs).toContain('@page { size: A4 portrait; margin: 10mm; }');
       expect(poJs).toContain('const itemCount = paper.querySelectorAll(\'tbody tr\').length;');
       expect(poJs).toContain('po-print-dense');
+      expect(poJs).toContain('.po-document-table .po-document-total-row td:last-child { text-align: right; }');
       expect(poJs).toContain('<body><main class="po-print-sheet ${printDensity}" data-item-count="${itemCount}">${paper.outerHTML}</main></body>');
       expect(poJs).toContain('printDocument.images');
       expect(poJs).toContain('printWindow.print();');

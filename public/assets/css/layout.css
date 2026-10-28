@@ -328,6 +328,9 @@ main, #main-content {
   border-top: 2px solid #174c89;
   background: #f3f7fb;
 }
+#po-document-paper .po-document-total-row td:last-child {
+  text-align: right;
+}
 #po-document-paper .po-document-total {
   color: #173b63;
 }

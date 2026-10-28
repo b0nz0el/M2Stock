@@ -730,6 +730,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
             .po-document-table tbody tr, .po-document-table thead { break-inside: avoid; page-break-inside: avoid; }
             .po-document-total-row td { border-top: 1pt solid #174c89; border-bottom: 0; background: #f3f7fb; font-weight: 700; }
             .po-document-total-row td:first-child { text-align: right; }
+            .po-document-table .po-document-total-row td:last-child { text-align: right; }
             .po-document-total { color: #173b63 !important; }
             .po-document-notes { margin: 0 0 5mm; padding: 2.5mm 3mm; border-left: 1.2pt solid #174c89; background: #f7f9fc; color: #475467; font-size: 8pt; }
             .po-document-notes-label { color: #173b63; font-weight: 700; }
