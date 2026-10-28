@@ -17,7 +17,7 @@ describe('navigation.js a11y', () => {
       <aside aria-label="Menu utama">
         <button onclick="closeSidebar()" class="close-btn" aria-label="Tutup"></button>
         <button class="menu-item" onclick="showPage('dashboard')">Dashboard</button>
-        <button class="menu-item" onclick="showPage('items')">Barang</button>
+        <button class="menu-item" onclick="showPage('items')">Master Barang</button>
       </aside>
       <nav class="bottom-nav">
         <button type="button" class="bottom-nav-item" data-tab="dashboard"></button>
@@ -42,7 +42,7 @@ describe('navigation.js a11y', () => {
     syncActiveState();
     const items = document.querySelectorAll('.bottom-nav-item');
     expect(items[0].getAttribute('aria-label')).toBe('Dashboard');
-    expect(items[1].getAttribute('aria-label')).toBe('Barang');
+    expect(items[1].getAttribute('aria-label')).toBe('Master Barang');
     expect(items[2].getAttribute('aria-label')).toBe('Barang Masuk');
     expect(items[3].getAttribute('aria-label')).toBe('Barang Keluar');
     expect(items[4].getAttribute('aria-label')).toBe('Menu navigasi');

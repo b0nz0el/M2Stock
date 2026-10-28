@@ -532,11 +532,19 @@ class AppSidebar extends HTMLElement {
             <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i> Dashboard
           </a>
 
-          <div class="section-title">Inventori</div>
+          <div class="section-title">Master Data</div>
           <a href="${getUrl('items')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="items">
-            <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Barang
+            <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Master Barang
             <span id="sidebar-items-badge" class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">0</span>
           </a>
+          <a href="${getUrl('suppliers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="suppliers">
+            <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i> Supplier
+          </a>
+          <a href="${getUrl('customers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="customers">
+            <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i> Customer
+          </a>
+
+          <div class="section-title">Inventori</div>
           <a href="${getUrl('in')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="in">
             <i data-lucide="arrow-down-circle" class="w-4 h-4" aria-hidden="true"></i> Barang Masuk
           </a>
@@ -548,14 +556,6 @@ class AppSidebar extends HTMLElement {
           </a>
           <a href="${getUrl('return')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="return">
             <i data-lucide="rotate-ccw" class="w-4 h-4" aria-hidden="true"></i> Retur
-          </a>
-
-          <div class="section-title">Master Data</div>
-          <a href="${getUrl('suppliers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="suppliers">
-            <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i> Supplier
-          </a>
-          <a href="${getUrl('customers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="customers">
-            <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i> Customer
           </a>
 
           <div class="section-title">Keuangan</div>
@@ -590,7 +590,7 @@ class AppSidebar extends HTMLElement {
           </a>
           <button type="button" onclick="window.checkForPwaUpdate()" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#32ADE6] hover:bg-[#32ADE6]/10 transition cursor-pointer" data-action="check-update" title="Periksa dan update pembaruan PWA">
             <i data-lucide="refresh-cw" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Cek Pembaruan
-            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold">v3.4.21</span>
+            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold">v3.4.22</span>
           </button>
 
           <!-- Tombol Keluar Langsung di Drawer Mobile -->

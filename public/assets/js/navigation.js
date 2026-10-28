@@ -3,7 +3,7 @@
    Routing antar halaman, sidebar drawer & sinkronisasi tab aktif
    ═══════════════════════════════════════════════════ */
 const pageTitles = {
-  dashboard: 'Dashboard', items: 'Barang', in: 'Barang Masuk',
+  dashboard: 'Dashboard', items: 'Master Barang', in: 'Barang Masuk',
   out: 'Barang Keluar', po: 'Purchase Order', return: 'Retur',
   suppliers: 'Supplier', customers: 'Customer', cash: 'Kas & Keuangan',
   debt: 'Hutang & Piutang', report: 'Laporan', users: 'Kelola User',
@@ -90,7 +90,7 @@ function syncActiveState() {
 
   const tabLabels = {
     dashboard: 'Dashboard',
-    items: 'Barang',
+    items: 'Master Barang',
     in: 'Barang Masuk',
     out: 'Barang Keluar',
     menu: 'Menu navigasi'
