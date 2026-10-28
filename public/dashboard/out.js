@@ -184,7 +184,7 @@
             <div class="inline-flex items-center border border-white/10 rounded-lg bg-black/40 overflow-hidden">
               <button type="button" onclick="updatePosCartQty(${idx}, ${item.qty - 1})"
                       class="px-2 py-1 text-white hover:bg-white/10 text-xs transition font-bold" title="Kurang 1">−</button>
-              <input type="number" min="1" max="${item.stock ?? 999999}" value="${item.qty}"
+              <input type="number" min="1" max="${item.stock ?? 999999}" step="1" inputmode="numeric" value="${item.qty}"
                      onchange="updatePosCartQty(${idx}, this.value)"
                      class="w-12 text-center bg-transparent text-xs text-white focus:outline-none py-1 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
               <button type="button" onclick="updatePosCartQty(${idx}, ${item.qty + 1})"

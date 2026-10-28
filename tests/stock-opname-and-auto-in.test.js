@@ -52,6 +52,12 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(htmlContent).toContain('id="tab-in-new"');
       expect(htmlContent).toContain('id="item-stock-warning-banner"');
     });
+
+    it('uses numeric mobile keyboards for integer stock and quantity fields', () => {
+      expect(htmlContent).toMatch(/id="item-min-stock"[^>]*inputmode="numeric"/);
+      expect(htmlContent).toMatch(/id="in-qty"[^>]*inputmode="numeric"/);
+      expect(htmlContent).toMatch(/id="adj-actual-stock"[^>]*inputmode="decimal"/);
+    });
   });
 
   describe('Api.items.adjustStock', () => {
@@ -259,6 +265,15 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
 
       // Pastikan TIDAK membuat transaksi masuk otomatis dari katalog agar tidak dobel dengan Barang Masuk
       expect(window.Api.transactions.createIn).not.toHaveBeenCalled();
+    });
+
+    it('strips leading zeros from minimum stock input', () => {
+      const input = document.getElementById('item-min-stock');
+      input.value = '0006';
+      input.dispatchEvent(new Event('input'));
+
+      expect(input.value).toBe('6');
+      expect(Number(input.value)).toBe(6);
     });
 
     it('opens stock adjustment modal and calculates difference correctly', async () => {

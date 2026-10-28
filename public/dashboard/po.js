@@ -831,7 +831,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         </select>
       </div>
       <div class="po-item-qty">
-        <input type="number" required min="1" step="1" value="${qty}" placeholder="Qty"
+        <input type="number" required min="1" step="1" inputmode="numeric" value="${qty}" placeholder="Qty"
                class="item-qty w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white text-center focus:outline-none focus:border-[#0088CC]">
       </div>
       <div class="po-item-price">

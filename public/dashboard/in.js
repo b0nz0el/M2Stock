@@ -8,6 +8,37 @@
   let deleteInId = null;
   let isSubmittingIn = false;
 
+  function normalizeNumericInputValue(value) {
+    if (value === null || value === undefined) return '0';
+    const digitsOnly = String(value).replace(/\D+/g, '');
+    if (!digitsOnly) return '0';
+    const normalized = digitsOnly.replace(/^0+(?=\d)/, '');
+    return normalized || '0';
+  }
+
+  function sanitizeNumericInputElement(input) {
+    if (!input) return;
+    input.value = normalizeNumericInputValue(input.value);
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!target || typeof target.matches !== 'function') return;
+      if (target.matches('#in-price, #in-sell-price, #in-qty')) {
+        sanitizeNumericInputElement(target);
+      }
+    }, true);
+
+    document.addEventListener('blur', (event) => {
+      const target = event.target;
+      if (!target || typeof target.matches !== 'function') return;
+      if (target.matches('#in-price, #in-sell-price, #in-qty')) {
+        sanitizeNumericInputElement(target);
+      }
+    }, true);
+  }
+
   function formatRupiahVal(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
   }
@@ -625,7 +656,10 @@
         select.dispatchEvent(new Event('change', { bubbles: true }));
       }
       const priceInput = document.getElementById('in-price');
-      if (priceInput) priceInput.value = '0';
+      if (priceInput) {
+        priceInput.value = '0';
+        sanitizeNumericInputElement(priceInput);
+      }
       calculateInTotal();
 
       const searchInput = document.getElementById('in-product-search');

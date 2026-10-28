@@ -4,6 +4,37 @@
   let unitsData = [];
   let isSubmittingItem = false;
 
+  function normalizeNumericInputValue(value) {
+    if (value === null || value === undefined) return '0';
+    const digitsOnly = String(value).replace(/\D+/g, '');
+    if (!digitsOnly) return '0';
+    const normalized = digitsOnly.replace(/^0+(?=\d)/, '');
+    return normalized || '0';
+  }
+
+  function sanitizeNumericInputElement(input) {
+    if (!input) return;
+    input.value = normalizeNumericInputValue(input.value);
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!target || typeof target.matches !== 'function') return;
+      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock')) {
+        sanitizeNumericInputElement(target);
+      }
+    }, true);
+
+    document.addEventListener('blur', (event) => {
+      const target = event.target;
+      if (!target || typeof target.matches !== 'function') return;
+      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock')) {
+        sanitizeNumericInputElement(target);
+      }
+    }, true);
+  }
+
   async function loadCategories() {
     if (typeof window.supabase === 'undefined') return;
     try {
@@ -740,6 +771,8 @@
     if (warnBanner) warnBanner.classList.add('hidden');
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
+    sanitizeNumericInputElement(document.getElementById('item-cost-price'));
+    sanitizeNumericInputElement(document.getElementById('item-sell-price'));
     document.getElementById('item-min-stock').value = item.min_stock || 3;
 
     const getLocalMeta = (typeof window !== 'undefined' && window.getLocalChannelMeta) ? window.getLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.getLocalChannelMeta ? Api.items.getLocalChannelMeta : null);

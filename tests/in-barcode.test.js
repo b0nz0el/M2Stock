@@ -65,4 +65,22 @@ describe('Barang Masuk barcode lookup', () => {
       'error'
     );
   });
+
+  it('strips leading zeros from currency inputs without changing the numeric value', () => {
+    const input = document.getElementById('in-price');
+    input.value = '000125000';
+    input.dispatchEvent(new Event('input'));
+
+    expect(input.value).toBe('125000');
+    expect(Number(input.value)).toBe(125000);
+  });
+
+  it('strips leading zeros from incoming quantities', () => {
+    const input = document.getElementById('in-qty');
+    input.value = '0008';
+    input.dispatchEvent(new Event('input'));
+
+    expect(input.value).toBe('8');
+    expect(Number(input.value)).toBe(8);
+  });
 });
