@@ -165,6 +165,7 @@ export const items = {
               name: item.name || '',
               brand: item.brand || '-',
               category_id: item.category_id,
+              supplier_id: item.supplier_id ?? null,
               category: (item.categories && item.categories.name) || 'Umum',
               unit_id: item.unit_id,
               unit: (item.units && item.units.name) || 'pcs',
@@ -243,6 +244,7 @@ export const items = {
             name: data.name || '',
             brand: data.brand || '-',
             category_id: data.category_id,
+            supplier_id: data.supplier_id ?? null,
             category: (data.categories && data.categories.name) || 'Umum',
             unit_id: data.unit_id,
             unit: (data.units && data.units.name) || 'pcs',
@@ -288,6 +290,9 @@ export const items = {
           const primaryChannelLink = (formattedChannels && formattedChannels.length > 1)
             ? JSON.stringify(formattedChannels)
             : ((formattedChannels && formattedChannels[0]?.link) || data.channel_link || null);
+          const minStock = data.min_stock !== undefined ? data.min_stock : data.minStock;
+          const costPrice = data.cost_price !== undefined ? data.cost_price : data.costPrice;
+          const sellPrice = data.sell_price !== undefined ? data.sell_price : (data.sellPrice !== undefined ? data.sellPrice : data.unitPrice);
 
           const row = {
             name: data.name,
@@ -295,13 +300,14 @@ export const items = {
             barcode: data.barcode == null ? null : (String(data.barcode).trim() || null),
             category_id: data.category_id ? Number(data.category_id) : null,
             unit_id: data.unit_id ? Number(data.unit_id) : 1,
+            supplier_id: data.supplier_id == null || data.supplier_id === '' ? null : Number(data.supplier_id),
             brand: data.brand || null,
             channel: primaryChannel,
             channel_link: primaryChannelLink,
             stock: data.stock !== undefined ? Number(data.stock) : 0,
-            min_stock: (data.min_stock !== undefined ? data.min_stock : data.minStock) !== undefined ? Number(data.min_stock || data.minStock) : 0,
-            cost_price: (data.cost_price !== undefined ? data.cost_price : data.costPrice) !== undefined ? Number(data.cost_price || data.costPrice) : 0,
-            sell_price: (data.sell_price !== undefined ? data.sell_price : (data.sellPrice || data.unitPrice)) !== undefined ? Number(data.sell_price || data.sellPrice || data.unitPrice) : 0,
+            min_stock: minStock !== undefined ? Number(minStock) : 0,
+            cost_price: costPrice !== undefined ? Number(costPrice) : 0,
+            sell_price: sellPrice !== undefined ? Number(sellPrice) : 0,
             image_url: resolvedImageUrl
           };
 
@@ -384,6 +390,7 @@ export const items = {
           if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
           if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
           if (row.unit_id !== undefined) row.unit_id = Number(row.unit_id);
+          if (row.supplier_id !== undefined) row.supplier_id = row.supplier_id == null || row.supplier_id === '' ? null : Number(row.supplier_id);
           if (row.images !== undefined) {
             if (!row.image_url && Array.isArray(row.images)) {
               row.image_url = row.images.length === 1 ? row.images[0] : JSON.stringify(row.images);

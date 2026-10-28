@@ -37,6 +37,19 @@
         sanitizeNumericInputElement(target);
       }
     }, true);
+
+    document.addEventListener('change', (event) => {
+      if (event.target?.matches?.('#in-supplier-id') && selectedExistingProduct) {
+        selectedSupplierManuallyChanged = true;
+      }
+    }, true);
+  }
+
+  function applyProductDefaultSupplier(supplierId) {
+    const supplierSelect = document.getElementById('in-supplier-id');
+    if (!supplierSelect) return;
+    const value = supplierId == null ? '' : String(supplierId);
+    supplierSelect.value = Array.from(supplierSelect.options).some(option => option.value === value) ? value : '';
   }
 
   function formatRupiahVal(val) {
@@ -76,6 +89,7 @@
   let selectedProductRefreshId = 0;
   let isRefreshingSelectedProduct = false;
   let selectedProductPriceError = null;
+  let selectedSupplierManuallyChanged = false;
   let inReferencesLoaded = false;
 
   // Manajemen Galeri Foto Produk Baru di Barang Masuk
@@ -483,6 +497,8 @@
     if (barcodeWrap) barcodeWrap.classList.remove('hidden');
 
     selectedExistingProduct = prod;
+    selectedSupplierManuallyChanged = false;
+    applyProductDefaultSupplier(prod.supplier_id);
     selectedProductPriceError = null;
     resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
@@ -547,6 +563,9 @@
         String(product.id) === String(freshProduct.id) ? freshProduct : product
       );
       selectedExistingProduct = freshProduct;
+      if (!selectedSupplierManuallyChanged) {
+        applyProductDefaultSupplier(freshProduct.supplier_id);
+      }
       const priceInput = document.getElementById('in-price');
       if (priceInput) priceInput.value = String(freshProduct.cost_price ?? 0);
 
@@ -577,6 +596,8 @@
     if (prod && priceInput) {
       priceInput.value = String(prod.cost_price || 0);
       selectedExistingProduct = prod;
+      selectedSupplierManuallyChanged = false;
+      applyProductDefaultSupplier(prod.supplier_id);
       selectedProductPriceError = null;
       refreshSelectedProductPrice(prod.id);
     } else {
@@ -972,6 +993,7 @@
           barcode: barcodeVal,
           category_id: categoryId ? Number(categoryId) : null,
           unit_id: Number(unitId),
+          supplier_id: supplierId || null,
           cost_price: price,
           sell_price: sellPrice,
           stock: 0,

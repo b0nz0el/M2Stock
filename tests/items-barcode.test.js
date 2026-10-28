@@ -33,7 +33,27 @@ describe('product barcode API mapping', () => {
     const result = await items.create(row);
 
     expect(result.ok).toBe(true);
-    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, brand: null, channel: 'Offline', channel_link: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, image_url: null }]);
+    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, image_url: null }]);
+  });
+
+  it('stores the product supplier and preserves zero prices on create', async () => {
+    const select = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
+    const insert = vi.fn(() => ({ select }));
+    window.supabase = { from: vi.fn(() => ({ insert })) };
+
+    await items.create({
+      name: 'Produk Supplier',
+      sku: 'SUP-001',
+      supplier_id: '5',
+      cost_price: 0,
+      sell_price: 0
+    });
+
+    expect(insert.mock.calls[0][0][0]).toMatchObject({
+      supplier_id: 5,
+      cost_price: 0,
+      sell_price: 0
+    });
   });
 
   it('returns stored barcodes when reading Supabase products', async () => {
@@ -46,6 +66,7 @@ describe('product barcode API mapping', () => {
       min_stock: 1,
       cost_price: 100,
       sell_price: 200,
+      supplier_id: 5,
       unit_id: 2,
       units: { name: 'botol' }
     };
@@ -63,6 +84,7 @@ describe('product barcode API mapping', () => {
     expect(result.data[0].barcode).toBe('0123456789012');
     expect(result.data[0].unit_id).toBe(2);
     expect(result.data[0].unit).toBe('botol');
+    expect(result.data[0].supplier_id).toBe(5);
   });
 
   it('normalizes empty barcode values to null before saving', async () => {
@@ -86,7 +108,7 @@ describe('product barcode API mapping', () => {
       select: vi.fn(),
       eq: vi.fn(),
       single: vi.fn().mockResolvedValue({
-        data: { id: productId, name: 'Filter Aquarium', barcode: '0123456789012' },
+        data: { id: productId, name: 'Filter Aquarium', barcode: '0123456789012', supplier_id: 5 },
         error: null
       })
     };
@@ -99,6 +121,7 @@ describe('product barcode API mapping', () => {
     expect(query.eq).toHaveBeenCalledWith('id', productId);
     expect(result.ok).toBe(true);
     expect(result.data.id).toBe(productId);
+    expect(result.data.supplier_id).toBe(5);
   });
 
   it('updates a UUID product without numeric coercion', async () => {
@@ -146,5 +169,18 @@ describe('product barcode API mapping', () => {
 
     expect(insert.mock.calls[0][0][0].unit_id).toBe(4);
     expect(update).toHaveBeenCalledWith({ unit_id: 4 });
+  });
+
+  it('saves and clears the product default supplier and updates the latest purchase price', async () => {
+    const updateSelect = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
+    const eq = vi.fn(() => ({ select: updateSelect }));
+    const update = vi.fn(() => ({ eq }));
+    window.supabase = { from: vi.fn(() => ({ update })) };
+
+    await items.update('product-id', { supplier_id: '5', cost_price: 37500 });
+    await items.update('product-id', { supplier_id: '', cost_price: 0 });
+
+    expect(update).toHaveBeenNthCalledWith(1, { supplier_id: 5, cost_price: 37500 });
+    expect(update).toHaveBeenNthCalledWith(2, { supplier_id: null, cost_price: 0 });
   });
 });

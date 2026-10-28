@@ -259,7 +259,8 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
           name: 'Amara Busa 8D Besar',
           stock: 0,
           cost_price: 45000,
-          sell_price: 55000
+          sell_price: 55000,
+          supplier_id: 5
         })
       );
 
@@ -311,9 +312,40 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(document.getElementById('item-stock-adjustment-action').classList.contains('hidden')).toBe(false);
       expect(document.getElementById('item-stock-help').textContent).toContain('Stock Opname');
       expect(document.getElementById('item-stock-help').querySelector('button')).toBeNull();
+      expect(document.getElementById('item-supplier-wrap').classList.contains('hidden')).toBe(false);
 
       window.openAddItemModal();
       expect(document.getElementById('item-stock-adjustment-action').classList.contains('hidden')).toBe(true);
+    });
+
+    it('submits the selected default supplier and edited purchase price from the product form', async () => {
+      window.Api.items.getAll = vi.fn().mockResolvedValue({
+        ok: true,
+        data: [{
+          id: 10,
+          name: 'Amara Busa 8D Besar',
+          sku: 'FIL-AMA-310',
+          stock: 2,
+          unit: 'pack',
+          cost_price: 45000,
+          sell_price: 55000,
+          supplier_id: 5
+        }]
+      });
+      await window.loadItemsFromBackend();
+
+      window.openEditItemModal(10);
+      await vi.waitFor(() => {
+        expect(document.getElementById('item-supplier-id').value).toBe('5');
+      });
+      document.getElementById('item-cost-price').value = '67500';
+
+      await window.handleItemSubmit(new Event('submit', { cancelable: true }));
+
+      expect(window.Api.items.update).toHaveBeenCalledWith(
+        '10',
+        expect.objectContaining({ supplier_id: 5, cost_price: 67500 })
+      );
     });
 
     it('loads history from the separate stock adjustment ledger', async () => {

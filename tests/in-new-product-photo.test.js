@@ -19,10 +19,12 @@ describe('Barang Masuk New Product Photo & Camera Feature', () => {
       expect(htmlContent).toContain('id="in-compression-info"');
     });
 
-    it('clarifies initial stock guidance in modal-item to prevent double counting invoice purchases', () => {
+    it('clarifies product supplier defaults without rewriting incoming-stock history', () => {
       expect(htmlContent).toContain('Stok awal fisik toko');
       expect(htmlContent).toContain('id="item-supplier-id"');
-      expect(htmlContent).toContain('Otomatis catat Barang Masuk jika stok &gt; 0.');
+      expect(htmlContent).toContain('Supplier Utama');
+      expect(htmlContent).toContain('supplier default saat produk ini dipilih di Barang Masuk');
+      expect(htmlContent).toContain('Riwayat transaksi lama tidak diubah.');
     });
 
     it('includes responsive utilities in responsive.css to fix duplicate button texts on desktop', () => {

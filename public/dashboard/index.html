@@ -512,7 +512,7 @@
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Supplier</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Kasir</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Jumlah</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Harga</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Harga Saat Transaksi</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Total</th>
               <th class="px-4 py-3 w-16"></th>
             </tr>
@@ -3033,12 +3033,12 @@
           <input type="number" id="item-stock" min="0" value="0" readonly class="w-full bg-white/5 text-[#A0A0A5] border border-white/10 rounded-xl px-3.5 py-2 text-sm cursor-not-allowed focus:outline-none">
           <p id="item-stock-help" class="mt-1 text-[11px] leading-relaxed text-[#A0A0A5]">Stok awal fisik toko dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.</p>
         </div>
-        <div id="item-supplier-wrap" class="hidden">
-          <label for="item-supplier-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Supplier (Faktur Awal)</label>
+        <div id="item-supplier-wrap">
+          <label for="item-supplier-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Supplier Utama</label>
           <select id="item-supplier-id" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
-            <option value="">Umum / Saldo Awal Toko</option>
+            <option value="">Pilih supplier utama (opsional)</option>
           </select>
-          <p class="mt-1 text-[11px] text-[#A0A0A5]">Otomatis catat Barang Masuk jika stok &gt; 0.</p>
+          <p class="mt-1 text-[11px] text-[#A0A0A5]">Digunakan sebagai supplier default saat produk ini dipilih di Barang Masuk. Riwayat transaksi lama tidak diubah.</p>
         </div>
       </div>
 

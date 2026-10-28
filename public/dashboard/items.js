@@ -36,89 +36,98 @@
   }
 
   async function loadCategories() {
-    if (typeof window.supabase === 'undefined') return;
+    const supSelect = document.getElementById('item-supplier-id');
+    if (supSelect) supSelect.disabled = true;
     try {
-      const [categoryResult, unitResult] = await Promise.all([
-        window.supabase.from('categories').select('id, name').order('name'),
-        window.supabase.from('units').select('id, name').order('name')
-      ]);
-      if (categoryResult.error) throw categoryResult.error;
-      if (unitResult.error) throw unitResult.error;
-      categoriesData = categoryResult.data || [];
-      unitsData = unitResult.data || [];
+      if (typeof window.supabase !== 'undefined') {
+        const [categoryResult, unitResult] = await Promise.all([
+          window.supabase.from('categories').select('id, name').order('name'),
+          window.supabase.from('units').select('id, name').order('name')
+        ]);
+        if (categoryResult.error) throw categoryResult.error;
+        if (unitResult.error) throw unitResult.error;
+        categoriesData = categoryResult.data || [];
+        unitsData = unitResult.data || [];
 
-      // 1. Dropdown Form Tambah/Edit
-      const select = document.getElementById('item-category');
-      if (select) {
-        const currentVal = select.value;
-        select.innerHTML = '<option value="">Umum (Tanpa Kategori)</option>';
-        if (categoriesData.length > 0) {
-          categoriesData.forEach(function (cat) {
-            const opt = document.createElement('option');
-            opt.value = cat.id;
-            opt.textContent = cat.name;
-            select.appendChild(opt);
-          });
-        }
-        if (currentVal) select.value = currentVal;
-      }
-
-      const unitSelect = document.getElementById('item-unit');
-      if (unitSelect) {
-        const currentUnit = unitSelect.value;
-        unitSelect.innerHTML = '';
-        unitsData.forEach(function (unit) {
-          const option = document.createElement('option');
-          option.value = unit.id;
-          option.textContent = unit.name;
-          unitSelect.appendChild(option);
-        });
-        if (currentUnit && unitsData.some(unit => String(unit.id) === currentUnit)) {
-          unitSelect.value = currentUnit;
-        } else {
-          const defaultUnit = unitsData.find(unit => unit.name.toLowerCase() === 'pcs') || unitsData[0];
-          if (defaultUnit) unitSelect.value = String(defaultUnit.id);
-        }
-      }
-
-      // 2. Dropdown Filter Toolbar
-      const filterSelect = document.getElementById('filter-category');
-      if (filterSelect) {
-        const filterVal = filterSelect.value;
-        filterSelect.innerHTML = '<option value="all">Semua Kategori</option>';
-        if (categoriesData.length > 0) {
-          categoriesData.forEach(function (cat) {
-            const opt = document.createElement('option');
-            opt.value = cat.id;
-            opt.textContent = cat.name;
-            filterSelect.appendChild(opt);
-          });
-        }
-        if (filterVal) filterSelect.value = filterVal;
-      }
-
-      // 3. Dropdown Supplier Form Tambah
-      const supSelect = document.getElementById('item-supplier-id');
-      if (supSelect && typeof Api !== 'undefined' && Api.suppliers?.getAll) {
-        try {
-          const supRes = await Api.suppliers.getAll();
-          if (supRes.ok && Array.isArray(supRes.data)) {
-            const currentSup = supSelect.value;
-            supSelect.innerHTML = '<option value="">Umum / Saldo Awal Toko</option>';
-            supRes.data.forEach(function (s) {
+        // 1. Dropdown Form Tambah/Edit
+        const select = document.getElementById('item-category');
+        if (select) {
+          const currentVal = select.value;
+          select.innerHTML = '<option value="">Umum (Tanpa Kategori)</option>';
+          if (categoriesData.length > 0) {
+            categoriesData.forEach(function (cat) {
               const opt = document.createElement('option');
-              opt.value = s.id;
-              opt.textContent = s.name;
-              supSelect.appendChild(opt);
+              opt.value = cat.id;
+              opt.textContent = cat.name;
+              select.appendChild(opt);
             });
-            if (currentSup) supSelect.value = currentSup;
           }
-        } catch (_) {}
+          if (currentVal) select.value = currentVal;
+        }
+
+        const unitSelect = document.getElementById('item-unit');
+        if (unitSelect) {
+          const currentUnit = unitSelect.value;
+          unitSelect.innerHTML = '';
+          unitsData.forEach(function (unit) {
+            const option = document.createElement('option');
+            option.value = unit.id;
+            option.textContent = unit.name;
+            unitSelect.appendChild(option);
+          });
+          if (currentUnit && unitsData.some(unit => String(unit.id) === currentUnit)) {
+            unitSelect.value = currentUnit;
+          } else {
+            const defaultUnit = unitsData.find(unit => unit.name.toLowerCase() === 'pcs') || unitsData[0];
+            if (defaultUnit) unitSelect.value = String(defaultUnit.id);
+          }
+        }
+
+        // 2. Dropdown Filter Toolbar
+        const filterSelect = document.getElementById('filter-category');
+        if (filterSelect) {
+          const filterVal = filterSelect.value;
+          filterSelect.innerHTML = '<option value="all">Semua Kategori</option>';
+          if (categoriesData.length > 0) {
+            categoriesData.forEach(function (cat) {
+              const opt = document.createElement('option');
+              opt.value = cat.id;
+              opt.textContent = cat.name;
+              filterSelect.appendChild(opt);
+            });
+          }
+          if (filterVal) filterSelect.value = filterVal;
+        }
+      }
+
+      // 3. Dropdown Supplier Utama Produk
+      if (supSelect) {
+        if (typeof Api === 'undefined' || !Api.suppliers?.getAll) {
+          throw new Error('Layanan supplier tidak tersedia.');
+        }
+        const supRes = await Api.suppliers.getAll();
+        if (!supRes?.ok || !Array.isArray(supRes.data)) {
+          throw new Error(supRes?.error?.message || 'Gagal memuat daftar supplier.');
+        }
+        const currentSup = supSelect.value;
+        supSelect.innerHTML = '<option value="">Pilih supplier utama (opsional)</option>';
+        supRes.data.forEach(function (s) {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.name;
+          supSelect.appendChild(opt);
+        });
+        supSelect.value = currentSup;
+        supSelect.disabled = false;
       }
     } catch (e) {
-      console.error('Gagal memuat kategori dan satuan:', e);
+      if (supSelect) {
+        supSelect.innerHTML = '<option value="">Daftar supplier gagal dimuat</option>';
+        supSelect.disabled = true;
+      }
+      console.error('Gagal memuat data master produk:', e);
       if (typeof showToast === 'function') {
-        showToast('Kategori atau satuan gagal dimuat. Periksa koneksi dan migrasi database.', 'error');
+        showToast(e?.message || 'Data master produk gagal dimuat. Periksa koneksi dan konfigurasi database.', 'error');
       }
     }
   }
@@ -683,7 +692,7 @@
     if (stockHelp) stockHelp.textContent = 'Stok awal produk baru selalu dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.';
     document.getElementById('item-stock-adjustment-action')?.classList.add('hidden');
     const supWrap = document.getElementById('item-supplier-wrap');
-    if (supWrap) supWrap.classList.add('hidden');
+    if (supWrap) supWrap.classList.remove('hidden');
     const supSel = document.getElementById('item-supplier-id');
     if (supSel) supSel.value = '';
 
@@ -766,7 +775,7 @@
     document.getElementById('item-stock-help').textContent = 'Sesuaikan stok via Stock Opname.';
     document.getElementById('item-stock-adjustment-action')?.classList.remove('hidden');
     const supWrap = document.getElementById('item-supplier-wrap');
-    if (supWrap) supWrap.classList.add('hidden');
+    if (supWrap) supWrap.classList.remove('hidden');
     const warnBanner = document.getElementById('item-stock-warning-banner');
     if (warnBanner) warnBanner.classList.add('hidden');
     document.getElementById('item-cost-price').value = item.cost_price || 0;
@@ -820,6 +829,10 @@
       if (item.unit_id) {
         document.getElementById('item-unit').value = item.unit_id;
       }
+      const supSelect = document.getElementById('item-supplier-id');
+      if (supSelect) {
+        supSelect.value = item.supplier_id == null ? '' : String(item.supplier_id);
+      }
     });
 
     const modal = document.getElementById('modal-item');
@@ -869,6 +882,14 @@
       const brand = document.getElementById('item-brand').value.trim();
       const category_id = document.getElementById('item-category').value;
       const unit_id = document.getElementById('item-unit').value;
+      const supplierSelect = document.getElementById('item-supplier-id');
+      if (supplierSelect?.disabled) {
+        if (typeof showToast === 'function') {
+          showToast('Produk belum disimpan karena daftar supplier belum berhasil dimuat.', 'error');
+        }
+        return;
+      }
+      const supplier_id = supplierSelect?.value ? Number(supplierSelect.value) : null;
       const stock = Number(document.getElementById('item-stock').value);
       const cost_price = Number(document.getElementById('item-cost-price').value);
       const sell_price = Number(document.getElementById('item-sell-price').value);
@@ -1037,6 +1058,7 @@
         brand: brand || null,
         category_id: category_id ? Number(category_id) : null,
         unit_id: Number(unit_id),
+        supplier_id: supplier_id,
         channel: primaryChannel,
         channel_link: primaryChannelLink,
         channels: channelsPayload,

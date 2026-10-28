@@ -10,7 +10,8 @@ const product = {
   barcode: '0123456789012',
   sku: 'FLT-007',
   stock: 3,
-  cost_price: 25000
+  cost_price: 25000,
+  supplier_id: 5
 };
 
 function setupForm() {
@@ -20,6 +21,7 @@ function setupForm() {
     <input type="hidden" id="in-product-id" value="">
     <input id="in-price" value="0">
     <input id="in-qty" value="1">
+    <select id="in-supplier-id"><option value="">Tanpa Supplier</option></select>
     <span id="in-total-preview"></span>
   `;
 
@@ -28,7 +30,7 @@ function setupForm() {
       getAll: vi.fn().mockResolvedValue({ ok: true, data: [product] }),
       getById: vi.fn().mockResolvedValue({ ok: true, data: product })
     },
-    suppliers: { getAll: vi.fn().mockResolvedValue({ ok: true, data: [] }) }
+    suppliers: { getAll: vi.fn().mockResolvedValue({ ok: true, data: [{ id: 5, name: 'Supplier Utama' }] }) }
   };
   window.showToast = vi.fn();
   window.eval(inScript);
@@ -52,6 +54,7 @@ describe('Barang Masuk barcode lookup', () => {
     expect(document.getElementById('in-barcode').value).toBe('0123456789012');
     expect(document.getElementById('in-product-id').value).toBe('7');
     expect(document.getElementById('in-price').value).toBe('25000');
+    expect(document.getElementById('in-supplier-id').value).toBe('5');
     expect(document.getElementById('in-barcode-status').textContent).toContain('Filter Aquarium');
   });
 
@@ -74,7 +77,7 @@ describe('Barang Masuk barcode lookup', () => {
   });
 
   it('uses the latest master purchase price when selecting an existing product', async () => {
-    const updatedProduct = { ...product, cost_price: 37500 };
+    const updatedProduct = { ...product, cost_price: 37500, supplier_id: 5 };
     window.Api.items.getById.mockResolvedValue({ ok: true, data: updatedProduct });
     await window.loadDropdowns();
 
@@ -83,6 +86,28 @@ describe('Barang Masuk barcode lookup', () => {
     expect(window.Api.items.getById).toHaveBeenCalledWith(product.id);
     expect(document.getElementById('in-price').value).toBe('37500');
     expect(document.getElementById('in-total-preview').textContent).toContain('37.500');
+    expect(document.getElementById('in-supplier-id').value).toBe('5');
+  });
+
+  it('does not overwrite a manual supplier choice while the latest product data loads', async () => {
+    let resolveProduct;
+    window.Api.items.getById.mockReturnValue(new Promise(resolve => {
+      resolveProduct = resolve;
+    }));
+    await window.loadDropdowns();
+    const supplierSelect = document.getElementById('in-supplier-id');
+    const alternateSupplier = document.createElement('option');
+    alternateSupplier.value = '6';
+    alternateSupplier.textContent = 'Supplier Pilihan';
+    supplierSelect.appendChild(alternateSupplier);
+
+    const selection = window.selectInProduct(product.id);
+    supplierSelect.value = '6';
+    supplierSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    resolveProduct({ ok: true, data: { ...product, supplier_id: 5, cost_price: 25000 } });
+    await selection;
+
+    expect(supplierSelect.value).toBe('6');
   });
 
   it('blocks incoming-stock submission when the latest master price cannot be loaded', async () => {
