@@ -288,18 +288,19 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(indexHtml).toContain('id="doc-po-supplier-subtitle"');
     });
 
-    it('mengisolasi PO dari seluruh elemen dashboard selama proses cetak', async () => {
+    it('mencetak PO dari dokumen mandiri dengan ukuran kertas A4', async () => {
       const fs = await import('fs');
       const path = await import('path');
       const poJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/po.js'), 'utf-8');
-      const layoutCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/layout.css'), 'utf-8');
 
-      expect(poJs).toContain("document.body.classList.add('print-mode-po');");
-      expect(poJs).toContain("window.addEventListener('afterprint', cleanup, { once: true });");
-      expect(poJs).toContain('window.print();');
-      expect(poJs).not.toContain('function printPODocument() {\n    window.print();');
-      expect(layoutCss).toContain('body.print-mode-po > *:not(#modal-print-po)');
-      expect(layoutCss).toContain('body.print-mode-po #modal-print-po > .modal-po-content > .modal-po-preview');
+      expect(poJs).toContain("const printWindow = window.open('', '_blank');");
+      expect(poJs).toContain('@page { size: A4 portrait; margin: 10mm; }');
+      expect(poJs).toContain('const itemCount = paper.querySelectorAll(\'tbody tr\').length;');
+      expect(poJs).toContain('po-print-dense');
+      expect(poJs).toContain('<body><main class="po-print-sheet ${printDensity}" data-item-count="${itemCount}">${paper.outerHTML}</main></body>');
+      expect(poJs).toContain('printDocument.images');
+      expect(poJs).toContain('printWindow.print();');
+      expect(poJs).toContain("showToast('Izinkan pop-up untuk mencetak atau menyimpan PDF PO', 'error');");
     });
 
     it('memastikan template index.html menggunakan po-signatures-grid flex row untuk 3 tanda tangan di A4', async () => {
@@ -319,6 +320,7 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       const path = await import('path');
       const responsiveCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/responsive.css'), 'utf-8');
       const layoutCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/layout.css'), 'utf-8');
+      const poJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/po.js'), 'utf-8');
       const indexHtml = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/index.html'), 'utf-8');
 
       // Mobile tabs & KPI grid
@@ -337,9 +339,9 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(layoutCss).toContain('size: A4 portrait;');
       expect(layoutCss).toContain('min-height: 0 !important;');
       expect(layoutCss).toContain('height: auto !important;');
-      expect(layoutCss).toContain('.po-signatures-grid');
-      expect(layoutCss).toContain('page-break-inside: avoid !important;');
-      expect(layoutCss).toContain('#modal-print-po:not(.hidden)');
+      expect(poJs).toContain('@page { size: A4 portrait; margin: 10mm; }');
+      expect(poJs).toContain('.po-signatures-grid');
+      expect(poJs).toContain('.po-document-table tbody tr, .po-document-table thead { break-inside: avoid;');
     });
   });
 });

@@ -671,16 +671,110 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       return;
     }
 
-    const cleanup = () => document.body.classList.remove('print-mode-po');
-    window.addEventListener('afterprint', cleanup, { once: true });
-    document.body.classList.add('print-mode-po');
-    try {
-      window.print();
-    } catch (error) {
-      cleanup();
-      window.removeEventListener('afterprint', cleanup);
-      console.error('Gagal mencetak PO:', error);
-      showToast('Gagal membuka dialog cetak PO', 'error');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast('Izinkan pop-up untuk mencetak atau menyimpan PDF PO', 'error');
+      return;
+    }
+
+    const itemCount = paper.querySelectorAll('tbody tr').length;
+    const printDensity = itemCount > 35 ? 'po-print-dense' : itemCount > 25 ? 'po-print-compact' : '';
+    const printDocument = printWindow.document;
+    printDocument.open();
+    printDocument.write(`<!doctype html>
+      <html lang="id">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Purchase Order</title>
+          <style>
+            @page { size: A4 portrait; margin: 10mm; }
+            *, *::before, *::after { box-sizing: border-box; }
+            html, body { width: 100%; min-height: 0; margin: 0; background: #fff; }
+            h2, p { margin: 0; }
+            .hidden { display: none !important; }
+            body { color: #172033; font: 9pt/1.3 Arial, Helvetica, sans-serif; }
+            .po-print-sheet { width: 190mm; max-width: 100%; margin: 0 auto; padding: 0; background: #fff; }
+            #po-document-paper { width: 100%; max-width: 100%; margin: 0; padding: 0; background: #fff; color: #172033; font: 9pt/1.3 Arial, Helvetica, sans-serif; }
+            .po-document-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8mm; padding: 0 0 5mm; margin: 0 0 5mm; border-bottom: 1.2pt solid #174c89; }
+            .po-document-brand { display: flex; align-items: flex-start; gap: 5mm; min-width: 0; }
+            .po-document-logo { display: block; width: 36mm; height: auto; object-fit: contain; }
+            .po-document-identity { min-width: 0; }
+            .po-document-issuer-label, .po-document-field-label { color: #174c89; font-size: 7pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+            .po-document-issuer-label { margin: 0 0 1mm; }
+            .po-document-store-name { margin: 0; color: #172033; font-size: 13pt; font-weight: 700; }
+            .po-document-store-slogan, .po-document-contact { margin: 1mm 0 0; color: #475467; font-size: 8pt; line-height: 1.25; overflow-wrap: anywhere; }
+            .po-document-number { flex: 0 0 auto; min-width: 43mm; text-align: right; }
+            .po-document-badge { display: inline-block; padding: 2mm 3mm; border-radius: 1mm; background: #174c89; color: #fff; font-size: 8pt; font-weight: 700; letter-spacing: .1em; }
+            .po-document-number-label { margin: 2mm 0 .5mm; color: #667085; font-size: 7pt; letter-spacing: .08em; text-transform: uppercase; }
+            .po-document-no { margin: 0; color: #172033; font: 700 10pt/1.2 Arial, Helvetica, sans-serif; overflow-wrap: anywhere; }
+            .po-document-info { display: grid; grid-template-columns: 1.1fr .9fr; gap: 8mm; padding: 0 0 4mm; margin: 0 0 4mm; border-bottom: .6pt solid #d0d5dd; }
+            .po-document-supplier-name { margin: 1mm 0 0; color: #172033; font-size: 10pt; font-weight: 700; }
+            .po-document-supplier-subtitle { margin: .5mm 0 0; color: #475467; font-size: 8pt; font-weight: 600; }
+            .po-document-supplier-contact { margin: 0; color: #475467; font-size: 8pt; }
+            .po-document-order-meta { text-align: right; }
+            .po-document-order-meta > div + div { margin-top: 1.5mm; }
+            .po-document-meta-label { color: #667085; font-size: 8pt; }
+            .po-document-meta-value, .po-document-status { color: #172033; font-size: 8pt; font-weight: 600; }
+            .po-document-status { color: #174c89; font-weight: 700; text-transform: uppercase; }
+            .po-document-table { width: 100%; margin: 0 0 4mm; border-collapse: collapse; table-layout: fixed; }
+            .po-document-table th, .po-document-table td { padding: 1.35mm 1.5mm; border-bottom: .5pt solid #d0d5dd; color: #172033; font-size: 8pt; line-height: 1.2; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+            .po-document-table th { background: #eaf1f8; color: #173b63; font-weight: 700; }
+            .po-print-compact .po-document-table th, .po-print-compact .po-document-table td { padding: .65mm 1.2mm; font-size: 7.5pt; line-height: 1.15; }
+            .po-print-dense .po-document-table th, .po-print-dense .po-document-table td { padding: .35mm 1mm; font-size: 7pt; line-height: 1.05; }
+            .po-document-table th:first-child, .po-document-table td:first-child { width: 8%; text-align: center; }
+            .po-document-table th:nth-child(2), .po-document-table td:nth-child(2) { width: 40%; }
+            .po-document-table th:nth-child(3), .po-document-table td:nth-child(3) { width: 13%; text-align: center; }
+            .po-document-table th:nth-child(4), .po-document-table td:nth-child(4) { width: 19%; text-align: right; }
+            .po-document-table th:nth-child(5), .po-document-table td:nth-child(5) { width: 20%; text-align: right; }
+            .po-document-table tbody tr, .po-document-table thead { break-inside: avoid; page-break-inside: avoid; }
+            .po-document-total-row td { border-top: 1pt solid #174c89; border-bottom: 0; background: #f3f7fb; font-weight: 700; }
+            .po-document-total-row td:first-child { text-align: right; }
+            .po-document-total { color: #173b63 !important; }
+            .po-document-notes { margin: 0 0 5mm; padding: 2.5mm 3mm; border-left: 1.2pt solid #174c89; background: #f7f9fc; color: #475467; font-size: 8pt; }
+            .po-document-notes-label { color: #173b63; font-weight: 700; }
+            .po-document-notes p { margin: 1mm 0 0; }
+            .po-signatures-grid { display: flex; align-items: flex-start; justify-content: space-between; gap: 5mm; width: 100%; padding-top: 2mm; break-inside: auto; page-break-inside: auto; }
+            .po-signatures-grid > div { flex: 1 1 0; min-width: 0; color: #344054; font-size: 7.5pt; text-align: center; }
+            .po-signatures-grid p { margin: 0 0 9mm; }
+            .po-signatures-grid p:last-child { margin: 0; padding-top: 1.5mm; border-top: .6pt solid #98a2b3; color: #172033; font-weight: 700; }
+            @media screen {
+              body { padding: 12mm; background: #f2f4f7; }
+              .po-print-sheet { min-height: 277mm; padding: 10mm; box-shadow: 0 2mm 8mm rgba(16, 24, 40, .15); }
+            }
+            @media print {
+              html, body { width: auto; height: auto; overflow: visible; }
+              body { padding: 0; background: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+              .po-print-sheet { width: 190mm; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body><main class="po-print-sheet ${printDensity}" data-item-count="${itemCount}">${paper.outerHTML}</main></body>
+      </html>`);
+    printDocument.close();
+
+    const openPrintDialog = async () => {
+      try {
+        await printDocument.fonts.ready;
+        await Promise.all(Array.from(printDocument.images, image => {
+          if (image.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            image.addEventListener('load', resolve, { once: true });
+            image.addEventListener('error', resolve, { once: true });
+          });
+        }));
+        printWindow.focus();
+        printWindow.print();
+      } catch (error) {
+        console.error('Gagal menyiapkan cetak PO:', error);
+        showToast('Gagal menyiapkan dokumen cetak PO', 'error');
+      }
+    };
+
+    if (printDocument.readyState === 'complete') {
+      openPrintDialog();
+    } else {
+      printWindow.addEventListener('load', openPrintDialog, { once: true });
     }
   }
 

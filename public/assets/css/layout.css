@@ -346,7 +346,7 @@ main, #main-content {
   color: #4b5563;
 }
 
-/* ═══ PRINT STYLES (RECEIPT, PACKING LIST, PO & RETURN) ═══ */
+/* ═══ PRINT STYLES (RECEIPT, PACKING LIST & RETURN) ═══ */
 @media print {
   @page {
     size: A4 portrait;
@@ -364,16 +364,10 @@ main, #main-content {
     margin: 0 !important;
   }
 
-  body.print-mode-po > *:not(#modal-print-po) {
-    display: none !important;
-  }
-
   body * {
     visibility: hidden !important;
   }
 
-  /* De-position fixed modal containers so Chromium doesn't repeat headers on page 2 */
-  #modal-print-po:not(.hidden),
   #modal-print-return:not(.hidden) {
     position: static !important;
     display: block !important;
@@ -384,7 +378,6 @@ main, #main-content {
     inset: auto !important;
   }
 
-  #modal-print-po > div,
   #modal-print-return > div {
     max-width: 100% !important;
     padding: 0 !important;
@@ -398,31 +391,6 @@ main, #main-content {
   body > .flex.min-h-screen {
     display: none !important;
   }
-  #modal-print-po > div > * {
-    display: none !important;
-  }
-  #modal-print-po > div > :nth-child(2) {
-    display: block !important;
-    max-height: none !important;
-    padding: 0 !important;
-    overflow: visible !important;
-  }
-  body.print-mode-po #modal-print-po > .modal-po-content {
-    display: block !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-  body.print-mode-po #modal-print-po > .modal-po-content > * {
-    display: none !important;
-  }
-  body.print-mode-po #modal-print-po > .modal-po-content > .modal-po-preview {
-    display: block !important;
-  }
-  #modal-print-po > div,
-  #modal-print-po > div > :nth-child(2) {
-    visibility: visible !important;
-  }
-
   body.print-mode-receipt #receipt-paper,
   body.print-mode-receipt #receipt-paper * {
     visibility: visible !important;
@@ -452,112 +420,6 @@ main, #main-content {
     padding: 0 !important;
     background: #fff !important;
     color: #000 !important;
-  }
-
-  /* PO print styles */
-  #po-document-paper,
-  #po-document-paper * {
-    visibility: visible !important;
-  }
-  #po-document-paper {
-    position: static !important;
-    width: auto !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 4mm 5mm !important;
-    background: #fff !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    border: none !important;
-    font-size: 10.5px !important;
-    line-height: 1.25 !important;
-    box-sizing: border-box !important;
-  }
-  #po-document-paper .po-document-header {
-    gap: 8mm !important;
-    padding-bottom: 4mm !important;
-    margin-bottom: 4mm !important;
-    border-color: #174c89 !important;
-  }
-  #po-document-paper .po-document-header > div:first-child {
-    gap: 4mm !important;
-  }
-  #po-document-paper .po-document-logo {
-    display: block !important;
-    width: 36mm !important;
-    height: auto !important;
-    object-fit: contain !important;
-  }
-  #po-document-paper .po-document-number span {
-    background: #174c89 !important;
-    color: #fff !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-  #po-document-paper .po-document-info {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: flex-start !important;
-    gap: 8mm !important;
-    padding-bottom: 4mm !important;
-    margin-bottom: 4mm !important;
-  }
-  #po-document-paper .po-document-info > div {
-    flex: 1 1 0 !important;
-  }
-  #po-document-paper .po-document-info > div:last-child {
-    text-align: right !important;
-  }
-  #po-document-paper table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-bottom: 4mm !important;
-  }
-  #po-document-paper table th,
-  #po-document-paper table td {
-    padding: 1.5mm 1.2mm !important;
-    font-size: 10.5px !important;
-    line-height: 1.3 !important;
-  }
-  #po-document-paper .po-document-items-header {
-    background: #eaf1f8 !important;
-    color: #173b63 !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-  #po-document-paper table tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  #po-document-paper table thead {
-    display: table-header-group !important;
-  }
-  #po-document-paper .po-document-total-row {
-    background: #f3f7fb !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-  #po-document-paper #doc-po-store-name {
-    font-size: 16px !important;
-    line-height: 1.1 !important;
-  }
-  #po-document-paper .grid-cols-2 {
-    display: flex !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-    padding-bottom: 4px !important;
-    margin-bottom: 6px !important;
-  }
-  #po-document-paper .mb-6 {
-    margin-bottom: 6px !important;
-    padding: 4px 6px !important;
-  }
-  #po-document-paper .po-document-notes {
-    border-left: 2px solid #174c89 !important;
-    border-radius: 0 !important;
-    background: #f7f9fc !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
   }
 
   /* Single-page Return print styles */
@@ -593,7 +455,6 @@ main, #main-content {
   }
 
   /* Guaranteed horizontal side-by-side signatures on all paper sizes */
-  .po-signatures-grid,
   .return-signatures-grid {
     display: flex !important;
     flex-direction: row !important;
@@ -605,15 +466,11 @@ main, #main-content {
     break-inside: avoid !important;
     width: 100% !important;
   }
-  .po-signatures-grid > div,
   .return-signatures-grid > div {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     text-align: center !important;
   }
-  .po-signatures-grid p.mb-8,
-  .po-signatures-grid p.mb-10,
-  .po-signatures-grid p.mb-12,
   .return-signatures-grid p.mb-8,
   .return-signatures-grid p.mb-10,
   .return-signatures-grid p.mb-12 {
