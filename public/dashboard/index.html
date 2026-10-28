@@ -417,27 +417,9 @@
       </div>
 
       <div class="flex items-center justify-between flex-wrap gap-3" id="items-pagination-wrap">
-        <div class="flex items-center gap-3 text-sm">
-          <input type="checkbox" id="select-all-items" onchange="toggleSelectAllPage(this.checked)" aria-label="Pilih semua di halaman ini" class="accent-[#0088CC] w-4 h-4 cursor-pointer">
-          <label for="select-all-items" class="text-[#A0A0A5] cursor-pointer" id="label-select-page">Pilih semua halaman ini</label>
-          <span class="text-[#A0A0A5]">·</span>
-          <button type="button" onclick="openBulkPriceModal()" data-action="edit-bulk" class="text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium disabled:opacity-40" id="btn-bulk-price">
-            <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit Harga Massal
-          </button>
-          <span class="text-[#A0A0A5]">·</span>
-          <button type="button" onclick="openBulkMetaModal()" data-action="edit-bulk-meta" class="text-[#32ADE6] hover:underline flex items-center gap-1.5 font-medium disabled:opacity-40" id="btn-bulk-meta">
-            <i data-lucide="layers" class="w-3.5 h-3.5" aria-hidden="true"></i> Edit Satuan &amp; Supplier
-          </button>
-          <span class="text-[#A0A0A5]">·</span>
-          <button type="button" onclick="openBulkDeleteModal()" data-action="delete-bulk" class="text-[#FF3B30] hover:underline flex items-center gap-1.5 font-medium disabled:opacity-40" id="btn-bulk-delete">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i> Hapus Massal
-          </button>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-[#A0A0A5] mr-2" id="items-pagination-info">0-0 dari 0</span>
-          <div class="flex items-center gap-1" id="items-pagination-buttons">
-            <!-- Dinamis via renderPagination() -->
-          </div>
+        <span class="text-sm text-[#A0A0A5]" id="items-pagination-info">0-0 dari 0</span>
+        <div class="flex items-center gap-1" id="items-pagination-buttons">
+          <!-- Dinamis via renderPagination() -->
         </div>
       </div>
     </div>
@@ -3007,6 +2989,36 @@
         </div>
       </div>
 
+      <!-- Saluran Penjualan & Tautan Channel (Marketplace URL) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label for="item-channel" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Saluran Penjualan</label>
+          <select id="item-channel" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <option value="Offline">Offline / Toko Fisik</option>
+            <option value="Shopee">Shopee</option>
+            <option value="Tokopedia">Tokopedia</option>
+            <option value="TikTok">TikTok Shop</option>
+            <option value="Lazada">Lazada</option>
+            <option value="WhatsApp">WhatsApp / Direct</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label for="item-channel-link" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Link Channel / URL Produk</label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#A0A0A5]">
+                <i data-lucide="link" class="w-4 h-4" aria-hidden="true"></i>
+              </span>
+              <input type="url" id="item-channel-link" placeholder="mis. https://shopee.co.id/produk-... atau link etalase" class="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            </div>
+            <a id="btn-open-channel-link" href="#" target="_blank" rel="noopener noreferrer" title="Buka Link Produk" class="hidden px-3.5 py-2 bg-white/5 hover:bg-white/10 text-[#32ADE6] border border-white/10 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0">
+              <i data-lucide="external-link" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span>Buka</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-3 gap-3">
         <div>
           <label for="item-cost-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Beli (Rp)</label>
@@ -3607,12 +3619,12 @@
               <div>
                 <label for="out-channel" class="block text-xs font-medium text-[#A0A0A5] mb-1">Channel <span class="text-[#FF3B30]">*</span></label>
                 <select id="out-channel" required="" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-[#0088CC] focus:outline-none">
-                  <option value="Offline">Offline / Toko Fisik</option>
+                  <option value="Offline">Offline</option>
                   <option value="Shopee">Shopee</option>
                   <option value="Tokopedia">Tokopedia</option>
                   <option value="TikTok">TikTok Shop</option>
                   <option value="Lazada">Lazada</option>
-                  <option value="WhatsApp">WhatsApp / Direct</option>
+                  <option value="WhatsApp">WhatsApp</option>
                 </select>
               </div>
               <div>

@@ -33,7 +33,7 @@ describe('product barcode API mapping', () => {
     const result = await items.create(row);
 
     expect(result.ok).toBe(true);
-    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, brand: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, image_url: null }]);
+    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, brand: null, channel: 'Offline', channel_link: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, image_url: null }]);
   });
 
   it('returns stored barcodes when reading Supabase products', async () => {

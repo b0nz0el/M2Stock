@@ -82,6 +82,8 @@ export const items = {
               sellPrice: Number(item.sell_price) || 0,
               sell_price: Number(item.sell_price) || 0,
               unitPrice: Number(item.sell_price) || 0,
+              channel: item.channel || 'Offline',
+              channel_link: item.channel_link || '',
               image_url: primaryImageUrl,
               images: itemImages,
               created_at: item.created_at,
@@ -153,6 +155,8 @@ export const items = {
             sellPrice: Number(data.sell_price) || 0,
             sell_price: Number(data.sell_price) || 0,
             unitPrice: Number(data.sell_price) || 0,
+            channel: data.channel || 'Offline',
+            channel_link: data.channel_link || '',
             image_url: primaryImageUrl,
             images: itemImages,
             created_at: data.created_at,
@@ -186,6 +190,8 @@ export const items = {
             category_id: data.category_id ? Number(data.category_id) : null,
             unit_id: data.unit_id ? Number(data.unit_id) : 1,
             brand: data.brand || null,
+            channel: data.channel || 'Offline',
+            channel_link: data.channel_link || null,
             stock: data.stock !== undefined ? Number(data.stock) : 0,
             min_stock: (data.min_stock !== undefined ? data.min_stock : data.minStock) !== undefined ? Number(data.min_stock || data.minStock) : 0,
             cost_price: (data.cost_price !== undefined ? data.cost_price : data.costPrice) !== undefined ? Number(data.cost_price || data.costPrice) : 0,
@@ -202,7 +208,19 @@ export const items = {
             query = query.abortSignal(opts.signal);
           }
 
-          const { data: inserted, error } = await query;
+          let { data: inserted, error } = await query;
+          if (error && (String(error.message || '').includes('channel_link') || String(error.message || '').includes('channel'))) {
+            const fallbackRow = { ...row };
+            delete fallbackRow.channel;
+            delete fallbackRow.channel_link;
+            let retryQuery = window.supabase.from('products').insert([fallbackRow]).select();
+            if (opts && opts.signal) retryQuery = retryQuery.abortSignal(opts.signal);
+            const retryRes = await retryQuery;
+            if (!retryRes.error) {
+              inserted = retryRes.data;
+              error = null;
+            }
+          }
           if (error) {
             return formatResponse({
               ok: false,
@@ -272,7 +290,19 @@ export const items = {
             query = query.abortSignal(opts.signal);
           }
 
-          const { data: updated, error } = await query;
+          let { data: updated, error } = await query;
+          if (error && (String(error.message || '').includes('channel_link') || String(error.message || '').includes('channel'))) {
+            const fallbackRow = { ...row };
+            delete fallbackRow.channel;
+            delete fallbackRow.channel_link;
+            let retryQuery = window.supabase.from('products').update(fallbackRow).eq('id', id).select();
+            if (opts && opts.signal) retryQuery = retryQuery.abortSignal(opts.signal);
+            const retryRes = await retryQuery;
+            if (!retryRes.error) {
+              updated = retryRes.data;
+              error = null;
+            }
+          }
           if (error) {
             return formatResponse({
               ok: false,

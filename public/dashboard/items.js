@@ -381,6 +381,16 @@
     const warnBanner = document.getElementById('item-stock-warning-banner');
     if (warnBanner) warnBanner.classList.add('hidden');
 
+    const channelSelect = document.getElementById('item-channel');
+    if (channelSelect) channelSelect.value = 'Offline';
+    const channelLinkInput = document.getElementById('item-channel-link');
+    if (channelLinkInput) channelLinkInput.value = '';
+    const btnOpenChannel = document.getElementById('btn-open-channel-link');
+    if (btnOpenChannel) {
+      btnOpenChannel.classList.add('hidden');
+      btnOpenChannel.href = '#';
+    }
+
     document.getElementById('modal-item-title').textContent = 'Tambah Barang';
     const submitBtn = document.getElementById('btn-submit-item');
     if (submitBtn) {
@@ -449,6 +459,22 @@
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
+
+    const channelSelect = document.getElementById('item-channel');
+    if (channelSelect) channelSelect.value = item.channel || 'Offline';
+    const channelLinkInput = document.getElementById('item-channel-link');
+    const btnOpenChannel = document.getElementById('btn-open-channel-link');
+    const initialLink = (item.channel_link || '').trim();
+    if (channelLinkInput) channelLinkInput.value = initialLink;
+    if (btnOpenChannel) {
+      if (initialLink) {
+        btnOpenChannel.classList.remove('hidden');
+        btnOpenChannel.href = /^https?:\/\//i.test(initialLink) ? initialLink : `https://${initialLink}`;
+      } else {
+        btnOpenChannel.classList.add('hidden');
+        btnOpenChannel.href = '#';
+      }
+    }
 
     const existingImages = parseProductImages(item.images || item.image_url);
     if (existingImages.length > 0) {
@@ -531,6 +557,15 @@
       const cost_price = Number(document.getElementById('item-cost-price').value);
       const sell_price = Number(document.getElementById('item-sell-price').value);
       const min_stock = Number(document.getElementById('item-min-stock').value);
+
+      const channelSelect = document.getElementById('item-channel');
+      const channel = channelSelect ? channelSelect.value : 'Offline';
+      const channelLinkInput = document.getElementById('item-channel-link');
+      let rawChannelLink = channelLinkInput ? channelLinkInput.value.trim() : '';
+      let channel_link = null;
+      if (rawChannelLink) {
+        channel_link = /^https?:\/\//i.test(rawChannelLink) ? rawChannelLink : `https://${rawChannelLink}`;
+      }
 
       if (!name) {
         if (typeof showToast === 'function') showToast('Nama barang tidak boleh kosong', 'error');
@@ -627,6 +662,8 @@
         brand: brand || null,
         category_id: category_id ? Number(category_id) : null,
         unit_id: Number(unit_id),
+        channel: channel || 'Offline',
+        channel_link: channel_link,
         cost_price: cost_price,
         sell_price: sell_price,
         min_stock: min_stock,
@@ -1412,7 +1449,17 @@
             </div>
           `}
         </td>
-        <td class="px-4 py-3.5 font-medium">${escapeHtml(item.name)}</td>
+        <td class="px-4 py-3.5 font-medium">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span>${escapeHtml(item.name)}</span>
+            ${item.channel_link ? `
+              <a href="${escapeHtml(item.channel_link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[11px] font-normal text-[#32ADE6] hover:underline bg-[#0088CC]/10 border border-[#0088CC]/20 px-1.5 py-0.5 rounded-md transition hover:bg-[#0088CC]/20" title="Buka produk di ${escapeHtml(item.channel || 'Channel')}">
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+                <span>${escapeHtml(item.channel || 'Link')}</span>
+              </a>
+            ` : ''}
+          </div>
+        </td>
         <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
         <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.sku || '-')}</td>
         <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.barcode || '-')}</td>
@@ -2281,6 +2328,24 @@
         if (typeof showToast === 'function') showToast('Barcode berhasil dipindai', 'success');
       });
     });
+  }
+
+  const channelLinkInput = document.getElementById('item-channel-link');
+  if (channelLinkInput) {
+    const updateOpenButton = function () {
+      const btn = document.getElementById('btn-open-channel-link');
+      if (!btn) return;
+      const rawVal = (channelLinkInput.value || '').trim();
+      if (rawVal) {
+        btn.classList.remove('hidden');
+        btn.href = /^https?:\/\//i.test(rawVal) ? rawVal : `https://${rawVal}`;
+      } else {
+        btn.classList.add('hidden');
+        btn.href = '#';
+      }
+    };
+    channelLinkInput.addEventListener('input', updateOpenButton);
+    channelLinkInput.addEventListener('change', updateOpenButton);
   }
 
   document.getElementById('btn-import-items')?.addEventListener('click', function () {
