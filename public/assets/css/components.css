@@ -583,56 +583,35 @@ tbody tr:nth-child(5) {
   display: none !important;
 }
 
-/* ═══ FLOATING BULK ACTION BAR ═══ */
+/* ═══ INTEGRATED TABLE BULK ACTION BAR (SHOPIFY/GITHUB STANDARD) ═══ */
 #bulk-bar {
-  position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom));
-  left: 16px;
-  right: 16px;
-  width: auto;
-  max-width: calc(100% - 32px);
-  margin: 0 auto;
-  background: rgba(28, 28, 30, 0.94);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(0, 136, 204, 0.18) 0%, rgba(28, 28, 30, 0.98) 100%);
+  border-bottom: 1px solid rgba(0, 136, 204, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   padding: 8px 16px;
-  box-shadow: 0 20px 48px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  z-index: 50;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  animation: bulkBarSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes bulkBarSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  animation: bulkBarSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 #bulk-bar.hidden {
   display: none !important;
 }
 
-@media (min-width: 1025px) {
-  #bulk-bar {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    bottom: 28px !important;
-    min-width: 520px;
-    max-width: 680px;
-    padding: 10px 20px !important;
-    border-radius: 9999px !important;
+@keyframes bulkBarSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

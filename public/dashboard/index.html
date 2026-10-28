@@ -287,7 +287,7 @@
 
   
     <!-- =========================== ITEMS =========================== -->
-    <div id="page-items" class="page p-6 pb-28 sm:pb-32 space-y-5">
+    <div id="page-items" class="page p-6 pb-16 space-y-5">
       <div class="items-page-header flex items-center justify-between">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Barang</h2>
@@ -330,6 +330,35 @@
       </div>
 
       <div class="card overflow-hidden">
+        <!-- Integrated Bulk Action Bar (Shopify & GitHub Standard) -->
+        <div id="bulk-bar" class="hidden bg-[#152332] border-b border-[#0088CC]/30 px-3 sm:px-4 py-2 sm:py-2.5 items-center justify-between gap-2 sm:gap-3 transition-all duration-200" role="region" aria-label="Aksi massal produk">
+          <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <span class="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[#0088CC] text-white text-[11px] font-bold" id="bulk-count-badge">0</span>
+            <span class="text-xs sm:text-sm font-semibold text-white whitespace-nowrap" id="bulk-count">0 produk dipilih</span>
+          </div>
+          <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
+            <button type="button" onclick="openBulkPriceModal()" class="bulk-action-btn bulk-action-btn--primary shrink-0" id="bulk-btn-price" title="Edit Harga Massal">
+              <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span class="hidden sm:inline">Ubah Harga</span>
+              <span class="sm:hidden text-xs">Harga</span>
+            </button>
+            <button type="button" onclick="openBulkMetaModal()" class="bulk-action-btn bulk-action-btn--secondary shrink-0" id="bulk-btn-meta" title="Edit Satuan & Supplier Massal">
+              <i data-lucide="layers" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span class="hidden sm:inline">Satuan &amp; Supplier</span>
+              <span class="sm:hidden text-xs">Satuan</span>
+            </button>
+            <button type="button" onclick="openBulkDeleteModal()" class="bulk-action-btn bulk-action-btn--danger shrink-0" id="bulk-btn-delete" title="Hapus Massal Produk">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span class="hidden sm:inline">Hapus</span>
+              <span class="sm:hidden text-xs">Hapus</span>
+            </button>
+            <div class="w-px h-4 sm:h-5 bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
+            <button type="button" onclick="clearSelection()" class="bulk-action-btn bulk-action-btn--ghost shrink-0" title="Batalkan pilihan">
+              <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span class="hidden md:inline">Batal</span>
+            </button>
+          </div>
+        </div>
         <div class="card-table-wrap">
         <table class="w-full text-sm">
           <thead class="bg-white/[0.02] border-b border-white/5">
@@ -2220,7 +2249,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label for="setting-shop-name" class="block text-xs text-[#A0A0A5] font-medium mb-1">Nama Usaha</label>
-                <input type="text" id="setting-shop-name" required="" placeholder="Contoh: JTMaquarium" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                <input type="text" id="setting-shop-name" required="" placeholder="Contoh: David" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
               </div>
 
               <div>
@@ -2230,7 +2259,7 @@
 
               <div>
                 <label for="setting-shop-email" class="block text-xs text-[#A0A0A5] font-medium mb-1">Email Toko</label>
-                <input type="email" id="setting-shop-email" placeholder="Contoh: jtmaquarium@agmail.com" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+                <input type="email" id="setting-shop-email" placeholder="Contoh: david@example.com" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
               </div>
 
               <div>
@@ -2240,7 +2269,7 @@
             </div>
 
             <div>
-              <label for="setting-shop-address" class="block text-xs text-[#A0A0A5] font-medium mb-1">Alamat Lengkap Toko</label>
+              <label for="setting-shop-address" class="block text-xs text-[#A0A0A5] font-medium mb-1">Alamat Toko</label>
               <textarea id="setting-shop-address" rows="3" placeholder="Jl. Mangga No. 67, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat - 17413" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC] resize-none"></textarea>
             </div>
 
@@ -2270,7 +2299,7 @@
           <form id="form-setting-pos" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label for="setting-pos-tax" class="block text-xs text-[#A0A0A5] font-medium mb-1">Pajak Pertambahan Nilai / PPN (%)</label>
+                <label for="setting-pos-tax" class="block text-xs text-[#A0A0A5] font-medium mb-1">PPN (%)</label>
                 <div class="relative">
                   <input type="number" id="setting-pos-tax" min="0" max="100" step="0.5" value="11" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
                   <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#A0A0A5] font-bold">%</span>
@@ -2288,7 +2317,7 @@
               <div>
                 <label for="setting-pos-default-payment" class="block text-xs text-[#A0A0A5] font-medium mb-1">Metode Pembayaran Default</label>
                 <select id="setting-pos-default-payment" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
-                  <option value="Cash" class="bg-[#1C1C1E]">Tunai (Cash)</option>
+                  <option value="Cash" class="bg-[#1C1C1E]">Tunai</option>
                   <option value="Transfer" class="bg-[#1C1C1E]">Transfer Bank</option>
                   <option value="QRIS" class="bg-[#1C1C1E]">QRIS</option>
                 </select>
@@ -2296,7 +2325,7 @@
             </div>
 
             <div>
-              <label for="setting-pos-receipt-footer" class="block text-xs text-[#A0A0A5] font-medium mb-1">Pesan Penutup / Footer Struk</label>
+              <label for="setting-pos-receipt-footer" class="block text-xs text-[#A0A0A5] font-medium mb-1">Pesan Penutup</label>
               <textarea id="setting-pos-receipt-footer" rows="2" placeholder="Terima kasih telah berbelanja di toko kami!" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC] resize-none"></textarea>
             </div>
 
@@ -2911,7 +2940,7 @@
         <div>
           <label for="item-category" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Kategori</label>
           <select id="item-category" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
-            <option value="">Umum (Tanpa Kategori)</option>
+            <option value="">Umum</option>
           </select>
         </div>
         <div>
@@ -2991,105 +3020,175 @@
 <!-- =========================== MODAL (ITEMS: modal-stock-adjustment) =========================== -->
 <div id="modal-stock-adjustment" class="hidden stock-opname-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-stock-adjustment-title">
   <section class="stock-opname-dialog">
-    <header class="stock-opname-header">
-      <div class="stock-opname-heading">
-        <div class="stock-opname-heading__icon" aria-hidden="true">
-          <i data-lucide="clipboard-check" class="w-5 h-5"></i>
-        </div>
-        <div class="min-w-0">
-          <p class="stock-opname-eyebrow">INVENTORI <span aria-hidden="true">/</span> STOCK OPNAME</p>
-          <h3 id="modal-stock-adjustment-title" class="stock-opname-title">Koreksi Stok Fisik</h3>
-          <p class="stock-opname-subtitle">Hitung stok aktual dan catat selisihnya dengan alasan yang jelas.</p>
-        </div>
-      </div>
-      <div class="stock-opname-header__actions">
-        <button type="button" id="btn-show-adjustment-history" class="stock-opname-history-button">
-          <i data-lucide="history" class="w-4 h-4" aria-hidden="true"></i>
-          <span>Riwayat</span>
-        </button>
-        <button type="button" onclick="closeStockAdjustmentModal()" aria-label="Tutup Stock Opname" class="stock-opname-close-button">
-          <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
-        </button>
-      </div>
-    </header>
-
-    <form id="form-stock-adjustment" onsubmit="handleStockAdjustmentSubmit(event)" class="stock-opname-form">
-      <input type="hidden" id="adj-product-id">
-
-      <section class="stock-opname-product" aria-label="Informasi produk">
-        <div class="stock-opname-product__top">
+    <!-- View 1: Form Koreksi Stok Fisik -->
+    <div id="stock-opname-view-form" class="flex flex-col">
+      <header class="stock-opname-header">
+        <div class="stock-opname-heading">
+          <div class="stock-opname-heading__icon" aria-hidden="true">
+            <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+          </div>
           <div class="min-w-0">
-            <p class="stock-opname-label">PRODUK</p>
-            <h4 id="adj-product-name" class="stock-opname-product__name">Nama Produk</h4>
+            <p class="stock-opname-eyebrow">INVENTORI <span aria-hidden="true">/</span> STOCK OPNAME</p>
+            <h3 id="modal-stock-adjustment-title" class="stock-opname-title">Koreksi Stok Fisik</h3>
+            <p class="stock-opname-subtitle">Hitung stok aktual dan catat selisihnya dengan alasan yang jelas.</p>
           </div>
-          <span id="adj-product-sku" class="stock-opname-sku">SKU-001</span>
         </div>
-        <div class="stock-opname-product__meta">
-          <span><span class="stock-opname-label-inline">Kategori</span><strong id="adj-product-cat">Umum</strong></span>
-          <span class="stock-opname-product__divider" aria-hidden="true"></span>
-          <span><span class="stock-opname-label-inline">Satuan</span><strong id="adj-product-unit">pcs</strong></span>
-        </div>
-      </section>
-
-      <section class="stock-opname-count" aria-label="Perbandingan stok sistem dan stok fisik">
-        <div class="stock-opname-count__card">
-          <label class="stock-opname-label" for="adj-current-stock">STOK DI SISTEM</label>
-          <output class="stock-opname-current">
-            <span id="adj-current-stock">0</span>
-            <span id="adj-unit-label-current" class="stock-opname-unit">pcs</span>
-          </output>
-          <p class="stock-opname-hint">Saldo saat ini</p>
-        </div>
-        <div class="stock-opname-count__card stock-opname-count__card--actual">
-          <label class="stock-opname-label" for="adj-actual-stock">STOK FISIK AKTUAL <span aria-hidden="true">*</span></label>
-          <div class="stock-opname-input-wrap">
-            <input type="number" id="adj-actual-stock" min="0" step="any" inputmode="decimal" required oninput="calculateAdjustmentDifference()" aria-describedby="stock-opname-count-hint" class="stock-opname-input">
-            <span id="stock-opname-count-unit" class="stock-opname-unit">pcs</span>
-          </div>
-          <p id="stock-opname-count-hint" class="stock-opname-hint">Hitung unit yang tersedia secara fisik.</p>
-        </div>
-      </section>
-
-      <div id="adj-diff-box" class="stock-opname-difference" role="status" aria-live="polite">
-        <div class="stock-opname-difference__label">
-          <i data-lucide="arrow-left-right" class="w-4 h-4" aria-hidden="true"></i>
-          <span>Selisih stok</span>
-        </div>
-        <span id="adj-diff-badge" class="stock-opname-difference__value">0 pcs (Tidak ada perubahan)</span>
-      </div>
-
-      <section class="stock-opname-reason" aria-label="Detail penyesuaian">
-        <div class="stock-opname-field">
-          <label for="adj-reason" class="stock-opname-field__label">Alasan penyesuaian <span class="stock-opname-required" aria-hidden="true">*</span></label>
-          <select id="adj-reason" required class="stock-opname-control">
-            <option value="Koreksi Salah Input / Dobel">Koreksi salah input / data ganda</option>
-            <option value="Stock Opname Fisik">Hasil penghitungan fisik</option>
-            <option value="Barang Rusak / Kadaluarsa">Barang rusak / kedaluwarsa</option>
-            <option value="Barang Hilang / Selisih Kasir">Barang hilang / selisih kasir</option>
-            <option value="Bonus / Hadiah Supplier">Bonus / hadiah supplier</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-        </div>
-        <div class="stock-opname-field">
-          <label for="adj-notes" class="stock-opname-field__label">Catatan <span class="stock-opname-optional">(opsional)</span></label>
-          <textarea id="adj-notes" rows="2" placeholder="Contoh: hitung ulang rak A bersama supervisor." class="stock-opname-control stock-opname-control--notes"></textarea>
-        </div>
-      </section>
-
-      <footer class="stock-opname-footer">
-        <p class="stock-opname-audit-note">
-          <i data-lucide="shield-check" class="w-4 h-4" aria-hidden="true"></i>
-          <span>Perubahan dicatat di riwayat audit stok.</span>
-        </p>
-        <div class="stock-opname-footer__buttons">
-          <button type="button" onclick="closeStockAdjustmentModal()" class="stock-opname-cancel-button">Batal</button>
-          <button type="submit" id="btn-submit-adjustment" class="stock-opname-submit-button">
-            <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
-            <span>Simpan koreksi</span>
+        <div class="stock-opname-header__actions">
+          <button type="button" id="btn-show-adjustment-history" class="stock-opname-history-button" title="Lihat riwayat penyesuaian">
+            <i data-lucide="history" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Riwayat</span>
+          </button>
+          <button type="button" onclick="closeStockAdjustmentModal()" aria-label="Tutup Stock Opname" class="stock-opname-close-button">
+            <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
           </button>
         </div>
-      </footer>
-    </form>
+      </header>
+
+      <form id="form-stock-adjustment" onsubmit="handleStockAdjustmentSubmit(event)" class="stock-opname-form">
+        <input type="hidden" id="adj-product-id">
+
+        <section class="stock-opname-product" aria-label="Informasi produk">
+          <div class="stock-opname-product__top">
+            <div class="min-w-0">
+              <p class="stock-opname-label">PRODUK</p>
+              <h4 id="adj-product-name" class="stock-opname-product__name">Nama Produk</h4>
+            </div>
+            <span id="adj-product-sku" class="stock-opname-sku">SKU-001</span>
+          </div>
+          <div class="stock-opname-product__meta">
+            <span><span class="stock-opname-label-inline">Kategori</span><strong id="adj-product-cat">Umum</strong></span>
+            <span class="stock-opname-product__divider" aria-hidden="true"></span>
+            <span><span class="stock-opname-label-inline">Satuan</span><strong id="adj-product-unit">pcs</strong></span>
+          </div>
+        </section>
+
+        <section class="stock-opname-count" aria-label="Perbandingan stok sistem dan stok fisik">
+          <div class="stock-opname-count__card">
+            <label class="stock-opname-label" for="adj-current-stock">STOK DI SISTEM</label>
+            <output class="stock-opname-current">
+              <span id="adj-current-stock">0</span>
+              <span id="adj-unit-label-current" class="stock-opname-unit">pcs</span>
+            </output>
+            <p class="stock-opname-hint">Saldo saat ini</p>
+          </div>
+          <div class="stock-opname-count__card stock-opname-count__card--actual">
+            <label class="stock-opname-label" for="adj-actual-stock">STOK FISIK AKTUAL <span aria-hidden="true">*</span></label>
+            <div class="stock-opname-input-wrap">
+              <input type="number" id="adj-actual-stock" min="0" step="any" inputmode="decimal" required oninput="calculateAdjustmentDifference()" aria-describedby="stock-opname-count-hint" class="stock-opname-input">
+              <span id="stock-opname-count-unit" class="stock-opname-unit">pcs</span>
+            </div>
+            <p id="stock-opname-count-hint" class="stock-opname-hint">Hitung unit yang tersedia secara fisik.</p>
+          </div>
+        </section>
+
+        <div id="adj-diff-box" class="stock-opname-difference" role="status" aria-live="polite">
+          <div class="stock-opname-difference__label">
+            <i data-lucide="arrow-left-right" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Selisih stok</span>
+          </div>
+          <span id="adj-diff-badge" class="stock-opname-difference__value">0 pcs (Tidak ada perubahan)</span>
+        </div>
+
+        <section class="stock-opname-reason" aria-label="Detail penyesuaian">
+          <div class="stock-opname-field">
+            <label for="adj-reason" class="stock-opname-field__label">Alasan penyesuaian <span class="stock-opname-required" aria-hidden="true">*</span></label>
+            <select id="adj-reason" required class="stock-opname-control">
+              <option value="Koreksi Salah Input / Dobel">Koreksi salah input / data ganda</option>
+              <option value="Stock Opname Fisik">Hasil penghitungan fisik</option>
+              <option value="Barang Rusak / Kadaluarsa">Barang rusak / kedaluwarsa</option>
+              <option value="Barang Hilang / Selisih Kasir">Barang hilang / selisih kasir</option>
+              <option value="Bonus / Hadiah Supplier">Bonus / hadiah supplier</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="stock-opname-field">
+            <label for="adj-notes" class="stock-opname-field__label">Catatan <span class="stock-opname-optional">(opsional)</span></label>
+            <textarea id="adj-notes" rows="2" placeholder="Contoh: hitung ulang rak A bersama supervisor." class="stock-opname-control stock-opname-control--notes"></textarea>
+          </div>
+        </section>
+
+        <footer class="stock-opname-footer">
+          <p class="stock-opname-audit-note">
+            <i data-lucide="shield-check" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Perubahan dicatat di riwayat audit stok.</span>
+          </p>
+          <div class="stock-opname-footer__buttons">
+            <button type="button" onclick="closeStockAdjustmentModal()" class="stock-opname-cancel-button">Batal</button>
+            <button type="submit" id="btn-submit-adjustment" class="stock-opname-submit-button">
+              <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+              <span>Simpan koreksi</span>
+            </button>
+          </div>
+        </footer>
+      </form>
+    </div>
+
+    <!-- View 2: Riwayat Audit Penyesuaian (In-Modal Audit Timeline) -->
+    <div id="stock-opname-view-history" class="hidden flex-col">
+      <header class="stock-opname-header">
+        <div class="stock-opname-heading">
+          <button type="button" onclick="switchStockOpnameView('form')" aria-label="Kembali ke Form Koreksi" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition shrink-0 cursor-pointer border border-white/10" title="Kembali ke Form Koreksi">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i>
+          </button>
+          <div class="min-w-0">
+            <p class="stock-opname-eyebrow">INVENTORI <span aria-hidden="true">/</span> AUDIT TRAIL</p>
+            <h3 class="stock-opname-title">Riwayat Penyesuaian Stok</h3>
+            <p id="adj-history-product-name" class="stock-opname-subtitle">Memuat data produk...</p>
+          </div>
+        </div>
+        <div class="stock-opname-header__actions">
+          <button type="button" onclick="closeStockAdjustmentModal()" aria-label="Tutup Stock Opname" class="stock-opname-close-button">
+            <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="p-5 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(85vh-120px)]">
+        <!-- Info Saldo Singkat -->
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.03] border border-white/5 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-[#A0A0A5]">Saldo Sistem Saat Ini:</span>
+            <strong id="adj-history-current-stock" class="text-white text-sm font-semibold">0 pcs</strong>
+          </div>
+          <span id="adj-history-sku-badge" class="font-mono bg-white/5 px-2.5 py-0.5 rounded text-[11px] text-[#A0A0A5]">SKU</span>
+        </div>
+
+        <!-- Shimmer Skeleton Loading -->
+        <div id="stock-adjustment-history-loading" class="space-y-3 hidden">
+          <div class="p-4 rounded-xl bg-[#232326] border border-white/5 animate-pulse space-y-2.5">
+            <div class="flex justify-between"><div class="w-28 h-4 bg-white/10 rounded"></div><div class="w-20 h-4 bg-white/10 rounded"></div></div>
+            <div class="w-40 h-3.5 bg-white/5 rounded"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#232326] border border-white/5 animate-pulse space-y-2.5">
+            <div class="flex justify-between"><div class="w-28 h-4 bg-white/10 rounded"></div><div class="w-20 h-4 bg-white/10 rounded"></div></div>
+            <div class="w-40 h-3.5 bg-white/5 rounded"></div>
+          </div>
+        </div>
+
+        <!-- Modern Empty State -->
+        <div id="stock-adjustment-history-empty" class="text-center py-10 px-4 space-y-3 hidden">
+          <div class="w-12 h-12 rounded-2xl bg-[#0088CC]/10 text-[#0088CC] grid place-items-center mx-auto">
+            <i data-lucide="history" class="w-6 h-6" aria-hidden="true"></i>
+          </div>
+          <h4 class="text-sm font-semibold text-white">Belum Ada Riwayat Penyesuaian</h4>
+          <p class="text-xs text-[#A0A0A5] max-w-sm mx-auto leading-relaxed">Produk ini belum pernah mengalami koreksi stok fisik. Seluruh catatan audit akan muncul di sini secara kronologis.</p>
+          <button type="button" onclick="switchStockOpnameView('form')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#0088CC] text-white hover:bg-[#0077BB] transition cursor-pointer shadow-md shadow-[#0088CC]/20 active:scale-95">
+            <i data-lucide="clipboard-check" class="w-3.5 h-3.5" aria-hidden="true"></i>
+            <span>Lakukan Koreksi Stok Sekarang</span>
+          </button>
+        </div>
+
+        <!-- Error State -->
+        <p id="stock-adjustment-history-error" class="hidden text-center py-4 px-3 rounded-xl bg-[#FF453A]/10 border border-[#FF453A]/20 text-xs text-[#FF453A] font-medium"></p>
+
+        <!-- Timeline List Container -->
+        <div id="stock-adjustment-timeline-list" class="space-y-3"></div>
+
+        <!-- Hidden elements for test backward-compatibility -->
+        <p id="stock-adjustment-history-product" class="sr-only"></p>
+        <table class="hidden"><tbody id="stock-adjustment-history-body"></tbody></table>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -3231,7 +3330,7 @@
           <div>
             <label for="in-category-id" class="block text-xs font-medium text-[#A0A0A5] mb-1">Kategori</label>
             <select id="in-category-id" onchange="autoUpdateInSkuPlaceholder()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
-              <option value="">Umum (Tanpa Kategori)</option>
+              <option value="">Umum</option>
             </select>
           </div>
           <div>
@@ -3252,7 +3351,7 @@
           </div>
         </div>
         <div>
-          <label for="in-sku" class="block text-xs font-medium text-[#A0A0A5] mb-1">SKU / Kode (Opsional)</label>
+          <label for="in-sku" class="block text-xs font-medium text-[#A0A0A5] mb-1">SKU</label>
           <div class="flex gap-2">
             <input type="text" id="in-sku" placeholder="Otomatis jika kosong" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
             <button type="button" onclick="applyInAutoSku()" title="Generate SKU Otomatis" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-[#32ADE6] border border-white/10 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0">
@@ -3538,10 +3637,10 @@
               <div>
                 <label for="out-payment-method" class="block text-xs font-medium text-[#A0A0A5] mb-1">Metode Pembayaran <span class="text-[#FF3B30]">*</span></label>
                 <select id="out-payment-method" required="" onchange="handlePosPaymentMethodChange()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-[#0088CC] focus:outline-none">
-                  <option value="Cash">Cash / Tunai (Lunas)</option>
-                  <option value="Transfer">Transfer Bank (Lunas)</option>
-                  <option value="QRIS">QRIS / E-Wallet (Lunas)</option>
-                  <option value="Tempo">Tempo / Piutang (Belum Lunas)</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Transfer">Transfer</option>
+                  <option value="QRIS">QRIS</option>
+                  <option value="Tempo">Tempo</option>
                 </select>
               </div>
 
@@ -3646,7 +3745,7 @@
         <table class="w-full text-left text-xs min-w-[520px]">
           <thead>
             <tr class="border-b border-white/10 text-[#A0A0A5]">
-              <th class="py-2 px-2 whitespace-nowrap">No. Resi / Order</th>
+              <th class="py-2 px-2 whitespace-nowrap">No. Resi</th>
               <th class="py-2 px-2">Barang</th>
               <th class="py-2 px-2 text-center whitespace-nowrap">Qty</th>
               <th class="py-2 px-2 whitespace-nowrap">Channel</th>
@@ -3914,10 +4013,10 @@
         <div class="border-b-2 border-black pb-3 mb-4">
           <div class="flex justify-between items-start">
             <div>
-              <h2 id="doc-po-store-name" class="text-xl font-extrabold tracking-wider text-black">JTMaquarium</h2>
+              <h2 id="doc-po-store-name" class="text-xl font-extrabold tracking-wider text-black">Habitic</h2>
               <p id="doc-po-store-slogan" class="text-xs font-semibold text-gray-800">Perlengkapan Aksesoris Aquarium</p>
               <p id="doc-po-store-address" class="text-[11px] text-gray-600 mt-0.5">Jl. Mangga No. 67, Pondok Gede, Kota Bekasi</p>
-              <p id="doc-po-store-contact" class="text-[11px] text-gray-600">WA: 0812-9662-8052 | Email: jtmaquarium@gmail.com</p>
+              <p id="doc-po-store-contact" class="text-[11px] text-gray-600">WA: 0812-9662-8052 | Email: david@example.com</p>
             </div>
             <div class="text-right">
               <span class="inline-block px-3 py-1 bg-black text-white font-bold text-xs uppercase tracking-widest rounded">
@@ -3983,7 +4082,7 @@
           </div>
           <div>
             <p class="font-semibold mb-12">Disetujui Oleh (Owner):</p>
-            <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pemilik <span id="doc-po-sign-name">JTMaquarium</span> )</p>
+            <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pemilik <span id="doc-po-sign-name">David</span> )</p>
           </div>
           <div>
             <p class="font-semibold mb-12">Diterima Oleh (Supplier):</p>
@@ -4162,10 +4261,10 @@
             <div class="border-b-2 border-black pb-3 mb-4">
               <div class="flex justify-between items-start">
                 <div>
-                  <h2 id="doc-return-store-name" class="text-lg font-extrabold tracking-wider text-black">JTMaquarium</h2>
+                  <h2 id="doc-return-store-name" class="text-lg font-extrabold tracking-wider text-black">Habitic</h2>
                   <p id="doc-return-store-slogan" class="text-[11px] font-semibold text-gray-800">Perlengkapan Aksesoris Aquarium</p>
                   <p id="doc-return-store-address" class="text-[10px] text-gray-600">Jl. Mangga No. 67, Pondok Gede, Kota Bekasi</p>
-                  <p id="doc-return-store-contact" class="text-[10px] text-gray-600">WA: 0812-9662-8052 | Email: jtmaquarium@gmail.com</p>
+                  <p id="doc-return-store-contact" class="text-[10px] text-gray-600">WA: 0812-9662-8052 | Email: david@example.com</p>
                 </div>
                 <div class="text-right">
                   <span class="inline-block px-2.5 py-1 bg-black text-white font-bold text-[10px] uppercase tracking-wider rounded">
@@ -4217,7 +4316,7 @@
 
             <!-- Alasan & Keterangan -->
             <div class="mb-4 bg-gray-50 p-2.5 rounded border border-gray-200 text-[10px]">
-              <span class="font-bold text-gray-700">Alasan Retur / Masalah:</span>
+              <span class="font-bold text-gray-700">Alasan Retur:</span>
               <p class="text-gray-800 mt-0.5 italic" id="doc-return-reason">-</p>
             </div>
 
@@ -4225,11 +4324,11 @@
             <div class="grid grid-cols-2 gap-6 pt-4 text-center text-[10px] text-gray-700">
               <div>
                 <p class="font-semibold mb-12">Yang Menyerahkan:</p>
-                <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pengaju / Pelanggan )</p>
+                <p class="border-t border-gray-400 pt-1 font-bold text-black">( Pelanggan )</p>
               </div>
               <div>
                 <p class="font-semibold mb-12">Yang Menerima (Gudang/Kasir):</p>
-                <p class="border-t border-gray-400 pt-1 font-bold text-black">( Petugas <span id="doc-return-sign-name">JTMaquarium</span> )</p>
+                <p class="border-t border-gray-400 pt-1 font-bold text-black">( Petugas <span id="doc-return-sign-name">David</span> )</p>
               </div>
             </div>
           </div>
@@ -4720,33 +4819,7 @@
 </div>
 
 <!-- ═══════════ FLOATING BULK ACTION BAR ═══════════ -->
-<aside id="bulk-bar" class="hidden fixed z-50 items-center justify-between gap-3 shadow-2xl transition-all duration-200" role="region" aria-label="Aksi massal produk">
-  <div class="flex items-center gap-2.5">
-    <span class="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[#0088CC] text-white text-[11px] font-bold" id="bulk-count-badge">0</span>
-    <span class="text-xs sm:text-sm font-semibold text-white whitespace-nowrap" id="bulk-count">0 produk dipilih</span>
-  </div>
-  <div class="flex items-center gap-1.5 sm:gap-2">
-    <button type="button" onclick="openBulkPriceModal()" class="bulk-action-btn bulk-action-btn--primary" id="bulk-btn-price" title="Edit Harga Massal">
-      <i data-lucide="tag" class="w-3.5 h-3.5" aria-hidden="true"></i>
-      <span class="hidden sm:inline">Ubah Harga</span>
-      <span class="sm:hidden">Harga</span>
-    </button>
-    <button type="button" onclick="openBulkMetaModal()" class="bulk-action-btn bulk-action-btn--secondary" id="bulk-btn-meta" title="Edit Satuan & Supplier Massal">
-      <i data-lucide="layers" class="w-3.5 h-3.5" aria-hidden="true"></i>
-      <span class="hidden sm:inline">Satuan &amp; Supplier</span>
-      <span class="sm:hidden">Satuan</span>
-    </button>
-    <button type="button" onclick="openBulkDeleteModal()" class="bulk-action-btn bulk-action-btn--danger" id="bulk-btn-delete" title="Hapus Massal Produk">
-      <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
-      <span class="hidden sm:inline">Hapus</span>
-    </button>
-    <div class="w-px h-5 bg-white/10 mx-1 hidden sm:block"></div>
-    <button type="button" onclick="clearSelection()" class="bulk-action-btn bulk-action-btn--ghost" title="Batalkan pilihan">
-      <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
-      <span class="hidden md:inline">Batal</span>
-    </button>
-  </div>
-</aside>
+
 
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toast-container" 

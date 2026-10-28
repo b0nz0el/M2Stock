@@ -172,25 +172,33 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
         </div>
 
         <div id="modal-stock-adjustment" class="hidden">
-          <form id="form-stock-adjustment">
-            <input id="adj-product-id" value="">
-            <span id="adj-product-name"></span>
-            <span id="adj-product-sku"></span>
-            <span id="adj-product-cat"></span>
-            <span id="adj-product-unit"></span>
-            <span id="adj-unit-label-current"></span>
-            <span id="stock-opname-count-unit"></span>
-            <span id="adj-current-stock"></span>
-            <input id="adj-actual-stock" value="">
-            <div id="adj-diff-box">
-              <span id="adj-diff-badge"></span>
-            </div>
-            <select id="adj-reason">
-              <option value="Koreksi Salah Input / Dobel">Koreksi Salah Input / Dobel</option>
-            </select>
-            <textarea id="adj-notes"></textarea>
-            <button id="btn-submit-adjustment"><span>Simpan Penyesuaian</span></button>
-          </form>
+          <div id="stock-opname-view-form">
+            <form id="form-stock-adjustment">
+              <input id="adj-product-id" value="">
+              <span id="adj-product-name"></span>
+              <span id="adj-product-sku"></span>
+              <span id="adj-product-cat"></span>
+              <span id="adj-product-unit"></span>
+              <span id="adj-unit-label-current"></span>
+              <span id="stock-opname-count-unit"></span>
+              <span id="adj-current-stock"></span>
+              <input id="adj-actual-stock" value="">
+              <div id="adj-diff-box">
+                <span id="adj-diff-badge"></span>
+              </div>
+              <select id="adj-reason">
+                <option value="Koreksi Salah Input / Dobel">Koreksi Salah Input / Dobel</option>
+              </select>
+              <textarea id="adj-notes"></textarea>
+              <button id="btn-submit-adjustment"><span>Simpan Penyesuaian</span></button>
+            </form>
+          </div>
+          <div id="stock-opname-view-history" class="hidden">
+            <p id="adj-history-product-name"></p>
+            <strong id="adj-history-current-stock"></strong>
+            <span id="adj-history-sku-badge"></span>
+            <div id="stock-adjustment-timeline-list"></div>
+          </div>
         </div>
         <div id="modal-stock-adjustment-history" class="hidden">
           <p id="stock-adjustment-history-product"></p>
@@ -313,6 +321,14 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
 
       expect(window.Api.items.getStockAdjustments).toHaveBeenCalledWith(10);
       expect(document.getElementById('stock-adjustment-history-body').textContent).toContain('Stock Opname Fisik');
+      expect(document.getElementById('stock-adjustment-timeline-list').textContent).toContain('Stock Opname Fisik');
+      expect(document.getElementById('stock-opname-view-history').classList.contains('hidden')).toBe(false);
+      expect(document.getElementById('stock-opname-view-form').classList.contains('hidden')).toBe(true);
+
+      // Kembali ke form view
+      window.switchStockOpnameView('form');
+      expect(document.getElementById('stock-opname-view-form').classList.contains('hidden')).toBe(false);
+      expect(document.getElementById('stock-opname-view-history').classList.contains('hidden')).toBe(true);
     });
 
     it('submits stock adjustment successfully', async () => {

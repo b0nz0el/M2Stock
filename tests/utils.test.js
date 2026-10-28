@@ -439,7 +439,7 @@ describe('utils.js', () => {
   });
 
   describe('icons.js (Lucide local subset)', () => {
-    it('berhasil merender icon clipboard-check, cloud, external-link, maximize-2, share-2 menjadi SVG', () => {
+    it('berhasil merender icon clipboard-check, cloud, external-link, maximize-2, share-2, arrow-left, user menjadi SVG', () => {
       const container = document.createElement('div');
       container.innerHTML = `
         <i data-lucide="clipboard-check" class="w-4 h-4"></i>
@@ -447,6 +447,8 @@ describe('utils.js', () => {
         <i data-lucide="external-link"></i>
         <i data-lucide="maximize-2"></i>
         <i data-lucide="share-2"></i>
+        <i data-lucide="arrow-left"></i>
+        <i data-lucide="user"></i>
       `;
       document.body.appendChild(container);
 
@@ -454,19 +456,20 @@ describe('utils.js', () => {
       window.refreshIcons(container);
 
       const svgs = container.querySelectorAll('svg');
-      expect(svgs.length).toBe(5);
+      expect(svgs.length).toBe(7);
 
       const clipboardCheck = container.querySelector('svg[data-lucide="clipboard-check"]');
       expect(clipboardCheck).not.toBeNull();
       expect(clipboardCheck.classList.contains('lucide-clipboard-check')).toBe(true);
       expect(clipboardCheck.classList.contains('w-4')).toBe(true);
 
-      const cloud = container.querySelector('svg[data-lucide="cloud"]');
-      expect(cloud).not.toBeNull();
-      expect(cloud.classList.contains('lucide-cloud')).toBe(true);
+      const arrowLeft = container.querySelector('svg[data-lucide="arrow-left"]');
+      expect(arrowLeft).not.toBeNull();
+      expect(arrowLeft.classList.contains('lucide-arrow-left')).toBe(true);
 
-      const extLink = container.querySelector('svg[data-lucide="external-link"]');
-      expect(extLink).not.toBeNull();
+      const userIcon = container.querySelector('svg[data-lucide="user"]');
+      expect(userIcon).not.toBeNull();
+      expect(userIcon.classList.contains('lucide-user')).toBe(true);
 
       container.remove();
     });
