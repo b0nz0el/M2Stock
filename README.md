@@ -241,9 +241,11 @@ npm test
 
 ## 🚀 Panduan Deployment ke Cloudflare Pages
 
-Setiap push ke branch `main` akan menjalankan GitHub Actions untuk menaikkan versi patch
-secara otomatis dan mengirim commit versi tersebut. Cloudflare Pages yang terhubung ke
-repository akan menerbitkan commit terbaru dari folder `public/`.
+Setiap push ke branch `main` menjalankan GitHub Actions untuk menaikkan versi patch
+secara otomatis dan mengirim commit versi tersebut. Workflow ini **tidak melakukan deploy
+Cloudflare Pages**. Deploy hanya otomatis jika integrasi Git Cloudflare Pages untuk branch
+`main` aktif, atau jika workflow deploy Cloudflare dengan kredensial yang sesuai sudah
+dikonfigurasi.
 
 Untuk merilis perubahan:
 1. Commit perubahan ke branch `main`.
@@ -251,8 +253,9 @@ Untuk merilis perubahan:
    ```bash
    git push origin main
    ```
-3. Tunggu workflow **Bump app version** selesai; Cloudflare Pages akan membangun commit terbaru
-   dari folder `public/` ke:
+3. Tunggu workflow **Bump app version** selesai.
+4. Verifikasi deployment dengan memastikan service worker di `/sw.js` menyajikan nama cache
+   versi terbaru sebelum menganggap rilis sudah live:
    👉 **[https://aquastock-pro.pages.dev](https://aquastock-pro.pages.dev)**
 
 ---
