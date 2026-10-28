@@ -28,6 +28,9 @@
       if (target.matches('#in-price, #in-sell-price, #in-qty')) {
         sanitizeNumericInputElement(target);
       }
+      if (target.matches('#in-price')) {
+        selectedPriceManuallyChanged = true;
+      }
     }, true);
 
     document.addEventListener('blur', (event) => {
@@ -39,8 +42,13 @@
     }, true);
 
     document.addEventListener('change', (event) => {
-      if (event.target?.matches?.('#in-supplier-id') && selectedExistingProduct) {
+      const target = event.target;
+      if (!target || typeof target.matches !== 'function') return;
+      if (target.matches('#in-supplier-id')) {
         selectedSupplierManuallyChanged = true;
+      }
+      if (target.matches('#in-price')) {
+        selectedPriceManuallyChanged = true;
       }
     }, true);
   }
@@ -90,6 +98,8 @@
   let isRefreshingSelectedProduct = false;
   let selectedProductPriceError = null;
   let selectedSupplierManuallyChanged = false;
+  let selectedPriceManuallyChanged = false;
+  let loadDropdownsPromise = null;
   let inReferencesLoaded = false;
 
   // Manajemen Galeri Foto Produk Baru di Barang Masuk
@@ -281,85 +291,97 @@
   }
 
   async function loadDropdowns() {
-    inReferencesLoaded = false;
-    productsLoaded = false;
-    try {
-      const prodRes = await Api.items.getAll();
-      if (!prodRes?.ok) {
-        throw new Error(prodRes?.error?.message || 'Gagal memuat daftar produk.');
-      }
-      availableProducts = prodRes.data || [];
-      productsLoaded = true;
-      const prodSelect = document.getElementById('in-product-id');
-      if (prodSelect && prodSelect.tagName === 'SELECT') {
-        prodSelect.innerHTML = '<option value="">Pilih Produk</option>';
-        availableProducts.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          opt.textContent = p.name;
-          prodSelect.appendChild(opt);
-        });
-      }
+    if (loadDropdownsPromise) return loadDropdownsPromise;
 
-      const supRes = await Api.suppliers.getAll();
-      if (!supRes?.ok) {
-        throw new Error(supRes?.error?.message || 'Gagal memuat daftar supplier.');
-      }
-      const supSelect = document.getElementById('in-supplier-id');
-      if (supSelect) {
-        const currentSupVal = supSelect.value;
-        supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
-        (supRes.data || []).forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = s.name;
-          supSelect.appendChild(opt);
-        });
-        if (currentSupVal) supSelect.value = currentSupVal;
-      }
-      inReferencesLoaded = true;
+    loadDropdownsPromise = (async () => {
+      inReferencesLoaded = false;
+      productsLoaded = false;
+      try {
+        const prodRes = await Api.items.getAll();
+        if (!prodRes?.ok) {
+          throw new Error(prodRes?.error?.message || 'Gagal memuat daftar produk.');
+        }
+        availableProducts = prodRes.data || [];
+        productsLoaded = true;
+        const prodSelect = document.getElementById('in-product-id');
+        if (prodSelect && prodSelect.tagName === 'SELECT') {
+          prodSelect.innerHTML = '<option value="">Pilih Produk</option>';
+          availableProducts.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.name;
+            prodSelect.appendChild(opt);
+          });
+        }
 
-      // Load categories & units for new product registration
-      if (typeof window.supabase !== 'undefined') {
-        const [catRes, unitRes] = await Promise.all([
-          window.supabase.from('categories').select('id, name').order('name'),
-          window.supabase.from('units').select('id, name').order('name')
-        ]);
-        if (catRes.data) {
-          categoriesData = catRes.data;
-          const catSel = document.getElementById('in-category-id');
-          if (catSel) {
-            catSel.innerHTML = '<option value="">Umum (Tanpa Kategori)</option>';
-            categoriesData.forEach(c => {
-              const opt = document.createElement('option');
-              opt.value = c.id;
-              opt.textContent = c.name;
-              catSel.appendChild(opt);
-            });
+        const supRes = await Api.suppliers.getAll();
+        if (!supRes?.ok) {
+          throw new Error(supRes?.error?.message || 'Gagal memuat daftar supplier.');
+        }
+        const supSelect = document.getElementById('in-supplier-id');
+        if (supSelect) {
+          const currentSupVal = supSelect.value;
+          supSelect.innerHTML = '<option value="">Umum / Tanpa Supplier</option>';
+          (supRes.data || []).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            supSelect.appendChild(opt);
+          });
+          if (selectedExistingProduct && !selectedSupplierManuallyChanged) {
+            applyProductDefaultSupplier(selectedExistingProduct.supplier_id);
+          } else if (currentSupVal) {
+            supSelect.value = currentSupVal;
           }
         }
-        if (unitRes.data) {
-          unitsData = unitRes.data;
-          const unitSel = document.getElementById('in-unit-id');
-          if (unitSel) {
-            unitSel.innerHTML = '';
-            unitsData.forEach(u => {
-              const opt = document.createElement('option');
-              opt.value = u.id;
-              opt.textContent = u.name;
-              unitSel.appendChild(opt);
-            });
+        inReferencesLoaded = true;
+
+        // Load categories & units for new product registration
+        if (typeof window.supabase !== 'undefined') {
+          const [catRes, unitRes] = await Promise.all([
+            window.supabase.from('categories').select('id, name').order('name'),
+            window.supabase.from('units').select('id, name').order('name')
+          ]);
+          if (catRes.data) {
+            categoriesData = catRes.data;
+            const catSel = document.getElementById('in-category-id');
+            if (catSel) {
+              catSel.innerHTML = '<option value="">Umum (Tanpa Kategori)</option>';
+              categoriesData.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                catSel.appendChild(opt);
+              });
+            }
+          }
+          if (unitRes.data) {
+            unitsData = unitRes.data;
+            const unitSel = document.getElementById('in-unit-id');
+            if (unitSel) {
+              unitSel.innerHTML = '';
+              unitsData.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = u.name;
+                unitSel.appendChild(opt);
+              });
+            }
           }
         }
+        return true;
+      } catch (err) {
+        console.error('Error loading dropdowns:', err);
+        if (typeof showToast === 'function') {
+          showToast(`Data Barang Masuk gagal diperbarui: ${err.message || 'Kesalahan saat memuat produk/supplier.'}`, 'error');
+        }
+        return false;
       }
-      return true;
-    } catch (err) {
-      console.error('Error loading dropdowns:', err);
-      if (typeof showToast === 'function') {
-        showToast(`Data Barang Masuk gagal diperbarui: ${err.message || 'Kesalahan saat memuat produk/supplier.'}`, 'error');
-      }
-      return false;
-    }
+    })().finally(() => {
+      loadDropdownsPromise = null;
+    });
+
+    return loadDropdownsPromise;
   }
 
   function handleProductSearchInput(e) {
@@ -383,7 +405,7 @@
     let html = '';
     matches.forEach(p => {
       html += `
-        <button type="button" class="w-full text-left px-3.5 py-2.5 hover:bg-white/10 flex items-center justify-between text-sm transition" onclick="selectInProduct(${p.id})">
+        <button type="button" class="w-full text-left px-3.5 py-2.5 hover:bg-white/10 flex items-center justify-between text-sm transition" onclick="selectInProduct('${escapeHtml(String(p.id))}')">
           <div>
             <div class="font-medium text-white">${escapeHtml(p.name)}</div>
             <div class="text-xs text-[#A0A0A5]">${p.sku ? escapeHtml(p.sku) + ' • ' : ''}${escapeHtml(p.category || 'Umum')}</div>
@@ -479,6 +501,10 @@
   }
 
   async function selectInProduct(productId) {
+    if (loadDropdownsPromise) {
+      await loadDropdownsPromise;
+    }
+
     const prod = availableProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
 
@@ -497,8 +523,9 @@
     if (barcodeWrap) barcodeWrap.classList.remove('hidden');
 
     selectedExistingProduct = prod;
-    selectedSupplierManuallyChanged = false;
-    applyProductDefaultSupplier(prod.supplier_id);
+    if (!selectedSupplierManuallyChanged) {
+      applyProductDefaultSupplier(prod.supplier_id);
+    }
     selectedProductPriceError = null;
     resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
@@ -527,7 +554,9 @@
     }
 
     const priceInput = document.getElementById('in-price');
-    if (priceInput) priceInput.value = String(prod.cost_price || 0);
+    if (priceInput && !selectedPriceManuallyChanged) {
+      priceInput.value = String(prod.cost_price || 0);
+    }
 
     const barcodeInput = document.getElementById('in-barcode');
     if (barcodeInput && prod.barcode) barcodeInput.value = prod.barcode;
@@ -567,7 +596,9 @@
         applyProductDefaultSupplier(freshProduct.supplier_id);
       }
       const priceInput = document.getElementById('in-price');
-      if (priceInput) priceInput.value = String(freshProduct.cost_price ?? 0);
+      if (priceInput && !selectedPriceManuallyChanged) {
+        priceInput.value = String(freshProduct.cost_price ?? 0);
+      }
 
       const badge = document.getElementById('in-product-badge');
       if (badge) {
@@ -594,10 +625,13 @@
     const prod = availableProducts.find(p => String(p.id) === String(pId));
     const priceInput = document.getElementById('in-price');
     if (prod && priceInput) {
-      priceInput.value = String(prod.cost_price || 0);
+      if (!selectedPriceManuallyChanged) {
+        priceInput.value = String(prod.cost_price || 0);
+      }
       selectedExistingProduct = prod;
-      selectedSupplierManuallyChanged = false;
-      applyProductDefaultSupplier(prod.supplier_id);
+      if (!selectedSupplierManuallyChanged) {
+        applyProductDefaultSupplier(prod.supplier_id);
+      }
       selectedProductPriceError = null;
       refreshSelectedProductPrice(prod.id);
     } else {
@@ -621,6 +655,12 @@
     selectedProductPriceError = null;
     selectedProductRefreshId += 1;
     isRefreshingSelectedProduct = false;
+    selectedPriceManuallyChanged = false;
+    selectedSupplierManuallyChanged = false;
+    const priceInput = document.getElementById('in-price');
+    if (priceInput) priceInput.value = '0';
+    const supSelect = document.getElementById('in-supplier-id');
+    if (supSelect) supSelect.value = '';
     resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
     if (prodInput) {
@@ -667,6 +707,7 @@
     }
 
     updateInStockPreview();
+    calculateInTotal();
   }
 
   function getLastProductSequence() {
@@ -807,6 +848,8 @@
   function openAddInModal() {
     const form = document.getElementById('form-in');
     if (form) form.reset();
+    selectedSupplierManuallyChanged = false;
+    selectedPriceManuallyChanged = false;
     clearInProductSelection();
     switchInMode('existing');
     calculateInTotal();
@@ -887,12 +930,12 @@
         alert('Anda tidak punya akses untuk mengubah data.');
         return;
       }
-      let productId = document.getElementById('in-product-id').value;
+      let productId = document.getElementById('in-product-id')?.value || '';
       const productName = document.getElementById('in-product-search')?.value.trim() || '';
-      const supplierId = document.getElementById('in-supplier-id').value;
-      const qty = Number(document.getElementById('in-qty').value);
-      const price = Number(document.getElementById('in-price').value);
-      const note = document.getElementById('in-note').value.trim();
+      const supplierId = document.getElementById('in-supplier-id')?.value || '';
+      const qty = Number(document.getElementById('in-qty')?.value || 0);
+      const price = Number(document.getElementById('in-price')?.value || 0);
+      const note = document.getElementById('in-note')?.value?.trim() || '';
 
       if (!productName) {
         if (typeof showToast === 'function') showToast('Masukkan nama produk terlebih dahulu', 'error');
@@ -1440,6 +1483,7 @@
   window.loadDropdowns = loadDropdowns;
   window.handleInBarcodeLookup = handleInBarcodeLookup;
   window.handleInBarcodeDetected = handleInBarcodeLookup;
+  window.handleProductSearchInput = handleProductSearchInput;
   window.handleInProductChange = handleInProductChange;
   window.handleInSubmit = handleInSubmit;
   window.openAddInModal = openAddInModal;
@@ -1460,6 +1504,19 @@
   window.previewInGalleryPhoto = previewInGalleryPhoto;
   window.handleInImageSelection = handleInImageSelection;
   window.resetInImageForm = resetInImageForm;
+  window.applyProductDefaultSupplier = applyProductDefaultSupplier;
+  window.refreshSelectedProductPrice = refreshSelectedProductPrice;
+  window._getSelectedExistingProduct = () => selectedExistingProduct;
+  window._getSelectedSupplierManuallyChanged = () => selectedSupplierManuallyChanged;
+  window._getSelectedPriceManuallyChanged = () => selectedPriceManuallyChanged;
+  window._setSelectedSupplierManuallyChanged = (val) => { selectedSupplierManuallyChanged = val; };
+  window._setSelectedPriceManuallyChanged = (val) => { selectedPriceManuallyChanged = val; };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('aquastock:products-updated', () => {
+      loadDropdowns().catch(console.error);
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     setupSearchListeners();

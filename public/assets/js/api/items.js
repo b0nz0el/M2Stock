@@ -126,7 +126,7 @@ export const items = {
           const ascending = params && typeof params.ascending === 'boolean' ? params.ascending : true;
           let query = window.supabase
             .from('products')
-            .select('*, categories(name), units(name)')
+            .select('*, categories(name), units(name), suppliers(id, name)')
             .order(orderCol, { ascending });
 
           if (params && params.category_id) {
@@ -166,6 +166,8 @@ export const items = {
               brand: item.brand || '-',
               category_id: item.category_id,
               supplier_id: item.supplier_id ?? null,
+              supplier: (item.suppliers && item.suppliers.name) || null,
+              supplier_name: (item.suppliers && item.suppliers.name) || null,
               category: (item.categories && item.categories.name) || 'Umum',
               unit_id: item.unit_id,
               unit: (item.units && item.units.name) || 'pcs',
@@ -207,7 +209,7 @@ export const items = {
           const isNumericId = /^\d+$/.test(idValue);
           let query = window.supabase
             .from('products')
-            .select('*, categories(name), units(name)');
+            .select('*, categories(name), units(name), suppliers(id, name)');
 
           if (isUuid || isNumericId) {
             query = query.eq('id', idValue);
@@ -245,6 +247,8 @@ export const items = {
             brand: data.brand || '-',
             category_id: data.category_id,
             supplier_id: data.supplier_id ?? null,
+            supplier: (data.suppliers && data.suppliers.name) || null,
+            supplier_name: (data.suppliers && data.suppliers.name) || null,
             category: (data.categories && data.categories.name) || 'Umum',
             unit_id: data.unit_id,
             unit: (data.units && data.units.name) || 'pcs',

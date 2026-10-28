@@ -1096,6 +1096,15 @@
         showToast(id ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan', 'success');
       }
       await loadItemsFromBackend();
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('aquastock:products-updated', {
+          detail: { id: id || (res?.data && res.data.id) }
+        }));
+        if (typeof window.loadDropdowns === 'function') {
+          window.loadDropdowns().catch(console.error);
+        }
+      }
     } catch (err) {
       if (typeof showToast === 'function') {
         showToast(err.message || 'Terjadi kesalahan sistem', 'error');
