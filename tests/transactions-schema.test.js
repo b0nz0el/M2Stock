@@ -138,4 +138,77 @@ describe('transaction Supabase schema mapping', () => {
     expect(result.error.code).toBe('VALIDATION_ERROR');
     expect(insert).not.toHaveBeenCalled();
   });
+
+  it('updateHistoryInByProduct: mengupdate price, cost_price, dan supplier_id pada transaksi masuk lama', async () => {
+    const updatedRows = [
+      { id: 1, product_id: 12, type: 'in', qty: 5, price: 15000, cost_price: 15000, supplier_id: 8 },
+      { id: 2, product_id: 12, type: 'in', qty: 10, price: 15000, cost_price: 15000, supplier_id: 8 }
+    ];
+
+    const select = vi.fn().mockResolvedValue({ data: updatedRows, error: null });
+    const eqType = vi.fn(() => ({ select }));
+    const eqProduct = vi.fn(() => ({ eq: eqType }));
+    const update = vi.fn(() => ({ eq: eqProduct }));
+    window.supabase = { from: vi.fn(() => ({ update })) };
+
+    const result = await transactions.updateHistoryInByProduct(12, {
+      cost_price: 15000,
+      supplier_id: 8
+    });
+
+    expect(result.ok).toBe(true);
+    expect(update).toHaveBeenCalledWith({
+      price: 15000,
+      cost_price: 15000,
+      supplier_id: 8
+    });
+    expect(eqProduct).toHaveBeenCalledWith('product_id', 12);
+    expect(eqType).toHaveBeenCalledWith('type', 'in');
+    expect(result.data.updatedCount).toBe(2);
+    expect(result.data.transactions).toEqual(updatedRows);
+  });
+
+  it('updateHistoryInByProduct: melakukan retry fallback jika kolom cost_price tidak ada', async () => {
+    let callCount = 0;
+    const select = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.resolve({
+          data: null,
+          error: { code: 'PGRST204', message: "Could not find the 'cost_price' column of 'transactions' in the schema cache" }
+        });
+      }
+      return Promise.resolve({
+        data: [{ id: 1, product_id: 12, type: 'in', qty: 5, price: 15000, supplier_id: 8 }],
+        error: null
+      });
+    });
+
+    const eqType = vi.fn(() => ({ select, abortSignal: vi.fn(() => ({ select })) }));
+    const eqProduct = vi.fn(() => ({ eq: eqType }));
+    const update = vi.fn(() => ({ eq: eqProduct }));
+    window.supabase = { from: vi.fn(() => ({ update })) };
+
+    const result = await transactions.updateHistoryInByProduct(12, {
+      cost_price: 15000,
+      supplier_id: 8
+    });
+
+    expect(result.ok).toBe(true);
+    expect(update).toHaveBeenCalledTimes(2);
+    // Panggilan kedua tidak menyertakan cost_price
+    expect(update).toHaveBeenNthCalledWith(2, {
+      price: 15000,
+      supplier_id: 8
+    });
+    expect(result.data.updatedCount).toBe(1);
+  });
+
+  it('updateHistoryInByProduct: mengembalikan 0 perubahan jika tidak ada data yang diubah', async () => {
+    window.supabase = { from: vi.fn() };
+    const result = await transactions.updateHistoryInByProduct(12, {});
+    expect(result.ok).toBe(true);
+    expect(result.data.updatedCount).toBe(0);
+    expect(window.supabase.from).not.toHaveBeenCalled();
+  });
 });

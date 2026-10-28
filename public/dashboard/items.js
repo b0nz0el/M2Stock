@@ -3,6 +3,11 @@
   let categoriesData = [];
   let unitsData = [];
   let isSubmittingItem = false;
+  let editInitialCostPrice = null;
+  let editInitialSupplierId = null;
+  let pendingItemPayload = null;
+  let pendingItemId = null;
+  let pendingSaveLocalMeta = null;
 
   function normalizeNumericInputValue(value) {
     if (value === null || value === undefined) return '0';
@@ -675,6 +680,11 @@
   function openAddItemModal() {
     const form = document.getElementById('item-form');
     if (form) form.reset();
+    editInitialCostPrice = null;
+    editInitialSupplierId = null;
+    pendingItemPayload = null;
+    pendingItemId = null;
+    pendingSaveLocalMeta = null;
     const unitSelect = document.getElementById('item-unit');
     const defaultUnit = unitsData.find(unit => unit.name.toLowerCase() === 'pcs') || unitsData[0];
     if (unitSelect && defaultUnit) unitSelect.value = String(defaultUnit.id);
@@ -762,6 +772,12 @@
   function openEditItemModal(id) {
     const item = currentItems.find(function (i) { return String(i.id) === String(id); });
     if (!item) return;
+
+    editInitialCostPrice = Number(item.cost_price ?? item.costPrice ?? 0);
+    editInitialSupplierId = item.supplier_id == null ? '' : String(item.supplier_id);
+    pendingItemPayload = null;
+    pendingItemId = null;
+    pendingSaveLocalMeta = null;
 
     resetImageForm();
     document.getElementById('item-id').value = item.id;
@@ -1070,6 +1086,25 @@
       };
       let res;
       if (id) {
+        // Cek apakah ada perubahan cost_price atau supplier_id
+        const isCostPriceChanged = editInitialCostPrice !== null && editInitialCostPrice !== cost_price;
+        const currentSupStr = supplier_id ? String(supplier_id) : '';
+        const isSupplierChanged = editInitialSupplierId !== null && editInitialSupplierId !== currentSupStr;
+
+        const confirmModal = document.getElementById('modal-confirm-history-update');
+        if (confirmModal && (isCostPriceChanged || isSupplierChanged)) {
+          pendingItemPayload = payload;
+          pendingItemId = id;
+          pendingSaveLocalMeta = { sku, primaryChannel, primaryChannelLink, channelsPayload };
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalBtnContent;
+          }
+          isSubmittingItem = false;
+          openConfirmHistoryModal();
+          return;
+        }
+
         res = await Api.items.update(id, payload);
       } else {
         // Master Barang (katalog): Stok produk baru selalu berawal dari 0
@@ -1111,6 +1146,102 @@
       }
     } finally {
       isSubmittingItem = false;
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnContent;
+      }
+    }
+  }
+
+  function openConfirmHistoryModal() {
+    const modal = document.getElementById('modal-confirm-history-update');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeConfirmHistoryModal() {
+    const modal = document.getElementById('modal-confirm-history-update');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    pendingItemPayload = null;
+    pendingItemId = null;
+    pendingSaveLocalMeta = null;
+  }
+
+  async function confirmHistoryUpdate(shouldUpdateHistory) {
+    if (!pendingItemId || !pendingItemPayload) {
+      closeConfirmHistoryModal();
+      return;
+    }
+
+    const id = pendingItemId;
+    const payload = pendingItemPayload;
+    const localMeta = pendingSaveLocalMeta;
+    pendingItemId = null;
+    pendingItemPayload = null;
+    pendingSaveLocalMeta = null;
+
+    closeConfirmHistoryModal();
+
+    const btnSubmit = document.getElementById('btn-submit-item');
+    const originalBtnContent = btnSubmit ? btnSubmit.innerHTML : '';
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<span>Menyimpan Produk...</span>';
+    }
+
+    try {
+      const res = await Api.items.update(id, payload);
+      if (!res.ok) {
+        if (typeof showToast === 'function') {
+          showToast(res.error?.message || 'Gagal memperbarui data master', 'error');
+        }
+        return;
+      }
+
+      let historyMsg = '';
+      if (shouldUpdateHistory && typeof Api.transactions?.updateHistoryInByProduct === 'function') {
+        const histRes = await Api.transactions.updateHistoryInByProduct(id, {
+          cost_price: payload.cost_price,
+          supplier_id: payload.supplier_id
+        });
+        if (histRes.ok) {
+          const count = histRes.data?.updatedCount || 0;
+          historyMsg = ` & ${count} riwayat Barang Masuk berhasil dikoreksi`;
+        }
+      }
+
+      if (localMeta) {
+        const saveLocal = (typeof window !== 'undefined' && window.saveLocalChannelMeta) ? window.saveLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.saveLocalChannelMeta ? Api.items.saveLocalChannelMeta : null);
+        if (typeof saveLocal === 'function') {
+          saveLocal(id, localMeta.sku, localMeta.primaryChannel, localMeta.primaryChannelLink, localMeta.channelsPayload);
+        }
+      }
+
+      closeItemModal();
+      if (typeof showToast === 'function') {
+        showToast(shouldUpdateHistory ? `Produk berhasil diperbarui${historyMsg}` : 'Produk berhasil diperbarui (riwayat lama dipertahankan)', 'success');
+      }
+      await loadItemsFromBackend();
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('aquastock:products-updated', {
+          detail: { id }
+        }));
+        if (typeof window.loadDropdowns === 'function') {
+          window.loadDropdowns().catch(console.error);
+        }
+      }
+    } catch (err) {
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Terjadi kesalahan sistem saat memperbarui data', 'error');
+      }
+    } finally {
       if (btnSubmit) {
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = originalBtnContent;
@@ -2653,6 +2784,9 @@
   window.openAddItemModal = openAddItemModal;
   window.openEditItemModal = openEditItemModal;
   window.closeItemModal = closeItemModal;
+  window.openConfirmHistoryModal = openConfirmHistoryModal;
+  window.closeConfirmHistoryModal = closeConfirmHistoryModal;
+  window.confirmHistoryUpdate = confirmHistoryUpdate;
   window.handleItemSubmit = handleItemSubmit;
   window.handleImageSelection = handleImageSelection;
   window.removeSelectedPhoto = removeSelectedPhoto;

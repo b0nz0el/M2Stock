@@ -24,7 +24,7 @@ describe('Barang Masuk New Product Photo & Camera Feature', () => {
       expect(htmlContent).toContain('id="item-supplier-id"');
       expect(htmlContent).toContain('Supplier Utama');
       expect(htmlContent).toContain('supplier default saat produk ini dipilih di Barang Masuk');
-      expect(htmlContent).toContain('Riwayat transaksi lama tidak diubah.');
+      expect(htmlContent).toContain('Riwayat transaksi lama diubah atas izin notifikasi saat update.');
     });
 
     it('includes responsive utilities in responsive.css to fix duplicate button texts on desktop', () => {

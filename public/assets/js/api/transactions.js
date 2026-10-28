@@ -543,6 +543,97 @@ export const transactions = {
         }
       }
       return apiRequest(`/transactions/${id}`, { method: 'DELETE', ...opts });
+    },
+
+    updateHistoryInByProduct: async (productId, { cost_price, supplier_id } = {}, opts) => {
+      if (isSupabaseAvailable()) {
+        try {
+          const pId = isNaN(Number(productId)) ? productId : Number(productId);
+          const updates = {};
+          if (cost_price !== undefined && cost_price !== null) {
+            const numPrice = Math.max(0, Math.round(Number(cost_price) || 0));
+            updates.price = numPrice;
+            updates.cost_price = numPrice;
+          }
+          if (supplier_id !== undefined) {
+            updates.supplier_id = supplier_id ? (isNaN(Number(supplier_id)) ? supplier_id : Number(supplier_id)) : null;
+          }
+
+          if (Object.keys(updates).length === 0) {
+            return formatResponse({
+              ok: true,
+              data: { updatedCount: 0, transactions: [] },
+              meta: { message: 'Tidak ada perubahan untuk riwayat transaksi' }
+            });
+          }
+
+          let query = window.supabase
+            .from('transactions')
+            .update(updates)
+            .eq('product_id', pId)
+            .eq('type', 'in')
+            .select('id, product_id, type, qty, price, cost_price, supplier_id');
+
+          if (opts && opts.signal) {
+            query = query.abortSignal(opts.signal);
+          }
+
+          let { data, error } = await query;
+
+          // Fallback skema jika kolom cost_price tidak ada pada transactions
+          if (error && (error.message?.includes('cost_price') || error.code === 'PGRST204')) {
+            const fallbackUpdates = { ...updates };
+            delete fallbackUpdates.cost_price;
+            let retryQuery = window.supabase
+              .from('transactions')
+              .update(fallbackUpdates)
+              .eq('product_id', pId)
+              .eq('type', 'in')
+              .select('id, product_id, type, qty, price, supplier_id');
+
+            if (opts && opts.signal) retryQuery = retryQuery.abortSignal(opts.signal);
+            const retryRes = await retryQuery;
+            data = retryRes.data;
+            error = retryRes.error;
+          }
+
+          if (error) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: error.code || 'SUPABASE_ERROR',
+                message: error.message || 'Gagal memperbarui riwayat transaksi lama',
+                details: error
+              }
+            });
+          }
+
+          const count = Array.isArray(data) ? data.length : 0;
+
+          try {
+            if (typeof logAudit === 'function') {
+              logAudit('UPDATE', `Koreksi Riwayat Barang Masuk: Produk ID ${pId} (${count} transaksi diperbarui)`);
+            }
+          } catch (_) {}
+
+          return formatResponse({
+            ok: true,
+            data: {
+              updatedCount: count,
+              transactions: data || []
+            },
+            meta: { message: `${count} riwayat transaksi Barang Masuk lama berhasil diperbarui` }
+          });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+
+      return apiRequest(`/transactions/in/product/${productId}`, {
+        method: 'PATCH',
+        body: { cost_price, supplier_id },
+        ...opts
+      });
     }
 };
 
