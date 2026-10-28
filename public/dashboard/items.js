@@ -368,6 +368,86 @@
     return /^https?:\/\//i.test(s) ? s : `https://${s}`;
   }
 
+  function getChannelBadgeConfig(channel, link) {
+    const ch = String(channel || 'Offline').trim();
+    const hasLink = Boolean(link && String(link).trim());
+
+    switch (ch) {
+      case 'Shopee':
+        return {
+          label: 'Shopee',
+          icon: 'shopping-bag',
+          badgeClasses: 'bg-[#EE4D2D]/15 text-[#EE4D2D] border-[#EE4D2D]/30 hover:bg-[#EE4D2D]/25',
+          iconColor: 'text-[#EE4D2D]',
+          hasLink
+        };
+      case 'Tokopedia':
+        return {
+          label: 'Tokopedia',
+          icon: 'store',
+          badgeClasses: 'bg-[#03AC0E]/15 text-[#00AA5B] border-[#03AC0E]/30 hover:bg-[#03AC0E]/25',
+          iconColor: 'text-[#00AA5B]',
+          hasLink
+        };
+      case 'TikTok':
+      case 'TikTok Shop':
+        return {
+          label: 'TikTok Shop',
+          icon: 'sparkles',
+          badgeClasses: 'bg-[#00F2FE]/10 text-[#00F2FE] border-[#00F2FE]/25 hover:bg-[#00F2FE]/20',
+          iconColor: 'text-[#00F2FE]',
+          hasLink
+        };
+      case 'Lazada':
+        return {
+          label: 'Lazada',
+          icon: 'tag',
+          badgeClasses: 'bg-[#0088CC]/15 text-[#32ADE6] border-[#0088CC]/30 hover:bg-[#0088CC]/25',
+          iconColor: 'text-[#32ADE6]',
+          hasLink
+        };
+      case 'WhatsApp':
+        return {
+          label: 'WhatsApp',
+          icon: 'message-circle',
+          badgeClasses: 'bg-[#25D366]/15 text-[#25D366] border-[#25D366]/30 hover:bg-[#25D366]/25',
+          iconColor: 'text-[#25D366]',
+          hasLink
+        };
+      case 'Offline':
+      default:
+        return hasLink ? {
+          label: 'Link Etalase',
+          icon: 'external-link',
+          badgeClasses: 'bg-white/5 text-[#32ADE6] border-white/10 hover:bg-white/10',
+          iconColor: 'text-[#32ADE6]',
+          hasLink: true
+        } : null;
+    }
+  }
+
+  function renderChannelBadgeHtml(channel, link) {
+    const cfg = getChannelBadgeConfig(channel, link);
+    if (!cfg) return '';
+
+    if (cfg.hasLink) {
+      return `
+        <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}">
+          <i data-lucide="${cfg.icon}" class="w-3 h-3 ${cfg.iconColor}"></i>
+          <span>${escapeHtml(cfg.label)}</span>
+          <i data-lucide="external-link" class="w-2.5 h-2.5 opacity-70"></i>
+        </a>
+      `;
+    }
+
+    return `
+      <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium border ${cfg.badgeClasses}">
+        <i data-lucide="${cfg.icon}" class="w-3 h-3 ${cfg.iconColor}"></i>
+        <span>${escapeHtml(cfg.label)}</span>
+      </span>
+    `;
+  }
+
   function openAddItemModal() {
     const form = document.getElementById('item-form');
     if (form) form.reset();
@@ -475,14 +555,18 @@
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     document.getElementById('item-min-stock').value = item.min_stock || 3;
 
+    const getLocalMeta = (typeof window !== 'undefined' && window.getLocalChannelMeta) ? window.getLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.getLocalChannelMeta ? Api.items.getLocalChannelMeta : null);
+    const localMeta = typeof getLocalMeta === 'function' ? getLocalMeta(item.id, item.sku) : null;
+    const effectiveChannel = (item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline');
+    const effectiveLink = (item.channel_link || (localMeta && localMeta.channel_link) || '').trim();
+
     const channelSelect = document.getElementById('item-channel');
-    if (channelSelect) channelSelect.value = item.channel || 'Offline';
+    if (channelSelect) channelSelect.value = effectiveChannel;
     const channelLinkInput = document.getElementById('item-channel-link');
     const btnOpenChannel = document.getElementById('btn-open-channel-link');
-    const initialLink = (item.channel_link || '').trim();
-    if (channelLinkInput) channelLinkInput.value = initialLink;
+    if (channelLinkInput) channelLinkInput.value = effectiveLink;
     if (btnOpenChannel) {
-      const formatted = formatChannelUrl(initialLink);
+      const formatted = formatChannelUrl(effectiveLink);
       if (formatted) {
         btnOpenChannel.classList.remove('hidden');
         btnOpenChannel.classList.add('inline-flex');
@@ -709,6 +793,12 @@
           showToast(res.error?.message || 'Gagal menyimpan data ke Supabase', 'error');
         }
         return;
+      }
+
+      const saveLocal = (typeof window !== 'undefined' && window.saveLocalChannelMeta) ? window.saveLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.saveLocalChannelMeta ? Api.items.saveLocalChannelMeta : null);
+      if (typeof saveLocal === 'function') {
+        const savedId = id || (res?.data && res.data.id) || null;
+        saveLocal(savedId, sku, channel, channel_link);
       }
 
       closeItemModal();
@@ -1474,14 +1564,9 @@
           `}
         </td>
         <td class="px-4 py-3.5 font-medium">
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span>${escapeHtml(item.name)}</span>
-            ${item.channel_link ? `
-              <a href="${escapeHtml(item.channel_link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[11px] font-normal text-[#32ADE6] hover:underline bg-[#0088CC]/10 border border-[#0088CC]/20 px-1.5 py-0.5 rounded-md transition hover:bg-[#0088CC]/20" title="Buka produk di ${escapeHtml(item.channel || 'Channel')}">
-                <i data-lucide="external-link" class="w-3 h-3"></i>
-                <span>${escapeHtml(item.channel || 'Link')}</span>
-              </a>
-            ` : ''}
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-white text-sm font-semibold">${escapeHtml(item.name)}</span>
+            ${renderChannelBadgeHtml(item.channel, item.channel_link)}
           </div>
         </td>
         <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
@@ -1495,8 +1580,8 @@
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
             ${item.channel_link ? `
-              <a href="${escapeHtml(item.channel_link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml(item.channel || 'Marketplace')}" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml(item.channel || 'Marketplace')}">
-                <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+              <a href="${escapeHtml(item.channel_link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml((getChannelBadgeConfig(item.channel, item.channel_link) || {}).label || item.channel || 'Marketplace')}" class="p-1.5 hover:bg-white/5 rounded-lg ${(getChannelBadgeConfig(item.channel, item.channel_link) || {}).iconColor || 'text-[#32ADE6]'} inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml((getChannelBadgeConfig(item.channel, item.channel_link) || {}).label || item.channel || 'Marketplace')}">
+                <i data-lucide="${(getChannelBadgeConfig(item.channel, item.channel_link) || {}).icon || 'external-link'}" class="w-4 h-4" aria-hidden="true"></i>
               </a>
             ` : ''}
             <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]">
@@ -2207,6 +2292,20 @@
       }
 
       currentItems = res.data || [];
+      const getLocalMeta = (typeof window !== 'undefined' && window.getLocalChannelMeta) ? window.getLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.getLocalChannelMeta ? Api.items.getLocalChannelMeta : null);
+      if (typeof getLocalMeta === 'function') {
+        currentItems.forEach(function (item) {
+          const meta = getLocalMeta(item.id, item.sku);
+          if (meta) {
+            if (!item.channel || item.channel === 'Offline') {
+              item.channel = meta.channel || item.channel || 'Offline';
+            }
+            if (!item.channel_link) {
+              item.channel_link = meta.channel_link || '';
+            }
+          }
+        });
+      }
       // Urutkan default otomatis A-Z
       currentItems.sort(function (a, b) {
         return (a.name || '').trim().localeCompare((b.name || '').trim(), 'id', { sensitivity: 'base', numeric: true });

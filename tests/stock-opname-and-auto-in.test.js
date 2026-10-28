@@ -448,7 +448,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       window.switchInMode('new');
       expect(document.getElementById('in-new-product-fields').classList.contains('hidden')).toBe(false);
       expect(document.getElementById('in-barcode-wrap').classList.contains('hidden')).toBe(true);
-      expect(document.getElementById('in-product-badge').textContent).toContain('1x Kerja');
+      expect(document.getElementById('in-product-badge').textContent).toContain('Masuk Master Barang');
 
       window.switchInMode('existing');
       expect(document.getElementById('in-barcode-wrap').classList.contains('hidden')).toBe(false);

@@ -77,6 +77,7 @@
   "loader-2": "<path d=\"M12 2v4\"></path><path d=\"M12 18v4\"></path><path d=\"m4.93 4.93 2.83 2.83\"></path><path d=\"m16.24 16.24 2.83 2.83\"></path><path d=\"M2 12h4\"></path><path d=\"M18 12h4\"></path><path d=\"m4.93 19.07 2.83-2.83\"></path><path d=\"m16.24 7.76 2.83-2.83\"></path>",
   "mail": "<path d=\"m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7\"></path><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"></rect>",
   "menu": "<path d=\"M4 5h16\"></path><path d=\"M4 12h16\"></path><path d=\"M4 19h16\"></path>",
+  "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"></path>",
   "maximize-2": "<polyline points=\"15 3 21 3 21 9\"></polyline><polyline points=\"9 21 3 21 3 15\"></polyline><line x1=\"21\" x2=\"14\" y1=\"3\" y2=\"10\"></line><line x1=\"3\" x2=\"10\" y1=\"21\" y2=\"14\"></line>",
   "package-plus": "<path d=\"m16.5 9.4-9-5.19\"></path><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0\"></path><path d=\"M3.3 7 12 12l8.7-5\"></path><path d=\"M12 22V12\"></path><path d=\"M19 16v6\"></path><path d=\"M16 19h6\"></path>",
   "package-search": "<path d=\"m16.5 9.4-9-5.19\"></path><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4\"></path><path d=\"M3.3 7 12 12l8.7-5\"></path><path d=\"M12 22V12\"></path><circle cx=\"18\" cy=\"18\" r=\"3\"></circle><path d=\"m20.2 20.2 1.8 1.8\"></path>",

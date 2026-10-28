@@ -386,7 +386,7 @@
         searchInput.readOnly = false;
       }
       if (badge) {
-        badge.textContent = '✨ 1x Kerja (Langsung Masuk Katalog & Stok)';
+        badge.textContent = 'Masuk Master Barang';
         badge.className = 'text-[11px] font-medium text-[#32ADE6]';
       }
       if (newFields) newFields.classList.remove('hidden');
@@ -520,7 +520,7 @@
     const badge = document.getElementById('in-product-badge');
     if (badge) {
       if (inCurrentMode === 'new') {
-        badge.textContent = '✨ 1x Kerja (Langsung Masuk Katalog & Stok)';
+        badge.textContent = 'Masuk Master Barang';
         badge.className = 'text-[11px] font-medium text-[#32ADE6]';
       } else {
         badge.textContent = '';

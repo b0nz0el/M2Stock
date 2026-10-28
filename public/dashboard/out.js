@@ -69,7 +69,7 @@
         if (!name) return;
         const opt = document.createElement('option');
         opt.value = name;
-        opt.textContent = name === 'Offline' ? 'Offline / Toko Fisik' : name;
+        opt.textContent = name;
         channelSelect.appendChild(opt);
       });
 

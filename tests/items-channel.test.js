@@ -163,11 +163,54 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(html).toContain('top-4');
   });
 
-  it('Ikon Lucide "link" dan "globe" terdaftar di icons.js', () => {
+  it('Ikon Lucide "link", "globe", dan "message-circle" terdaftar di icons.js', () => {
     const iconsPath = path.resolve(__dirname, '../public/assets/js/icons.js');
     const iconsContent = fs.readFileSync(iconsPath, 'utf8');
 
     expect(iconsContent).toContain('"link":');
     expect(iconsContent).toContain('"globe":');
+    expect(iconsContent).toContain('"message-circle":');
+  });
+
+  it('HTML index.html memiliki opsi Offline murni tanpa embel-embel dan input URL dengan placeholder kosong lapang', () => {
+    const htmlPath = path.resolve(__dirname, '../public/dashboard/index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    expect(html).toContain('<option value="Offline">Offline</option>');
+    expect(html).not.toContain('<option value="Offline">Offline / Toko Fisik</option>');
+    expect(html).toContain('<input type="url" id="item-channel-link" placeholder=""');
+    expect(html).toContain('pl-10');
+  });
+
+  it('Dual-layer persistence: saveLocalChannelMeta dan getLocalChannelMeta menjaga data channel dan link tetap tersimpan', async () => {
+    // 1. Simpan channel meta ke local storage
+    Api.items.saveLocalChannelMeta(99, 'SKU-99', 'Shopee', 'https://shopee.co.id/ikan-cupang');
+    const stored = Api.items.getLocalChannelMeta(99, 'SKU-99');
+    expect(stored).not.toBeNull();
+    expect(stored.channel).toBe('Shopee');
+    expect(stored.channel_link).toBe('https://shopee.co.id/ikan-cupang');
+
+    // 2. Simulasi getAll dari Supabase yang belum memiliki kolom channel
+    const mockProducts = [
+      {
+        id: 99,
+        sku: 'SKU-99',
+        name: 'Ikan Cupang Halfmoon',
+        channel: null,
+        channel_link: null,
+        categories: { name: 'Ikan' },
+        units: { name: 'ekor' }
+      }
+    ];
+
+    const orderMock = vi.fn().mockResolvedValue({ data: mockProducts, error: null });
+    const selectMock = vi.fn().mockReturnValue({ order: orderMock });
+    const fromMock = vi.fn().mockReturnValue({ select: selectMock });
+    window.supabase = { from: fromMock };
+
+    const res = await Api.items.getAll();
+    expect(res.ok).toBe(true);
+    expect(res.data[0].channel).toBe('Shopee');
+    expect(res.data[0].channel_link).toBe('https://shopee.co.id/ikan-cupang');
   });
 });

@@ -28,7 +28,45 @@ export function parseItemImages(rawImageUrl, rawImages) {
   return [];
 }
 
+export function getLocalChannelMeta(id, sku) {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem('aquastock_product_channels');
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    if (!map || typeof map !== 'object') return null;
+    if (id && map[String(id)]) return map[String(id)];
+    if (sku && map['sku:' + String(sku).trim().toLowerCase()]) return map['sku:' + String(sku).trim().toLowerCase()];
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export function saveLocalChannelMeta(id, sku, channel, channel_link) {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const raw = localStorage.getItem('aquastock_product_channels');
+    const map = raw ? JSON.parse(raw) : {};
+    const entry = {
+      channel: channel || 'Offline',
+      channel_link: channel_link || '',
+      updated_at: Date.now()
+    };
+    if (id) map[String(id)] = entry;
+    if (sku) map['sku:' + String(sku).trim().toLowerCase()] = entry;
+    localStorage.setItem('aquastock_product_channels', JSON.stringify(map));
+  } catch (_) {}
+}
+
+if (typeof window !== 'undefined') {
+  window.getLocalChannelMeta = getLocalChannelMeta;
+  window.saveLocalChannelMeta = saveLocalChannelMeta;
+}
+
 export const items = {
+  getLocalChannelMeta,
+  saveLocalChannelMeta,
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
         try {
@@ -64,6 +102,9 @@ export const items = {
           const mapped = (data || []).map(function (item) {
             const itemImages = parseItemImages(item.image_url, item.images);
             const primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
+            const localMeta = getLocalChannelMeta(item.id, item.sku);
+            const effectiveChannel = (item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline');
+            const effectiveLink = item.channel_link || (localMeta && localMeta.channel_link) || '';
             return {
               id: item.id,
               sku: item.sku || '',
@@ -82,8 +123,8 @@ export const items = {
               sellPrice: Number(item.sell_price) || 0,
               sell_price: Number(item.sell_price) || 0,
               unitPrice: Number(item.sell_price) || 0,
-              channel: item.channel || 'Offline',
-              channel_link: item.channel_link || '',
+              channel: effectiveChannel,
+              channel_link: effectiveLink,
               image_url: primaryImageUrl,
               images: itemImages,
               created_at: item.created_at,
@@ -137,6 +178,9 @@ export const items = {
 
           const itemImages = parseItemImages(data.image_url, data.images);
           const primaryImageUrl = itemImages[0] || (typeof data.image_url === 'string' && !data.image_url.startsWith('[') ? data.image_url : null);
+          const localMeta = getLocalChannelMeta(data.id, data.sku);
+          const effectiveChannel = (data.channel && data.channel !== 'Offline') ? data.channel : ((localMeta && localMeta.channel) || data.channel || 'Offline');
+          const effectiveLink = data.channel_link || (localMeta && localMeta.channel_link) || '';
           const mapped = {
             id: data.id,
             sku: data.sku || '',
@@ -155,8 +199,8 @@ export const items = {
             sellPrice: Number(data.sell_price) || 0,
             sell_price: Number(data.sell_price) || 0,
             unitPrice: Number(data.sell_price) || 0,
-            channel: data.channel || 'Offline',
-            channel_link: data.channel_link || '',
+            channel: effectiveChannel,
+            channel_link: effectiveLink,
             image_url: primaryImageUrl,
             images: itemImages,
             created_at: data.created_at,
@@ -233,6 +277,11 @@ export const items = {
           }
 
           const newProd = inserted && inserted[0] ? inserted[0] : null;
+          saveLocalChannelMeta(newProd?.id, newProd?.sku || data.sku, data.channel, data.channel_link);
+          if (newProd) {
+            newProd.channel = data.channel || 'Offline';
+            newProd.channel_link = data.channel_link || '';
+          }
           try {
             if (typeof logAudit === 'function') {
               logAudit('CREATE', `Tambah Produk Baru: ${newProd?.name || data.name || 'Produk'} (SKU: ${newProd?.sku || data.sku || '-'})`);
@@ -248,6 +297,7 @@ export const items = {
           return handleError(err);
         }
       }
+      saveLocalChannelMeta(data.id, data.sku, data.channel, data.channel_link);
       return apiRequest('/items', { method: 'POST', body: data, ...opts });
     },
 
@@ -315,6 +365,11 @@ export const items = {
           }
 
           const updatedProd = updated && updated[0] ? updated[0] : null;
+          saveLocalChannelMeta(id, data.sku, data.channel, data.channel_link);
+          if (updatedProd) {
+            updatedProd.channel = data.channel || 'Offline';
+            updatedProd.channel_link = data.channel_link || '';
+          }
           try {
             if (typeof logAudit === 'function') {
               logAudit('UPDATE', `Update Produk: ${updatedProd?.name || data.name || id}`);
@@ -330,6 +385,7 @@ export const items = {
           return handleError(err);
         }
       }
+      saveLocalChannelMeta(id, data.sku, data.channel, data.channel_link);
       return apiRequest(`/items/${id}`, { method: 'PUT', body: data, ...opts });
     },
 

@@ -1375,8 +1375,9 @@
     padding: 16px !important;
   }
 
-  #page-items .card table tbody tr:has(td:last-child button) td:first-child {
-    padding-right: 80px !important;
+  #page-items .card table tbody tr:has(td:last-child button) td:first-child,
+  #page-items .card table tbody tr:has(td:last-child a) td:first-child {
+    padding-right: 140px !important;
   }
 
   #page-items .card table tbody td[data-label="FOTO"]::before {
@@ -1396,6 +1397,10 @@
   }
 
   #page-items .card table tbody td[data-label="NAMA"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
     justify-content: flex-start !important;
     font-size: 1rem !important;
     font-weight: 600 !important;
