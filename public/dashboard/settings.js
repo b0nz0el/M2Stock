@@ -5,6 +5,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { settings as settingsApi } from '../assets/js/api/settings.js';
+import { initBarcodeSettings } from './settings-barcode.js';
 import { supabase } from '../assets/js/supabase-client.js';
 import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 
@@ -746,6 +747,7 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       renderCatalogList('setting-unit-list', [], 'Satuan gagal dimuat.');
       renderCatalogList('setting-channel-list', [], 'Saluran penjualan gagal dimuat.');
     }
+    initBarcodeSettings();
   }
 
   if (typeof window !== 'undefined') {
