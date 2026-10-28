@@ -241,13 +241,18 @@ npm test
 
 ## 🚀 Panduan Deployment ke Cloudflare Pages
 
-Proyek ini telah terhubung dengan GitHub CI/CD Cloudflare Pages:
-1. Pastikan seluruh perubahan telah di-commit ke branch `main`.
-2. Lakukan push ke remote repository:
+Setiap push ke branch `main` akan menjalankan GitHub Actions untuk menaikkan versi patch
+secara otomatis dan mengirim commit versi tersebut. Cloudflare Pages yang terhubung ke
+repository akan menerbitkan commit terbaru dari folder `public/`.
+
+Untuk merilis perubahan:
+1. Commit perubahan ke branch `main`.
+2. Push ke remote repository:
    ```bash
    git push origin main
    ```
-3. Cloudflare Pages akan otomatis mendeteksi commit baru dan memicu deployment statis dari folder `public/` dalam waktu 1–2 menit ke:  
+3. Tunggu workflow **Bump app version** selesai; Cloudflare Pages akan membangun commit terbaru
+   dari folder `public/` ke:
    👉 **[https://aquastock-pro.pages.dev](https://aquastock-pro.pages.dev)**
 
 ---

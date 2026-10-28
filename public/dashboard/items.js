@@ -372,6 +372,7 @@
     if (stockLabel) stockLabel.textContent = 'Stok Awal (0)';
     const stockHelp = document.getElementById('item-stock-help');
     if (stockHelp) stockHelp.textContent = 'Stok awal produk baru selalu dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.';
+    document.getElementById('item-stock-adjustment-action')?.classList.add('hidden');
     const supWrap = document.getElementById('item-supplier-wrap');
     if (supWrap) supWrap.classList.add('hidden');
     const supSel = document.getElementById('item-supplier-id');
@@ -439,14 +440,8 @@
     document.getElementById('item-stock').value = item.stock || 0;
     document.getElementById('item-stock').disabled = true;
     document.getElementById('item-stock-label').textContent = 'Stok Saat Ini';
-    document.getElementById('item-stock-help').innerHTML = `
-      <div class="mt-2 p-2.5 rounded-xl bg-[#FF9500]/10 border border-[#FF9500]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <span class="text-xs text-white/90">Koreksi / sesuaikan stok fisik?</span>
-        <button type="button" onclick="closeItemModal(); openStockAdjustmentModal('${item.id}')" class="bg-[#FF9500] hover:bg-[#E08500] text-black font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition shadow">
-          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Koreksi Stok (Stock Opname)
-        </button>
-      </div>
-    `;
+    document.getElementById('item-stock-help').textContent = 'Saldo stok dikelola melalui transaksi inventori. Untuk menyamakan dengan hitungan fisik, gunakan Stock Opname.';
+    document.getElementById('item-stock-adjustment-action')?.classList.remove('hidden');
     const supWrap = document.getElementById('item-supplier-wrap');
     if (supWrap) supWrap.classList.add('hidden');
     const warnBanner = document.getElementById('item-stock-warning-banner');
@@ -726,8 +721,17 @@
   let selectedAdjustmentProduct = null;
 
   function openStockAdjustmentModal(productId) {
-    const item = currentItems.find(i => String(i.id) === String(productId));
-    if (!item) return;
+    let item = currentItems.find(i => String(i.id) === String(productId));
+    if (!item) {
+      item = {
+        id: productId,
+        name: 'Produk',
+        sku: '-',
+        category: 'Umum',
+        unit: 'pcs',
+        stock: 0
+      };
+    }
 
     selectedAdjustmentProduct = item;
     const idInput = document.getElementById('adj-product-id');
@@ -747,6 +751,9 @@
 
     const unitLabelCur = document.getElementById('adj-unit-label-current');
     if (unitLabelCur) unitLabelCur.textContent = item.unit || 'pcs';
+
+    const actualUnit = document.getElementById('stock-opname-count-unit');
+    if (actualUnit) actualUnit.textContent = item.unit || 'pcs';
 
     const curStockEl = document.getElementById('adj-current-stock');
     if (curStockEl) curStockEl.textContent = String(item.stock ?? 0);
@@ -782,6 +789,116 @@
     }
   }
 
+  async function openStockAdjustmentHistory(productIdOverride = null) {
+    const chosenId = productIdOverride ?? document.getElementById('adj-product-id')?.value ?? selectedAdjustmentProduct?.id;
+    let targetProduct = selectedAdjustmentProduct;
+
+    if (!targetProduct && chosenId != null && Array.isArray(currentItems)) {
+      targetProduct = currentItems.find(item => String(item.id) === String(chosenId)) || null;
+    }
+
+    if (!targetProduct && chosenId != null) {
+      targetProduct = { id: chosenId, name: 'Produk', sku: '-' };
+    }
+
+    if (!targetProduct) return;
+    selectedAdjustmentProduct = targetProduct;
+
+    let modal = document.getElementById('modal-stock-adjustment-history');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-stock-adjustment-history';
+      modal.className = 'hidden';
+      document.body.appendChild(modal);
+    }
+
+    let title = document.getElementById('stock-adjustment-history-product');
+    if (!title) {
+      title = document.createElement('p');
+      title.id = 'stock-adjustment-history-product';
+      modal.appendChild(title);
+    }
+
+    let tbody = document.getElementById('stock-adjustment-history-body');
+    if (!tbody) {
+      tbody = document.createElement('tbody');
+      tbody.id = 'stock-adjustment-history-body';
+      const table = document.createElement('table');
+      table.appendChild(tbody);
+      modal.appendChild(table);
+    }
+
+    let empty = document.getElementById('stock-adjustment-history-empty');
+    if (!empty) {
+      empty = document.createElement('p');
+      empty.id = 'stock-adjustment-history-empty';
+      empty.className = 'hidden';
+      modal.appendChild(empty);
+    }
+
+    let errorEl = document.getElementById('stock-adjustment-history-error');
+    if (!errorEl) {
+      errorEl = document.createElement('p');
+      errorEl.id = 'stock-adjustment-history-error';
+      errorEl.className = 'hidden';
+      modal.appendChild(errorEl);
+    }
+
+    title.textContent = `${targetProduct.name || 'Produk'} (${targetProduct.sku || '-'})`;
+    tbody.innerHTML = '';
+    empty.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    try {
+      const itemsApi = (typeof Api !== 'undefined' && Api.items) ? Api.items : (window.Api && window.Api.items);
+      const result = await itemsApi.getStockAdjustments(targetProduct.id);
+      if (!result.ok) throw new Error(result.error?.message || 'Gagal memuat riwayat penyesuaian.');
+
+      const adjustments = Array.isArray(result.data) ? result.data : [];
+      if (adjustments.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      tbody.innerHTML = adjustments.map((adjustment) => {
+        const difference = Number(adjustment.difference);
+        const createdAt = new Date(adjustment.created_at);
+        const dateText = Number.isNaN(createdAt.getTime())
+          ? '-'
+          : createdAt.toLocaleString('id-ID');
+        const userName = typeof window.resolveUserName === 'function'
+          ? window.resolveUserName(adjustment.created_by)
+          : (adjustment.created_by || '-');
+        const reasonAndNotes = [adjustment.reason, adjustment.notes].filter(Boolean).join(' - ');
+        return `
+          <tr>
+            <td class="py-2 pr-3 whitespace-nowrap">${escapeHtml(dateText)}</td>
+            <td class="py-2 pr-3">${escapeHtml(String(adjustment.previous_stock))}</td>
+            <td class="py-2 pr-3">${escapeHtml(String(adjustment.actual_stock))}</td>
+            <td class="py-2 pr-3 ${difference < 0 ? 'text-[#FF453A]' : 'text-[#34C759]'}">${difference > 0 ? '+' : ''}${escapeHtml(String(difference))}</td>
+            <td class="py-2 pr-3">${escapeHtml(reasonAndNotes)}</td>
+            <td class="py-2">${escapeHtml(userName || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (error) {
+      errorEl.textContent = error.message || 'Gagal memuat riwayat penyesuaian.';
+      errorEl.classList.remove('hidden');
+    }
+
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+  }
+
+  function closeStockAdjustmentHistory() {
+    const modal = document.getElementById('modal-stock-adjustment-history');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
   function calculateAdjustmentDifference() {
     if (!selectedAdjustmentProduct) return;
     const currentStock = Number(selectedAdjustmentProduct.stock || 0);
@@ -794,18 +911,16 @@
     const box = document.getElementById('adj-diff-box');
 
     if (badge && box) {
+      box.classList.remove('is-increase', 'is-decrease', 'is-balanced');
       if (diff === 0) {
         badge.textContent = `0 ${unit} (Tidak ada perubahan)`;
-        badge.className = 'font-bold text-[#A0A0A5]';
-        box.className = 'p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-white/5 border-white/10 text-white';
+        box.classList.add('is-balanced');
       } else if (diff > 0) {
         badge.textContent = `+${diff} ${unit} (Stok Bertambah)`;
-        badge.className = 'font-bold text-[#34C759]';
-        box.className = 'p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-[#34C759]/10 border-[#34C759]/30 text-white';
+        box.classList.add('is-increase');
       } else {
         badge.textContent = `${diff} ${unit} (Stok Berkurang)`;
-        badge.className = 'font-bold text-[#FF3B30]';
-        box.className = 'p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-[#FF3B30]/10 border-[#FF3B30]/30 text-white';
+        box.classList.add('is-decrease');
       }
     }
   }
@@ -1981,11 +2096,18 @@
 
   window.openStockAdjustmentModal = openStockAdjustmentModal;
   window.closeStockAdjustmentModal = closeStockAdjustmentModal;
+  window.openStockAdjustmentHistory = openStockAdjustmentHistory;
+  window.closeStockAdjustmentHistory = closeStockAdjustmentHistory;
   window.calculateAdjustmentDifference = calculateAdjustmentDifference;
   window.handleStockAdjustmentSubmit = handleStockAdjustmentSubmit;
 
   // Tutup modal saat klik pada backdrop atau tekan Escape
   window.addEventListener('click', function (e) {
+    const historyTrigger = e.target.closest('#btn-show-adjustment-history');
+    if (historyTrigger) {
+      const productId = document.getElementById('adj-product-id')?.value || selectedAdjustmentProduct?.id;
+      openStockAdjustmentHistory(productId);
+    }
     const itemAction = e.target.closest('[data-item-action]');
     if (itemAction) {
       const itemId = itemAction.dataset.itemId;
@@ -1996,12 +2118,14 @@
 
     const modalItem = document.getElementById('modal-item');
     const modalAdj = document.getElementById('modal-stock-adjustment');
+    const modalAdjHistory = document.getElementById('modal-stock-adjustment-history');
     const modalDelete = document.getElementById('modal-delete');
     const modalBulkDel = document.getElementById('modal-bulk-delete');
     const modalBulkPrice = document.getElementById('modal-bulk-price');
     const modalBulkMeta = document.getElementById('modal-bulk-meta');
     if (e.target === modalItem) closeItemModal();
     if (e.target === modalAdj) closeStockAdjustmentModal();
+    if (e.target === modalAdjHistory) closeStockAdjustmentHistory();
     if (e.target === modalDelete) closeDeleteModal();
     if (e.target === modalBulkDel) closeBulkDeleteModal();
     if (e.target === modalBulkPrice) closeBulkPriceModal();
@@ -2014,6 +2138,7 @@
   window.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       closeItemModal();
+      closeStockAdjustmentHistory();
       closeStockAdjustmentModal();
       closeDeleteModal();
       closeBulkDeleteModal();

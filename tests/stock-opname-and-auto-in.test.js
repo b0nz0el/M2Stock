@@ -30,6 +30,11 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(htmlContent).toContain('id="adj-diff-box"');
       expect(htmlContent).toContain('id="adj-reason"');
       expect(htmlContent).toContain('id="btn-submit-adjustment"');
+      expect(htmlContent).toContain('id="btn-show-adjustment-history"');
+      expect(htmlContent).toContain('id="modal-stock-adjustment-history"');
+      expect(htmlContent).toContain('id="item-stock-adjustment-action"');
+      expect(htmlContent).toContain('class="stock-opname-dialog"');
+      expect(htmlContent).toContain('class="stock-opname-count"');
     });
 
     it('contains item-supplier-id in modal-item', () => {
@@ -54,37 +59,22 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
 
     beforeEach(() => {
       mockSupabase = {
+        rpc: vi.fn().mockImplementation((_functionName, params) => Promise.resolve({
+          data: {
+            ok: true,
+            adjustment_id: params.p_actual_stock === 2 ? null : 'adjustment-123',
+            previous_stock: params.p_actual_stock === 1 ? 2 : 2,
+            actual_stock: params.p_actual_stock,
+            difference: params.p_actual_stock - 2,
+            message: params.p_actual_stock === 2
+              ? 'Stok sudah sesuai, tidak ada penyesuaian yang diperlukan.'
+              : 'Stok berhasil disesuaikan dan dicatat pada ledger opname.'
+          },
+          error: null
+        })),
         from: vi.fn().mockImplementation((table) => {
-          if (table === 'products') {
-            return {
-              select: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({
-                    data: { id: 10, name: 'Amara Busa 8D Besar', sku: 'FIL-AMA-310', stock: 2, cost_price: 45000 },
-                    error: null
-                  })
-                })
-              }),
-              update: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  select: vi.fn().mockResolvedValue({
-                    data: [{ id: 10, name: 'Amara Busa 8D Besar', stock: 1 }],
-                    error: null
-                  })
-                })
-              })
-            };
-          }
-          if (table === 'transactions') {
-            return {
-              insert: vi.fn().mockResolvedValue({ data: [{ id: 999 }], error: null })
-            };
-          }
           return {};
         }),
-        auth: {
-          getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
-        }
       };
 
       window.supabase = mockSupabase;
@@ -95,7 +85,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       vi.clearAllMocks();
     });
 
-    it('creates an OUT transaction and adjusts stock when actual stock is less than current stock', async () => {
+    it('records a stock decrease through the dedicated atomic opname RPC, not Barang Keluar', async () => {
       // Mengoreksi stok Amara Busa dari 2 menjadi 1 (selisih -1)
       const res = await items.adjustStock(10, 1, 'Koreksi Salah Input Dobel', 'Koreksi faktur dobel BOS Sarno');
 
@@ -103,25 +93,49 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(res.data.stock).toBe(1);
       expect(res.meta.previousStock).toBe(2);
       expect(res.meta.difference).toBe(-1);
-
-      // Verifikasi insert transaksi keluar (OUT)
-      expect(mockSupabase.from).toHaveBeenCalledWith('transactions');
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('perform_stock_opname', {
+        p_product_id: '10',
+        p_actual_stock: 1,
+        p_reason: 'Koreksi Salah Input Dobel',
+        p_notes: 'Koreksi faktur dobel BOS Sarno'
+      });
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
-    it('creates an IN transaction and adjusts stock when actual stock is greater than current stock', async () => {
+    it('records a stock increase through the dedicated opname RPC, not Barang Masuk', async () => {
       // Mengoreksi stok dari 2 menjadi 5 (selisih +3)
       const res = await items.adjustStock(10, 5, 'Stock Opname Fisik');
 
       expect(res.ok).toBe(true);
       expect(res.meta.difference).toBe(3);
-      expect(mockSupabase.from).toHaveBeenCalledWith('transactions');
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('perform_stock_opname', {
+        p_product_id: '10',
+        p_actual_stock: 5,
+        p_reason: 'Stock Opname Fisik',
+        p_notes: ''
+      });
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
-    it('returns without transaction when actual stock equals current stock', async () => {
+    it('does not create an adjustment when actual stock equals current stock', async () => {
       const res = await items.adjustStock(10, 2, 'Cek Fisik');
 
       expect(res.ok).toBe(true);
       expect(res.meta.message).toContain('Stok sudah sesuai');
+      expect(res.data.adjustment_id).toBeNull();
+    });
+
+    it('does not fall back to browser-side writes when the adjustment RPC fails', async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: { code: '42501', message: 'Akses ditolak' }
+      });
+
+      const res = await items.adjustStock(10, 1, 'Stock Opname Fisik');
+
+      expect(res.ok).toBe(false);
+      expect(res.error.message).toBe('Akses ditolak');
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
   });
 
@@ -131,6 +145,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
     beforeEach(() => {
       document.body.innerHTML = `
         <div id="modal-item">
+          <h3 id="modal-item-title"></h3>
           <form id="form-item">
             <input id="item-id" value="">
             <input id="item-name" value="Amara Busa 8D Besar">
@@ -141,6 +156,8 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
             <select id="item-unit"><option value="1">pack</option></select>
             <input id="item-stock" value="1">
             <span id="item-stock-label"></span>
+            <p id="item-stock-help"></p>
+            <section id="item-stock-adjustment-action" class="hidden"></section>
             <div id="item-supplier-wrap">
               <select id="item-supplier-id">
                 <option value="5" selected>BOS Sarno</option>
@@ -162,6 +179,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
             <span id="adj-product-cat"></span>
             <span id="adj-product-unit"></span>
             <span id="adj-unit-label-current"></span>
+            <span id="stock-opname-count-unit"></span>
             <span id="adj-current-stock"></span>
             <input id="adj-actual-stock" value="">
             <div id="adj-diff-box">
@@ -174,6 +192,12 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
             <button id="btn-submit-adjustment"><span>Simpan Penyesuaian</span></button>
           </form>
         </div>
+        <div id="modal-stock-adjustment-history" class="hidden">
+          <p id="stock-adjustment-history-product"></p>
+          <tbody id="stock-adjustment-history-body"></tbody>
+          <p id="stock-adjustment-history-empty" class="hidden"></p>
+          <p id="stock-adjustment-history-error" class="hidden"></p>
+        </div>
 
         <table id="items-table">
           <tbody id="items-tbody"></tbody>
@@ -185,7 +209,8 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
           getAll: vi.fn().mockResolvedValue({ ok: true, data: [] }),
           create: vi.fn().mockResolvedValue({ ok: true, data: { id: 101, name: 'Amara Busa 8D Besar' } }),
           update: vi.fn().mockResolvedValue({ ok: true, data: { id: 101 } }),
-          adjustStock: vi.fn().mockResolvedValue({ ok: true, data: { id: 10, stock: 1 }, meta: { message: 'Sukses' } })
+          adjustStock: vi.fn().mockResolvedValue({ ok: true, data: { id: 10, stock: 1 }, meta: { message: 'Sukses' } }),
+          getStockAdjustments: vi.fn().mockResolvedValue({ ok: true, data: [] })
         },
         transactions: {
           createIn: vi.fn().mockResolvedValue({ ok: true, data: { id: 202 } })
@@ -240,6 +265,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
 
       expect(document.getElementById('adj-current-stock').textContent).toBe('2');
       expect(document.getElementById('adj-actual-stock').value).toBe('2');
+      expect(document.getElementById('stock-opname-count-unit').textContent).toBe('pack');
 
       // Ubah stok aktual menjadi 1 (selisih -1)
       document.getElementById('adj-actual-stock').value = '1';
@@ -247,6 +273,46 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
 
       const diffBadge = document.getElementById('adj-diff-badge');
       expect(diffBadge.textContent).toContain('-1');
+      expect(document.getElementById('adj-diff-box').classList.contains('is-decrease')).toBe(true);
+    });
+
+    it('shows the full-width stock opname callout only while editing an existing product', async () => {
+      window.Api.items.getAll = vi.fn().mockResolvedValue({
+        ok: true,
+        data: [{ id: 10, name: 'Amara Busa 8D Besar', sku: 'FIL-AMA-310', stock: 2, unit: 'pack' }]
+      });
+      await window.loadItemsFromBackend();
+
+      window.openEditItemModal(10);
+
+      expect(document.getElementById('item-stock-adjustment-action').classList.contains('hidden')).toBe(false);
+      expect(document.getElementById('item-stock-help').textContent).toContain('Stock Opname');
+      expect(document.getElementById('item-stock-help').querySelector('button')).toBeNull();
+
+      window.openAddItemModal();
+      expect(document.getElementById('item-stock-adjustment-action').classList.contains('hidden')).toBe(true);
+    });
+
+    it('loads history from the separate stock adjustment ledger', async () => {
+      window.Api.items.getStockAdjustments.mockResolvedValue({
+        ok: true,
+        data: [{
+          id: 'adjustment-1',
+          previous_stock: 2,
+          actual_stock: 1,
+          difference: -1,
+          reason: 'Stock Opname Fisik',
+          notes: 'Hitung fisik',
+          created_by: 'user-1',
+          created_at: '2026-10-28T00:00:00.000Z'
+        }]
+      });
+      await window.loadItemsFromBackend();
+      window.openStockAdjustmentModal(10);
+      await window.openStockAdjustmentHistory();
+
+      expect(window.Api.items.getStockAdjustments).toHaveBeenCalledWith(10);
+      expect(document.getElementById('stock-adjustment-history-body').textContent).toContain('Stock Opname Fisik');
     });
 
     it('submits stock adjustment successfully', async () => {

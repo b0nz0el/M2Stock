@@ -131,40 +131,19 @@ describe('Audit Kepatuhan Kontrol Inventori ERP/WMS & IAS 2', () => {
   describe('Pilar 2: Stock Opname Strict-Ledger & Dukungan UUID', () => {
     it('mendukung ID produk UUID string tanpa menghasilkan NaN', async () => {
       const uuidProdId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-      let insertedPayload = null;
 
       const mockSupabase = {
-        rpc: vi.fn().mockRejectedValue(new Error('RPC belum terpasang')),
-        from: vi.fn((table) => {
-          if (table === 'products') {
-            return {
-              select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  single: vi.fn().mockResolvedValue({
-                    data: { id: uuidProdId, name: 'Produk UUID', sku: 'SKU-UUID', stock: 5, cost_price: 15000 },
-                    error: null
-                  })
-                }))
-              })),
-              update: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  select: vi.fn().mockResolvedValue({
-                    data: [{ id: uuidProdId, stock: 7 }],
-                    error: null
-                  })
-                }))
-              }))
-            };
-          }
-          if (table === 'transactions') {
-            return {
-              insert: vi.fn((rows) => {
-                insertedPayload = rows[0];
-                return Promise.resolve({ error: null });
-              })
-            };
-          }
-        })
+        rpc: vi.fn().mockResolvedValue({
+          data: {
+            ok: true,
+            adjustment_id: 'adjustment-uuid',
+            previous_stock: 5,
+            actual_stock: 7,
+            difference: 2
+          },
+          error: null
+        }),
+        from: vi.fn()
       };
 
       window.supabase = mockSupabase;
@@ -172,59 +151,29 @@ describe('Audit Kepatuhan Kontrol Inventori ERP/WMS & IAS 2', () => {
       const res = await items.adjustStock(uuidProdId, 7, 'Opname Fisik', 'Penyesuaian rutin');
 
       expect(res.ok).toBe(true);
-      // Memastikan product_id di transaksi tidak menjadi NaN, melainkan string UUID asli
-      expect(insertedPayload.product_id).toBe(uuidProdId);
-      expect(insertedPayload.qty).toBe(2);
-      expect(insertedPayload.type).toBe('in');
-      expect(insertedPayload.cost_price).toBe(15000);
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('perform_stock_opname', {
+        p_product_id: uuidProdId,
+        p_actual_stock: 7,
+        p_reason: 'Opname Fisik',
+        p_notes: 'Penyesuaian rutin'
+      });
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
-    it('tidak mengubah saldo produk jika pencatatan transaksi mutasi di ledger gagal', async () => {
+    it('tidak mengubah saldo produk di browser jika RPC opname tidak tersedia', async () => {
       const prodId = 'prod-test-99';
-      let productUpdateCalled = false;
 
       const mockSupabase = {
-        rpc: vi.fn().mockRejectedValue(new Error('RPC belum terpasang')),
-        from: vi.fn((table) => {
-          if (table === 'products') {
-            return {
-              select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  single: vi.fn().mockResolvedValue({
-                    data: { id: prodId, name: 'Produk Uji', sku: 'SKU-99', stock: 10, cost_price: 20000 },
-                    error: null
-                  })
-                }))
-              })),
-              update: vi.fn(() => {
-                productUpdateCalled = true;
-                return {
-                  eq: vi.fn(() => ({
-                    select: vi.fn().mockResolvedValue({ data: [], error: null })
-                  }))
-                };
-              })
-            };
-          }
-          if (table === 'transactions') {
-            return {
-              // Simulasi kegagalan insert transaksi mutasi ledger
-              insert: vi.fn().mockResolvedValue({
-                error: { code: '42P01', message: 'Relation transactions error' }
-              })
-            };
-          }
-        })
+        from: vi.fn()
       };
 
       window.supabase = mockSupabase;
 
       const res = await items.adjustStock(prodId, 15, 'Opname Gagal Test');
 
-      // Verifikasi: Fungsi mengembalikan error dan saldo produk TIDAK PERNAH disentuh
       expect(res.ok).toBe(false);
-      expect(res.error).toBeDefined();
-      expect(productUpdateCalled).toBe(false);
+      expect(res.error.code).toBe('RPC_UNAVAILABLE');
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
   });
 

@@ -1740,7 +1740,7 @@
                 <th class="px-5 py-3.5 w-44">Waktu</th>
                 <th class="px-5 py-3.5 w-52">User</th>
                 <th class="px-5 py-3.5 w-32">Aksi</th>
-                <th class="px-5 py-3.5">Target / Detail Aktivitas</th>
+                <th class="px-5 py-3.5">Aktivitas</th>
                 <th class="px-5 py-3.5 w-36">IP Address</th>
               </tr>
             </thead>
@@ -2916,7 +2916,7 @@
         <div>
           <label for="item-stock" id="item-stock-label" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok Awal (0)</label>
           <input type="number" id="item-stock" min="0" value="0" readonly class="w-full bg-white/5 text-[#A0A0A5] border border-white/10 rounded-xl px-3.5 py-2 text-sm cursor-not-allowed focus:outline-none">
-          <p id="item-stock-help" class="mt-1 text-[11px] text-[#A0A0A5]">Stok awal fisik toko dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.</p>
+          <p id="item-stock-help" class="mt-1 text-[11px] leading-relaxed text-[#A0A0A5]">Stok awal fisik toko dimulai dari 0. Penambahan stok dicatat melalui menu Barang Masuk.</p>
         </div>
         <div id="item-supplier-wrap" class="hidden">
           <label for="item-supplier-id" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Supplier (Faktur Awal)</label>
@@ -2926,6 +2926,23 @@
           <p class="mt-1 text-[11px] text-[#A0A0A5]">Otomatis catat Barang Masuk jika stok &gt; 0.</p>
         </div>
       </div>
+
+      <section id="item-stock-adjustment-action" class="hidden stock-adjustment-callout" aria-labelledby="item-stock-adjustment-title">
+        <div class="stock-adjustment-callout__copy">
+          <div class="stock-adjustment-callout__icon" aria-hidden="true">
+            <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <h4 id="item-stock-adjustment-title" class="text-sm font-semibold text-white">Koreksi / sesuaikan stok fisik?</h4>
+            <p class="mt-1 text-xs leading-relaxed text-[#A0A0A5]">Gunakan Stock Opname jika hasil hitung fisik berbeda dari stok sistem. Koreksi dicatat di riwayat penyesuaian, bukan sebagai barang masuk atau keluar.</p>
+          </div>
+        </div>
+        <button type="button" id="btn-open-stock-opname" onclick="closeItemModal(); openStockAdjustmentModal(document.getElementById('item-id').value)" class="stock-adjustment-callout__button">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Mulai Stock Opname</span>
+          <i data-lucide="arrow-right" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+      </section>
 
       <!-- Warning Banner Anti Dobel Input -->
       <div id="item-stock-warning-banner" class="hidden p-3 rounded-xl bg-[#FF9500]/10 border border-[#FF9500]/30 text-[#FF9500] text-xs flex items-start gap-2.5">
@@ -2965,89 +2982,138 @@
 </div>
 
 <!-- =========================== MODAL (ITEMS: modal-stock-adjustment) =========================== -->
-<div id="modal-stock-adjustment" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-stock-adjustment-title">
-  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
-    <div class="flex items-center justify-between pb-3 border-b border-white/10">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-[#FF9500]/15 grid place-items-center flex-shrink-0 text-[#FF9500]">
-          <i data-lucide="sliders-horizontal" class="w-5 h-5" aria-hidden="true"></i>
+<div id="modal-stock-adjustment" class="hidden stock-opname-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-stock-adjustment-title">
+  <section class="stock-opname-dialog">
+    <header class="stock-opname-header">
+      <div class="stock-opname-heading">
+        <div class="stock-opname-heading__icon" aria-hidden="true">
+          <i data-lucide="clipboard-check" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h3 id="modal-stock-adjustment-title" class="text-base font-bold text-white">Penyesuaian Stok (Stock Opname)</h3>
-          <p class="text-xs text-[#A0A0A5]">Koreksi stok fisik aktual produk</p>
+        <div class="min-w-0">
+          <p class="stock-opname-eyebrow">INVENTORI <span aria-hidden="true">/</span> STOCK OPNAME</p>
+          <h3 id="modal-stock-adjustment-title" class="stock-opname-title">Koreksi / sesuaikan stok fisik</h3>
+          <p class="stock-opname-subtitle">Hitung stok aktual dan catat selisihnya dengan alasan yang jelas.</p>
         </div>
       </div>
-      <button type="button" onclick="closeStockAdjustmentModal()" class="w-8 h-8 rounded-lg text-[#A0A0A5] hover:text-white hover:bg-white/5 grid place-items-center transition">
-        <i data-lucide="x" class="w-4 h-4"></i>
-      </button>
-    </div>
+      <div class="stock-opname-header__actions">
+        <button type="button" id="btn-show-adjustment-history" class="stock-opname-history-button">
+          <i data-lucide="history" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Riwayat</span>
+        </button>
+        <button type="button" onclick="closeStockAdjustmentModal()" aria-label="Tutup Stock Opname" class="stock-opname-close-button">
+          <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
 
-    <form id="form-stock-adjustment" onsubmit="handleStockAdjustmentSubmit(event)" class="space-y-4">
+    <form id="form-stock-adjustment" onsubmit="handleStockAdjustmentSubmit(event)" class="stock-opname-form">
       <input type="hidden" id="adj-product-id">
 
-      <!-- Product Info Card -->
-      <div class="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1">
-        <div class="flex items-center justify-between">
-          <span id="adj-product-name" class="font-semibold text-white text-sm">Nama Produk</span>
-          <span id="adj-product-sku" class="font-mono text-xs text-[#A0A0A5]">SKU-001</span>
-        </div>
-        <div class="text-xs text-[#A0A0A5] flex items-center gap-2">
-          <span>Kategori: <strong id="adj-product-cat" class="text-white/80">Umum</strong></span>
-          <span>•</span>
-          <span>Satuan: <strong id="adj-product-unit" class="text-white/80">pcs</strong></span>
-        </div>
-      </div>
-
-      <!-- Current vs Actual Stock -->
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Stok di Sistem</label>
-          <div class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white/70 font-mono">
-            <span id="adj-current-stock">0</span> <span id="adj-unit-label-current" class="text-xs font-normal text-[#A0A0A5]">pcs</span>
+      <section class="stock-opname-product" aria-label="Informasi produk">
+        <div class="stock-opname-product__top">
+          <div class="min-w-0">
+            <p class="stock-opname-label">PRODUK</p>
+            <h4 id="adj-product-name" class="stock-opname-product__name">Nama Produk</h4>
           </div>
+          <span id="adj-product-sku" class="stock-opname-sku">SKU-001</span>
         </div>
-        <div>
-          <label for="adj-actual-stock" class="block text-xs font-medium text-[#32ADE6] mb-1.5">Stok Fisik Aktual <span class="text-[#FF3B30]">*</span></label>
-          <input type="number" id="adj-actual-stock" min="0" required oninput="calculateAdjustmentDifference()" class="w-full bg-black/40 border border-[#0088CC] focus:ring-1 focus:ring-[#0088CC] rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none">
+        <div class="stock-opname-product__meta">
+          <span><span class="stock-opname-label-inline">Kategori</span><strong id="adj-product-cat">Umum</strong></span>
+          <span class="stock-opname-product__divider" aria-hidden="true"></span>
+          <span><span class="stock-opname-label-inline">Satuan</span><strong id="adj-product-unit">pcs</strong></span>
         </div>
+      </section>
+
+      <section class="stock-opname-count" aria-label="Perbandingan stok sistem dan stok fisik">
+        <div class="stock-opname-count__card">
+          <label class="stock-opname-label" for="adj-current-stock">STOK DI SISTEM</label>
+          <output class="stock-opname-current">
+            <span id="adj-current-stock">0</span>
+            <span id="adj-unit-label-current" class="stock-opname-unit">pcs</span>
+          </output>
+          <p class="stock-opname-hint">Saldo saat ini</p>
+        </div>
+        <div class="stock-opname-count__card stock-opname-count__card--actual">
+          <label class="stock-opname-label" for="adj-actual-stock">STOK FISIK AKTUAL <span aria-hidden="true">*</span></label>
+          <div class="stock-opname-input-wrap">
+            <input type="number" id="adj-actual-stock" min="0" step="any" inputmode="decimal" required oninput="calculateAdjustmentDifference()" aria-describedby="stock-opname-count-hint" class="stock-opname-input">
+            <span id="stock-opname-count-unit" class="stock-opname-unit">pcs</span>
+          </div>
+          <p id="stock-opname-count-hint" class="stock-opname-hint">Hitung unit yang tersedia secara fisik.</p>
+        </div>
+      </section>
+
+      <div id="adj-diff-box" class="stock-opname-difference" role="status" aria-live="polite">
+        <div class="stock-opname-difference__label">
+          <i data-lucide="arrow-left-right" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Selisih stok</span>
+        </div>
+        <span id="adj-diff-badge" class="stock-opname-difference__value">0 pcs (Tidak ada perubahan)</span>
       </div>
 
-      <!-- Difference Indicator Badge -->
-      <div id="adj-diff-box" class="p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition bg-white/5 border-white/10 text-white">
-        <span>Selisih Mutasi:</span>
-        <span id="adj-diff-badge" class="font-bold">0 pcs (Tidak ada perubahan)</span>
-      </div>
-
-      <!-- Reason & Notes -->
-      <div class="space-y-3">
-        <div>
-          <label for="adj-reason" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Alasan Penyesuaian <span class="text-[#FF3B30]">*</span></label>
-          <select id="adj-reason" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
-            <option value="Koreksi Salah Input / Dobel">Koreksi Salah Input / Dobel</option>
-            <option value="Stock Opname Fisik">Stock Opname Fisik (Penghitungan Toko)</option>
-            <option value="Barang Rusak / Kadaluarsa">Barang Rusak / Cacat / Mati</option>
-            <option value="Barang Hilang / Selisih Kasir">Barang Hilang / Selisih</option>
-            <option value="Bonus / Hadiah Supplier">Bonus / Hadiah Supplier</option>
+      <section class="stock-opname-reason" aria-label="Detail penyesuaian">
+        <div class="stock-opname-field">
+          <label for="adj-reason" class="stock-opname-field__label">Alasan penyesuaian <span class="stock-opname-required" aria-hidden="true">*</span></label>
+          <select id="adj-reason" required class="stock-opname-control">
+            <option value="Koreksi Salah Input / Dobel">Koreksi salah input / data ganda</option>
+            <option value="Stock Opname Fisik">Hasil penghitungan fisik</option>
+            <option value="Barang Rusak / Kadaluarsa">Barang rusak / kedaluwarsa</option>
+            <option value="Barang Hilang / Selisih Kasir">Barang hilang / selisih kasir</option>
+            <option value="Bonus / Hadiah Supplier">Bonus / hadiah supplier</option>
             <option value="Lainnya">Lainnya</option>
           </select>
         </div>
-        <div>
-          <label for="adj-notes" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Keterangan Tambahan (Opsional)</label>
-          <textarea id="adj-notes" rows="2" placeholder="Catatan tambahan penyesuaian..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs focus:border-[#0088CC] focus:outline-none resize-none"></textarea>
+        <div class="stock-opname-field">
+          <label for="adj-notes" class="stock-opname-field__label">Catatan <span class="stock-opname-optional">(opsional)</span></label>
+          <textarea id="adj-notes" rows="2" placeholder="Contoh: hitung ulang rak A bersama supervisor." class="stock-opname-control stock-opname-control--notes"></textarea>
         </div>
-      </div>
+      </section>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/5">
-        <button type="button" onclick="closeStockAdjustmentModal()" class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
-          Batal
-        </button>
-        <button type="submit" id="btn-submit-adjustment" class="bg-[#FF9500] hover:bg-[#E08500] text-black font-semibold px-5 py-2 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-[#FF9500]/20 transition">
-          <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
-          <span>Simpan Penyesuaian</span>
-        </button>
-      </div>
+      <footer class="stock-opname-footer">
+        <p class="stock-opname-audit-note">
+          <i data-lucide="shield-check" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Perubahan dicatat di riwayat audit stok.</span>
+        </p>
+        <div class="stock-opname-footer__buttons">
+          <button type="button" onclick="closeStockAdjustmentModal()" class="stock-opname-cancel-button">Batal</button>
+          <button type="submit" id="btn-submit-adjustment" class="stock-opname-submit-button">
+            <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Simpan koreksi</span>
+          </button>
+        </div>
+      </footer>
     </form>
+  </section>
+</div>
+
+<div id="modal-stock-adjustment-history" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="stock-adjustment-history-title">
+  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 id="stock-adjustment-history-title" class="text-base font-bold text-white">Riwayat Penyesuaian Stok</h3>
+        <p id="stock-adjustment-history-product" class="text-xs text-[#A0A0A5]"></p>
+      </div>
+      <button type="button" onclick="closeStockAdjustmentHistory()" aria-label="Tutup riwayat" class="w-8 h-8 rounded-lg text-[#A0A0A5] hover:text-white hover:bg-white/5 grid place-items-center">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="text-[#A0A0A5] border-b border-white/10">
+          <tr>
+            <th class="py-2 pr-3">Waktu</th>
+            <th class="py-2 pr-3">Sebelum</th>
+            <th class="py-2 pr-3">Fisik</th>
+            <th class="py-2 pr-3">Selisih</th>
+            <th class="py-2 pr-3">Alasan / Catatan</th>
+            <th class="py-2">Petugas</th>
+          </tr>
+        </thead>
+        <tbody id="stock-adjustment-history-body" class="divide-y divide-white/5"></tbody>
+      </table>
+    </div>
+    <p id="stock-adjustment-history-empty" class="hidden text-center py-6 text-sm text-[#A0A0A5]">Belum ada riwayat penyesuaian untuk produk ini.</p>
+    <p id="stock-adjustment-history-error" class="hidden text-center py-4 text-sm text-[#FF453A]"></p>
   </div>
 </div>
 

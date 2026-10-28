@@ -307,133 +307,59 @@ export const items = {
       if (isSupabaseAvailable()) {
         try {
           const targetStock = Number(actualStock);
-          if (isNaN(targetStock) || targetStock < 0) {
+          if (!Number.isFinite(targetStock) || targetStock < 0) {
             return formatResponse({
               ok: false,
               error: { code: 'INVALID_STOCK', message: 'Stok fisik harus berupa angka nol atau lebih.' }
             });
           }
 
-          let currentUserId = null;
-          try {
-            if (window.supabase?.auth) {
-              const uRes = await window.supabase.auth.getUser();
-              currentUserId = uRes?.data?.user?.id || null;
-            }
-          } catch (_) {}
-
-          // PRIORITAS 1: Eksekusi Atomik via Database RPC PostgreSQL (perform_stock_opname)
-          if (typeof window.supabase.rpc === 'function') {
-            try {
-              const { data: rpcRes, error: rpcErr } = await window.supabase.rpc('perform_stock_opname', {
-                p_product_id: String(id),
-                p_actual_stock: targetStock,
-                p_reason: reason,
-                p_notes: notes || '',
-                p_user_id: currentUserId
-              });
-
-              if (!rpcErr && rpcRes && rpcRes.ok) {
-                try {
-                  if (typeof logAudit === 'function') {
-                    logAudit('UPDATE', `Stock Opname Atomik: Produk ID ${id} disesuaikan menjadi ${targetStock}. Alasan: ${reason}`);
-                  }
-                } catch (_) {}
-
-                return formatResponse({
-                  ok: true,
-                  data: { id: id, stock: targetStock },
-                  meta: { message: rpcRes.message || `Stok berhasil disesuaikan menjadi ${targetStock}` }
-                });
-              }
-            } catch (rpcErr) {
-              console.warn('RPC perform_stock_opname fallback ke client strict-ledger:', rpcErr);
-            }
-          }
-
-          // PRIORITAS 2 (Fallback Strict-Ledger): Ambil data produk & pastikan mutasi tercatat di ledger sebelum saldo diubah
-          const { data: prod, error: pErr } = await window.supabase
-            .from('products')
-            .select('id, name, sku, stock, cost_price')
-            .eq('id', id)
-            .single();
-
-          if (pErr || !prod) {
+          if (typeof window.supabase?.rpc !== 'function') {
             return formatResponse({
               ok: false,
-              error: { code: 'NOT_FOUND', message: 'Produk tidak ditemukan.' }
+              error: { code: 'RPC_UNAVAILABLE', message: 'Penyesuaian stok atomik tidak tersedia. Perubahan stok dibatalkan.' }
             });
           }
 
-          const currentStock = Number(prod.stock || 0);
-          const diff = targetStock - currentStock;
+          const { data: rpcRes, error: rpcErr } = await window.supabase.rpc('perform_stock_opname', {
+            p_product_id: String(id),
+            p_actual_stock: targetStock,
+            p_reason: reason,
+            p_notes: notes || ''
+          });
 
-          if (diff === 0) {
-            return formatResponse({
-              ok: true,
-              data: prod,
-              meta: { message: 'Stok sudah sesuai, tidak ada perubahan.' }
-            });
-          }
-
-          const noteText = `[STOCK OPNAME] ${reason}${notes ? ' - ' + notes : ''} (Koreksi ${diff > 0 ? '+' : ''}${diff})`;
-          const targetProductId = (typeof id === 'string' && id.includes('-')) ? id : (isNaN(Number(id)) ? id : Number(id));
-
-          // 1. Wajib catat mutasi koreksi di ledger transaksi terlebih dahulu
-          const { error: txErr } = await window.supabase
-            .from('transactions')
-            .insert([{
-              type: diff > 0 ? 'in' : 'out',
-              product_id: targetProductId,
-              qty: Math.abs(diff),
-              price: Number(prod.cost_price || 0),
-              cost_price: Number(prod.cost_price || 0),
-              channel: 'Offline',
-              note: noteText,
-              created_by: currentUserId
-            }]);
-
-          if (txErr) {
-            console.error('Gagal mencatat mutasi opname di ledger transaksi:', txErr);
+          if (rpcErr) {
             return formatResponse({
               ok: false,
               error: {
-                code: txErr.code || 'LEDGER_INSERT_ERROR',
-                message: `Gagal mencatat mutasi koreksi di ledger: ${txErr.message || 'Kesalahan database'}. Saldo produk tidak diubah untuk menjaga integritas data.`,
-                details: txErr
+                code: rpcErr.code || 'STOCK_ADJUSTMENT_ERROR',
+                message: rpcErr.message || 'Gagal mencatat penyesuaian stok.',
+                details: rpcErr
               }
             });
           }
 
-          // 2. Saldo produk baru diperbarui setelah entri ledger berhasil dicatat
-          const { data: updated, error: uErr } = await window.supabase
-            .from('products')
-            .update({ stock: targetStock, updated_at: new Date().toISOString() })
-            .eq('id', id)
-            .select();
-
-          if (uErr) {
+          if (!rpcRes?.ok) {
             return formatResponse({
               ok: false,
-              error: { code: uErr.code || 'UPDATE_ERROR', message: uErr.message || 'Gagal memperbarui stok produk.' }
+              error: { code: 'STOCK_ADJUSTMENT_ERROR', message: 'Database tidak mengonfirmasi penyesuaian stok.' }
             });
           }
 
-          const resProd = updated && updated[0] ? updated[0] : { ...prod, stock: targetStock };
-
-          try {
-            if (typeof logAudit === 'function') {
-              logAudit('UPDATE', `Stock Opname: ${prod.name} (SKU: ${prod.sku || '-'}) disesuaikan dari ${currentStock} menjadi ${targetStock}. Alasan: ${reason}`);
-            }
-          } catch (_) {}
+          const difference = Number(rpcRes.difference || 0);
+          const previousStock = Number(rpcRes.previous_stock ?? targetStock);
 
           return formatResponse({
             ok: true,
-            data: resProd,
+            data: {
+              id,
+              stock: targetStock,
+              adjustment_id: rpcRes.adjustment_id || null
+            },
             meta: {
-              message: `Stok produk berhasil disesuaikan menjadi ${targetStock}`,
-              previousStock: currentStock,
-              difference: diff
+              message: rpcRes.message || `Stok produk berhasil disesuaikan menjadi ${targetStock}`,
+              previousStock,
+              difference
             }
           });
         } catch (err) {
@@ -442,6 +368,26 @@ export const items = {
       }
 
       return apiRequest(`/items/${id}/adjust-stock`, { method: 'POST', body: { actualStock, reason, notes }, ...opts });
+    },
+
+    getStockAdjustments: async (id, opts = {}) => {
+      if (isSupabaseAvailable()) {
+        try {
+          const { data, error } = await window.supabase
+            .from('stock_adjustments')
+            .select('id, product_id, previous_stock, actual_stock, difference, reason, notes, created_by, created_at')
+            .eq('product_id', id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (error) return formatResponse({ ok: false, error });
+          return formatResponse({ ok: true, data: data || [] });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+
+      return apiRequest(`/items/${id}/stock-adjustments`, { ...opts });
     },
 
     delete: async (id, opts) => {

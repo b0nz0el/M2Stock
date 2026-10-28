@@ -15,7 +15,9 @@ Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yan
 7. Untuk mencatat kanal transaksi dan mencegah stok menjadi negatif, jalankan migrasi `supabase/migrations/20261016_inventory_stock_safety.sql` melalui **SQL Editor**.
 8. Untuk mengelola kategori dan satuan stok dari menu Pengaturan, jalankan migrasi `supabase/migrations/20261016_product_units.sql` melalui **SQL Editor**.
 
-Saldo produk hanya boleh berubah melalui trigger/database transaction; frontend tidak lagi melakukan fallback update stok. Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan berurutan, termasuk `20261028_inventory_single_stock_trigger.sql`, lalu verifikasi trigger `trg_transaction_stock_update` ada dan enabled sebelum mencatat transaksi. Migrasi trigger tersebut aman dijalankan ulang, membersihkan trigger stok lama `trg_transactions_auto_stock`/fungsi stok legacy, dan tidak mengubah saldo yang telah tercatat.
+Saldo akibat barang masuk/keluar berubah melalui trigger database; frontend tidak melakukan fallback update stok. Penyesuaian stok fisik dicatat terpisah pada `stock_adjustments` dan diproses atomik melalui `perform_stock_opname`, sehingga tidak muncul sebagai penjualan/barang keluar. Terapkan migrasi `20261029_stock_adjustment_ledger.sql` setelah `20261028_inventory_single_stock_trigger.sql`. Riwayat mencatat saldo sebelum, saldo fisik, selisih, alasan, petugas, dan waktu; akses perubahan hanya melalui RPC untuk OWNER/STAFF.
+
+Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan berurutan, termasuk `20261028_inventory_single_stock_trigger.sql`, lalu verifikasi trigger `trg_transaction_stock_update` ada dan enabled sebelum mencatat transaksi. Migrasi trigger tersebut aman dijalankan ulang, membersihkan trigger stok lama `trg_transactions_auto_stock`/fungsi stok legacy, dan tidak mengubah saldo yang telah tercatat.
 
 ---
 
