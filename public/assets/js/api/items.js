@@ -28,6 +28,36 @@ export function parseItemImages(rawImageUrl, rawImages) {
   return [];
 }
 
+export function parseItemChannels(rawChannel, rawChannelLink, localMeta) {
+  // 1. Cek dari localMeta.channels jika sudah ada array
+  if (localMeta && Array.isArray(localMeta.channels) && localMeta.channels.length > 0) {
+    return localMeta.channels.filter(c => c && typeof c === 'object' && c.channel);
+  }
+
+  // 2. Cek jika rawChannelLink berupa JSON array
+  if (typeof rawChannelLink === 'string') {
+    const trimmed = rawChannelLink.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter(c => c && typeof c === 'object' && c.channel);
+        }
+      } catch (_) {}
+    }
+  }
+
+  // 3. Fallback jika ada channel_link atau rawChannel tunggal
+  const effectiveCh = (rawChannel && rawChannel !== 'Offline') ? rawChannel : ((localMeta && localMeta.channel) || rawChannel || 'Offline');
+  const effectiveLk = (typeof rawChannelLink === 'string' && !rawChannelLink.startsWith('[') ? rawChannelLink : (localMeta && localMeta.channel_link)) || '';
+
+  if (effectiveLk || (effectiveCh && effectiveCh !== 'Offline')) {
+    return [{ channel: effectiveCh, link: effectiveLk }];
+  }
+
+  return [];
+}
+
 export function getLocalChannelMeta(id, sku) {
   try {
     if (typeof localStorage === 'undefined') return null;
@@ -35,22 +65,42 @@ export function getLocalChannelMeta(id, sku) {
     if (!raw) return null;
     const map = JSON.parse(raw);
     if (!map || typeof map !== 'object') return null;
-    if (id && map[String(id)]) return map[String(id)];
-    if (sku && map['sku:' + String(sku).trim().toLowerCase()]) return map['sku:' + String(sku).trim().toLowerCase()];
-    return null;
+    let entry = null;
+    if (id && map[String(id)]) entry = map[String(id)];
+    if (!entry && sku && map['sku:' + String(sku).trim().toLowerCase()]) entry = map['sku:' + String(sku).trim().toLowerCase()];
+    if (entry && !Array.isArray(entry.channels)) {
+      entry.channels = entry.channel ? [{ channel: entry.channel, link: entry.channel_link || '' }] : [];
+    }
+    return entry;
   } catch (_) {
     return null;
   }
 }
 
-export function saveLocalChannelMeta(id, sku, channel, channel_link) {
+export function saveLocalChannelMeta(id, sku, channel, channel_link, channels = null) {
   try {
     if (typeof localStorage === 'undefined') return;
     const raw = localStorage.getItem('aquastock_product_channels');
     const map = raw ? JSON.parse(raw) : {};
+
+    let formattedChannels = Array.isArray(channels) ? channels.filter(c => c && c.channel) : null;
+    if (!formattedChannels && channel_link && typeof channel_link === 'string' && channel_link.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(channel_link);
+        if (Array.isArray(parsed)) formattedChannels = parsed;
+      } catch (_) {}
+    }
+    if (!formattedChannels && (channel || channel_link)) {
+      formattedChannels = [{ channel: channel || 'Offline', link: channel_link || '' }];
+    }
+
+    const primaryChannel = (formattedChannels && formattedChannels[0]?.channel) || channel || 'Offline';
+    const primaryLink = (formattedChannels && formattedChannels[0]?.link) || (typeof channel_link === 'string' && !channel_link.startsWith('[') ? channel_link : '');
+
     const entry = {
-      channel: channel || 'Offline',
-      channel_link: channel_link || '',
+      channel: primaryChannel,
+      channel_link: primaryLink,
+      channels: formattedChannels || [],
       updated_at: Date.now()
     };
     if (id) map[String(id)] = entry;
@@ -60,6 +110,7 @@ export function saveLocalChannelMeta(id, sku, channel, channel_link) {
 }
 
 if (typeof window !== 'undefined') {
+  window.parseItemChannels = parseItemChannels;
   window.getLocalChannelMeta = getLocalChannelMeta;
   window.saveLocalChannelMeta = saveLocalChannelMeta;
 }
@@ -67,6 +118,7 @@ if (typeof window !== 'undefined') {
 export const items = {
   getLocalChannelMeta,
   saveLocalChannelMeta,
+  parseItemChannels,
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
         try {
@@ -103,8 +155,9 @@ export const items = {
             const itemImages = parseItemImages(item.image_url, item.images);
             const primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
             const localMeta = getLocalChannelMeta(item.id, item.sku);
-            const effectiveChannel = (item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline');
-            const effectiveLink = item.channel_link || (localMeta && localMeta.channel_link) || '';
+            const channels = parseItemChannels(item.channel, item.channel_link, localMeta);
+            const effectiveChannel = (channels[0]?.channel) || ((item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline'));
+            const effectiveLink = (channels[0]?.link) || (typeof item.channel_link === 'string' && !item.channel_link.startsWith('[') ? item.channel_link : (localMeta && localMeta.channel_link)) || '';
             return {
               id: item.id,
               sku: item.sku || '',
@@ -125,6 +178,7 @@ export const items = {
               unitPrice: Number(item.sell_price) || 0,
               channel: effectiveChannel,
               channel_link: effectiveLink,
+              channels: channels,
               image_url: primaryImageUrl,
               images: itemImages,
               created_at: item.created_at,
@@ -179,8 +233,9 @@ export const items = {
           const itemImages = parseItemImages(data.image_url, data.images);
           const primaryImageUrl = itemImages[0] || (typeof data.image_url === 'string' && !data.image_url.startsWith('[') ? data.image_url : null);
           const localMeta = getLocalChannelMeta(data.id, data.sku);
-          const effectiveChannel = (data.channel && data.channel !== 'Offline') ? data.channel : ((localMeta && localMeta.channel) || data.channel || 'Offline');
-          const effectiveLink = data.channel_link || (localMeta && localMeta.channel_link) || '';
+          const channels = parseItemChannels(data.channel, data.channel_link, localMeta);
+          const effectiveChannel = (channels[0]?.channel) || ((data.channel && data.channel !== 'Offline') ? data.channel : ((localMeta && localMeta.channel) || data.channel || 'Offline'));
+          const effectiveLink = (channels[0]?.link) || (typeof data.channel_link === 'string' && !data.channel_link.startsWith('[') ? data.channel_link : (localMeta && localMeta.channel_link)) || '';
           const mapped = {
             id: data.id,
             sku: data.sku || '',
@@ -201,6 +256,7 @@ export const items = {
             unitPrice: Number(data.sell_price) || 0,
             channel: effectiveChannel,
             channel_link: effectiveLink,
+            channels: channels,
             image_url: primaryImageUrl,
             images: itemImages,
             created_at: data.created_at,
@@ -227,6 +283,12 @@ export const items = {
             resolvedImageUrl = data.images.length === 1 ? data.images[0] : JSON.stringify(data.images);
           }
 
+          const formattedChannels = Array.isArray(data.channels) ? data.channels.filter(c => c && c.channel) : null;
+          const primaryChannel = (formattedChannels && formattedChannels[0]?.channel) || data.channel || 'Offline';
+          const primaryChannelLink = (formattedChannels && formattedChannels.length > 1)
+            ? JSON.stringify(formattedChannels)
+            : ((formattedChannels && formattedChannels[0]?.link) || data.channel_link || null);
+
           const row = {
             name: data.name,
             sku: data.sku || data.code || null,
@@ -234,8 +296,8 @@ export const items = {
             category_id: data.category_id ? Number(data.category_id) : null,
             unit_id: data.unit_id ? Number(data.unit_id) : 1,
             brand: data.brand || null,
-            channel: data.channel || 'Offline',
-            channel_link: data.channel_link || null,
+            channel: primaryChannel,
+            channel_link: primaryChannelLink,
             stock: data.stock !== undefined ? Number(data.stock) : 0,
             min_stock: (data.min_stock !== undefined ? data.min_stock : data.minStock) !== undefined ? Number(data.min_stock || data.minStock) : 0,
             cost_price: (data.cost_price !== undefined ? data.cost_price : data.costPrice) !== undefined ? Number(data.cost_price || data.costPrice) : 0,
@@ -276,11 +338,12 @@ export const items = {
             });
           }
 
-          const newProd = inserted && inserted[0] ? inserted[0] : null;
-          saveLocalChannelMeta(newProd?.id, newProd?.sku || data.sku, data.channel, data.channel_link);
+          const newProd = inserted && inserted[0] ? { ...inserted[0] } : null;
+          saveLocalChannelMeta(newProd?.id, newProd?.sku || data.sku, primaryChannel, primaryChannelLink, formattedChannels);
           if (newProd) {
-            newProd.channel = data.channel || 'Offline';
-            newProd.channel_link = data.channel_link || '';
+            newProd.channel = primaryChannel;
+            newProd.channel_link = primaryChannelLink || '';
+            newProd.channels = formattedChannels || [{ channel: primaryChannel, link: primaryChannelLink || '' }];
           }
           try {
             if (typeof logAudit === 'function') {
@@ -297,7 +360,12 @@ export const items = {
           return handleError(err);
         }
       }
-      saveLocalChannelMeta(data.id, data.sku, data.channel, data.channel_link);
+      const formattedChannels = Array.isArray(data.channels) ? data.channels.filter(c => c && c.channel) : null;
+      const primaryChannel = (formattedChannels && formattedChannels[0]?.channel) || data.channel || 'Offline';
+      const primaryChannelLink = (formattedChannels && formattedChannels.length > 1)
+        ? JSON.stringify(formattedChannels)
+        : ((formattedChannels && formattedChannels[0]?.link) || data.channel_link || null);
+      saveLocalChannelMeta(data.id, data.sku, primaryChannel, primaryChannelLink, formattedChannels);
       return apiRequest('/items', { method: 'POST', body: data, ...opts });
     },
 
@@ -322,6 +390,14 @@ export const items = {
             }
             delete row.images;
           }
+
+          const formattedChannels = Array.isArray(data.channels) ? data.channels.filter(c => c && c.channel) : null;
+          if (formattedChannels) {
+            row.channel = formattedChannels[0]?.channel || 'Offline';
+            row.channel_link = formattedChannels.length > 1 ? JSON.stringify(formattedChannels) : (formattedChannels[0]?.link || null);
+          }
+          delete row.channels;
+
           delete row.id;
           delete row.categories;
           delete row.units;
@@ -364,11 +440,14 @@ export const items = {
             });
           }
 
-          const updatedProd = updated && updated[0] ? updated[0] : null;
-          saveLocalChannelMeta(id, data.sku, data.channel, data.channel_link);
+          const updatedProd = updated && updated[0] ? { ...updated[0] } : null;
+          const finalChannel = formattedChannels ? (formattedChannels[0]?.channel || 'Offline') : (row.channel || data.channel || 'Offline');
+          const finalLink = formattedChannels ? (formattedChannels.length > 1 ? JSON.stringify(formattedChannels) : (formattedChannels[0]?.link || '')) : (row.channel_link || data.channel_link || '');
+          saveLocalChannelMeta(id, data.sku, finalChannel, finalLink, formattedChannels);
           if (updatedProd) {
-            updatedProd.channel = data.channel || 'Offline';
-            updatedProd.channel_link = data.channel_link || '';
+            updatedProd.channel = finalChannel;
+            updatedProd.channel_link = finalLink;
+            updatedProd.channels = formattedChannels || parseItemChannels(updatedProd.channel, updatedProd.channel_link, { channel: finalChannel, channel_link: finalLink });
           }
           try {
             if (typeof logAudit === 'function') {
@@ -385,7 +464,10 @@ export const items = {
           return handleError(err);
         }
       }
-      saveLocalChannelMeta(id, data.sku, data.channel, data.channel_link);
+      const formattedChannels = Array.isArray(data.channels) ? data.channels.filter(c => c && c.channel) : null;
+      const finalChannel = formattedChannels ? (formattedChannels[0]?.channel || 'Offline') : (data.channel || 'Offline');
+      const finalLink = formattedChannels ? (formattedChannels.length > 1 ? JSON.stringify(formattedChannels) : (formattedChannels[0]?.link || '')) : (data.channel_link || '');
+      saveLocalChannelMeta(id, data.sku, finalChannel, finalLink, formattedChannels);
       return apiRequest(`/items/${id}`, { method: 'PUT', body: data, ...opts });
     },
 

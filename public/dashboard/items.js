@@ -426,25 +426,199 @@
     }
   }
 
-  function renderChannelBadgeHtml(channel, link) {
-    const cfg = getChannelBadgeConfig(channel, link);
-    if (!cfg) return '';
-
-    if (cfg.hasLink) {
-      return `
-        <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}">
-          <span>${escapeHtml(cfg.label)}</span>
-          <i data-lucide="external-link" class="w-3 h-3 opacity-80" aria-hidden="true"></i>
-        </a>
-      `;
+  function renderChannelBadgeHtml(channel, link, channels = null) {
+    let channelList = [];
+    if (Array.isArray(channels) && channels.length > 0) {
+      channelList = channels.filter(c => c && c.channel);
+    } else {
+      const parser = (typeof parseItemChannels === 'function')
+        ? parseItemChannels
+        : ((typeof Api !== 'undefined' && Api.items?.parseItemChannels) ? Api.items.parseItemChannels : null);
+      if (typeof parser === 'function') {
+        const parsed = parser(channel, link, null);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          channelList = parsed;
+        }
+      }
+      if (channelList.length === 0 && (channel || link)) {
+        channelList = [{ channel: channel || 'Offline', link: link || '' }];
+      }
     }
 
-    return `
-      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border ${cfg.badgeClasses}">
-        <span>${escapeHtml(cfg.label)}</span>
-      </span>
-    `;
+    if (!channelList || channelList.length === 0) return '';
+
+    return channelList.map(item => {
+      const cfg = getChannelBadgeConfig(item.channel, item.link);
+      if (!cfg) return '';
+      if (cfg.hasLink) {
+        return `
+          <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}">
+            <span>${escapeHtml(cfg.label)}</span>
+            <i data-lucide="external-link" class="w-3 h-3 opacity-80" aria-hidden="true"></i>
+          </a>
+        `;
+      }
+      return `
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border ${cfg.badgeClasses}">
+          <span>${escapeHtml(cfg.label)}</span>
+        </span>
+      `;
+    }).join(' ');
   }
+
+  const AVAILABLE_CHANNELS = ['Offline', 'Shopee', 'Tokopedia', 'TikTok Shop', 'Lazada', 'WhatsApp'];
+  let itemChannelsState = [];
+
+  function syncLegacyChannelInputs() {
+    const chSelect = document.getElementById('item-channel');
+    const chLink = document.getElementById('item-channel-link');
+    const btnOpen = document.getElementById('btn-open-channel-link');
+
+    const first = (Array.isArray(itemChannelsState) && itemChannelsState[0]) || { channel: 'Offline', link: '' };
+    if (chSelect) chSelect.value = first.channel || 'Offline';
+    if (chLink) chLink.value = first.link || '';
+    if (btnOpen) {
+      const formatted = formatChannelUrl(first.link);
+      if (formatted) {
+        btnOpen.href = formatted;
+        btnOpen.classList.remove('hidden');
+        btnOpen.classList.add('inline-flex');
+      } else {
+        btnOpen.classList.add('hidden');
+        btnOpen.classList.remove('inline-flex');
+        btnOpen.href = '#';
+      }
+    }
+  }
+
+  function bindItemChannelRowEvents() {
+    const container = document.getElementById('item-channels-list');
+    if (!container) return;
+
+    container.querySelectorAll('.item-channel-select').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const idx = Number(e.target.getAttribute('data-index'));
+        if (itemChannelsState[idx]) {
+          itemChannelsState[idx].channel = e.target.value;
+          syncLegacyChannelInputs();
+        }
+      });
+    });
+
+    container.querySelectorAll('.item-channel-url').forEach(inp => {
+      const handleUrlInput = (e) => {
+        const idx = Number(e.target.getAttribute('data-index'));
+        const val = e.target.value.trim();
+        if (itemChannelsState[idx]) {
+          itemChannelsState[idx].link = val;
+        }
+        const row = e.target.closest('.channel-row');
+        if (row) {
+          const openBtn = row.querySelector('.btn-channel-row-open');
+          const formatted = formatChannelUrl(val);
+          if (openBtn) {
+            if (formatted) {
+              openBtn.href = formatted;
+              openBtn.classList.remove('hidden');
+              openBtn.classList.add('inline-flex');
+            } else {
+              openBtn.classList.add('hidden');
+              openBtn.classList.remove('inline-flex');
+              openBtn.href = '#';
+            }
+          }
+        }
+        syncLegacyChannelInputs();
+      };
+      inp.addEventListener('input', handleUrlInput);
+      inp.addEventListener('change', handleUrlInput);
+    });
+
+    container.querySelectorAll('.btn-channel-row-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const row = e.currentTarget.closest('.channel-row');
+        const idx = Number(row?.getAttribute('data-index') ?? e.currentTarget.getAttribute('data-index'));
+        if (!isNaN(idx) && idx >= 0 && idx < itemChannelsState.length) {
+          itemChannelsState.splice(idx, 1);
+          renderItemChannelsList();
+        }
+      });
+    });
+  }
+
+  function renderItemChannelsList() {
+    const container = document.getElementById('item-channels-list');
+    if (!container) return;
+
+    if (!Array.isArray(itemChannelsState) || itemChannelsState.length === 0) {
+      container.innerHTML = `
+        <div class="p-3 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-xl">
+          <p class="text-xs text-[#A0A0A5]">Belum ada saluran penjualan ditambahkan.</p>
+          <button type="button" class="mt-1.5 text-xs text-[#32ADE6] hover:underline font-medium cursor-pointer inline-flex items-center gap-1" onclick="window.addItemChannelRow && window.addItemChannelRow()">
+            <i data-lucide="plus" class="w-3 h-3"></i> Tambah Saluran Pertama
+          </button>
+        </div>
+      `;
+      syncLegacyChannelInputs();
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+      return;
+    }
+
+    container.innerHTML = itemChannelsState.map((ch, idx) => {
+      const channelVal = ch.channel || 'Offline';
+      const linkVal = ch.link || '';
+      const formattedLink = formatChannelUrl(linkVal);
+      const hasValidLink = Boolean(formattedLink);
+
+      const optionsHtml = AVAILABLE_CHANNELS.map(opt => `
+        <option value="${escapeHtml(opt)}" ${opt === channelVal ? 'selected' : ''}>${escapeHtml(opt)}</option>
+      `).join('');
+
+      return `
+        <div class="channel-row p-2.5 bg-white/[0.02] border border-white/10 hover:border-white/20 rounded-xl flex flex-col sm:flex-row sm:items-center gap-2 transition" data-index="${idx}">
+          <div class="w-full sm:w-44 shrink-0">
+            <select class="item-channel-select w-full bg-[#1C1C1E] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-[#0088CC] focus:outline-none transition cursor-pointer" data-index="${idx}" aria-label="Pilih Saluran Penjualan">
+              ${optionsHtml}
+            </select>
+          </div>
+          <div class="flex-1 min-w-0">
+            <input type="url" class="item-channel-url w-full bg-[#1C1C1E] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-[#636366] focus:border-[#0088CC] focus:outline-none transition" placeholder="Masukkan URL produk (mis. shopee.co.id/...)" value="${escapeHtml(linkVal)}" data-index="${idx}" aria-label="URL Produk Saluran">
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0 justify-end sm:justify-start">
+            <a href="${hasValidLink ? escapeHtml(formattedLink) : '#'}" target="_blank" rel="noopener noreferrer" class="btn-channel-row-open ${hasValidLink ? 'inline-flex' : 'hidden'} px-2.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white hover:text-[#32ADE6] rounded-lg text-xs font-medium items-center gap-1 transition active:scale-95" title="Buka Link Produk" data-index="${idx}">
+              <i data-lucide="external-link" class="w-3.5 h-3.5" aria-hidden="true"></i>
+              <span class="hidden md:inline text-[11px]">Buka</span>
+            </a>
+            <button type="button" class="btn-channel-row-delete p-2 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] hover:bg-[#FF3B30]/10 border border-transparent hover:border-[#FF3B30]/20 transition cursor-pointer active:scale-95" title="Hapus Saluran" data-index="${idx}" aria-label="Hapus Saluran">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    syncLegacyChannelInputs();
+    bindItemChannelRowEvents();
+
+    if (typeof window.refreshIcons === 'function') {
+      window.refreshIcons();
+    }
+  }
+
+  function addItemChannelRow() {
+    if (!Array.isArray(itemChannelsState)) itemChannelsState = [];
+    const used = itemChannelsState.map(c => c.channel);
+    const nextCh = AVAILABLE_CHANNELS.find(ch => ch !== 'Offline' && !used.includes(ch)) || 'Shopee';
+    itemChannelsState.push({ channel: nextCh, link: '' });
+    renderItemChannelsList();
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('.item-channel-url');
+      if (inputs.length > 0) {
+        inputs[inputs.length - 1].focus();
+      }
+    }, 50);
+  }
+  window.addItemChannelRow = addItemChannelRow;
 
   function openAddItemModal() {
     const form = document.getElementById('item-form');
@@ -472,6 +646,9 @@
 
     const warnBanner = document.getElementById('item-stock-warning-banner');
     if (warnBanner) warnBanner.classList.add('hidden');
+
+    itemChannelsState = [{ channel: 'Shopee', link: '' }];
+    renderItemChannelsList();
 
     const channelSelect = document.getElementById('item-channel');
     if (channelSelect) channelSelect.value = 'Offline';
@@ -555,26 +732,20 @@
 
     const getLocalMeta = (typeof window !== 'undefined' && window.getLocalChannelMeta) ? window.getLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.getLocalChannelMeta ? Api.items.getLocalChannelMeta : null);
     const localMeta = typeof getLocalMeta === 'function' ? getLocalMeta(item.id, item.sku) : null;
-    const effectiveChannel = (item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline');
-    const effectiveLink = (item.channel_link || (localMeta && localMeta.channel_link) || '').trim();
+    const parser = (typeof window !== 'undefined' && window.parseItemChannels) ? window.parseItemChannels : (typeof Api !== 'undefined' && Api.items?.parseItemChannels ? Api.items.parseItemChannels : null);
 
-    const channelSelect = document.getElementById('item-channel');
-    if (channelSelect) channelSelect.value = effectiveChannel;
-    const channelLinkInput = document.getElementById('item-channel-link');
-    const btnOpenChannel = document.getElementById('btn-open-channel-link');
-    if (channelLinkInput) channelLinkInput.value = effectiveLink;
-    if (btnOpenChannel) {
-      const formatted = formatChannelUrl(effectiveLink);
-      if (formatted) {
-        btnOpenChannel.classList.remove('hidden');
-        btnOpenChannel.classList.add('inline-flex');
-        btnOpenChannel.href = formatted;
-      } else {
-        btnOpenChannel.classList.add('hidden');
-        btnOpenChannel.classList.remove('inline-flex');
-        btnOpenChannel.href = '#';
-      }
+    let existingChannels = (Array.isArray(item.channels) && item.channels.length > 0)
+      ? item.channels
+      : (typeof parser === 'function' ? parser(item.channel, item.channel_link, localMeta) : []);
+
+    if (!existingChannels || existingChannels.length === 0) {
+      const effectiveChannel = (item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline');
+      const effectiveLink = (item.channel_link || (localMeta && localMeta.channel_link) || '').trim();
+      existingChannels = [{ channel: effectiveChannel, link: effectiveLink }];
     }
+
+    itemChannelsState = existingChannels.map(c => ({ channel: c.channel || 'Offline', link: c.link || '' }));
+    renderItemChannelsList();
 
     const existingImages = parseProductImages(item.images || item.image_url);
     if (existingImages.length > 0) {
@@ -658,20 +829,73 @@
       const sell_price = Number(document.getElementById('item-sell-price').value);
       const min_stock = Number(document.getElementById('item-min-stock').value);
 
-      const channelSelect = document.getElementById('item-channel');
-      const channel = channelSelect ? channelSelect.value : 'Offline';
-      const channelLinkInput = document.getElementById('item-channel-link');
-      let rawChannelLink = channelLinkInput ? channelLinkInput.value.trim() : '';
-      let channel_link = null;
-      if (rawChannelLink) {
-        channel_link = formatChannelUrl(rawChannelLink);
-        if (!channel_link) {
-          if (typeof showToast === 'function') {
-            showToast('Tautan produk tidak valid. Masukkan link atau domain lengkap (mis. shopee.co.id/...)', 'warning');
+      // Read current values directly from DOM rows to capture latest edits
+      const channelRows = document.querySelectorAll('#item-channels-list .channel-row');
+      const channelsPayload = [];
+      let hasInvalidUrl = false;
+
+      if (channelRows.length > 0) {
+        channelRows.forEach((row, i) => {
+          const sel = row.querySelector('.item-channel-select');
+          const inp = row.querySelector('.item-channel-url');
+          const chName = sel ? sel.value : (itemChannelsState[i]?.channel || 'Offline');
+          const rawLink = inp ? inp.value.trim() : (itemChannelsState[i]?.link || '').trim();
+
+          if (rawLink) {
+            const validated = formatChannelUrl(rawLink);
+            if (!validated) {
+              hasInvalidUrl = true;
+            } else {
+              channelsPayload.push({ channel: chName, link: validated });
+            }
+          } else if (chName && chName !== 'Offline') {
+            channelsPayload.push({ channel: chName, link: '' });
           }
-          return;
+        });
+      } else if (Array.isArray(itemChannelsState) && itemChannelsState.length > 0) {
+        itemChannelsState.forEach(c => {
+          if (!c) return;
+          const chName = c.channel || 'Offline';
+          const rawLink = (c.link || '').trim();
+          if (rawLink) {
+            const validated = formatChannelUrl(rawLink);
+            if (!validated) {
+              hasInvalidUrl = true;
+            } else {
+              channelsPayload.push({ channel: chName, link: validated });
+            }
+          } else if (chName && chName !== 'Offline') {
+            channelsPayload.push({ channel: chName, link: '' });
+          }
+        });
+      } else {
+        const legacySelect = document.getElementById('item-channel');
+        const legacyLinkInput = document.getElementById('item-channel-link');
+        const legacyCh = legacySelect ? legacySelect.value : 'Offline';
+        const legacyLk = legacyLinkInput ? legacyLinkInput.value.trim() : '';
+        if (legacyLk) {
+          const validated = formatChannelUrl(legacyLk);
+          if (!validated) {
+            hasInvalidUrl = true;
+          } else {
+            channelsPayload.push({ channel: legacyCh, link: validated });
+          }
+        } else if (legacyCh && legacyCh !== 'Offline') {
+          channelsPayload.push({ channel: legacyCh, link: '' });
         }
       }
+
+      if (hasInvalidUrl) {
+        if (typeof showToast === 'function') {
+          showToast('Salah satu tautan produk tidak valid. Masukkan link atau domain lengkap (mis. shopee.co.id/...)', 'warning');
+        }
+        return;
+      }
+
+      const primaryChannel = (channelsPayload[0]?.channel) || 'Offline';
+      const primaryChannelLink = (channelsPayload.length > 1)
+        ? JSON.stringify(channelsPayload)
+        : (channelsPayload[0]?.link || null);
 
       if (!name) {
         if (typeof showToast === 'function') showToast('Nama barang tidak boleh kosong', 'error');
@@ -768,8 +992,9 @@
         brand: brand || null,
         category_id: category_id ? Number(category_id) : null,
         unit_id: Number(unit_id),
-        channel: channel || 'Offline',
-        channel_link: channel_link,
+        channel: primaryChannel,
+        channel_link: primaryChannelLink,
+        channels: channelsPayload,
         cost_price: cost_price,
         sell_price: sell_price,
         min_stock: min_stock,
@@ -796,7 +1021,7 @@
       const saveLocal = (typeof window !== 'undefined' && window.saveLocalChannelMeta) ? window.saveLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.saveLocalChannelMeta ? Api.items.saveLocalChannelMeta : null);
       if (typeof saveLocal === 'function') {
         const savedId = id || (res?.data && res.data.id) || null;
-        saveLocal(savedId, sku, channel, channel_link);
+        saveLocal(savedId, sku, primaryChannel, primaryChannelLink, channelsPayload);
       }
 
       closeItemModal();
@@ -1564,7 +1789,7 @@
         <td class="px-4 py-3.5 font-medium">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-white text-sm font-semibold">${escapeHtml(item.name)}</span>
-            ${renderChannelBadgeHtml(item.channel, item.channel_link)}
+            ${renderChannelBadgeHtml(item.channel, item.channel_link, item.channels)}
           </div>
         </td>
         <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
@@ -1577,11 +1802,16 @@
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
-            ${item.channel_link ? `
-              <a href="${escapeHtml(item.channel_link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml((getChannelBadgeConfig(item.channel, item.channel_link) || {}).label || item.channel || 'Marketplace')}" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml((getChannelBadgeConfig(item.channel, item.channel_link) || {}).label || item.channel || 'Marketplace')}">
-                <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
-              </a>
-            ` : ''}
+            ${(function () {
+              const chList = (Array.isArray(item.channels) && item.channels.length > 0)
+                ? item.channels.filter(c => c && c.link)
+                : (item.channel_link ? [{ channel: item.channel, link: item.channel_link }] : []);
+              return chList.map(c => `
+                <a href="${escapeHtml(c.link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}">
+                  <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+                </a>
+              `).join('');
+            })()}
             <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
             </button>
@@ -2475,6 +2705,13 @@
     };
     channelLinkInput.addEventListener('input', updateOpenButton);
     channelLinkInput.addEventListener('change', updateOpenButton);
+  }
+
+  const btnAddItemChannel = document.getElementById('btn-add-item-channel');
+  if (btnAddItemChannel) {
+    btnAddItemChannel.addEventListener('click', function () {
+      addItemChannelRow();
+    });
   }
 
   document.getElementById('btn-import-items')?.addEventListener('click', function () {

@@ -238,4 +238,91 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(res.data[0].channel).toBe('Shopee');
     expect(res.data[0].channel_link).toBe('https://shopee.co.id/ikan-cupang');
   });
+
+  it('Multi-Channel CRUD: index.html menyediakan container #item-channels-list dan tombol #btn-add-item-channel', () => {
+    const htmlPath = path.resolve(__dirname, '../public/dashboard/index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    expect(html).toContain('id="item-channels-list"');
+    expect(html).toContain('id="btn-add-item-channel"');
+    expect(html).toContain('Tambah Saluran');
+  });
+
+  it('Api.items.parseItemChannels mengurai JSON array string, string tunggal, dan localMeta dengan benar', () => {
+    const parse = Api.items.parseItemChannels;
+    expect(typeof parse).toBe('function');
+
+    // JSON array string
+    const jsonStr = JSON.stringify([
+      { channel: 'Shopee', link: 'https://shopee.co.id/item-1' },
+      { channel: 'Tokopedia', link: 'https://tokopedia.com/item-1' }
+    ]);
+    const res1 = parse('Shopee', jsonStr);
+    expect(res1).toHaveLength(2);
+    expect(res1[0].channel).toBe('Shopee');
+    expect(res1[1].channel).toBe('Tokopedia');
+
+    // Single link string
+    const res2 = parse('Tokopedia', 'https://tokopedia.com/single');
+    expect(res2).toEqual([{ channel: 'Tokopedia', link: 'https://tokopedia.com/single' }]);
+
+    // Fallback localMeta channels
+    const localMeta = {
+      channels: [
+        { channel: 'TikTok Shop', link: 'https://shop.tiktok.com/item-x' },
+        { channel: 'WhatsApp', link: 'https://wa.me/628123456789' }
+      ]
+    };
+    const res3 = parse(null, null, localMeta);
+    expect(res3).toHaveLength(2);
+    expect(res3[0].channel).toBe('TikTok Shop');
+    expect(res3[1].channel).toBe('WhatsApp');
+
+    // Offline / Kosong
+    const res4 = parse('Offline', '');
+    expect(res4).toEqual([]);
+  });
+
+  it('Multi-Channel CRUD: saveLocalChannelMeta dan getLocalChannelMeta mendukung array channels', () => {
+    const channels = [
+      { channel: 'Shopee', link: 'https://shopee.co.id/ikan' },
+      { channel: 'Tokopedia', link: 'https://tokopedia.com/ikan' }
+    ];
+    Api.items.saveLocalChannelMeta(101, 'SKU-MULTI', 'Shopee', JSON.stringify(channels), channels);
+    const stored = Api.items.getLocalChannelMeta(101, 'SKU-MULTI');
+    expect(stored).not.toBeNull();
+    expect(stored.channel).toBe('Shopee');
+    expect(stored.channels).toHaveLength(2);
+    expect(stored.channels[1].channel).toBe('Tokopedia');
+  });
+
+  it('Api.items.create dan update menyimpan channels array ke channel_link sebagai JSON jika memiliki banyak channel', async () => {
+    const channels = [
+      { channel: 'Shopee', link: 'https://shopee.co.id/ikan-hias' },
+      { channel: 'TikTok Shop', link: 'https://tiktok.com/@aqua/item' }
+    ];
+    const selectMock = vi.fn().mockResolvedValue({
+      data: [{ id: 105, name: 'Ikan Guppy', channel: 'Shopee', channel_link: JSON.stringify(channels) }],
+      error: null
+    });
+    const insertMock = vi.fn().mockReturnValue({ select: selectMock });
+    const fromMock = vi.fn().mockReturnValue({ insert: insertMock });
+    window.supabase = { from: fromMock };
+
+    const res = await Api.items.create({
+      name: 'Ikan Guppy',
+      sku: 'GUP-001',
+      channels: channels,
+      sell_price: 15000,
+      cost_price: 8000
+    });
+
+    expect(res.ok).toBe(true);
+    expect(insertMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        channel: 'Shopee',
+        channel_link: JSON.stringify(channels)
+      })
+    ]);
+  });
 });
