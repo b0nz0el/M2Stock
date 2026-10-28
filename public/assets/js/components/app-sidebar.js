@@ -590,11 +590,11 @@ class AppSidebar extends HTMLElement {
           </a>
           <button type="button" onclick="window.checkForPwaUpdate()" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#32ADE6] hover:bg-[#32ADE6]/10 transition cursor-pointer" data-action="check-update" title="Periksa dan update pembaruan PWA">
             <i data-lucide="refresh-cw" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Cek Pembaruan
-            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold">v3.4.35</span>
+            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold" data-app-version-sidebar>v3.4.35</span>
           </button>
 
           <!-- Tombol Keluar Langsung di Drawer Mobile -->
-          <button type="button" data-action="logout" class="md:hidden w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#FF453A] hover:bg-[#FF453A]/10 border border-[#FF453A]/20 transition mt-4 mb-2">
+          <button type="button" data-action="logout" class="sidebar-drawer-logout w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#FF453A] hover:bg-[#FF453A]/10 border border-[#FF453A]/20 transition mt-4 mb-2">
             <i data-lucide="log-out" class="w-4 h-4 text-[#FF453A]" aria-hidden="true"></i>
             <span>Keluar dari Akun</span>
           </button>
@@ -608,7 +608,7 @@ class AppSidebar extends HTMLElement {
             <span id="sidebar-user-role" class="badge bg-[#0088CC]/20 text-[#32ADE6]">OWNER</span>
           </div>
           <button type="button" data-action="logout" title="Keluar / Logout" aria-label="Keluar / Logout"
-                  class="p-2 hover:bg-[#FF3B30]/15 rounded-lg text-[#A0A0A5] hover:text-[#FF3B30] transition flex-shrink-0">
+                  class="w-11 h-11 bg-[#FF453A]/10 hover:bg-[#FF453A]/15 rounded-xl text-[#FF453A] hover:text-[#FF3B30] border border-[#FF453A]/20 transition flex-shrink-0 grid place-items-center">
             <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
           </button>
         </div>

@@ -458,23 +458,77 @@ if (typeof window !== 'undefined') {
 
 /* ═══ PWA Service Worker Registration & Seamless Auto-Update Engine ═══ */
 (function registerPwaServiceWorker() {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+  if (typeof window === 'undefined') return;
 
+  const supportsServiceWorker = 'serviceWorker' in navigator;
   let isRefreshing = false;
 
-  // 1. Otomatis reload halaman saat Service Worker baru aktif mengambil alih kontrol
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (isRefreshing) return;
-    isRefreshing = true;
-    window.location.reload();
-  });
+  if (supportsServiceWorker) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      window.location.reload();
+    });
+  }
 
   function promptAndActivate(worker) {
     if (!worker) return;
     worker.postMessage({ type: 'SKIP_WAITING' });
   }
 
+  const installedVersion = document.querySelector('meta[name="app-version"]')?.content || '';
+
+  function renderVersionStatus(release) {
+    const badge = document.querySelector('[data-app-version-badge]');
+    const localVersion = document.querySelector('[data-app-version-local]');
+    const syncStatus = document.getElementById('github-version-status');
+    const sidebarVersion = document.querySelector('[data-app-version-sidebar]');
+    const isCurrent = release.version === installedVersion;
+
+    if (badge) {
+      badge.textContent = `v${installedVersion} (${isCurrent ? 'Terkini' : 'Pembaruan tersedia'})`;
+      badge.classList.toggle('is-update-available', !isCurrent);
+    }
+    if (localVersion) localVersion.textContent = `Aquastock Pro v${installedVersion} (PWA Local-First)`;
+    if (sidebarVersion) sidebarVersion.textContent = `v${installedVersion}`;
+    if (syncStatus) {
+      syncStatus.textContent = isCurrent
+        ? `GitHub ${release.branch} v${release.version} · sinkron`
+        : `GitHub ${release.branch} v${release.version} · versi aplikasi v${installedVersion}`;
+    }
+    window.AQUASTOCK_RELEASE_VERSION = release.version;
+  }
+
+  async function fetchReleaseVersion() {
+    const response = await fetch(`/version.json?check=${Date.now()}`, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' }
+    });
+    if (!response.ok) throw new Error(`Pemeriksaan versi gagal (HTTP ${response.status})`);
+    const release = await response.json();
+    if (!release || !/^\d+\.\d+\.\d+$/.test(release.version || '') ||
+        release.repository !== 'b0nz0el/aquastock-pro' || !release.branch) {
+      throw new Error('Metadata versi GitHub tidak valid');
+    }
+    renderVersionStatus(release);
+    return release;
+  }
+
+  function showUpdateToast(message, type) {
+    if (typeof showToast === 'function') showToast(message, type);
+  }
+
+  const syncStatus = document.getElementById('github-version-status');
+  if (syncStatus) {
+    fetchReleaseVersion().catch((error) => {
+      console.warn('[PWA] Release version check failed:', error);
+      syncStatus.textContent = `GitHub main belum dapat diperiksa · aplikasi v${installedVersion}`;
+    });
+  }
+
   window.addEventListener('load', () => {
+    if (!supportsServiceWorker) return;
     navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((reg) => {
       // 2. Periksa pembaruan segera saat aplikasi dimuat
       try { reg.update(); } catch (_) {}
@@ -517,42 +571,79 @@ if (typeof window !== 'undefined') {
     });
   });
 
-  // Tombol bantuan manual untuk memeriksa pembaruan di UI
   window.checkForPwaUpdate = async function () {
-    if (typeof showToast === 'function') {
-      showToast('Memeriksa versi terbaru ke server Cloudflare...', 'loading');
-    }
-    try {
-      // 1. Bersihkan semua cache Service Worker lama
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
+    const buttons = document.querySelectorAll('[data-action="check-update"]');
+    buttons.forEach((button) => {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+    });
+    showUpdateToast('Memeriksa versi rilis GitHub main...', 'loading');
 
-      // 2. Jika serviceWorker aktif, periksa update registrasi
-      if ('serviceWorker' in navigator) {
+    try {
+      const release = await fetchReleaseVersion();
+      const versionDiffers = release.version !== installedVersion;
+
+      if (supportsServiceWorker) {
         const reg = await navigator.serviceWorker.getRegistration();
         if (reg) {
           await reg.update();
           if (reg.waiting) {
             promptAndActivate(reg.waiting);
+            showUpdateToast(`Pembaruan v${release.version} ditemukan. Aplikasi sedang dimuat ulang...`, 'info');
             return;
           }
           if (reg.installing) {
-            promptAndActivate(reg.installing);
+            const worker = reg.installing;
+            const state = await new Promise((resolve) => {
+              const timeout = setTimeout(() => resolve(worker.state), 20000);
+              const onStateChange = () => {
+                if (['installed', 'activated', 'redundant'].includes(worker.state)) {
+                  clearTimeout(timeout);
+                  worker.removeEventListener('statechange', onStateChange);
+                  resolve(worker.state);
+                }
+              };
+              worker.addEventListener('statechange', onStateChange);
+              onStateChange();
+            });
+            if (state === 'installed' && navigator.serviceWorker.controller) {
+              promptAndActivate(worker);
+              showUpdateToast(`Pembaruan v${release.version} ditemukan. Aplikasi sedang dimuat ulang...`, 'info');
+              return;
+            }
+            if (state === 'activated') {
+              window.location.reload();
+              return;
+            }
+            if (state === 'redundant') {
+              throw new Error('Service Worker pembaruan gagal dipasang');
+            }
+            showUpdateToast('Pembaruan sedang diunduh. Silakan coba kembali sebentar lagi.', 'info');
             return;
           }
         }
       }
-      if (typeof showToast === 'function') {
-        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.35)!', 'success');
+
+      if (versionDiffers) {
+        if (!supportsServiceWorker) {
+          showUpdateToast(`Versi v${release.version} tersedia. Halaman akan dimuat ulang.`, 'info');
+          setTimeout(() => window.location.reload(), 700);
+          return;
+        }
+        throw new Error(`GitHub main sudah v${release.version}, tetapi worker pembaruan belum tersedia`);
       }
-      setTimeout(() => {
-        window.location.reload();
-      }, 700);
-    } catch (e) {
-      console.warn('[PWA] Manual update check error:', e);
-      window.location.reload();
+
+      showUpdateToast(`Aquastock Pro v${installedVersion} sudah sinkron dengan GitHub main.`, 'success');
+    } catch (error) {
+      console.warn('[PWA] Manual update check error:', error);
+      const status = document.getElementById('github-version-status');
+      if (status) status.textContent = `Pemeriksaan pembaruan gagal · aplikasi v${installedVersion}`;
+      showUpdateToast(error.message || 'Pemeriksaan pembaruan gagal. Silakan coba kembali.', 'error');
+    } finally {
+      buttons.forEach((button) => {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+      });
     }
   };
 })();
@@ -829,6 +920,5 @@ if (typeof module !== 'undefined' && module.exports) {
     setImageViewerIndex
   };
 }
-
 
 

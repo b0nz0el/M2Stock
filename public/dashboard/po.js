@@ -56,7 +56,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     return note;
   }
 
-  function resolvePoSupplierName(item) {
+  function isAutomaticRestockPO(item) {
     const supplierName = item.supplier_nama || item.suppliers?.name || '';
     const supplierNameLower = supplierName.toLowerCase();
     const hasLinkedSupplier = item.supplier_id != null || item.suppliers?.id != null;
@@ -70,10 +70,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       'restock assistant'
     ].includes(supplierNameLower);
 
-    if (isAutoRestock && (!supplierName || (!hasLinkedSupplier && isGenericRestockName))) {
-      return RESTOCK_ASSISTANT_LABEL;
-    }
+    return isAutoRestock && (!supplierName || (!hasLinkedSupplier && isGenericRestockName));
+  }
 
+  function resolvePoSupplierName(item) {
+    if (isAutomaticRestockPO(item)) return RESTOCK_ASSISTANT_LABEL;
+    const supplierName = item.supplier_nama || item.suppliers?.name || '';
     return supplierName || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
   }
 
@@ -482,6 +484,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     const docNo = document.getElementById('doc-po-no');
     const docSupplier = document.getElementById('doc-po-supplier');
+    const docSupplierSubtitle = document.getElementById('doc-po-supplier-subtitle');
     const docSupplierNotes = document.getElementById('doc-po-supplier-notes');
     const docDate = document.getElementById('doc-po-date');
     const docStatus = document.getElementById('doc-po-status');
@@ -490,7 +493,15 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const tbody = document.getElementById('doc-po-items-tbody');
 
     if (docNo) docNo.textContent = noPO;
-    if (docSupplier) docSupplier.textContent = supplierName;
+    if (docSupplier) {
+      docSupplier.textContent = isAutomaticRestockPO(item)
+        ? 'Restock otomatis dari daftar stok menipis'
+        : supplierName;
+    }
+    if (docSupplierSubtitle) {
+      docSupplierSubtitle.textContent = '(Restock Assistant)';
+      docSupplierSubtitle.classList.toggle('hidden', !isAutomaticRestockPO(item));
+    }
     if (docSupplierNotes) docSupplierNotes.textContent = item.supplier_kontak || item.suppliers?.phone || 'Pemasok Terdaftar';
     if (docDate) docDate.textContent = tanggalPO;
     if (docStatus) docStatus.textContent = status;

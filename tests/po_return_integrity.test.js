@@ -281,6 +281,11 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(poJs).toContain("const supplierName = resolvePoSupplierName(item);");
       expect(poJs).toContain('const supplierName = resolvePoSupplierName(p) || \'-\';');
       expect(poJs).toContain('resolvePoSupplierName(p) || p.catatan');
+      expect(poJs).toContain("'Restock otomatis dari daftar stok menipis'");
+      expect(poJs).toContain("docSupplierSubtitle.textContent = '(Restock Assistant)'");
+
+      const indexHtml = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/index.html'), 'utf-8');
+      expect(indexHtml).toContain('id="doc-po-supplier-subtitle"');
     });
 
     it('memastikan template index.html menggunakan po-signatures-grid flex row untuk 3 tanda tangan di A4', async () => {

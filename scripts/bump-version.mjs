@@ -46,7 +46,16 @@ pkg.version = newVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
 console.log(`  ✓ Updated package.json → ${newVersion}`);
 
-// 4. Update public/sw.js
+// 4. Publish version metadata for the app's same-origin update check
+const versionPath = path.join(rootDir, 'public/version.json');
+fs.writeFileSync(versionPath, JSON.stringify({
+  version: newVersion,
+  repository: 'b0nz0el/aquastock-pro',
+  branch: 'main'
+}, null, 2) + '\n', 'utf8');
+console.log(`  ✓ Updated public/version.json → ${newVersion}`);
+
+// 5. Update public/sw.js
 const swPath = path.join(rootDir, 'public/sw.js');
 if (fs.existsSync(swPath)) {
   let swContent = fs.readFileSync(swPath, 'utf8');
@@ -55,46 +64,36 @@ if (fs.existsSync(swPath)) {
   console.log(`  ✓ Updated public/sw.js → CACHE_NAME: aquastock-v${newVersion}-pwa`);
 }
 
-// 5. Update public/assets/js/components/app-sidebar.js
+// 6. Update public/assets/js/components/app-sidebar.js
 const sidebarPath = path.join(rootDir, 'public/assets/js/components/app-sidebar.js');
 if (fs.existsSync(sidebarPath)) {
   let sidebarContent = fs.readFileSync(sidebarPath, 'utf8');
   sidebarContent = sidebarContent.replace(
-    /(<span class="ml-auto text-\[10px\] bg-\[#32ADE6\]\/15 text-\[#32ADE6\] px-1\.5 py-0\.5 rounded font-mono font-semibold">)v[0-9.]+(<\/span>)/,
+    /(<span class="[^"]*" data-app-version-sidebar>)v[0-9.]+(<\/span>)/,
     `$1v${newVersion}$2`
   );
   fs.writeFileSync(sidebarPath, sidebarContent, 'utf8');
   console.log(`  ✓ Updated public/assets/js/components/app-sidebar.js → v${newVersion}`);
 }
 
-// 6. Update public/dashboard/index.html
+// 7. Update public/dashboard/index.html
 const htmlPath = path.join(rootDir, 'public/dashboard/index.html');
 if (fs.existsSync(htmlPath)) {
   let htmlContent = fs.readFileSync(htmlPath, 'utf8');
-  // Badge Terkini di settings
   htmlContent = htmlContent.replace(
-    /(<span class="px-2 py-0\.5 rounded-full text-\[11px\] font-bold bg-\[#34C759\]\/20 text-\[#34C759\] border border-\[#34C759\]\/30">)v[0-9.]+ \(Terkini\)(<\/span>)/,
+    /(<meta name="app-version" content=")[0-9.]+(")/,
+    `$1${newVersion}$2`
+  );
+  htmlContent = htmlContent.replace(
+    /(<span class="app-version-badge[^"]*" data-app-version-badge>)v[0-9.]+ \(Terkini\)(<\/span>)/,
     `$1v${newVersion} (Terkini)$2`
   );
-  // Versi aktif di settings
   htmlContent = htmlContent.replace(
-    /(Versi aktif: <span class="font-semibold text-white">Aquastock Pro )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
+    /(<span class="font-semibold text-white" data-app-version-local>Aquastock Pro )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
     `$1v${newVersion} (PWA Local-First)$2`
   );
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
   console.log(`  ✓ Updated public/dashboard/index.html → v${newVersion}`);
-}
-
-// 7. Update public/assets/js/app.js
-const appJsPath = path.join(rootDir, 'public/assets/js/app.js');
-if (fs.existsSync(appJsPath)) {
-  let appJsContent = fs.readFileSync(appJsPath, 'utf8');
-  appJsContent = appJsContent.replace(
-    /showToast\('Aplikasi berhasil disinkronkan ke versi terbaru \(v[0-9.]+\)!', 'success'\);/,
-    `showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v${newVersion})!', 'success');`
-  );
-  fs.writeFileSync(appJsPath, appJsContent, 'utf8');
-  console.log(`  ✓ Updated public/assets/js/app.js → v${newVersion}`);
 }
 
 console.log(`\n✅ Selesai! Versi sekarang adalah v${newVersion}`);

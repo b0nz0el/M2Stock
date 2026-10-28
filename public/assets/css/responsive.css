@@ -357,7 +357,26 @@
   min-height: 44px;
 }
 
+app-sidebar aside .sidebar-drawer-logout {
+  display: none !important;
+}
+
 @media (max-width: 767px) {
+  app-sidebar aside .sidebar-drawer-logout {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 48px !important;
+    padding: 0 14px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 69, 58, 0.06) !important;
+    color: #FF453A !important;
+  }
+
+  app-sidebar aside .sidebar-drawer-logout:hover {
+    background: rgba(255, 69, 58, 0.14) !important;
+  }
+
   #page-debt .debt-status-tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1633,21 +1652,24 @@
     display: none !important;
   }
 
-  app-sidebar aside button[data-action="logout"] {
+  app-sidebar aside .sidebar-user-footer button[data-action="logout"] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 36px !important;
-    height: 36px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
     margin: 0 auto !important;
     padding: 0 !important;
-    border-radius: 8px !important;
-    color: #A0A0A5 !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 69, 58, 0.2) !important;
+    background: rgba(255, 69, 58, 0.08) !important;
+    color: #FF453A !important;
     flex-shrink: 0 !important;
   }
-  app-sidebar aside button[data-action="logout"]:hover {
+  app-sidebar aside .sidebar-user-footer button[data-action="logout"]:hover {
     color: #FF3B30 !important;
-    background: rgba(255, 59, 48, 0.15) !important;
+    background: rgba(255, 69, 58, 0.15) !important;
   }
 
   #page-customers .customers-metrics {
