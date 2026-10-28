@@ -91,7 +91,13 @@ export const suppliers = {
           if (error) {
             return formatResponse({
               ok: false,
-              error: { code: error.code || 'SUPABASE_ERROR', message: error.message }
+              error: {
+                code: error.code || 'SUPABASE_ERROR',
+                message: error.code === 'PGRST116'
+                  ? 'Supplier tidak ditemukan atau perubahan tidak dapat disimpan. Muat ulang daftar dan periksa akses akun Anda.'
+                  : error.message || 'Gagal memperbarui supplier',
+                details: error
+              }
             });
           }
           return formatResponse({ ok: true, data: updated, meta: { message: 'Supplier berhasil diperbarui' } });

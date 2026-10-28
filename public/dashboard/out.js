@@ -1632,18 +1632,11 @@ function triggerScanFeedback() {
 }
 
 async function startWebBarcodeScan() {
-  if (_isStartingScan || _scanStream || _html5Scanner) return;
-  if (!isSecureContext()) {
-    showToast('Fitur kamera butuh HTTPS. Hubungi admin.', 'error');
+  if (typeof window.openItemBarcodeScanner !== 'function') {
+    showToast('Modul pemindai barcode belum siap. Muat ulang halaman dan coba kembali.', 'error');
     return;
   }
-  _isStartingScan = true;
-
-  if (hasNativeBarcodeDetector()) {
-    await startNativeScanner();
-    return;
-  }
-  await startFallbackScanner();
+  await window.openItemBarcodeScanner(handleScanSuccess);
 }
 
 async function startNativeScanner() {
@@ -1825,9 +1818,10 @@ function handleScanSuccess(decodedText) {
     if (matchedProduct) {
       addToPosCart(matchedProduct);
       showToast(`✓ ${matchedProduct.name} ditambahkan ke keranjang`, 'success');
-      setTimeout(closeWebBarcodeScan, 300);
       return;
     }
+    showToast(`Barcode "${trimmed.slice(0, 30)}" tidak cocok dengan SKU atau barcode produk.`, 'error');
+    return;
   }
 
   const input = document.getElementById('out-note');
@@ -1836,7 +1830,6 @@ function handleScanSuccess(decodedText) {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
   showToast(`Barcode terbaca: ${trimmed.slice(0, 30)}...`, 'success');
-  setTimeout(closeWebBarcodeScan, 300);
 }
 
 function closeWebBarcodeScan() {

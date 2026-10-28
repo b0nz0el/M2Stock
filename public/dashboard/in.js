@@ -75,6 +75,7 @@
   let selectedExistingProduct = null;
   let selectedProductRefreshId = 0;
   let isRefreshingSelectedProduct = false;
+  let selectedProductPriceError = null;
 
   // Manajemen Galeri Foto Produk Baru di Barang Masuk
   let inProductPhotos = [];
@@ -468,6 +469,7 @@
     if (barcodeWrap) barcodeWrap.classList.remove('hidden');
 
     selectedExistingProduct = prod;
+    selectedProductPriceError = null;
     resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
     if (prodInput) {
@@ -517,10 +519,11 @@
   async function refreshSelectedProductPrice(productId) {
     const requestId = ++selectedProductRefreshId;
     isRefreshingSelectedProduct = true;
+    selectedProductPriceError = null;
     try {
       const result = await Api.items.getById(productId);
       if (requestId !== selectedProductRefreshId
-        || String(document.getElementById('in-product-id')?.value) !== String(productId)) return;
+        || String(document.getElementById('in-product-id')?.value) !== String(productId)) return false;
       if (!result?.ok || !result.data) {
         throw new Error(result?.error?.message || 'Gagal memuat harga beli terbaru produk.');
       }
@@ -538,11 +541,15 @@
         badge.textContent = `✓ Terdaftar (Stok: ${freshProduct.stock ?? 0} ${freshProduct.unit || 'pcs'})`;
       }
       calculateInTotal();
+      return true;
     } catch (error) {
-      if (requestId === selectedProductRefreshId
-        && typeof showToast === 'function') {
-        showToast(`Harga beli terbaru gagal dimuat: ${error.message}`, 'error');
+      if (requestId === selectedProductRefreshId) {
+        selectedProductPriceError = error.message || 'Gagal memuat harga beli terbaru produk.';
+        if (typeof showToast === 'function') {
+          showToast(`Harga beli terbaru gagal dimuat: ${selectedProductPriceError}`, 'error');
+        }
       }
+      return false;
     } finally {
       if (requestId === selectedProductRefreshId) isRefreshingSelectedProduct = false;
     }
@@ -556,10 +563,12 @@
     if (prod && priceInput) {
       priceInput.value = String(prod.cost_price || 0);
       selectedExistingProduct = prod;
+      selectedProductPriceError = null;
       refreshSelectedProductPrice(prod.id);
     } else {
       selectedProductRefreshId += 1;
       isRefreshingSelectedProduct = false;
+      selectedProductPriceError = null;
     }
     calculateInTotal();
   }
@@ -574,6 +583,9 @@
 
   function clearInProductSelection() {
     selectedExistingProduct = null;
+    selectedProductPriceError = null;
+    selectedProductRefreshId += 1;
+    isRefreshingSelectedProduct = false;
     resetInImageForm();
     const prodInput = document.getElementById('in-product-id');
     if (prodInput) {
@@ -807,6 +819,15 @@
         showToast('Sedang memuat harga beli terbaru. Tunggu sebentar lalu simpan kembali.', 'warning');
       }
       return;
+    }
+    if (selectedExistingProduct && selectedProductPriceError) {
+      const refreshed = await refreshSelectedProductPrice(selectedExistingProduct.id);
+      if (!refreshed) {
+        if (typeof showToast === 'function') {
+          showToast('Barang masuk dibatalkan karena harga beli terbaru belum berhasil dimuat.', 'error');
+        }
+        return;
+      }
     }
     isSubmittingIn = true;
 

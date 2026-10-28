@@ -212,6 +212,46 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
   });
 
   describe('Thermal Receipt Grouping and POS Integration', () => {
+    it('routes POS barcode scans through the shared scanner and rejects unmatched codes', async () => {
+      document.body.innerHTML = `
+        <button id="btn-scan-barcode"></button>
+        <div id="modal-out"></div>
+        <input id="out-note" value="catatan tetap">
+      `;
+      document.getElementById('modal-out').classList.remove('hidden');
+      window.showToast = vi.fn();
+      const onScan = vi.fn();
+      window.openItemBarcodeScanner = vi.fn((callback) => {
+        onScan.mockImplementation(callback);
+      });
+      window.Api = {
+        transactions: { getByType: vi.fn().mockResolvedValue({ ok: false }) },
+        items: { getAll: vi.fn().mockResolvedValue({ ok: true, data: [] }) },
+        customers: { getAll: vi.fn().mockResolvedValue({ ok: false }) },
+        settings: { getChannels: vi.fn().mockResolvedValue([]) }
+      };
+
+      window.eval(outJsCode);
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      document.getElementById('btn-scan-barcode').click();
+      await Promise.resolve();
+
+      expect(window.openItemBarcodeScanner).toHaveBeenCalledTimes(1);
+      expect(typeof window.openItemBarcodeScanner.mock.calls[0][0]).toBe('function');
+
+      onScan('UNKNOWN-CODE');
+
+      expect(document.getElementById('out-note').value).toBe('catatan tetap');
+      expect(window.showToast).toHaveBeenCalledWith(
+        'Barcode "UNKNOWN-CODE" tidak cocok dengan SKU atau barcode produk.',
+        'error'
+      );
+      delete window.openItemBarcodeScanner;
+      delete window.showToast;
+      delete window.Api;
+      document.body.innerHTML = '';
+    });
+
     it('contains multi-item batch handling in openThermalReceiptModal', () => {
       expect(outJsCode).toContain('async function openThermalReceiptModal(txIdOrBatch)');
       expect(outJsCode).toContain("txIdOrBatch && typeof txIdOrBatch === 'object'");

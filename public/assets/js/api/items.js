@@ -441,17 +441,24 @@ export const items = {
           }
 
           const updatedProd = updated && updated[0] ? { ...updated[0] } : null;
+          if (!updatedProd) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: 'PRODUCT_NOT_UPDATED',
+                message: 'Produk tidak ditemukan atau perubahan ditolak. Muat ulang data dan periksa akses akun Anda.'
+              }
+            });
+          }
           const finalChannel = formattedChannels ? (formattedChannels[0]?.channel || 'Offline') : (row.channel || data.channel || 'Offline');
           const finalLink = formattedChannels ? (formattedChannels.length > 1 ? JSON.stringify(formattedChannels) : (formattedChannels[0]?.link || '')) : (row.channel_link || data.channel_link || '');
           saveLocalChannelMeta(id, data.sku, finalChannel, finalLink, formattedChannels);
-          if (updatedProd) {
-            updatedProd.channel = finalChannel;
-            updatedProd.channel_link = finalLink;
-            updatedProd.channels = formattedChannels || parseItemChannels(updatedProd.channel, updatedProd.channel_link, { channel: finalChannel, channel_link: finalLink });
-          }
+          updatedProd.channel = finalChannel;
+          updatedProd.channel_link = finalLink;
+          updatedProd.channels = formattedChannels || parseItemChannels(updatedProd.channel, updatedProd.channel_link, { channel: finalChannel, channel_link: finalLink });
           try {
             if (typeof logAudit === 'function') {
-              logAudit('UPDATE', `Update Produk: ${updatedProd?.name || data.name || id}`);
+              logAudit('UPDATE', `Update Produk: ${updatedProd.name || data.name || id}`);
             }
           } catch (_) {}
 

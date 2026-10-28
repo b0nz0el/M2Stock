@@ -66,6 +66,25 @@ describe('Barang Masuk barcode lookup', () => {
     expect(document.getElementById('in-total-preview').textContent).toContain('37.500');
   });
 
+  it('blocks incoming-stock submission when the latest master price cannot be loaded', async () => {
+    window.Api.items.getById.mockResolvedValue({
+      ok: false,
+      error: { message: 'Gagal membaca harga terbaru' }
+    });
+    window.Api.transactions = { createIn: vi.fn() };
+    await window.loadDropdowns();
+    await window.selectInProduct(product.id);
+
+    await window.handleInSubmit({ preventDefault: vi.fn() });
+
+    expect(window.Api.items.getById).toHaveBeenCalledTimes(2);
+    expect(window.Api.transactions.createIn).not.toHaveBeenCalled();
+    expect(window.showToast).toHaveBeenCalledWith(
+      'Barang masuk dibatalkan karena harga beli terbaru belum berhasil dimuat.',
+      'error'
+    );
+  });
+
   it('clears product selection when barcode is not registered', async () => {
     await window.loadDropdowns();
     document.getElementById('in-product-id').value = '7';

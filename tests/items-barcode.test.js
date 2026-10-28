@@ -117,6 +117,21 @@ describe('product barcode API mapping', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('reports an error when Supabase updates no product rows', async () => {
+    const query = {
+      select: vi.fn().mockResolvedValue({ data: [], error: null })
+    };
+    const eq = vi.fn(() => query);
+    const update = vi.fn(() => ({ eq }));
+    window.supabase = { from: vi.fn(() => ({ update })) };
+
+    const result = await items.update(404, { cost_price: 37500 });
+
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('PRODUCT_NOT_UPDATED');
+    expect(result.error.message).toContain('tidak ditemukan');
+  });
+
   it('stores the selected stock unit on product create and update', async () => {
     const insertSelect = vi.fn().mockResolvedValue({ data: [{ id: 'new-product' }], error: null });
     const insert = vi.fn(() => ({ select: insertSelect }));
