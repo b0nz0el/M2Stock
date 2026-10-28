@@ -665,7 +665,62 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function printPODocument() {
-    window.print();
+    const paper = document.getElementById('po-document-paper');
+    if (!paper) {
+      showToast('Dokumen PO tidak siap untuk dicetak', 'error');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast('Izinkan jendela baru untuk mencetak atau menyimpan PDF PO', 'error');
+      return;
+    }
+
+    const printDocument = printWindow.document;
+    printWindow.addEventListener('load', async () => {
+      try {
+        await printDocument.fonts.ready;
+        printWindow.focus();
+        printWindow.print();
+      } catch (error) {
+        console.error('Gagal menyiapkan cetak PO:', error);
+        showToast('Gagal menyiapkan jendela cetak PO', 'error');
+      }
+    }, { once: true });
+
+    printDocument.open();
+    printDocument.write(`<!doctype html>
+      <html lang="id">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Purchase Order</title>
+          <link rel="stylesheet" href="/assets/css/tailwind.static.css">
+          <link rel="stylesheet" href="/assets/css/base.css">
+          <link rel="stylesheet" href="/assets/css/layout.css">
+          <style>
+            html, body {
+              height: auto !important;
+              min-height: 0 !important;
+              overflow: visible !important;
+              background: #fff !important;
+            }
+            body { margin: 0 !important; }
+            #po-document-paper,
+            #po-document-paper * { visibility: visible !important; }
+            #po-document-paper {
+              display: block !important;
+              width: auto !important;
+              max-width: 100% !important;
+              margin: 0 auto !important;
+            }
+          </style>
+        </head>
+        <body></body>
+      </html>`);
+    printDocument.body.appendChild(paper.cloneNode(true));
+    printDocument.close();
   }
 
   // Master Data Loader & Select Populator
