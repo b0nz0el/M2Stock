@@ -85,6 +85,8 @@ describe('Internal product barcode creation', () => {
     expect(settingsHtml).toContain('tab-content-barcode');
     expect(settingsHtml).toContain('kode internal toko (Code 128)');
     expect(settingsHtml).toContain('data-lucide="scan-line"');
+    expect(settingsHtml).toContain('max-h-[55vh] overflow-y-auto overscroll-contain');
+    expect(settingsHtml).toContain('aria-label="Daftar produk tanpa barcode"');
     expect(icons).toContain('"scan-line"');
     expect(module).toContain("script.src = '/assets/js/vendor/jsbarcode.all.min.js'");
     expect(module).toContain("format: 'CODE128'");
