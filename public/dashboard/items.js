@@ -1465,6 +1465,7 @@
     const count = selectedItemIds.size;
     const bulkBar = document.getElementById('bulk-bar');
     const bulkCountText = document.getElementById('bulk-count');
+    const bulkCountBadge = document.getElementById('bulk-count-badge');
     const btnBulkPrice = document.getElementById('btn-bulk-price');
     const btnBulkDelete = document.getElementById('btn-bulk-delete');
     const btnBulkMeta = document.getElementById('btn-bulk-meta');
@@ -1475,10 +1476,13 @@
         bulkBar.classList.remove('hidden');
         bulkBar.classList.add('flex');
         bulkCountText.textContent = `${count} dipilih`;
+        if (bulkCountBadge) bulkCountBadge.textContent = String(count);
+        if (typeof window.refreshIcons === 'function') window.refreshIcons(bulkBar);
       } else {
         bulkBar.classList.add('hidden');
         bulkBar.classList.remove('flex');
         bulkCountText.textContent = `${count} dipilih`;
+        if (bulkCountBadge) bulkCountBadge.textContent = String(count);
       }
     }
 

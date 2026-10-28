@@ -185,7 +185,15 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.getAttribute('data-id');
-        if (confirm('Yakin ingin menghapus catatan kas ini?')) {
+        const confirmed = typeof window.showConfirmDialog === 'function'
+          ? await window.showConfirmDialog({
+              title: 'Hapus Catatan Kas',
+              message: 'Yakin ingin menghapus catatan kas ini? Tindakan ini tidak dapat dibatalkan.',
+              confirmText: 'Hapus Catatan',
+              type: 'danger'
+            })
+          : confirm('Yakin ingin menghapus catatan kas ini?');
+        if (confirmed) {
           await deleteCash(id);
         }
       });

@@ -6,8 +6,11 @@ import {
   showToast,
   focusProgrammatically,
   exportToCSV,
-  generateSKU
+  generateSKU,
+  escapeHtml,
+  showConfirmDialog
 } from '../public/assets/js/utils.js';
+import '../public/assets/js/icons.js';
 
 describe('utils.js', () => {
   describe('parseIndonesianNumber', () => {
@@ -346,6 +349,126 @@ describe('utils.js', () => {
 
     it('melakukan padding X untuk kode kategori atau brand yang kurang dari 3 karakter', () => {
       expect(generateSKU('AA', 'B', 1)).toBe('AAX-BXX-002');
+    });
+  });
+
+  describe('escapeHtml', () => {
+    it('meng-escape karakter khusus HTML (&, <, >, ", \')', () => {
+      const input = '<script>alert("xss & fun\'s")</script>';
+      expect(escapeHtml(input)).toBe('&lt;script&gt;alert(&quot;xss &amp; fun&#39;s&quot;)&lt;/script&gt;');
+    });
+
+    it('mengembalikan string kosong jika input null atau undefined', () => {
+      expect(escapeHtml(null)).toBe('');
+      expect(escapeHtml(undefined)).toBe('');
+      expect(escapeHtml('')).toBe('');
+    });
+  });
+
+  describe('showConfirmDialog', () => {
+    afterEach(() => {
+      const dialog = document.getElementById('aquastock-confirm-dialog');
+      if (dialog) dialog.remove();
+    });
+
+    it('merender dialog modal di DOM dengan teks dan tombol yang sesuai', () => {
+      const promise = showConfirmDialog({
+        title: 'Konfirmasi Hapus',
+        message: 'Apakah yakin ingin menghapus data ini?',
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batalkan',
+        type: 'danger'
+      });
+
+      const dialog = document.getElementById('aquastock-confirm-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog.querySelector('#confirm-dialog-title').textContent).toBe('Konfirmasi Hapus');
+      expect(dialog.querySelector('#confirm-dialog-message').textContent).toBe('Apakah yakin ingin menghapus data ini?');
+      expect(dialog.querySelector('#confirm-dialog-btn-confirm').textContent.trim()).toBe('Ya, Hapus');
+      expect(dialog.querySelector('#confirm-dialog-btn-cancel').textContent.trim()).toBe('Batalkan');
+
+      // Bersihkan dengan klik cancel
+      dialog.querySelector('#confirm-dialog-btn-cancel').click();
+      return promise.then(result => {
+        expect(result).toBe(false);
+        expect(document.getElementById('aquastock-confirm-dialog')).toBeNull();
+      });
+    });
+
+    it('mengembalikan true dan membersihkan DOM saat tombol konfirmasi diklik', async () => {
+      const promise = showConfirmDialog({
+        title: 'Lanjutkan',
+        message: 'Proses data sekarang?'
+      });
+
+      const confirmBtn = document.getElementById('confirm-dialog-btn-confirm');
+      expect(confirmBtn).not.toBeNull();
+      confirmBtn.click();
+
+      const result = await promise;
+      expect(result).toBe(true);
+      expect(document.getElementById('aquastock-confirm-dialog')).toBeNull();
+    });
+
+    it('mengembalikan false saat tombol Escape ditekan', async () => {
+      const promise = showConfirmDialog({
+        title: 'Keluar',
+        message: 'Batalkan form?'
+      });
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+      const result = await promise;
+      expect(result).toBe(false);
+      expect(document.getElementById('aquastock-confirm-dialog')).toBeNull();
+    });
+
+    it('mengembalikan false saat mengklik area backdrop di luar modal box', async () => {
+      const promise = showConfirmDialog({
+        title: 'Batal Klik Luar',
+        message: 'Klik luar untuk batal'
+      });
+
+      const overlay = document.getElementById('aquastock-confirm-dialog');
+      overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      const result = await promise;
+      expect(result).toBe(false);
+      expect(document.getElementById('aquastock-confirm-dialog')).toBeNull();
+    });
+  });
+
+  describe('icons.js (Lucide local subset)', () => {
+    it('berhasil merender icon clipboard-check, cloud, external-link, maximize-2, share-2 menjadi SVG', () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+        <i data-lucide="cloud" class="w-5 h-5"></i>
+        <i data-lucide="external-link"></i>
+        <i data-lucide="maximize-2"></i>
+        <i data-lucide="share-2"></i>
+      `;
+      document.body.appendChild(container);
+
+      expect(typeof window.refreshIcons).toBe('function');
+      window.refreshIcons(container);
+
+      const svgs = container.querySelectorAll('svg');
+      expect(svgs.length).toBe(5);
+
+      const clipboardCheck = container.querySelector('svg[data-lucide="clipboard-check"]');
+      expect(clipboardCheck).not.toBeNull();
+      expect(clipboardCheck.classList.contains('lucide-clipboard-check')).toBe(true);
+      expect(clipboardCheck.classList.contains('w-4')).toBe(true);
+
+      const cloud = container.querySelector('svg[data-lucide="cloud"]');
+      expect(cloud).not.toBeNull();
+      expect(cloud.classList.contains('lucide-cloud')).toBe(true);
+
+      const extLink = container.querySelector('svg[data-lucide="external-link"]');
+      expect(extLink).not.toBeNull();
+
+      container.remove();
     });
   });
 });

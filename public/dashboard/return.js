@@ -407,7 +407,15 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   async function handleCompleteReturn(id) {
-    if (!confirm('Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.')) {
+    const confirmed = typeof window.showConfirmDialog === 'function'
+      ? await window.showConfirmDialog({
+          title: 'Selesaikan Retur',
+          message: 'Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.',
+          confirmText: 'Selesaikan Retur',
+          type: 'primary'
+        })
+      : confirm('Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.');
+    if (!confirmed) {
       return;
     }
     try {

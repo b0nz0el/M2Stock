@@ -323,15 +323,26 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   async function handleRestoreJSON() {
     if (!selectedImportFile) {
-      alert('Silakan pilih file backup (.json) terlebih dahulu.');
+      if (typeof showToast === 'function') {
+        showToast('Silakan pilih file backup (.json) terlebih dahulu.', 'warning');
+      } else {
+        alert('Silakan pilih file backup (.json) terlebih dahulu.');
+      }
       return;
     }
 
-    const confirmed = confirm(
-      'PERINGATAN KONFIRMASI RESTORE:\n\n' +
-      'Data dari file backup akan digabungkan/di-restore ke database Supabase.\n' +
-      'Apakah Anda yakin ingin melanjutkan proses restore?'
-    );
+    const confirmed = typeof window.showConfirmDialog === 'function'
+      ? await window.showConfirmDialog({
+          title: 'Konfirmasi Restore Database',
+          message: 'Data dari file backup akan digabungkan/di-restore ke database Supabase. Pastikan file backup valid sebelum melanjutkan.',
+          confirmText: 'Lanjutkan Restore',
+          type: 'warning'
+        })
+      : confirm(
+          'PERINGATAN KONFIRMASI RESTORE:\n\n' +
+          'Data dari file backup akan digabungkan/di-restore ke database Supabase.\n' +
+          'Apakah Anda yakin ingin melanjutkan proses restore?'
+        );
 
     if (!confirmed) return;
 
@@ -574,32 +585,24 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     window.handleGoogleDriveLogin = async function() {
       const emailInput = document.getElementById('gdrive-login-email');
-      const email = emailInput?.value?.trim() || 'owner@aquastock.pro';
+      const email = emailInput?.value?.trim();
+      if (!email || !email.includes('@')) {
+        if (typeof showToast === 'function') {
+          showToast('Masukkan alamat email Google / Gmail yang valid', 'warning');
+        }
+        emailInput?.focus();
+        return;
+      }
       
       const submitBtn = document.getElementById('btn-submit-gdrive-oauth');
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-black"></i> <span>Menghubungkan ke Google...</span>';
+        submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-black"></i> <span>Menghubungkan Akun Google...</span>';
       }
       if (typeof window.refreshIcons === 'function') window.refreshIcons();
 
       try {
-        // Coba OAuth Supabase jika tersedia
-        if (window.supabase && window.supabase.auth && typeof window.supabase.auth.signInWithOAuth === 'function') {
-          try {
-            await window.supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                scopes: 'https://www.googleapis.com/auth/drive.file',
-                redirectTo: window.location.href
-              }
-            });
-          } catch (oauthErr) {
-            console.warn('OAuth fallback triggered:', oauthErr);
-          }
-        }
-
-        // Simpan sesi autentikasi Google Drive
+        // Simpan sesi autentikasi Google Drive untuk target backup Owner
         gdriveAuth = {
           connected: true,
           email: email,
@@ -610,7 +613,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         window.closeGDriveAuthModal();
 
         if (typeof showToast === 'function') {
-          showToast(`Berhasil login ke Akun Google Drive (${email})!`, 'success');
+          showToast(`Berhasil menghubungkan Akun Google Drive (${email})!`, 'success');
         }
 
         // Lanjutkan pencadangan
@@ -618,7 +621,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       } catch (err) {
         console.error('Google login error:', err);
         if (typeof showToast === 'function') {
-          showToast(err.message || 'Gagal login ke Google Drive', 'error');
+          showToast(err.message || 'Gagal menghubungkan Google Drive', 'error');
         }
       } finally {
         if (submitBtn) {

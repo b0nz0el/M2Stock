@@ -244,7 +244,15 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
         return;
       }
 
-      if (!window.confirm(`Hapus saluran penjualan "${entry.name}"?`)) return;
+      const confirmed = typeof window.showConfirmDialog === 'function'
+        ? await window.showConfirmDialog({
+            title: 'Hapus Saluran Penjualan',
+            message: `Hapus saluran penjualan "${entry.name}"?`,
+            confirmText: 'Hapus Saluran',
+            type: 'danger'
+          })
+        : window.confirm(`Hapus saluran penjualan "${entry.name}"?`);
+      if (!confirmed) return;
       button.disabled = true;
       try {
         catalogChannels = catalogChannels.filter(c => String(c.id) !== String(entry.id));
@@ -268,10 +276,20 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       return;
     }
 
-    const deleteMessage = table === 'categories'
+    const isCat = table === 'categories';
+    const deleteTitle = isCat ? 'Hapus Kategori' : 'Hapus Satuan Stok';
+    const deleteMessage = isCat
       ? `Hapus kategori "${entry.name}"? Produk dalam kategori ini akan tetap ada, tetapi menjadi tanpa kategori.`
       : `Hapus satuan "${entry.name}"? Satuan yang masih dipakai produk tidak dapat dihapus.`;
-    if (!window.confirm(deleteMessage)) return;
+    const confirmed = typeof window.showConfirmDialog === 'function'
+      ? await window.showConfirmDialog({
+          title: deleteTitle,
+          message: deleteMessage,
+          confirmText: isCat ? 'Hapus Kategori' : 'Hapus Satuan',
+          type: 'danger'
+        })
+      : window.confirm(deleteMessage);
+    if (!confirmed) return;
 
     button.disabled = true;
     try {

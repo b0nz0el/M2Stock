@@ -284,7 +284,15 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   async function handleDelete(id) {
-    if (!confirm('Yakin ingin menghapus catatan hutang/piutang ini?')) return;
+    const confirmed = typeof window.showConfirmDialog === 'function'
+      ? await window.showConfirmDialog({
+          title: 'Hapus Catatan Hutang / Piutang',
+          message: 'Yakin ingin menghapus catatan hutang/piutang ini? Tindakan ini tidak dapat dibatalkan.',
+          confirmText: 'Hapus Catatan',
+          type: 'danger'
+        })
+      : confirm('Yakin ingin menghapus catatan hutang/piutang ini?');
+    if (!confirmed) return;
     try {
       const res = await debtApi.delete(id);
       if (res.ok) {

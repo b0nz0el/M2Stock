@@ -96,15 +96,20 @@ function updateBulkBar() {
   const checked = document.querySelectorAll('.card table tbody input[type="checkbox"]:checked');
   const bar = document.getElementById('bulk-bar');
   const count = document.getElementById('bulk-count');
+  const badge = document.getElementById('bulk-count-badge');
   if (!bar) return;
 
   if (checked.length > 0) {
     bar.classList.remove('hidden');
     bar.classList.add('flex');
-    count.textContent = checked.length + ' dipilih';
+    if (count) count.textContent = checked.length + ' produk dipilih';
+    if (badge) badge.textContent = String(checked.length);
+    if (typeof window.refreshIcons === 'function') window.refreshIcons(bar);
   } else {
     bar.classList.add('hidden');
     bar.classList.remove('flex');
+    if (count) count.textContent = '0 produk dipilih';
+    if (badge) badge.textContent = '0';
   }
 }
 
@@ -541,7 +546,7 @@ if (typeof window !== 'undefined') {
       }
 
       if (typeof showToast === 'function') {
-        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.18)!', 'success');
+        showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.19)!', 'success');
       }
       setTimeout(() => {
         window.location.reload();
