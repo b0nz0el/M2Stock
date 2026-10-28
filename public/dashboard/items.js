@@ -354,6 +354,20 @@
     renderPhotoGallery();
   }
 
+  function isValidChannelUrl(val) {
+    if (!val) return false;
+    const s = String(val).trim();
+    if (/^https?:\/\/.+/i.test(s)) return true;
+    return /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/i.test(s);
+  }
+
+  function formatChannelUrl(val) {
+    if (!val) return null;
+    const s = String(val).trim();
+    if (!isValidChannelUrl(s)) return null;
+    return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+  }
+
   function openAddItemModal() {
     const form = document.getElementById('item-form');
     if (form) form.reset();
@@ -388,6 +402,7 @@
     const btnOpenChannel = document.getElementById('btn-open-channel-link');
     if (btnOpenChannel) {
       btnOpenChannel.classList.add('hidden');
+      btnOpenChannel.classList.remove('inline-flex');
       btnOpenChannel.href = '#';
     }
 
@@ -467,11 +482,14 @@
     const initialLink = (item.channel_link || '').trim();
     if (channelLinkInput) channelLinkInput.value = initialLink;
     if (btnOpenChannel) {
-      if (initialLink) {
+      const formatted = formatChannelUrl(initialLink);
+      if (formatted) {
         btnOpenChannel.classList.remove('hidden');
-        btnOpenChannel.href = /^https?:\/\//i.test(initialLink) ? initialLink : `https://${initialLink}`;
+        btnOpenChannel.classList.add('inline-flex');
+        btnOpenChannel.href = formatted;
       } else {
         btnOpenChannel.classList.add('hidden');
+        btnOpenChannel.classList.remove('inline-flex');
         btnOpenChannel.href = '#';
       }
     }
@@ -564,7 +582,13 @@
       let rawChannelLink = channelLinkInput ? channelLinkInput.value.trim() : '';
       let channel_link = null;
       if (rawChannelLink) {
-        channel_link = /^https?:\/\//i.test(rawChannelLink) ? rawChannelLink : `https://${rawChannelLink}`;
+        channel_link = formatChannelUrl(rawChannelLink);
+        if (!channel_link) {
+          if (typeof showToast === 'function') {
+            showToast('Tautan produk tidak valid. Masukkan link atau domain lengkap (mis. shopee.co.id/...)', 'warning');
+          }
+          return;
+        }
       }
 
       if (!name) {
@@ -1470,6 +1494,11 @@
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
+            ${item.channel_link ? `
+              <a href="${escapeHtml(item.channel_link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml(item.channel || 'Marketplace')}" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml(item.channel || 'Marketplace')}">
+                <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+              </a>
+            ` : ''}
             <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF9500]">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
             </button>
@@ -2336,11 +2365,14 @@
       const btn = document.getElementById('btn-open-channel-link');
       if (!btn) return;
       const rawVal = (channelLinkInput.value || '').trim();
-      if (rawVal) {
+      const formatted = formatChannelUrl(rawVal);
+      if (formatted) {
         btn.classList.remove('hidden');
-        btn.href = /^https?:\/\//i.test(rawVal) ? rawVal : `https://${rawVal}`;
+        btn.classList.add('inline-flex');
+        btn.href = formatted;
       } else {
         btn.classList.add('hidden');
+        btn.classList.remove('inline-flex');
         btn.href = '#';
       }
     };

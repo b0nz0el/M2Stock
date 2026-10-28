@@ -520,7 +520,7 @@ if (typeof window !== 'undefined') {
   // Tombol bantuan manual untuk memeriksa pembaruan di UI
   window.checkForPwaUpdate = async function () {
     if (typeof showToast === 'function') {
-      showToast('Memeriksa versi terbaru ke server Cloudflare...', 'info');
+      showToast('Memeriksa versi terbaru ke server Cloudflare...', 'loading');
     }
     try {
       // 1. Bersihkan semua cache Service Worker lama
@@ -544,13 +544,12 @@ if (typeof window !== 'undefined') {
           }
         }
       }
-
       if (typeof showToast === 'function') {
         showToast('Aplikasi berhasil disinkronkan ke versi terbaru (v3.4.26)!', 'success');
       }
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 700);
     } catch (e) {
       console.warn('[PWA] Manual update check error:', e);
       window.location.reload();

@@ -5,15 +5,27 @@
 /* ═══════════════════════════════════════════════════
    TOAST
    ═══════════════════════════════════════════════════ */
-function showToast(msg, type = 'success') {
+function showToast(msg, type = 'success', duration = (type === 'loading' ? 8000 : 3000)) {
   const variants = {
     success: { icon: 'check', role: 'status' },
     error: { icon: 'alert-circle', role: 'alert' },
     info: { icon: 'info', role: 'status' },
-    warning: { icon: 'alert-triangle', role: 'status' }
+    warning: { icon: 'alert-triangle', role: 'status' },
+    loading: { icon: 'loader-2', role: 'status', spinning: true }
   };
   const variant = variants[type] || variants.info;
   const container = document.getElementById('toast-container') || document.body;
+
+  // Jika memanggil status final (success/error/warning) saat ada loading toast, transisikan dengan mulus
+  if (type !== 'loading') {
+    const existingLoading = container.querySelectorAll('.toast--loading');
+    existingLoading.forEach(el => {
+      if (el._dismissTimer) clearTimeout(el._dismissTimer);
+      el.classList.add('toast--leaving');
+      setTimeout(() => el.remove(), 200);
+    });
+  }
+
   const toast = document.createElement('div');
   toast.className = `toast toast--${variants[type] ? type : 'info'}`;
   toast.setAttribute('role', variant.role);
@@ -24,7 +36,7 @@ function showToast(msg, type = 'success') {
   iconWrap.setAttribute('aria-hidden', 'true');
   const iconEl = document.createElement('i');
   iconEl.setAttribute('data-lucide', variant.icon);
-  iconEl.className = 'w-4 h-4';
+  iconEl.className = variant.spinning ? 'w-4 h-4 toast__spinner animate-spin text-[#32ADE6]' : 'w-4 h-4';
   iconWrap.appendChild(iconEl);
 
   const textSpan = document.createElement('span');
@@ -36,7 +48,10 @@ function showToast(msg, type = 'success') {
   closeButton.className = 'toast__close';
   closeButton.setAttribute('aria-label', 'Tutup notifikasi');
   closeButton.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>';
-  closeButton.addEventListener('click', () => toast.remove());
+  closeButton.addEventListener('click', () => {
+    if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
+    toast.remove();
+  });
 
   toast.append(iconWrap, textSpan, closeButton);
   container.appendChild(toast);
@@ -47,10 +62,14 @@ function showToast(msg, type = 'success') {
     lucide.createIcons();
   }
 
-  setTimeout(() => {
-    toast.classList.add('toast--leaving');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  if (duration > 0) {
+    toast._dismissTimer = setTimeout(() => {
+      toast.classList.add('toast--leaving');
+      setTimeout(() => toast.remove(), 250);
+    }, duration);
+  }
+
+  return toast;
 }
 
 /* ═══════════════════════════════════════════════════

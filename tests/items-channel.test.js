@@ -146,6 +146,21 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(html).toContain('id="item-channel"');
     expect(html).toContain('id="item-channel-link"');
     expect(html).toContain('id="btn-open-channel-link"');
+    // Memastikan modal item menggunakan lebar lapang max-w-2xl
+    expect(html).toContain('max-w-xl sm:max-w-2xl');
+    // Memastikan tombol buka link tidak menggunakan atribut title native agar tidak memicu tooltip yang menutupi harga
+    const btnMatch = html.match(/<a id="btn-open-channel-link"[^>]*>/);
+    expect(btnMatch).not.toBeNull();
+    expect(btnMatch[0]).not.toContain('title=');
+  });
+
+  it('HTML index.html memposisikan #toast-container di Top-Center secara modern', () => {
+    const htmlPath = path.resolve(__dirname, '../public/dashboard/index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    expect(html).toContain('id="toast-container"');
+    expect(html).toContain('left-1/2 -translate-x-1/2');
+    expect(html).toContain('top-4');
   });
 
   it('Ikon Lucide "link" dan "globe" terdaftar di icons.js', () => {

@@ -226,6 +226,20 @@ describe('utils.js', () => {
       document.querySelector('.toast__close').click();
       expect(document.querySelector('.toast')).toBeNull();
     });
+
+    it('mendukung tipe loading dengan spinner berputar dan transisi mulus ke status final', () => {
+      showToast('Sedang memuat data...', 'loading');
+      const toast = document.querySelector('.toast--loading');
+      expect(toast).not.toBeNull();
+      expect(toast.querySelector('.toast__icon [data-lucide="loader-2"]')).not.toBeNull();
+      expect(toast.querySelector('.toast__spinner')).not.toBeNull();
+
+      // Panggil status success, toast loading lama harus otomatis fade out
+      showToast('Selesai!', 'success');
+      expect(toast.classList.contains('toast--leaving')).toBe(true);
+      const successToast = document.querySelector('.toast--success');
+      expect(successToast).not.toBeNull();
+    });
   });
 
   describe('focusProgrammatically', () => {

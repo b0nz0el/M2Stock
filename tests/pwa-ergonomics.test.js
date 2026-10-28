@@ -72,10 +72,11 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('padding-bottom: max(18px, env(safe-area-inset-bottom, 18px))');
     });
 
-    it('positions mobile toast container above bottom navigation', () => {
+    it('positions mobile toast container as top-center dynamic HUD avoiding bottom navigation obstruction', () => {
       const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
       expect(responsiveCss).toContain('#toast-container');
-      expect(responsiveCss).toContain('bottom: calc(76px + env(safe-area-inset-bottom))');
+      expect(responsiveCss).toContain('top: calc(1rem + env(safe-area-inset-top))');
+      expect(responsiveCss).toContain('transform: translateX(-50%)');
     });
 
     it('enforces 44x44px touch targets on table card action buttons in responsive.css', () => {
