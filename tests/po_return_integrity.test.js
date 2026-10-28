@@ -288,17 +288,18 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(indexHtml).toContain('id="doc-po-supplier-subtitle"');
     });
 
-    it('mencetak PO pada dokumen terpisah agar layout dashboard tidak membuat halaman kosong', async () => {
+    it('mengisolasi PO dari seluruh elemen dashboard selama proses cetak', async () => {
       const fs = await import('fs');
       const path = await import('path');
       const poJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/po.js'), 'utf-8');
+      const layoutCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/layout.css'), 'utf-8');
 
-      expect(poJs).toContain("const printWindow = window.open('', '_blank');");
-      expect(poJs).toContain('printDocument.body.appendChild(paper.cloneNode(true));');
-      expect(poJs).toContain("printWindow.addEventListener('load'");
-      expect(poJs).toContain("showToast('Izinkan jendela baru untuk mencetak atau menyimpan PDF PO', 'error');");
-      expect(poJs).toContain('printWindow.print();');
+      expect(poJs).toContain("document.body.classList.add('print-mode-po');");
+      expect(poJs).toContain("window.addEventListener('afterprint', cleanup, { once: true });");
+      expect(poJs).toContain('window.print();');
       expect(poJs).not.toContain('function printPODocument() {\n    window.print();');
+      expect(layoutCss).toContain('body.print-mode-po > *:not(#modal-print-po)');
+      expect(layoutCss).toContain('body.print-mode-po #modal-print-po > .modal-po-content > .modal-po-preview');
     });
 
     it('memastikan template index.html menggunakan po-signatures-grid flex row untuk 3 tanda tangan di A4', async () => {

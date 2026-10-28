@@ -364,6 +364,10 @@ main, #main-content {
     margin: 0 !important;
   }
 
+  body.print-mode-po > *:not(#modal-print-po) {
+    display: none !important;
+  }
+
   body * {
     visibility: hidden !important;
   }
@@ -402,6 +406,17 @@ main, #main-content {
     max-height: none !important;
     padding: 0 !important;
     overflow: visible !important;
+  }
+  body.print-mode-po #modal-print-po > .modal-po-content {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  body.print-mode-po #modal-print-po > .modal-po-content > * {
+    display: none !important;
+  }
+  body.print-mode-po #modal-print-po > .modal-po-content > .modal-po-preview {
+    display: block !important;
   }
   #modal-print-po > div,
   #modal-print-po > div > :nth-child(2) {
