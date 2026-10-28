@@ -5,32 +5,34 @@ import path from 'path';
 describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
   const rootDir = path.resolve(__dirname, '..');
 
-  describe('Meta Viewport Standard (Apple HIG Native App Solid Ergonomics)', () => {
-    it('verifies public/dashboard/index.html locks viewport zoom to guarantee native app stability', () => {
+  describe('Meta Viewport Standard (accessible zoom)', () => {
+    it('keeps pinch zoom available on the dashboard', () => {
       const htmlPath = path.join(rootDir, 'public/dashboard/index.html');
       const html = fs.readFileSync(htmlPath, 'utf8');
       
-      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
-      expect(html).toContain('user-scalable=no');
-      expect(html).toContain('maximum-scale=1.0');
+      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
+      expect(html).not.toContain('user-scalable=no');
+      expect(html).not.toContain('maximum-scale=1.0');
     });
 
-    it('verifies login and 404 pages have compliant locked viewport tags', () => {
+    it('keeps pinch zoom available on the login, landing, and 404 pages', () => {
       const loginHtml = fs.readFileSync(path.join(rootDir, 'public/login/index.html'), 'utf8');
+      const landingHtml = fs.readFileSync(path.join(rootDir, 'public/index.html'), 'utf8');
       const errorHtml = fs.readFileSync(path.join(rootDir, 'public/404.html'), 'utf8');
 
-      expect(loginHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
-      expect(loginHtml).toContain('user-scalable=no');
-
-      expect(errorHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
-      expect(errorHtml).toContain('user-scalable=no');
+      for (const html of [loginHtml, landingHtml, errorHtml]) {
+        expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
+        expect(html).not.toContain('user-scalable=no');
+        expect(html).not.toContain('maximum-scale=1.0');
+      }
     });
   });
 
   describe('Touch-Action and Tap Delay Elimination', () => {
-    it('defines touch-action: pan-x pan-y !important in base.css to lock pinch-zoom while enabling smooth scrolling', () => {
+    it('preserves pinch zoom while avoiding double-tap delay', () => {
       const baseCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/base.css'), 'utf8');
-      expect(baseCss).toContain('touch-action: pan-x pan-y !important;');
+      expect(baseCss).toContain('touch-action: manipulation;');
+      expect(baseCss).not.toContain('touch-action: pan-x pan-y !important;');
       expect(baseCss).toContain('-webkit-tap-highlight-color: transparent;');
     });
   });
@@ -97,12 +99,46 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
   });
 
   describe('PWA Auto-Update & Zero-Stale Cache Synchronization', () => {
+    it('registers the service worker from the public login page', () => {
+      const loginHtml = fs.readFileSync(path.join(rootDir, 'public/login/index.html'), 'utf8');
+      const registrationScript = fs.readFileSync(path.join(rootDir, 'public/assets/js/pwa-register.js'), 'utf8');
+
+      expect(loginHtml).toContain('../assets/js/pwa-register.js');
+      expect(registrationScript).toContain("navigator.serviceWorker.register('/sw.js'");
+      expect(registrationScript).toContain("updateViaCache: 'none'");
+    });
+
+    it('serves manifest icons at their declared dimensions', () => {
+      const manifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'public/manifest.json'), 'utf8'));
+
+      for (const icon of manifest.icons) {
+        const image = fs.readFileSync(path.join(rootDir, 'public', icon.src.replace(/^\//, '')));
+        const [width, height] = icon.sizes.split('x').map(Number);
+
+        expect(image.subarray(1, 4).toString()).toBe('PNG');
+        expect(image.readUInt32BE(16)).toBe(width);
+        expect(image.readUInt32BE(20)).toBe(height);
+        expect(icon.purpose).toBe('any');
+      }
+    });
+
     it('verifies Cloudflare Pages public/_headers prevents caching sw.js', () => {
       const headersPath = path.join(rootDir, 'public/_headers');
       expect(fs.existsSync(headersPath)).toBe(true);
       const headers = fs.readFileSync(headersPath, 'utf8');
       expect(headers).toContain('/sw.js');
       expect(headers).toContain('Cache-Control: no-cache, no-store, must-revalidate');
+    });
+
+    it('serves the barcode fallback locally and precaches it for offline use', () => {
+      const scannerJs = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/barcode-scanner.js'), 'utf8');
+      const dashboardHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
+      const serviceWorker = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
+
+      expect(scannerJs).toContain("script.src = '/assets/js/vendor/html5-qrcode.min.js'");
+      expect(scannerJs).not.toContain('unpkg.com/html5-qrcode');
+      expect(dashboardHtml).not.toContain('unpkg.com/html5-qrcode');
+      expect(serviceWorker).toContain("'/assets/js/vendor/html5-qrcode.min.js'");
     });
 
     it('verifies sw.js employs Network-First strategy for critical CSS/JS', () => {

@@ -17,7 +17,7 @@ html, body {
 /* ═══ TOUCH-ACTION & ERGONOMICS (Native App PWA - Zoom Locked) ═══ */
 /* Mengunci pinch-to-zoom di seluruh layar agar kokoh seperti aplikasi native */
 html, body, #app, main, .page, .card, table {
-  touch-action: pan-x pan-y !important;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -189,4 +189,3 @@ input:focus, select:focus, textarea:focus {
   padding-bottom: 6px !important;
   font-size: 0.8125rem !important;
 }
-

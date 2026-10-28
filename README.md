@@ -1,9 +1,9 @@
 # Aquastock Pro — Production Inventory & POS System
-> **Versi Terbaru:** `v3.2.0` (Local-First PWA, Modern Kasir POS Split-View, & Offline Sync)  
+> **Versi aplikasi:** ikuti `package.json` dan `public/version.json` (diverifikasi pada `v3.4.43`)
 > **Sistem:** Multi-Page Application (MPA) Inventory & Point of Sale  
-> **Toko:** JTMaquarium (Jatimakmur Aquarium Aksesoris, Pondok Gede, Bekasi)  
+> **Toko:** Habitic, Pondok Gede, Bekasi)
 > **Live URL:** [https://aquastock-pro.pages.dev](https://aquastock-pro.pages.dev)  
-> **Deploy Pipeline:** Cloudflare Pages (Otomatis dari GitHub branch `main`)
+> **Hosting:** Cloudflare Pages (`main`; auto-deploy bergantung pada integrasi Cloudflare di luar repository)
 
 ---
 
@@ -11,19 +11,18 @@
 
 **Aquastock Pro** adalah sistem manajemen inventaris barang, kasir multi-item (Point of Sale / POS), manajemen pesanan pembelian (PO), pencatatan arus kas, dan pelacakan hutang/piutang yang dirancang khusus untuk toko perlengkapan dan aksesoris akuarium skala ritel dan grosir.
 
-Dibangun dengan arsitektur **Local-First Progressive Web App (PWA)**, sistem ini menggabungkan kecepatan kilat *Vanilla JavaScript (ES Modules)*, keandalan *Tailwind CSS* teroptimasi, serta keamanan berlapis *Supabase PostgreSQL Row Level Security (RLS)*. Sistem ini dapat diinstal langsung di perangkat desktop (Windows/Mac) maupun smartphone (Android/iOS) dan tetap dapat melayani transaksi kasir sekalipun koneksi internet terputus.
+Dibangun sebagai **Progressive Web App (PWA)** dengan *Vanilla JavaScript (ES Modules)*, *Tailwind CSS* dan backend Supabase. POS mempunyai antrean offline terbatas; fungsi lain yang memerlukan data cloud membutuhkan koneksi internet.
 
 ---
 
-## 🚀 Fitur Unggulan Terkini (v3.2.0)
+## 🚀 Fitur Utama
 
-### 1. 📱 Local-First Progressive Web App (PWA) & Offline Sync
+### 1. 📱 Progressive Web App (PWA) & Offline POS
 * **Web App Manifest (`/manifest.json`)**: Memungkinkan instalasi aplikasi (*Add to Home Screen*) dengan icon resolusi tinggi (`192x192` & `512x512` maskable), splash screen, dan mode tampilan *standalone*.
-* **Multi-Page Application Service Worker (`/sw.js`)**: Strategi *Cache-First* untuk seluruh aset statis (CSS, JS, Font InterVariable, SVG/PNG) dan *Network-First with Stale-While-Revalidate* untuk dokumen HTML dashboard.
+* **Multi-Page Application Service Worker (`/sw.js`)**: Menyimpan app shell dan aset lokal; halaman mencoba jaringan terlebih dahulu dengan cache sebagai fallback.
 * **Offline POS Engine (`aquastock-offline-db` via IndexedDB)**:
   * Menyalin katalog master barang ke database lokal browser.
-  * Mengantrekan transaksi penjualan kasir saat perangkat *offline*.
-  * Sinkronisasi otomatis ke cloud Supabase begitu koneksi internet pulih, lengkap dengan indikator status koneksi realtime (*Cloud Terhubung*, *Mode Kasir Offline*, *Menyinkronkan...*).
+  * POS dapat mengantrekan transaksi penjualan saat perangkat offline dan mencoba sinkronisasi ke Supabase saat koneksi pulih. Cakupan offline ini tidak berarti semua modul dapat dipakai offline.
 
 ### 2. 🛒 Kasir POS Multi-Item Split-View (Point of Sale)
 * **2-Column Split-View Layout**:
@@ -32,9 +31,9 @@ Dibangun dengan arsitektur **Local-First Progressive Web App (PWA)**, sistem ini
 * **Kalkulator Uang Tunai & Kembalian**: Dilengkapi tombol bantuan uang pas dan pecahan cepat (`Uang Pas`, `+20rb`, `+50rb`, `+100rb`).
 * **Cetak Struk Kasir Termal**: Format standar struk kasir 58mm & 80mm dengan nomor invoice unik terkelompok (`INV-YYMMDD-XXXX`).
 
-### 3. 🔍 Dual-Mode Barcode Scanner
+### 3. 🔍 Barcode Scanner
 * **Hardware Interceptor (USB / Bluetooth)**: Pendeteksi ketukan tombol super cepat global (< 50ms interval, >= 8 karakter diakhiri `Enter`) yang langsung mendeteksi pemindaian scanner fisik tanpa mengharuskan pengguna memfokuskan kursor ke input pencarian terlebih dahulu.
-* **Kamera Mobile / Tablet Scanner**: Menggunakan native browser `BarcodeDetector` API dengan fallback teruji `html5-qrcode`.
+* **Kamera Mobile / Tablet Scanner**: Menggunakan native browser `BarcodeDetector` API dengan pustaka `html5-qrcode` yang di-host lokal dan disertakan dalam cache PWA.
 * **Audio & Haptic Feedback**: Menghasilkan suara *beep* sintetis berfrekuensi 880Hz (100ms) via *Web Audio API* dan getaran haptik getar (`navigator.vibrate(100)`) saat barcode berhasil dipindai.
 
 ### 4. ⚡ Global Command Palette (`⌘K` / `Ctrl+K`)
@@ -66,9 +65,9 @@ Dibangun dengan arsitektur **Local-First Progressive Web App (PWA)**, sistem ini
 | **Local Cache** | IndexedDB (`aquastock-offline-db`) | Offline storage untuk master produk dan antrean transaksi |
 | **Service Worker** | Native PWA Cache API | Caching app shell dan offline fallback |
 | **Ikon Sistem** | Lucide Icons (Self-Hosted SVG) | 74 ikon mandiri teroptimasi tanpa CDN eksternal |
-| **Grafik & Chart** | Chart.js v4 | Lazy loaded khusus di dashboard & halaman laporan |
-| **Pengujian** | Vitest + Playwright | 19 suites uji unit/integrasi & skrip verifikasi otomatis |
-| **Hosting & CI/CD** | Cloudflare Pages | Auto-deploy dari git push branch `main` |
+| **Grafik & Chart** | Chart.js | Aset vendor lokal |
+| **Pengujian** | Vitest + Playwright + axe-core | Tes unit/integrasi dan pemeriksaan UI lokal |
+| **Hosting & CI/CD** | Cloudflare Pages + GitHub Actions | Deploy Pages bergantung pada integrasi Cloudflare; workflow di repo menaikkan versi |
 
 ---
 
@@ -197,10 +196,12 @@ Buka browser di **`http://localhost:8000`** atau port default via `npm start` di
 | :--- | :--- |
 | **`npm run dev`** | Menjalankan local server di port `8000` |
 | **`npm start`** | Menjalankan local server default di port `3000` |
-| **`npm test`** | Menjalankan seluruh test suite Vitest (19 file uji, 129 tests) |
+| **`npm test`** | Menjalankan seluruh test suite Vitest (jumlah tes mengikuti repository) |
 | **`npm run test:coverage`** | Menjalankan pengujian sekaligus menampilkan laporan cakupan kode V8 |
-| **`npm run size`** | Memeriksa ukuran aset (Raw & Gzip) terhadap alokasi *Size Budget* |
-| **`npm run build:css`** | Melakukan kompilasi & kompresi Tailwind CSS ke `tailwind.static.css` |
+| **`npm run size`** | Mengukur ukuran aset JavaScript dan CSS (peringatan budget masih bersifat monitoring) |
+| **`npm run build`** | Mengompilasi Tailwind CSS dan menyalin vendor barcode lokal ke folder publik |
+| **`npm run qa:a11y`** | Memeriksa halaman login dengan axe dan keyboard pada viewport mobile, tablet, desktop |
+| **`npm run qa:load`** | Smoke test HTTP statis terbatas; target remote hanya jika diizinkan secara eksplisit |
 
 ---
 
@@ -226,11 +227,11 @@ Aplikasi menerapkan sistem hak akses 3 tingkat (*Role-Based Access Control*) yan
 ## 🧪 Pengujian & Jaminan Mutu (Quality Assurance)
 
 Proyek ini dilengkapi dengan suite pengujian otomatis yang ketat:
-* **Vitest Unit & Integration Suites**: 19 file uji dengan 129 test assertions yang mencakup logika keranjang POS, kalkulasi kembalian, diskon, PPN, sinkronisasi stok, format nota termal, import CSV, dan skema transaksi.
-* **Size Budget Enforcement**:
-  * Total CSS Gzip: `19.56 KB` *(Jauh di bawah batas aman anggaran 60 KB)*.
-  * Typography & Icon: Zero CDN latency dengan preloading lokal font variable Inter.
-* **Verification Scripts**: Skrip Playwright untuk mencegah regresi navigasi dan freeze sidebar.
+* **Vitest Unit & Integration Suites**: mencakup POS, inventaris, PO/retur, barcode, CSV, dan kontrak pemulihan backup. Jalankan `npm test` untuk jumlah dan hasil terkini.
+* **Pemeriksaan UI**: `npm run qa:a11y` menggunakan axe pada halaman login dan tiga ukuran viewport. Ini bukan audit manual WCAG lengkap atau pengujian Safari/iOS.
+* **Smoke test performa**: `npm run qa:load` mengirim 40 permintaan GET berkonkurensi rendah ke aset statis saja. Ini bukan load test database, transaksi, atau kapasitas produksi.
+* **Ukuran aset**: gunakan `npm run size` untuk hasil terkini. Budget JavaScript 120 KB gzip masih berupa peringatan, bukan penghalang build.
+* **Pemulihan nyata**: pengujian unit memakai mock Supabase; lakukan recovery drill di proyek Supabase staging terpisah sebelum mengandalkan backup untuk produksi.
 
 Untuk menjalankan pengujian kapan saja:
 ```bash

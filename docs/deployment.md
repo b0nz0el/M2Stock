@@ -1,6 +1,6 @@
 # Panduan Deployment — Aquastock Pro
 
-Dokumen ini memuat panduan komprehensif untuk mendeploy sistem **Aquastock Pro** ke lingkungan produksi berbasis arsitektur **Jamstack Statis** dan backend cloud Supabase (disiapkan untuk realisasi **Fase 5: Production Deployment & CI/CD**).
+Dokumen ini memuat panduan untuk mendeploy **Aquastock Pro** sebagai Jamstack statis dengan backend Supabase.
 
 ---
 
@@ -21,7 +21,7 @@ Aquastock Pro tidak memerlukan server backend khusus (seperti Node.js server, Py
        ▼                                                     ▼
 ┌─────────────────────────────┐               ┌─────────────────────────────┐
 │   STATIC HOSTING PROVIDER   │               │       SUPABASE CLOUD        │
-│  (GitHub Pages / Vercel /   │               │   (Database, Auth, Storage, │
+│  (Cloudflare Pages)          │               │   (Database, Auth, Storage, │
 │   Cloudflare Pages / dsb.)  │               │    PostgREST Edge APIs)     │
 │                             │               │                             │
 │  • public/index.html        │  REST / HTTPS │  • PostgreSQL 15 Database   │
@@ -42,16 +42,16 @@ Aplikasi **Aquastock Pro** saat ini telah aktif di-deploy ke lingkungan produksi
 Pengaturan proyek di Cloudflare Pages Dashboard:
 - **Project Name**: `aquastock-pro`
 - **Framework Preset**: `None` / `Other`
-- **Build Command**: `npm run build:css` (Mengompilasi styling Tailwind CSS ke `public/assets/css/style.css`)
+- **Build Command**: `npm run build` (mengompilasi ke `public/assets/css/tailwind.static.css` dan menyalin vendor barcode lokal)
 - **Build Output Directory**: `public`
 - **Root Directory**: `/`
 - **Node.js Compatibility**: v18+ atau v20+
 
 ### 2.2 Pilihan Hosting Alternatif
-1. **GitHub Pages**:
-   - File konfigurasi workflow `.github/workflows/deploy.yml` dapat mem-publish folder `public/` saat ada perintah `git push` ke branch `main`.
-2. **Vercel / Netlify**:
-   - Gunakan Output Directory `public` dan Build Command `npm run build:css`.
+1. **Vercel / Netlify**:
+   - Gunakan Output Directory `public` dan Build Command `npm run build`.
+2. **GitHub Pages**:
+   - Workflow deploy GitHub Pages tidak tersedia di branch saat ini; siapkan workflow terpisah sebelum memilih hosting tersebut.
 
 ---
 
@@ -85,34 +85,51 @@ const SUPABASE_ANON_KEY = '<production-anon-key>';
 Jalankan seluruh langkah verifikasi ini di terminal lokal sebelum melakukan commit & push rilis produksi:
 
 ```bash
-# 1. Jalankan unit test dan integrasi contract test (wajib 50 passed)
+# 1. Jalankan seluruh unit dan contract tests
 npm test
 
-# 2. Periksa cakupan pengujian
+# 2. Coverage gate (dapat gagal jika threshold tidak terpenuhi)
 npm run test:coverage
 
-# 3. Kompilasi ulang static Tailwind CSS untuk memastikan tidak ada class baru yang hilang
-npm run build:css
+# 3. Build aset yang dipakai hosting statis
+npm run build
 
-# 4. Verifikasi kepatuhan size budget aset (CSS < 60 KB gzip, JS < 120 KB gzip)
+# 4. Lihat ukuran aset; ambang JS saat ini masih warning
 npm run size
 
-# 5. Uji serve lokal pada port produksi
-npm start
+# 5. Jalankan QA aksesibilitas (perlu app lokal dan Chromium)
+npm run dev
+# Terminal lain:
+QA_BASE_URL=http://127.0.0.1:8000 npm run qa:a11y
+
+# 6. Smoke load HTTP statis lokal: 40 GET, maksimum 4 serentak
+QA_BASE_URL=http://127.0.0.1:8000 npm run qa:load
 ```
+
+`qa:load` bukan load test database atau kapasitas penuh. Target remote ditolak secara default. Gunakan hanya staging yang Anda kuasai dengan `QA_ALLOW_REMOTE=1`; produksi memerlukan `QA_ALLOW_PRODUCTION_LOAD=1` dan persetujuan eksplisit. Jangan jalankan pengujian beban agresif pada toko aktif.
+
+### Recovery drill backup yang aman
+
+Export/import pada menu Backup adalah upsert subset tabel aplikasi, bukan salinan lengkap database/akun Supabase dan bukan transaksi restore atomik. Uji pemulihan hanya di proyek Supabase staging terpisah:
+
+1. Pastikan skema staging telah menjalankan bootstrap dan semua migrasi yang sama dengan produksi.
+2. Buat snapshot/backup staging sebelum uji; jangan gunakan project produksi sebagai target restore.
+3. Export JSON dari staging, simpan file dengan akses terbatas, dan catat nama file serta jumlah rekaman.
+4. Restore ke staging dan pastikan UI melaporkan semua tabel sukses; bila ada kegagalan parsial, periksa tabel yang ditampilkan dan jangan menganggap proses selesai.
+5. Verifikasi beberapa ID rekaman yang dipilih pada database staging, lalu export ulang dan bandingkan subset data yang diuji.
+6. Catat waktu, versi, hasil, dan siapa yang menjalankan drill. Hapus data uji sesuai kebijakan setelah bukti disimpan.
+
+Belum ada hasil recovery drill terhadap backup Supabase nyata yang dapat diklaim oleh audit repository ini. Jadwalkan drill tersebut sebelum mengandalkan prosedur pemulihan produksi.
 
 ---
 
 ## 5. Rencana & Roadmap Fase 5
 
-Fase 5 difokuskan pada otomasi dan stabilitas jangka panjang:
+Fokus lanjutan untuk otomasi dan stabilitas:
 
 1. **Automated CI/CD Quality Gates**:
    - Menjalankan `npm test` dan `npm run size` secara otomatis pada setiap Pull Request.
    - Menggagalkan build jika ukuran aset melampaui batas size budget atau ada unit test yang gagal.
 2. **Pembersihan Kode Usang (*Code Cleanup*)**:
-   - Menghapus folder rintisan awal yang kosong (`server/`, `database/`).
-   - Merapikan skrip utility yang sudah digantikan oleh npm scripts terpadu.
-3. **Optimasi Cache & Service Worker PWA (Opsional)**:
-   - Menambahkan Web App Manifest (`manifest.json`) agar aplikasi dapat diinstal sebagai Progressive Web App (PWA) di tablet kasir.
-   - Cache lokal untuk offline resilience dasar saat koneksi toko terputus sementara.
+   - Mengukur performa dengan perangkat/koneksi sasaran; jangan menganggap static HTTP smoke test sebagai load test backend.
+3. Jalankan recovery drill staging berkala dan catat hasilnya.

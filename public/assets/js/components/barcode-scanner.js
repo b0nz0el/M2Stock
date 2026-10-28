@@ -60,7 +60,7 @@
     if (libraryPromise) return libraryPromise;
     libraryPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      script.src = '/assets/js/vendor/html5-qrcode.min.js';
       script.onload = resolve;
       script.onerror = () => {
         libraryPromise = null;

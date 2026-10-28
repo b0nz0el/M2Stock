@@ -37,7 +37,7 @@ Audit dan perbaiki alur bisnis inventaris, terutama Purchase Order (PO) dan retu
    - `public/assets/js/api/return.js`
 6. Form/API retur tidak konsisten untuk `harga_satuan`: form mengirim nilai tersebut dan ringkasan menghitungnya, tetapi fungsi create/API dan tabel retur yang terlihat belum menyimpan kolom itu.
 7. Audit log memberi authenticated user izin insert dengan `WITH CHECK (true)`. Evaluasi apakah log ini digunakan sebagai bukti audit; bila iya, perpindahkan pencatatan penting ke trigger/fungsi tepercaya dan batasi manipulasi dari klien.
-8. Dokumentasi tidak sepenuhnya mencerminkan implementasi: `docs/api-contract.md` menyebut skema 7 tabel, sedangkan ada migrasi tambahan; `docs/deployment.md` masih menyatakan GitHub Pages sebagai default walau deployment terakhir memakai Cloudflare Pages.
+8. Catatan audit dokumentasi sebelumnya telah ditindaklanjuti: README dan panduan deployment kini menyatakan Cloudflare Pages sebagai hosting yang digunakan dengan auto-deploy bergantung pada konfigurasi eksternal; indeks CSS tidak lagi memakai angka ukuran lama; kontrak API merujuk modul per domain; dan klaim RLS membedakan kebijakan dalam migrasi dari konfigurasi instance aktif yang belum diverifikasi. Verifikasi ulang source terkini sebelum mengandalkan catatan ini.
 9. UI modal PO telah diuji lokal pada viewport 1280×800 dan 390×844; tidak tampak horizontal overflow pada ukuran tersebut. Ini bukan audit seluruh halaman atau aksesibilitas.
 
 Temuan di atas adalah petunjuk inspeksi, bukan asumsi final. Buka source terkini dan verifikasi sebelum mengubah apa pun.

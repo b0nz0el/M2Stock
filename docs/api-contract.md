@@ -6,7 +6,7 @@ Dokumen ini mendefinisikan kontrak antarmuka komunikasi antara frontend (Vanilla
 
 ## 1. Response Envelope Standar
 
-Seluruh fungsi pada wrapper `api.js` membungkus hasil pemanggilan ke dalam format envelope JSON seragam untuk menyederhanakan penanganan status di antarmuka pengguna:
+Modul akses data di `public/assets/js/api/*.js` umumnya membungkus respons ke dalam format envelope JSON untuk menyederhanakan penanganan status di antarmuka pengguna. Detail tiap operasi tetap mengikuti implementasi modul dan dapat berbeda untuk helper khusus:
 
 ```typescript
 interface ApiResponse<T = any> {

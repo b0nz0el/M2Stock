@@ -1,17 +1,20 @@
 {
   "name": "aquastock-pro",
-  "version": "3.4.43",
+  "version": "3.4.44",
   "description": "Aquastock Pro - Sistem Manajemen Inventori dan Kasir POS Modern (static frontend, siap dihubungkan ke backend)",
   "private": true,
   "scripts": {
-    "build": "echo 'AquaStock Pro static assets ready'",
+    "build": "npm run build:css && npm run vendor:sync",
     "start": "npx serve public",
     "dev": "npx serve public --listen 8000",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "qa:a11y": "node scripts/qa-a11y.mjs",
+    "qa:load": "node scripts/qa-static-load.mjs",
     "size": "node scripts/check-size.js",
     "bump": "node scripts/bump-version.mjs",
-    "build:css": "tailwindcss -i tailwind/input.css -o public/assets/css/tailwind.static.css --minify"
+    "build:css": "tailwindcss -i tailwind/input.css -o public/assets/css/tailwind.static.css --minify",
+    "vendor:sync": "node scripts/sync-vendor-assets.mjs"
   },
   "keywords": [
     "aquarium",
@@ -22,7 +25,9 @@
   "license": "MIT",
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.11",
+    "axe-core": "4.14.0",
     "happy-dom": "^21.0.1",
+    "html5-qrcode": "2.3.8",
     "playwright": "^1.64.0",
     "serve": "^14.0.0",
     "tailwindcss": "^3.4.19",

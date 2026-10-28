@@ -1,19 +1,16 @@
 # Panduan Setup Database Supabase — Aquastock Pro
 
-Dokumen ini menyediakan seluruh skrip SQL (*Data Definition Language* & DDL) yang dibutuhkan untuk menginisialisasi basis data **Aquastock Pro** dari nol (*fresh install*) pada instance Supabase baru.
+Dokumen ini berisi SQL bootstrap lama dan panduan migrasi untuk basis data **Aquastock Pro**. Skema berkembang terus: file SQL di `supabase/migrations/` adalah perubahan berurutan yang harus diterapkan setelah bootstrap pada instalasi baru. Jangan menjalankan hanya blok bootstrap lalu menganggap schema produksi sudah lengkap.
 
 ---
 
 ## Langkah Setup Cepat
 
-1. Buka dashboard proyek Anda di [supabase.com](https://supabase.com).
-2. Masuk ke menu **SQL Editor** pada navigasi sisi kiri.
-3. Klik tombol **New Query**, salin seluruh blok SQL di bawah ini, dan klik tombol **Run**.
-4. Masuk ke menu **Storage**, pastikan bucket bernama `product-images` telah dibuat dan berstatus **Public Bucket**.
-5. Buka menu **Authentication → Providers → Email**, pastikan statusnya **Enabled**. Nonaktifkan opsi *Confirm email* jika Anda berada dalam lingkungan pengembangan/pengujian lokal.
-6. Untuk menambahkan dukungan barcode pada tabel produk, jalankan migrasi `supabase/migrations/20261016_product_barcodes.sql` melalui **SQL Editor**.
-7. Untuk mencatat kanal transaksi dan mencegah stok menjadi negatif, jalankan migrasi `supabase/migrations/20261016_inventory_stock_safety.sql` melalui **SQL Editor**.
-8. Untuk mengelola kategori dan satuan stok dari menu Pengaturan, jalankan migrasi `supabase/migrations/20261016_product_units.sql` melalui **SQL Editor**.
+1. Buat proyek Supabase terpisah untuk staging/pengembangan; jangan uji setup atau restore langsung di produksi.
+2. Untuk instalasi baru, terapkan bootstrap SQL di bawah pada database kosong.
+3. Terapkan seluruh file `supabase/migrations/*.sql` sesuai urutan nama/tanggal. Bila menggunakan Supabase CLI, tautkan project yang benar dan gunakan `supabase db push`; tinjau terlebih dahulu migrasi pending dan hasilnya.
+4. Untuk project yang sudah berjalan, jalankan hanya migrasi yang belum diterapkan sesuai riwayat database; jangan mengulang bootstrap secara buta.
+5. Konfigurasikan bucket Storage, Auth, RLS, dan kredensial sesuai checklist deployment. Jangan nonaktifkan konfirmasi email di produksi.
 
 Saldo akibat barang masuk/keluar berubah melalui trigger database; frontend tidak melakukan fallback update stok. Penyesuaian stok fisik dicatat terpisah pada `stock_adjustments` dan diproses atomik melalui `perform_stock_opname`, sehingga tidak muncul sebagai penjualan/barang keluar. Terapkan migrasi `20261029_stock_adjustment_ledger.sql` setelah `20261028_inventory_single_stock_trigger.sql`. Riwayat mencatat saldo sebelum, saldo fisik, selisih, alasan, petugas, dan waktu; akses perubahan hanya melalui RPC untuk OWNER/STAFF.
 
@@ -21,7 +18,9 @@ Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan ber
 
 ---
 
-## Skrip SQL Lengkap (DDL, Triggers, RPC, RLS & Seed)
+## Skrip Bootstrap SQL Awal
+
+> **Cakupan backup aplikasi:** JSON export/import pada menu Backup adalah upsert subset tabel aplikasi; bukan backup lengkap PostgreSQL/Supabase, tidak menyertakan akun Auth, dan tidak menghapus data target yang tidak ada di file. Proses beberapa tabel tidak atomik. Gunakan backup provider/PITR dan ikuti recovery drill staging di [deployment.md](deployment.md) sebelum mengandalkannya untuk disaster recovery.
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════

@@ -106,12 +106,10 @@ export const backup = {
           .select('*');
 
         if (error) {
-          console.warn(`[BackupApi] Gagal membaca tabel ${t.id}:`, error.message);
-          backupData[t.id] = [];
-        } else {
-          backupData[t.id] = data || [];
-          totalRecords += (data || []).length;
+          throw new Error(`Gagal membaca tabel ${t.id} untuk backup: ${error.message}`);
         }
+        backupData[t.id] = data || [];
+        totalRecords += backupData[t.id].length;
       }
 
       const timestamp = new Date().toISOString();
@@ -222,30 +220,45 @@ export const backup = {
       const tablesData = parsedData.data && typeof parsedData.data === 'object'
         ? parsedData.data
         : parsedData;
+      if (!tablesData || typeof tablesData !== 'object' || Array.isArray(tablesData)) {
+        throw new Error('Format data tabel pada file backup tidak valid.');
+      }
+
+      const providedTables = BACKUP_TABLES.filter(table =>
+        Object.prototype.hasOwnProperty.call(tablesData, table.id)
+      );
+      if (providedTables.length === 0) {
+        throw new Error('File backup tidak berisi tabel Aquastock yang didukung.');
+      }
 
       let totalImported = 0;
       const details = {};
+      const failedTables = [];
 
-      for (const t of BACKUP_TABLES) {
+      for (const t of providedTables) {
         const rows = tablesData[t.id];
-        if (Array.isArray(rows) && rows.length > 0) {
-          try {
-            // Upsert / insert ke tabel target Supabase
-            const { error } = await supabase
-              .from(t.id)
-              .upsert(rows);
+        if (!Array.isArray(rows)) {
+          details[t.id] = { count: 0, status: 'error', message: 'Data tabel harus berupa array.' };
+          failedTables.push(t.id);
+          continue;
+        }
+        if (rows.length === 0) {
+          details[t.id] = { count: 0, status: 'success' };
+          continue;
+        }
 
-            if (error) {
-              console.warn(`[BackupApi] Gagal restore tabel ${t.id}:`, error.message);
-              details[t.id] = { count: 0, status: 'error', message: error.message };
-            } else {
-              totalImported += rows.length;
-              details[t.id] = { count: rows.length, status: 'success' };
-            }
-          } catch (upsertErr) {
-            console.warn(`[BackupApi] Exception restore tabel ${t.id}:`, upsertErr);
-            details[t.id] = { count: 0, status: 'error', message: upsertErr.message };
-          }
+        try {
+          const { error } = await supabase
+            .from(t.id)
+            .upsert(rows);
+
+          if (error) throw error;
+          totalImported += rows.length;
+          details[t.id] = { count: rows.length, status: 'success' };
+        } catch (upsertErr) {
+          console.warn(`[BackupApi] Gagal restore tabel ${t.id}:`, upsertErr);
+          details[t.id] = { count: 0, status: 'error', message: upsertErr.message || 'Gagal menyimpan data.' };
+          failedTables.push(t.id);
         }
       }
 
@@ -258,12 +271,20 @@ export const backup = {
       });
 
       return formatResponse({
-        ok: true,
+        ok: failedTables.length === 0,
         data: {
           totalImported,
           details,
-          fileName
-        }
+          fileName,
+          failedTables
+        },
+        error: failedTables.length > 0
+          ? {
+              code: 'PARTIAL_RESTORE',
+              message: `Restore tidak tuntas. Gagal pada tabel: ${failedTables.join(', ')}. Sebagian data mungkin sudah tersimpan.`,
+              details: { failedTables }
+            }
+          : null
       });
     } catch (err) {
       return handleError(err);

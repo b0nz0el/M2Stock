@@ -12,7 +12,7 @@ Aplikasi dibangun dengan pola **Static Client-Side Architecture** yang berkomuni
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        LAPISAN PERAMBAN (BROWSER)                       │
 │                                                                        │
-│   HTML5 (16 Halaman MPA)  │  Tailwind CSS (Statis)  │  Inter Variable  │
+│ HTML5 (dashboard modular) │ Tailwind CSS (Statis)  │ Inter Variable │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ Interaksi DOM & Event
 ┌───────────────────────────────────▼────────────────────────────────────┐
@@ -21,7 +21,7 @@ Aplikasi dibangun dengan pola **Static Client-Side Architecture** yang berkomuni
 │  app.js ───► navigation.js ───► utils.js ───► image-utils.js (Canvas)  │
 │                   │                                                    │
 │                   ▼                                                    │
-│      api.js (Single Source of Truth / Data Access Layer)               │
+│      assets/js/api/*.js (modul data per domain)                        │
 │                   │                                                    │
 │                   ▼                                                    │
 │      supabase-client.js (Inisialisasi SDK Klien Resmi)                 │
@@ -40,8 +40,8 @@ Aplikasi dibangun dengan pola **Static Client-Side Architecture** yang berkomuni
 │  ┌──────────────────────────────────────────────────────────────────┐  │
 │  │                DATABASE ENGINE (POSTGRESQL 15)                   │  │
 │  │                                                                  │  │
-│  │  • 7 Relational Tables (products, transactions, users, dll.)     │  │
-│  │  • Row Level Security (RLS) Policies Enforced                    │  │
+│  │  • Schema relasional berkembang melalui bootstrap & migrations │  │
+│  │  • Kebijakan Row Level Security (RLS) didefinisikan di migrasi   │  │
 │  │  • Database Triggers (Penyesuaian Stok Otomatis Mutasi Transaksi)│  │
 │  │  • Stored Procedures / RPC (get_auth_users, update_user_role)   │  │
 │  └──────────────────────────────────────────────────────────────────┘  │
@@ -58,8 +58,8 @@ Seluruh kode frontend berada di direktori `public/assets/js/` dan diorganisasika
    - Titik awal inisialisasi koneksi SDK `@supabase/supabase-js` melalui ESM CDN.
    - Menyediakan instance singleton `supabase` dan mengeksposnya ke objek global peramban `window.supabase`.
 
-2. **`api.js` (Single Source of Truth)**:
-   - Mengkapsulasi seluruh query basis data (SELECT, INSERT, UPDATE, DELETE, RPC) untuk produk, transaksi, supplier, pelanggan, dan pengguna.
+2. **`api/` (modul akses data per domain)**:
+   - Mengkapsulasi query basis data untuk produk, transaksi, supplier, pelanggan, pengguna, backup, dan domain lainnya di modul terpisah.
    - Menyediakan penanganan pembatalan request dinamis via `AbortController` (berguna untuk search debounce dan pergantian halaman cepat).
    - Memformat setiap hasil respons ke dalam struktur **Response Envelope** seragam (`{ ok, data, error, meta }`).
 
@@ -99,15 +99,9 @@ Seluruh kode frontend berada di direktori `public/assets/js/` dan diorganisasika
    - Memanfaatkan Supabase Auth berbasis JSON Web Token (JWT).
    - Registrasi dan login menggunakan email & kata sandi. Konfirmasi email dapat dinonaktifkan pada lingkungan development agar akun uji dapat langsung digunakan.
 
-2. **Database PostgreSQL 15**:
-   - Terdiri dari 7 tabel relasional utama:
-     - `profiles`: Informasi nama pengguna dan role hierarki (`OWNER`, `STAFF`, `VIEWER`).
-     - `categories`: Klasifikasi barang inventaris.
-     - `suppliers`: Data mitra vendor aksesoris.
-     - `customers`: Data pembeli dan mitra langganan.
-     - `products`: Katalog inventaris barang toko Jaquris.
-     - `transactions`: Log mutasi barang masuk (`in`) dan keluar (`out`).
-     - `notifications`: Notifikasi sistem dan peringatan stok menipis.
+2. **Database PostgreSQL (Supabase)**:
+   - Skema berkembang melalui bootstrap database dan migrasi berurutan di `supabase/migrations/`; jangan mengandalkan angka tabel tetap dari dokumen ini.
+   - Domain yang tercakup antara lain profil/role, produk, kategori/satuan, transaksi/stok, supplier/pelanggan, PO/retur, kas/utang, notifikasi, audit, backup, dan penyesuaian stok.
 
 3. **Storage Bucket (`product-images`)**:
    - Bucket publik untuk melayani aset gambar produk via URL publik.
@@ -133,9 +127,9 @@ Seluruh kode frontend berada di direktori `public/assets/js/` dan diorganisasika
                             ▼
 ┌────────────────────────────────────────────────────────┐
 │ PostgreSQL Row Level Security (RLS)                    │
-│  - auth.role() = 'authenticated' wajib untuk mutasi    │
-│  - Fungsi security definer is_owner() memvalidasi hak  │
-│  - Transaksi tidak bisa dihapus oleh Staff / Viewer    │
+│  - Kebijakan RLS dan role memeriksa akses data         │
+│  - Fungsi security definer is_owner() dipakai modul    │
+│  - Hak mutasi bergantung pada grant/policy aktif       │
 │  - Foreign Key Constraint mencegah hapus produk aktif │
 └────────────────────────────────────────────────────────┘
 ```
@@ -143,7 +137,7 @@ Seluruh kode frontend berada di direktori `public/assets/js/` dan diorganisasika
 1. **Prinsip Least Privilege**:
    - Frontend **hanya menggunakan Anon Key**. Kunci berkekuatan tinggi (`service_role key`) tidak pernah disertakan dalam kode klien atau file build publik.
 2. **Row Level Security (RLS)**:
-   - Seluruh tabel database dilindungi kebijakan RLS. Pengecekan otorisasi dijalankan langsung di mesin basis data, bukan sekadar logika antarmuka browser.
+   - Repository memiliki migrasi yang mendefinisikan kebijakan RLS. Pemeriksaan kode tidak membuktikan bahwa seluruh tabel, grant, dan RPC pada proyek Supabase aktif memiliki konfigurasi yang sama; verifikasi instance staging/produksi secara terpisah sebelum mengklaim perlindungan runtime.
 3. **Pembagian Peran (Role-Based Access Control)**:
    - `OWNER`: Hak penuh ke seluruh fitur, manajemen user, perubahan role, dan penghapusan transaksi / produk.
    - `STAFF`: Dapat melihat data, membuat produk baru, dan mencatat transaksi barang masuk & keluar kasir.
@@ -157,18 +151,17 @@ Untuk menjamin kelancaran sistem pada perangkat kasir berspesifikasi rendah dan 
 
 | Metrik / Aset | Batas Anggaran (Budget) | Ukuran Riil Saat Ini | Status Evaluasi |
 |---|---|---|---|
-| **Total CSS Gzip** | < 60.00 KB | **13.22 KB** (Raw: 49.53 KB) | ✔ **PASSED** (Hemat ~78%) |
-| **Total JS Gzip** | < 120.00 KB | **103.32 KB** (Raw: 345.72 KB)* | ✔ **PASSED** (Hemat ~14%) |
-| **First Contentful Paint (FCP)** | < 1.5 detik | **~0.6 - 0.9 detik** | ✔ **PASSED** |
-| **Time to Interactive (TTI)** | < 3.0 detik | **~1.1 - 1.4 detik** | ✔ **PASSED** |
-
-*\*Catatan JS: Total ukuran menyertakan vendor Chart.js (~69 KB gzip) yang hanya di-load secara malas (lazy-loaded) pada 2 dari 16 halaman. Ukuran bundle JS standar untuk 14 halaman lainnya adalah **~34.2 KB gzip**.*
+| **Total CSS Gzip** | Budget monitoring 60 KB | Diukur saat perintah dijalankan | `npm run size` |
+| **Total JS Gzip** | Budget monitoring 120 KB | Diukur saat perintah dijalankan; budget dapat terlampaui | `npm run size` |
+| **FCP / TTI** | Belum ada baseline terkontrol yang dapat diklaim | Ukur pada perangkat dan jaringan sasaran | Belum menjadi CI gate |
 
 ---
 
-## 6. Arsitektur Deployment (Pratinjau Fase 5)
+## 6. Arsitektur Deployment
 
-Pada Fase 5, sistem siap dideploy menggunakan model **Serverless Jamstack**:
-- **Frontend Hosting**: Statis murni di **GitHub Pages**, **Cloudflare Pages**, **Vercel**, atau **Netlify**.
+Sistem saat ini menggunakan model **Serverless Jamstack**:
+- **Frontend Hosting**: aset statis dipublikasikan di Cloudflare Pages; koneksi Git/auto-deploy dikonfigurasi di luar repository.
 - **Backend & Database**: Dihosting sepenuhnya pada infrastruktur **Supabase Cloud**.
 - Rincian panduan dan checklist deployment tersedia di [deployment.md](deployment.md).
+
+Skema bootstrap, migrasi, pengujian, dan backup dapat berubah; periksa file aktual di repository dan jangan menganggap dokumentasi ini sebagai bukti kondisi konfigurasi proyek cloud.
