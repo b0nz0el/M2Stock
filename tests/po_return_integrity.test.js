@@ -305,11 +305,19 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       const path = await import('path');
       const responsiveCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/responsive.css'), 'utf-8');
       const layoutCss = fs.readFileSync(path.resolve(process.cwd(), 'public/assets/css/layout.css'), 'utf-8');
+      const indexHtml = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/index.html'), 'utf-8');
 
       // Mobile tabs & KPI grid
       expect(responsiveCss).toContain('#page-po .po-status-tabs');
       expect(responsiveCss).toContain('overflow-x: auto !important;');
       expect(responsiveCss).toContain('#page-po .po-kpi-grid');
+      expect(indexHtml).toContain('class="modal-po-content');
+      expect(indexHtml).toContain('class="modal-po-preview');
+      expect(indexHtml).toContain('class="modal-po-actions');
+      expect(responsiveCss).toContain('#modal-print-po > .modal-po-content');
+      expect(responsiveCss).toContain('grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;');
+      expect(responsiveCss).toContain('#po-document-paper .po-document-header');
+      expect(responsiveCss).toContain('table-layout: fixed !important;');
 
       // Print styles
       expect(layoutCss).toContain('size: A4 portrait;');

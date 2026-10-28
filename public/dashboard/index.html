@@ -4059,7 +4059,7 @@
 
 <!-- =========================== MODAL (PO: modal-print-po) =========================== -->
 <div id="modal-print-po" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-print-po-title">
-  <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl p-6 space-y-4 my-auto">
+  <div class="modal-po-content bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl p-6 space-y-4 my-auto">
     <div class="flex items-center justify-between pb-3 border-b border-white/5">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
@@ -4076,7 +4076,7 @@
     </div>
 
     <!-- PREVIEW DOKUMEN CETAK PO -->
-    <div class="p-3 bg-black/40 rounded-xl overflow-x-auto max-h-[70vh] overflow-y-auto">
+    <div class="modal-po-preview p-3 bg-black/40 rounded-xl overflow-x-auto max-h-[70vh] overflow-y-auto">
       <div id="po-document-paper" class="bg-white text-black p-6 sm:p-8 rounded-lg shadow-xl font-sans text-xs leading-normal select-text max-w-2xl mx-auto">
         <!-- Kop Surat Toko (Sinkron dengan Pengaturan Toko) -->
         <div class="po-document-header">
@@ -4164,7 +4164,7 @@
     </div>
 
     <!-- Tombol Aksi Modal -->
-    <div class="flex items-center justify-between gap-2 pt-2 border-t border-white/5 flex-wrap">
+    <div class="modal-po-actions flex items-center justify-between gap-2 pt-2 border-t border-white/5 flex-wrap">
       <button type="button" id="btn-cancel-print-po" class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
         Tutup
       </button>
