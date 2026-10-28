@@ -180,10 +180,10 @@ function renderSuppliers() {
         <td class="px-5 py-3.5">${statusBadge}</td>
         <td class="px-5 py-3.5 text-right">
           <div class="flex items-center justify-end gap-1.5">
-            <button data-action="edit" onclick="editSupplier(${s.id})" title="Edit" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+            <button type="button" data-action="edit" data-supplier-action="edit" data-supplier-id="${escapeHtml(String(s.id))}" title="Edit" class="p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button data-action="delete" onclick="confirmDeleteSupplier(${s.id}, '${escapeHtml(s.name)}')" title="Hapus" class="p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
+            <button type="button" data-action="delete" data-supplier-action="delete" data-supplier-id="${escapeHtml(String(s.id))}" title="Hapus" class="p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
             </button>
           </div>
@@ -311,8 +311,28 @@ function closeSupplierModal() {
 }
 
 function editSupplier(id) {
-  const s = suppliersData.find(item => item.id === id);
+  const s = suppliersData.find(item => String(item.id) === String(id));
   if (s) openSupplierModal(s);
+}
+
+function setupSupplierTableActions() {
+  const tbody = document.getElementById('suppliers-table-body');
+  if (!tbody || tbody.dataset.supplierActionsBound === 'true') return;
+
+  tbody.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-supplier-action][data-supplier-id]');
+    if (!button || !tbody.contains(button)) return;
+
+    const supplier = suppliersData.find(item => String(item.id) === button.dataset.supplierId);
+    if (!supplier) return;
+
+    if (button.dataset.supplierAction === 'edit') {
+      editSupplier(supplier.id);
+    } else if (button.dataset.supplierAction === 'delete') {
+      confirmDeleteSupplier(supplier.id, supplier.name);
+    }
+  });
+  tbody.dataset.supplierActionsBound = 'true';
 }
 
 async function handleSupplierSubmit(e) {
@@ -418,6 +438,7 @@ function escapeHtml(str) {
 
 function initSuppliers() {
   setupSearchListeners();
+  setupSupplierTableActions();
   loadSuppliers();
 }
 
@@ -428,6 +449,7 @@ if (typeof window !== 'undefined') {
   window.goToSuppliersPage = goToSuppliersPage;
   window.renderSuppliersPagination = renderSuppliersPagination;
   window.renderSuppliers = renderSuppliers;
+  window.setupSupplierTableActions = setupSupplierTableActions;
   window.filterByStatus = filterByStatus;
   window.handleSearch = handleSearch;
   window.handleSearchSuppliers = handleSearch;

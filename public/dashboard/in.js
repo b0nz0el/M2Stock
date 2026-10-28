@@ -73,6 +73,8 @@
   let categoriesData = [];
   let unitsData = [];
   let selectedExistingProduct = null;
+  let selectedProductRefreshId = 0;
+  let isRefreshingSelectedProduct = false;
 
   // Manajemen Galeri Foto Produk Baru di Barang Masuk
   let inProductPhotos = [];
@@ -447,7 +449,7 @@
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
   }
 
-  function selectInProduct(productId) {
+  async function selectInProduct(productId) {
     const prod = availableProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
 
@@ -476,7 +478,6 @@
         prodInput.appendChild(opt);
       }
       prodInput.value = String(prod.id);
-      prodInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     const searchInput = document.getElementById('in-product-search');
@@ -509,7 +510,42 @@
     }
 
     calculateInTotal();
+    await refreshSelectedProductPrice(prod.id);
     document.getElementById('in-qty')?.focus();
+  }
+
+  async function refreshSelectedProductPrice(productId) {
+    const requestId = ++selectedProductRefreshId;
+    isRefreshingSelectedProduct = true;
+    try {
+      const result = await Api.items.getById(productId);
+      if (requestId !== selectedProductRefreshId
+        || String(document.getElementById('in-product-id')?.value) !== String(productId)) return;
+      if (!result?.ok || !result.data) {
+        throw new Error(result?.error?.message || 'Gagal memuat harga beli terbaru produk.');
+      }
+
+      const freshProduct = result.data;
+      availableProducts = availableProducts.map(product =>
+        String(product.id) === String(freshProduct.id) ? freshProduct : product
+      );
+      selectedExistingProduct = freshProduct;
+      const priceInput = document.getElementById('in-price');
+      if (priceInput) priceInput.value = String(freshProduct.cost_price ?? 0);
+
+      const badge = document.getElementById('in-product-badge');
+      if (badge) {
+        badge.textContent = `✓ Terdaftar (Stok: ${freshProduct.stock ?? 0} ${freshProduct.unit || 'pcs'})`;
+      }
+      calculateInTotal();
+    } catch (error) {
+      if (requestId === selectedProductRefreshId
+        && typeof showToast === 'function') {
+        showToast(`Harga beli terbaru gagal dimuat: ${error.message}`, 'error');
+      }
+    } finally {
+      if (requestId === selectedProductRefreshId) isRefreshingSelectedProduct = false;
+    }
   }
 
   function handleInProductChange() {
@@ -519,6 +555,11 @@
     const priceInput = document.getElementById('in-price');
     if (prod && priceInput) {
       priceInput.value = String(prod.cost_price || 0);
+      selectedExistingProduct = prod;
+      refreshSelectedProductPrice(prod.id);
+    } else {
+      selectedProductRefreshId += 1;
+      isRefreshingSelectedProduct = false;
     }
     calculateInTotal();
   }
@@ -674,7 +715,7 @@
       return;
     }
 
-    selectInProduct(product.id);
+    await selectInProduct(product.id);
     if (status) status.textContent = `Produk dipilih: ${product.name}`;
     if (typeof showToast === 'function') showToast(`Produk "${product.name}" berhasil dipilih`, 'success');
     document.getElementById('in-qty')?.focus();
@@ -761,6 +802,12 @@
   async function handleInSubmit(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (isSubmittingIn) return;
+    if (isRefreshingSelectedProduct) {
+      if (typeof showToast === 'function') {
+        showToast('Sedang memuat harga beli terbaru. Tunggu sebentar lalu simpan kembali.', 'warning');
+      }
+      return;
+    }
     isSubmittingIn = true;
 
     const submitBtn = document.getElementById('btn-submit-in');
@@ -814,7 +861,7 @@
           if (typeof showToast === 'function') {
             showToast(`Produk "${existingProd.name}" sudah terdaftar (SKU: ${existingProd.sku || '-'}). Dialihkan ke Barang Lama agar tidak terjadi duplikasi katalog.`, 'warning');
           }
-          selectInProduct(existingProd.id);
+          await selectInProduct(existingProd.id);
           return;
         }
       }

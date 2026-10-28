@@ -192,14 +192,22 @@
     const scannerInstance = new window.Html5Qrcode('item-scanner-reader', { verbose: false, formatsToSupport: formats });
     scanner = scannerInstance;
 
-    let cameraConfig = { facingMode: 'environment' };
+    let cameraConstraints = {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    };
     try {
       if (typeof window.Html5Qrcode.getCameras === 'function') {
         const devices = await window.Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
           const back = devices.find(d => /back|belakang|rear|environment/i.test(d.label)) || devices[devices.length - 1];
           if (back && back.id) {
-            cameraConfig = back.id;
+            cameraConstraints = {
+              deviceId: { exact: back.id },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            };
           }
         }
       }
@@ -207,15 +215,23 @@
 
     const startWithConfig = async (cfg) => {
       return scannerInstance.start(
-        cfg,
-        { fps: 10, qrbox: { width: 260, height: 160 }, aspectRatio: 1.333333 },
+        { facingMode: 'environment' },
+        {
+          fps: 12,
+          qrbox: (width, height) => ({
+            width: Math.min(Math.floor(width * 0.92), 480),
+            height: Math.min(Math.floor(height * 0.42), 180)
+          }),
+          aspectRatio: 1.333333,
+          videoConstraints: cfg
+        },
         (decodedText) => finishScan(modal, decodedText, onScan),
         () => {}
       );
     };
 
     try {
-      await startWithConfig(cameraConfig);
+      await startWithConfig(cameraConstraints);
     } catch (err1) {
       console.warn('Gagal start dengan kamera ID, mencoba environment constraint:', err1);
       try {
@@ -269,32 +285,89 @@
         const file = e.target.files?.[0];
         if (!file) return;
         setStatus(modal, 'Memindai foto barcode…');
+        photoBtn.disabled = true;
         try {
           await loadHtml5Qrcode();
-          const tempScanner = scanner || new window.Html5Qrcode('item-scanner-reader', { verbose: false });
-          const decodedText = await tempScanner.scanFile(file, true);
-          if (decodedText) {
-            await finishScan(modal, decodedText, onScan);
+          if (scanner) {
+            const activeScanner = scanner;
+            scanner = null;
+            try {
+              await activeScanner.stop();
+            } catch (error) {
+              console.warn('Kamera tidak aktif saat beralih ke pemindaian foto:', error);
+            }
+            try {
+              await activeScanner.clear();
+            } catch (error) {
+              console.warn('Gagal membersihkan kamera sebelum memindai foto:', error);
+            }
           }
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+          }
+          if (animationFrame !== null) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+          }
+          if (session !== scannerSession || !modal.isConnected) return;
+
+          const formats = HTML5_FORMATS
+            .map((format) => window.Html5QrcodeSupportedFormats[format])
+            .filter((format) => format !== undefined);
+          const photoScanner = new window.Html5Qrcode('item-scanner-reader', { verbose: false, formatsToSupport: formats });
+          scanner = photoScanner;
+          const decodedText = await photoScanner.scanFile(file, false);
+          if (scanner === photoScanner) scanner = null;
+          try {
+            await photoScanner.clear();
+          } catch (error) {
+            console.warn('Gagal membersihkan hasil pemindaian foto:', error);
+          }
+          if (decodedText) await finishScan(modal, decodedText, onScan);
         } catch (err) {
           console.warn('Barcode tidak terbaca dari foto:', err);
-          setStatus(modal, 'Barcode tidak terbaca dari foto. Coba foto lebih dekat dan pastikan fokus.');
-          if (typeof showToast === 'function') {
-            showToast('Barcode tidak terdeteksi dari foto. Pastikan gambar jelas.', 'error');
+          if (scanner) {
+            try {
+              await scanner.clear();
+            } catch (clearError) {
+              console.warn('Gagal membersihkan pemindai foto:', clearError);
+            }
+            scanner = null;
           }
+          setStatus(modal, 'Barcode belum terbaca. Gunakan foto yang fokus, cukup terang, dan tampilkan barcode secara utuh.');
+          if (typeof showToast === 'function') {
+            showToast('Barcode tidak terdeteksi dari foto. Pastikan gambar fokus dan barcode terlihat utuh.', 'error');
+          }
+          if (session === scannerSession && modal.isConnected) {
+            try {
+              await startFallbackScanner(modal, onScan, session);
+            } catch (restartError) {
+              console.warn('Kamera tidak dapat diaktifkan kembali setelah pemindaian foto:', restartError);
+              setStatus(modal, 'Foto belum terbaca dan kamera tidak dapat diaktifkan. Coba unggah foto lain atau periksa izin kamera.');
+            }
+          }
+        } finally {
+          fileInput.value = '';
+          photoBtn.disabled = false;
         }
       });
     }
 
     try {
-      if (typeof window.BarcodeDetector === 'function'
-        && typeof window.BarcodeDetector.getSupportedFormats === 'function'
-        && await startNativeScanner(modal, onScan, session)) return;
       await startFallbackScanner(modal, onScan, session);
     } catch (error) {
       if (session !== scannerSession || !modal.isConnected) return;
+      if (typeof window.BarcodeDetector === 'function'
+        && typeof window.BarcodeDetector.getSupportedFormats === 'function') {
+        try {
+          if (await startNativeScanner(modal, onScan, session)) return;
+        } catch (nativeError) {
+          console.warn('Pemindai kamera alternatif juga gagal dijalankan:', nativeError);
+        }
+      }
       console.warn('Kamera langsung tidak dapat diakses, beralih ke mode foto:', error);
-      setStatus(modal, 'Kamera langsung dibatasi oleh izin browser/sistem. Klik tombol "Ambil / Unggah Foto Barcode" di bawah untuk memindai.');
+      setStatus(modal, 'Kamera tidak dapat diaktifkan. Periksa izin kamera, atau gunakan tombol foto di bawah.');
       const scanBtn = modal.querySelector('#btn-scan-via-photo');
       if (scanBtn) {
         scanBtn.classList.remove('bg-[#0088CC]/20', 'text-[#32ADE6]');

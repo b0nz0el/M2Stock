@@ -22,7 +22,10 @@ function setupForm() {
   `;
 
   window.Api = {
-    items: { getAll: vi.fn().mockResolvedValue({ ok: true, data: [product] }) },
+    items: {
+      getAll: vi.fn().mockResolvedValue({ ok: true, data: [product] }),
+      getById: vi.fn().mockResolvedValue({ ok: true, data: product })
+    },
     suppliers: { getAll: vi.fn().mockResolvedValue({ ok: true, data: [] }) }
   };
   window.showToast = vi.fn();
@@ -49,6 +52,18 @@ describe('Barang Masuk barcode lookup', () => {
     expect(document.getElementById('in-product-id').value).toBe('7');
     expect(document.getElementById('in-price').value).toBe('25000');
     expect(document.getElementById('in-barcode-status').textContent).toContain('Filter Aquarium');
+  });
+
+  it('uses the latest master purchase price when selecting an existing product', async () => {
+    const updatedProduct = { ...product, cost_price: 37500 };
+    window.Api.items.getById.mockResolvedValue({ ok: true, data: updatedProduct });
+    await window.loadDropdowns();
+
+    await window.selectInProduct(product.id);
+
+    expect(window.Api.items.getById).toHaveBeenCalledWith(product.id);
+    expect(document.getElementById('in-price').value).toBe('37500');
+    expect(document.getElementById('in-total-preview').textContent).toContain('37.500');
   });
 
   it('clears product selection when barcode is not registered', async () => {
