@@ -2176,26 +2176,44 @@
         <p class="text-sm text-[#A0A0A5] mt-1">Konfigurasi profil toko, transaksi kasir, batas stok, dan preferensi tampilan</p>
       </div>
 
-      <!-- Card Status PWA & Pembaruan Sistem (Mencolok di Paling Atas Pengaturan) -->
-      <div class="card p-5 bg-gradient-to-r from-[#1C1C1E] via-[#242426] to-[#1C1C1E] border border-white/10 rounded-2xl shadow-xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-3.5">
-            <div class="w-11 h-11 rounded-xl bg-[#32ADE6]/15 text-[#32ADE6] flex items-center justify-center shrink-0 border border-[#32ADE6]/25 shadow-md">
+      <!-- Card Status PWA & Pembaruan Sistem (Modern SaaS Status Hero) -->
+      <div class="card p-5 sm:p-6 lg:p-7 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden transition-all">
+        <!-- Ambient top gradient border -->
+        <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#0088CC]/20 via-[#32ADE6]/70 to-[#0088CC]/20" aria-hidden="true"></div>
+
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+          <!-- Sisi Kiri: Icon + Informasi & Status -->
+          <div class="flex items-start gap-4 sm:gap-4.5 min-w-0">
+            <div class="w-12 h-12 rounded-2xl bg-[#0088CC]/10 text-[#32ADE6] border border-[#0088CC]/20 flex items-center justify-center shrink-0 shadow-inner mt-0.5">
               <i data-lucide="refresh-cw" class="w-5 h-5"></i>
             </div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-bold text-base text-white">Pembaruan &amp; Sinkronisasi Sistem</h3>
-                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30">v3.4.23 (Terkini)</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-[#A0A0A5] border border-white/10">PWA Standalone</span>
+            <div class="min-w-0 space-y-2">
+              <!-- Baris Judul & Badges -->
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h3 class="font-bold text-base sm:text-lg text-white tracking-tight leading-snug">Pembaruan &amp; Sinkronisasi Sistem</h3>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30">v3.4.23 (Terkini)</span>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/5 text-[#A0A0A5] border border-white/10 whitespace-nowrap">
+                    <i data-lucide="smartphone" class="w-3.5 h-3.5 text-[#32ADE6]" aria-hidden="true"></i>
+                    <span>PWA Standalone</span>
+                  </span>
+                </div>
               </div>
-              <p class="text-xs text-[#A0A0A5] mt-1">Aplikasi PWA ini otomatis tersinkronisasi. Klik periksa pembaruan untuk mengambil aset dan tampilan terbaru secara instan tanpa perlu menginstal ulang aplikasi.</p>
+
+              <!-- Deskripsi dengan Line Height Lega -->
+              <p class="text-xs sm:text-sm text-[#A0A0A5] leading-relaxed max-w-2xl">
+                Aplikasi PWA ini otomatis tersinkronisasi. Klik periksa pembaruan untuk mengambil aset dan tampilan terbaru secara instan tanpa perlu menginstal ulang aplikasi.
+              </p>
             </div>
           </div>
-          <button type="button" onclick="window.checkForPwaUpdate()" id="btn-check-pwa-update" class="w-full sm:w-auto bg-[#0088CC] hover:bg-[#0077BB] active:scale-95 text-white px-5 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 shadow-lg shadow-[#0088CC]/30 transition shrink-0 cursor-pointer">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-            <span>Periksa &amp; Update Sekarang</span>
-          </button>
+
+          <!-- Sisi Kanan: Tombol Aksi Cek Pembaruan -->
+          <div class="shrink-0 pt-1 sm:pt-0">
+            <button type="button" onclick="window.checkForPwaUpdate()" id="btn-check-pwa-update" class="w-full sm:w-auto bg-[#0088CC] hover:bg-[#0077BB] active:scale-95 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/25 border border-white/10 transition cursor-pointer whitespace-nowrap">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>Periksa &amp; Update Sekarang</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -3600,7 +3618,7 @@
               <div>
                 <label for="out-customer-id" class="block text-xs font-medium text-[#A0A0A5] mb-1">Pelanggan</label>
                 <select id="out-customer-id" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-[#0088CC] focus:outline-none">
-                  <option value="">Umum / Non-Pelanggan</option>
+                  <option value="">Umum</option>
                 </select>
               </div>
             </div>

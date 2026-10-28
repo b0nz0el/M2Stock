@@ -721,38 +721,46 @@
   }
 
   .settings-tabs {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     gap: 8px;
-    overflow: visible;
-    border-bottom: 0;
-    padding-bottom: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .settings-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .settings-tabs .settings-tab-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 48px;
-    justify-content: flex-start;
-    padding: 10px 12px !important;
-    white-space: normal !important;
-    text-align: left;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    min-width: max-content;
+    min-height: 40px !important;
+    justify-content: center;
+    padding: 8px 14px !important;
+    white-space: nowrap !important;
+    text-align: center;
+    border-radius: 12px;
   }
 
   #page-settings .settings-tabs .settings-tab-btn {
-    min-height: 48px;
+    min-height: 40px;
   }
 
   .settings-tabs .settings-tab-btn span {
     min-width: 0;
-    white-space: normal;
+    white-space: nowrap;
     line-height: 1.25;
   }
 
   .settings-tabs .settings-tab-btn:last-child {
-    grid-column: 1 / -1;
-    width: min(100%, calc(50% - 4px));
-    justify-self: center;
+    grid-column: auto !important;
+    width: auto !important;
+    justify-self: auto !important;
   }
 
   #page-settings > div:first-child h2 {
@@ -1639,27 +1647,35 @@
   }
 
   .settings-tabs {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     gap: 8px;
-    overflow: visible;
-    border-bottom: 0;
-    padding-bottom: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .settings-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .settings-tabs .settings-tab-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 48px;
-    justify-content: flex-start;
-    padding: 10px 12px !important;
-    white-space: normal !important;
-    text-align: left;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    min-width: max-content;
+    min-height: 40px !important;
+    justify-content: center;
+    padding: 8px 14px !important;
+    white-space: nowrap !important;
+    text-align: center;
+    border-radius: 12px;
   }
 
   .settings-tabs .settings-tab-btn span {
     min-width: 0;
-    white-space: normal;
+    white-space: nowrap;
     line-height: 1.25;
   }
 
