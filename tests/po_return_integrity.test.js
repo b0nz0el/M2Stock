@@ -270,6 +270,19 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(poJs).toContain('window.syncTableLabels();');
     });
 
+    it('menampilkan label deskriptif Restock Assistant sebagai pemasok virtual di semua tampilan PO', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const poJs = fs.readFileSync(path.resolve(process.cwd(), 'public/dashboard/po.js'), 'utf-8');
+      const label = 'Restock otomatis dari daftar stok menipis (Restock Assistant)';
+
+      expect(poJs).toContain(`const RESTOCK_ASSISTANT_LABEL = '${label}';`);
+      expect(poJs).toContain('function resolvePoSupplierName(item)');
+      expect(poJs).toContain("const supplierName = resolvePoSupplierName(item);");
+      expect(poJs).toContain('const supplierName = resolvePoSupplierName(p) || \'-\';');
+      expect(poJs).toContain('resolvePoSupplierName(p) || p.catatan');
+    });
+
     it('memastikan template index.html menggunakan po-signatures-grid flex row untuk 3 tanda tangan di A4', async () => {
       const fs = await import('fs');
       const path = await import('path');
@@ -301,4 +314,3 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
     });
   });
 });
-

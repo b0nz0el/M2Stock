@@ -44,7 +44,7 @@ Dibangun dengan arsitektur **Local-First Progressive Web App (PWA)**, sistem ini
 ### 5. 🤖 Restock Assistant & Manajemen PO
 * Pembuatan **Draft PO Otomatis** dari daftar barang dengan stok menipis (`stock <= min_stock`) yang dikelompokkan otomatis per supplier mitra.
 * Formula restock pintar: `GREATEST(1, (min_stock * 2) - stock)`.
-* Penomoran PO otomatis dengan catatan ringkas dan rapi: **`Restock Otomatis`**.
+* Label Restock Assistant pada PO otomatis: **`Restock otomatis dari daftar stok menipis (Restock Assistant)`**.
 
 ### 6. 📊 Adaptif UI/UX Lintas Perangkat (Responsive Design)
 * **Desktop (> 1024px)**: Sidebar navigasi tetap dengan badge indikator stok kritis dan notifikasi realtime.

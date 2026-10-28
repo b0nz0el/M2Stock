@@ -15,6 +15,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   let currentPage = 1;
   const pageSize = 15;
+  const RESTOCK_ASSISTANT_LABEL = 'Restock otomatis dari daftar stok menipis (Restock Assistant)';
   let currentStatus = 'all'; // 'all' | 'draft' | 'dikirim' | 'diterima' | 'dibatalkan'
   let currentSearch = '';
   let totalRecords = 0;
@@ -53,6 +54,27 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       return 'Restock Otomatis';
     }
     return note;
+  }
+
+  function resolvePoSupplierName(item) {
+    const supplierName = item.supplier_nama || item.suppliers?.name || '';
+    const supplierNameLower = supplierName.toLowerCase();
+    const hasLinkedSupplier = item.supplier_id != null || item.suppliers?.id != null;
+    const isAutoRestock = /restock (otomatis|assistant|stok kritis)/i.test(
+      `${item.catatan || ''} ${supplierName}`
+    ) || /supplier restock/i.test(supplierName);
+    const isGenericRestockName = [
+      'restock stok kritis',
+      'supplier restock',
+      'restock otomatis',
+      'restock assistant'
+    ].includes(supplierNameLower);
+
+    if (isAutoRestock && (!supplierName || (!hasLinkedSupplier && isGenericRestockName))) {
+      return RESTOCK_ASSISTANT_LABEL;
+    }
+
+    return supplierName || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
   }
 
   function getStatusBadge(status) {
@@ -199,7 +221,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     tbody.innerHTML = data.map((item) => {
       const itemCount = (item.items && item.items.length) || (item.purchase_order_items && item.purchase_order_items.length) || 1;
-      const supplierName = item.supplier_nama || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+      const supplierName = resolvePoSupplierName(item);
       return `
         <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
           <td class="px-4 py-3.5 font-mono text-xs font-semibold text-[#32ADE6]">
@@ -453,7 +475,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     const noPO = item.no_po || '-';
     const tanggalPO = formatDate(item.tanggal);
-    const supplierName = item.supplier_nama || item.suppliers?.name || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+    const supplierName = resolvePoSupplierName(item);
     const status = (item.status || 'draft').toUpperCase();
     const notes = formatPoNote(item.catatan) || 'Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.';
     const total = formatRupiah(item.total || 0);
@@ -553,7 +575,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   function generatePOWhatsAppText(item, overrideStoreInfo = null) {
     if (!item) return '';
-    const supplierName = item.supplier_nama || item.suppliers?.name || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
+    const supplierName = resolvePoSupplierName(item);
     const noPO = item.no_po || '-';
     const tanggalPO = formatDate(item.tanggal);
     const total = formatRupiah(item.total || 0);
@@ -888,7 +910,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
     const rowsHtml = poEntries.map((p, idx) => {
       const itemsCount = (p.items && p.items.length) || (p.purchase_order_items && p.purchase_order_items.length) || 1;
-      const supplierName = p.supplier_nama || p.catatan?.replace('Supplier: ', '') || '-';
+      const supplierName = resolvePoSupplierName(p) || '-';
       return `
         <tr>
           <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${idx + 1}</td>
@@ -971,7 +993,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const rows = poEntries.map(p => [
       p.no_po,
       p.tanggal || '',
-      `"${(p.supplier_nama || p.catatan || '').replace(/"/g, '""')}"`,
+      `"${(resolvePoSupplierName(p) || p.catatan || '').replace(/"/g, '""')}"`,
       (p.items && p.items.length) || (p.purchase_order_items && p.purchase_order_items.length) || 1,
       p.status,
       p.total,
