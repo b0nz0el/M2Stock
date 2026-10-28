@@ -14,8 +14,8 @@ html, body {
   background-color: #000;
 }
 
-/* ═══ TOUCH-ACTION & ERGONOMICS (Native App PWA - Zoom Locked) ═══ */
-/* Mengunci pinch-to-zoom di seluruh layar agar kokoh seperti aplikasi native */
+/* ═══ TOUCH-ACTION & ERGONOMICS ═══ */
+/* Mobile gesture restrictions are applied in responsive.css. */
 html, body, #app, main, .page, .card, table {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

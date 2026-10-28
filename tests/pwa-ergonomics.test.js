@@ -5,35 +5,41 @@ import path from 'path';
 describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
   const rootDir = path.resolve(__dirname, '..');
 
-  describe('Meta Viewport Standard (accessible zoom)', () => {
-    it('keeps pinch zoom available on the dashboard', () => {
+  describe('Meta Viewport Standard (fixed mobile scale)', () => {
+    it('disables pinch zoom on the dashboard', () => {
       const htmlPath = path.join(rootDir, 'public/dashboard/index.html');
       const html = fs.readFileSync(htmlPath, 'utf8');
       
-      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
-      expect(html).not.toContain('user-scalable=no');
-      expect(html).not.toContain('maximum-scale=1.0');
+      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
     });
 
-    it('keeps pinch zoom available on the login, landing, and 404 pages', () => {
+    it('disables pinch zoom on the login, landing, and 404 pages', () => {
       const loginHtml = fs.readFileSync(path.join(rootDir, 'public/login/index.html'), 'utf8');
       const landingHtml = fs.readFileSync(path.join(rootDir, 'public/index.html'), 'utf8');
       const errorHtml = fs.readFileSync(path.join(rootDir, 'public/404.html'), 'utf8');
 
       for (const html of [loginHtml, landingHtml, errorHtml]) {
-        expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">');
-        expect(html).not.toContain('user-scalable=no');
-        expect(html).not.toContain('maximum-scale=1.0');
+        expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">');
       }
     });
   });
 
   describe('Touch-Action and Tap Delay Elimination', () => {
-    it('preserves pinch zoom while avoiding double-tap delay', () => {
+    it('avoids double-tap delay for touch controls', () => {
       const baseCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/base.css'), 'utf8');
       expect(baseCss).toContain('touch-action: manipulation;');
       expect(baseCss).not.toContain('touch-action: pan-x pan-y !important;');
       expect(baseCss).toContain('-webkit-tap-highlight-color: transparent;');
+    });
+
+    it('prevents mobile viewport overflow and keeps dashboard controls inside the viewport', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('overflow-x: clip !important;');
+      expect(responsiveCss).toContain('touch-action: pan-y !important;');
+      expect(responsiveCss).toContain('#main-content,');
+      expect(responsiveCss).toContain('min-width: 0 !important;');
+      expect(responsiveCss).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+      expect(responsiveCss).toContain('#page-in #in-filter-buttons > button');
     });
   });
 

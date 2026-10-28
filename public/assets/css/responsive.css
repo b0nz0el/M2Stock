@@ -433,6 +433,122 @@ app-sidebar aside .sidebar-drawer-logout {
 }
 
 @media (max-width: 767px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip !important;
+    touch-action: pan-y !important;
+  }
+
+  body > div.flex {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  #main-content,
+  main {
+    box-sizing: border-box;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    touch-action: pan-y !important;
+  }
+
+  .page,
+  .page > * {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  header {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    gap: 8px !important;
+  }
+
+  header > div.flex-1 {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: 0;
+  }
+
+  header > div.ml-auto {
+    flex: 0 0 auto;
+    gap: 6px !important;
+    margin-left: 0 !important;
+  }
+
+  #page-in > div:first-child .flex.gap-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100% !important;
+  }
+
+  #page-in > div:first-child .flex.gap-2 > button {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px !important;
+  }
+
+  #page-in > div:first-child .flex.gap-2 > button[data-action="add"] {
+    grid-column: 1 / -1;
+    order: -1 !important;
+  }
+
+  #page-in .grid.grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    min-width: 0;
+  }
+
+  #page-in .grid.grid-cols-4 > .card {
+    min-width: 0;
+  }
+
+  #page-in #in-filter-buttons {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  #page-in #in-filter-buttons > button {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  #page-in #search-in,
+  #page-in #search-in + input,
+  #page-in .relative:has(> #search-in) {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .bottom-nav {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .bottom-nav-items {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .bottom-nav-item {
+    min-width: 0;
+  }
+
   #modal-print-po {
     align-items: stretch !important;
     justify-content: center !important;
@@ -783,7 +899,7 @@ app-sidebar aside .sidebar-drawer-logout {
     box-shadow: 0 2px 8px rgba(0, 136, 204, 0.25) !important;
     color: #FFFFFF !important;
     letter-spacing: -0.01em !important;
-    order: 1 !important;
+    order: -1 !important;
   }
 
   #page-out > div:first-child .flex.gap-2 > button[data-action="add"] {
