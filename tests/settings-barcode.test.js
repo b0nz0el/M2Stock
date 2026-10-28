@@ -7,7 +7,10 @@ const { supabase, productRows } = vi.hoisted(() => ({
 
 vi.mock('../public/assets/js/supabase-client.js', () => ({ supabase }));
 
-import { createInternalBarcode } from '../public/dashboard/settings-barcode.js';
+import {
+  createInternalBarcode,
+  filterProductsWithoutBarcode
+} from '../public/dashboard/settings-barcode.js';
 
 describe('Internal product barcode creation', () => {
   beforeEach(() => {
@@ -44,6 +47,7 @@ describe('Internal product barcode creation', () => {
       <button id="btn-refresh-missing-barcodes"></button>
       <button id="btn-select-missing-barcodes"></button>
       <button id="btn-generate-selected-barcodes"></button>
+      <input id="search-missing-barcodes">
       <p id="missing-barcode-count"></p>
       <ul id="missing-barcode-list"></ul>
     `;
@@ -69,6 +73,18 @@ describe('Internal product barcode creation', () => {
 
   it('rejects environments without a cryptographically secure random generator', () => {
     expect(() => createInternalBarcode({})).toThrow('tidak mendukung generator kode acak yang aman');
+  });
+
+  it('searches missing products by name or SKU without case sensitivity', () => {
+    const products = [
+      { name: 'Amara Aquarium Sponge', sku: 'FIL-AMA-306' },
+      { name: 'Amara Lampu LED', sku: 'LED-042' }
+    ];
+
+    expect(filterProductsWithoutBarcode(products, 'SPONGE')).toEqual([products[0]]);
+    expect(filterProductsWithoutBarcode(products, 'led-042')).toEqual([products[1]]);
+    expect(filterProductsWithoutBarcode(products, '  ')).toEqual(products);
+    expect(filterProductsWithoutBarcode(products, 'not found')).toEqual([]);
   });
 
   it('provides a settings tab, local renderer and print label path', async () => {
@@ -131,5 +147,51 @@ describe('Internal product barcode creation', () => {
     expect(productRows[1].barcode).toBe('OLD12345');
     expect(printDocument.body.textContent).toContain('Filter Aquarium');
     expect(printDocument.querySelector('.barcode')?.getAttribute('data-barcode-value')).toBe(productRows[0].barcode);
+  });
+
+  it('filters visible products and selects only search results while retaining hidden selections', async () => {
+    productRows.push({ id: 'product-3', name: 'Pakan Ikan', sku: 'FEED-3', barcode: null });
+    const printDocument = document.implementation.createHTMLDocument('Print labels');
+    const print = vi.fn();
+    vi.spyOn(window, 'open').mockReturnValue({
+      document: printDocument,
+      setTimeout: callback => callback(),
+      focus: vi.fn(),
+      print,
+      close: vi.fn()
+    });
+
+    const { initBarcodeSettings } = await import('../public/dashboard/settings-barcode.js');
+    initBarcodeSettings();
+    document.querySelector('[data-tab="barcode"]').click();
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('#missing-barcode-list [data-generate-barcode]')).toHaveLength(2);
+    });
+
+    const search = document.getElementById('search-missing-barcodes');
+    search.value = 'filter';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.getElementById('missing-barcode-count').textContent).toBe('1 dari 2 produk cocok');
+    expect(document.querySelectorAll('#missing-barcode-list [data-generate-barcode]')).toHaveLength(1);
+
+    document.getElementById('btn-select-missing-barcodes').click();
+    expect(document.querySelector('#missing-barcode-list input[data-select-row]').checked).toBe(true);
+    search.value = 'feed-3';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.querySelector('#missing-barcode-list [data-generate-barcode]').dataset.generateBarcode).toBe('product-3');
+    expect(document.getElementById('btn-generate-selected-barcodes').disabled).toBe(false);
+
+    document.getElementById('btn-select-missing-barcodes').click();
+    expect(document.querySelector('#missing-barcode-list input[data-select-row]').checked).toBe(true);
+    document.getElementById('btn-generate-selected-barcodes').click();
+    await vi.waitFor(() => {
+      expect(productRows[0].barcode).toMatch(/^AS\d{10}$/);
+      expect(productRows[2].barcode).toMatch(/^AS\d{10}$/);
+    });
+    expect(productRows[1].barcode).toBe('OLD12345');
+    await vi.waitFor(() => {
+      expect(print).toHaveBeenCalledOnce();
+    });
   });
 });

@@ -1,9 +1,19 @@
 import { supabase } from '../assets/js/supabase-client.js';
 
 let missingProducts = [];
+const selectedProductIds = new Set();
 let barcodeRendererPromise;
 let loading = false;
 let processing = false;
+
+export function filterProductsWithoutBarcode(products, searchTerm) {
+  const query = String(searchTerm || '').trim().toLocaleLowerCase();
+  if (!query) return products;
+  return products.filter(product =>
+    String(product.name || '').toLocaleLowerCase().includes(query)
+    || String(product.sku || '').toLocaleLowerCase().includes(query)
+  );
+}
 
 export function createInternalBarcode(cryptoApi = globalThis.crypto) {
   if (!cryptoApi?.getRandomValues) throw new Error('Browser tidak mendukung generator kode acak yang aman.');
@@ -44,6 +54,7 @@ async function loadMissingProducts() {
     }
 
     missingProducts = products.filter(product => !String(product.barcode || '').trim());
+    selectedProductIds.clear();
     renderMissingProducts();
   } catch (error) {
     console.error('Gagal memuat produk tanpa barcode:', error);
@@ -61,12 +72,15 @@ function renderMissingProducts() {
   const count = document.getElementById('missing-barcode-count');
   const generateButton = document.getElementById('btn-generate-selected-barcodes');
   const selectButton = document.getElementById('btn-select-missing-barcodes');
+  const searchInput = document.getElementById('search-missing-barcodes');
   if (!list || !count || !generateButton) return;
 
   list.replaceChildren();
-  if (selectButton) selectButton.textContent = 'Pilih semua';
-  count.textContent = `${missingProducts.length} produk belum memiliki barcode`;
-  if (selectButton) selectButton.disabled = missingProducts.length === 0;
+  const filteredProducts = filterProductsWithoutBarcode(missingProducts, searchInput?.value);
+  count.textContent = searchInput?.value.trim()
+    ? `${filteredProducts.length} dari ${missingProducts.length} produk cocok`
+    : `${missingProducts.length} produk belum memiliki barcode`;
+  if (selectButton) selectButton.disabled = filteredProducts.length === 0;
   generateButton.disabled = true;
 
   if (missingProducts.length === 0) {
@@ -77,7 +91,16 @@ function renderMissingProducts() {
     return;
   }
 
-  missingProducts.forEach(product => {
+  if (filteredProducts.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'py-6 text-center text-sm text-[#A0A0A5]';
+    empty.textContent = 'Produk tidak ditemukan. Coba kata kunci atau SKU lain.';
+    list.appendChild(empty);
+    if (selectButton) selectButton.textContent = 'Pilih semua';
+    return;
+  }
+
+  filteredProducts.forEach(product => {
     const row = document.createElement('li');
     row.className = 'flex items-center gap-3 py-3';
     row.dataset.productId = String(product.id);
@@ -86,6 +109,7 @@ function renderMissingProducts() {
     checkbox.type = 'checkbox';
     checkbox.dataset.selectRow = '';
     checkbox.dataset.productId = String(product.id);
+    checkbox.checked = selectedProductIds.has(String(product.id));
     checkbox.setAttribute('aria-label', `Pilih ${product.name || 'produk'}`);
     checkbox.className = 'h-4 w-4 shrink-0 accent-[#0088CC]';
 
@@ -110,6 +134,7 @@ function renderMissingProducts() {
     row.append(checkbox, details, button);
     list.appendChild(row);
   });
+  updateSelectionControls(filteredProducts);
 }
 
 async function loadBarcodeRenderer() {
@@ -258,17 +283,25 @@ async function generateAndPrint(products, trigger) {
     document.querySelectorAll('#missing-barcode-list [data-generate-barcode]').forEach(button => {
       button.disabled = false;
     });
-    document.querySelectorAll('#missing-barcode-list input[type="checkbox"]').forEach(input => {
-      input.checked = false;
-    });
-    updateGenerateButton();
+    updateSelectionControls();
   }
 }
 
 function updateGenerateButton() {
-  const selected = document.querySelectorAll('#missing-barcode-list input[data-select-row]:checked');
   const button = document.getElementById('btn-generate-selected-barcodes');
-  if (button && !loading) button.disabled = selected.length === 0;
+  if (button && !loading) button.disabled = selectedProductIds.size === 0;
+}
+
+function updateSelectionControls(products = filterProductsWithoutBarcode(
+  missingProducts,
+  document.getElementById('search-missing-barcodes')?.value
+)) {
+  const selectButton = document.getElementById('btn-select-missing-barcodes');
+  if (selectButton) {
+    const hasUnselected = products.some(product => !selectedProductIds.has(String(product.id)));
+    selectButton.textContent = hasUnselected ? 'Pilih semua hasil' : 'Batalkan pilihan hasil';
+  }
+  updateGenerateButton();
 }
 
 export function initBarcodeSettings() {
@@ -280,15 +313,30 @@ export function initBarcodeSettings() {
     if (event.target.closest('[data-tab="barcode"]')) loadMissingProducts();
   });
   document.getElementById('btn-refresh-missing-barcodes')?.addEventListener('click', loadMissingProducts);
+  document.getElementById('search-missing-barcodes')?.addEventListener('input', renderMissingProducts);
   document.getElementById('btn-select-missing-barcodes')?.addEventListener('click', event => {
-    const checkboxes = document.querySelectorAll('#missing-barcode-list input[data-select-row]');
-    const shouldSelect = Array.from(checkboxes).some(input => !input.checked);
-    checkboxes.forEach(input => { input.checked = shouldSelect; });
-    event.currentTarget.textContent = shouldSelect ? 'Batalkan pilihan' : 'Pilih semua';
-    updateGenerateButton();
+    const filteredProducts = filterProductsWithoutBarcode(
+      missingProducts,
+      document.getElementById('search-missing-barcodes')?.value
+    );
+    const shouldSelect = filteredProducts.some(product => !selectedProductIds.has(String(product.id)));
+    filteredProducts.forEach(product => {
+      const id = String(product.id);
+      if (shouldSelect) selectedProductIds.add(id);
+      else selectedProductIds.delete(id);
+    });
+    document.querySelectorAll('#missing-barcode-list input[data-select-row]').forEach(input => {
+      input.checked = selectedProductIds.has(input.dataset.productId);
+    });
+    updateSelectionControls(filteredProducts);
   });
   list.addEventListener('change', event => {
-    if (event.target.matches('input[data-select-row]')) updateGenerateButton();
+    if (event.target.matches('input[data-select-row]')) {
+      const id = event.target.dataset.productId;
+      if (event.target.checked) selectedProductIds.add(id);
+      else selectedProductIds.delete(id);
+      updateSelectionControls();
+    }
   });
   list.addEventListener('click', event => {
     const button = event.target.closest('[data-generate-barcode]');
@@ -297,11 +345,7 @@ export function initBarcodeSettings() {
     if (product) generateAndPrint([product], button);
   });
   document.getElementById('btn-generate-selected-barcodes')?.addEventListener('click', event => {
-    const selectedIds = new Set(Array.from(
-      document.querySelectorAll('#missing-barcode-list input[data-select-row]:checked'),
-      input => input.dataset.productId
-    ));
-    const selected = missingProducts.filter(product => selectedIds.has(String(product.id)));
+    const selected = missingProducts.filter(product => selectedProductIds.has(String(product.id)));
     if (selected.length) generateAndPrint(selected, event.currentTarget);
   });
 }

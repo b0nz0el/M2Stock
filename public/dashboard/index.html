@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="3.4.49">
+<meta name="app-version" content="3.4.50">
 <title>Aquastock Pro - Dashboard</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
@@ -2200,7 +2200,7 @@
               <div class="flex items-center gap-2.5 flex-wrap">
                 <h3 class="font-bold text-base sm:text-lg text-white tracking-tight leading-snug">Pembaruan &amp; Sinkronisasi Sistem</h3>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="app-version-badge px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30" data-app-version-badge>v3.4.49 (Terkini)</span>
+                  <span class="app-version-badge px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#34C759]/20 text-[#34C759] border border-[#34C759]/30" data-app-version-badge>v3.4.50 (Terkini)</span>
                   <span id="github-version-status" class="text-[11px] text-[#A0A0A5]" aria-live="polite">Menyinkronkan versi GitHub main...</span>
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/5 text-[#A0A0A5] border border-white/10 whitespace-nowrap">
                     <i data-lucide="smartphone" class="w-3.5 h-3.5 text-[#32ADE6]" aria-hidden="true"></i>
@@ -2515,8 +2515,14 @@
             Barcode ini adalah <strong class="text-white">kode internal toko (Code 128)</strong>, bukan nomor EAN/UPC resmi GS1. Kode yang sudah tersimpan tidak akan ditimpa.
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/5 pb-4">
-            <p id="missing-barcode-count" class="text-sm text-[#A0A0A5]" aria-live="polite">Memuat produk...</p>
+          <div class="space-y-3 border-b border-white/5 pb-4">
+            <label class="relative block">
+              <span class="sr-only">Cari nama atau SKU produk tanpa barcode</span>
+              <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A0A0A5]" aria-hidden="true"></i>
+              <input type="search" id="search-missing-barcodes" autocomplete="off" placeholder="Cari nama atau SKU produk..." class="w-full rounded-xl border border-white/10 bg-black/40 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-[#77777D] focus:border-[#0088CC] focus:outline-none">
+            </label>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p id="missing-barcode-count" class="text-sm text-[#A0A0A5]" aria-live="polite">Memuat produk...</p>
             <div class="flex flex-col sm:flex-row gap-2">
               <button type="button" id="btn-select-missing-barcodes" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition">
                 Pilih semua
@@ -2524,6 +2530,7 @@
               <button type="button" id="btn-generate-selected-barcodes" data-action="edit" disabled class="rounded-xl bg-[#0088CC] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0077BB] disabled:cursor-not-allowed disabled:opacity-50 transition">
                 Buat &amp; cetak barcode terpilih
               </button>
+            </div>
             </div>
           </div>
 
@@ -2596,7 +2603,7 @@
               </div>
               <div>
                 <h3 class="font-semibold text-base sm:text-lg text-white">Pembaruan &amp; Sinkronisasi Sistem PWA</h3>
-                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white" data-app-version-local>Aquastock Pro v3.4.49 (PWA Local-First)</span></p>
+                <p class="text-xs text-[#A0A0A5] mt-0.5">Versi aktif: <span class="font-semibold text-white" data-app-version-local>Aquastock Pro v3.4.50 (PWA Local-First)</span></p>
               </div>
             </div>
             <button type="button" onclick="window.checkForPwaUpdate()" class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition active:scale-95 shadow-md">
