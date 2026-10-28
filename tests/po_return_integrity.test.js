@@ -313,6 +313,8 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
 
       // Print styles
       expect(layoutCss).toContain('size: A4 portrait;');
+      expect(layoutCss).toContain('min-height: 0 !important;');
+      expect(layoutCss).toContain('height: auto !important;');
       expect(layoutCss).toContain('.po-signatures-grid');
       expect(layoutCss).toContain('page-break-inside: avoid !important;');
       expect(layoutCss).toContain('#modal-print-po:not(.hidden)');

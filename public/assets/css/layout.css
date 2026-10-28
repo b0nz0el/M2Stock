@@ -353,6 +353,13 @@ main, #main-content {
     margin: 6mm 8mm;
   }
 
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
   body {
     margin: 0 !important;
   }
