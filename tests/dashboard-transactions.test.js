@@ -44,8 +44,22 @@ describe('Dashboard Transaksi Barang Masuk & Keluar', () => {
     expect(indexHtml).toContain('/dashboard/in/');
   });
 
-  it('memastikan KPI Stok Kritis diganti dengan Valuasi Stok (Modal) pada dashboard', async () => {
-    expect(indexHtml).toContain('Valuasi Stok (Modal)');
+  it('memastikan 4 KPI dashboard berurutan (Total Stok, Nilai Stok, Valuasi Stok (Modal), Potensi Laba Kotor) dan Total Barang dihapus', async () => {
+    // Pastikan Total Barang tidak lagi menjadi judul kartu KPI
+    expect(indexHtml).not.toMatch(/<p class="[^"]*font-medium[^"]*">Total Barang<\/p>/);
+
+    // Pastikan 4 kartu berurutan
+    const totalStokIdx = indexHtml.indexOf('>Total Stok</p>');
+    const nilaiStokIdx = indexHtml.indexOf('>Nilai Stok</p>');
+    const valuasiStokIdx = indexHtml.indexOf('>Valuasi Stok (Modal)</p>');
+    const potensiLabaIdx = indexHtml.indexOf('>Potensi Laba Kotor</p>');
+
+    expect(totalStokIdx).toBeGreaterThan(-1);
+    expect(nilaiStokIdx).toBeGreaterThan(totalStokIdx);
+    expect(valuasiStokIdx).toBeGreaterThan(nilaiStokIdx);
+    expect(potensiLabaIdx).toBeGreaterThan(valuasiStokIdx);
+
+    expect(indexHtml).toContain('id="dash-potential-profit"');
     expect(indexHtml).toContain('id="dash-stock-cost-value"');
 
     document.body.innerHTML = `
@@ -53,6 +67,7 @@ describe('Dashboard Transaksi Barang Masuk & Keluar', () => {
       <div id="dash-total-stock"></div>
       <div id="dash-stock-value"></div>
       <div id="dash-stock-cost-value"></div>
+      <div id="dash-potential-profit"></div>
       <div id="dash-critical-stock"></div>
       <div id="restock-list"></div>
       <div id="recent-in-transactions-list"></div>
@@ -75,9 +90,21 @@ describe('Dashboard Transaksi Barang Masuk & Keluar', () => {
     runDashboard(window, document, window.Api);
     await window.loadDashboardData();
 
-    // 10*15.000 + 5*35.000 = 150.000 + 175.000 = Rp 325.000
+    // Total Stok = 10 + 5 = 15
+    const totalStockEl = document.getElementById('dash-total-stock');
+    expect(totalStockEl.textContent).toBe('15');
+
+    // Nilai Stok = 10*20.000 + 5*50.000 = 200.000 + 250.000 = Rp 450.000
+    const stockValueEl = document.getElementById('dash-stock-value');
+    expect(stockValueEl.textContent).toContain('450.000');
+
+    // Valuasi Stok Modal = 10*15.000 + 5*35.000 = 150.000 + 175.000 = Rp 325.000
     const costValueEl = document.getElementById('dash-stock-cost-value');
     expect(costValueEl.textContent).toContain('325.000');
+
+    // Potensi Laba Kotor = Nilai Stok - Valuasi Modal = 450.000 - 325.000 = Rp 125.000
+    const profitEl = document.getElementById('dash-potential-profit');
+    expect(profitEl.textContent).toContain('125.000');
   });
 
   it('memisahkan transaksi masuk dan keluar secara tepat di dashboard', async () => {

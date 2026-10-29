@@ -81,16 +81,20 @@
         }
       });
 
+      const potentialProfit = stockValue - stockCostValue;
+
       const elTotalItems = document.getElementById('dash-total-items');
       const elTotalStock = document.getElementById('dash-total-stock');
       const elStockValue = document.getElementById('dash-stock-value');
       const elStockCostValue = document.getElementById('dash-stock-cost-value');
+      const elPotentialProfit = document.getElementById('dash-potential-profit');
       const elCriticalStock = document.getElementById('dash-critical-stock');
 
       if (elTotalItems) elTotalItems.textContent = totalItems;
       if (elTotalStock) elTotalStock.textContent = totalStock;
       if (elStockValue) elStockValue.textContent = formatRupiahVal(stockValue);
       if (elStockCostValue) elStockCostValue.textContent = formatRupiahVal(stockCostValue);
+      if (elPotentialProfit) elPotentialProfit.textContent = formatRupiahVal(potentialProfit);
       if (elCriticalStock) elCriticalStock.textContent = criticalProducts.length;
 
       // Render Restock List

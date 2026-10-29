@@ -116,26 +116,18 @@
       </div>
 
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card card-stat p-5">
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <p class="text-xs text-[#A0A0A5] font-medium">Total Barang</p>
-            <span class="w-8 h-8 rounded-lg bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
-              <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i>
-            </span>
-          </div>
-          <p id="dash-total-items" class="text-3xl font-bold text-white tracking-tight">0</p>
-        </div>
-
+        <!-- 1. Total Stok -->
         <div class="card card-stat p-5">
           <div class="flex items-center justify-between gap-3 mb-3">
             <p class="text-xs text-[#A0A0A5] font-medium">Total Stok</p>
-            <span class="w-8 h-8 rounded-lg bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+            <span class="w-8 h-8 rounded-lg bg-[#0088CC]/10 text-[#32ADE6] grid place-items-center">
               <i data-lucide="layers" class="w-4 h-4" aria-hidden="true"></i>
             </span>
           </div>
           <p id="dash-total-stock" class="text-3xl font-bold text-white tracking-tight">0</p>
         </div>
 
+        <!-- 2. Nilai Stok -->
         <div class="card card-stat p-5">
           <div class="flex items-center justify-between gap-3 mb-3">
             <p class="text-xs text-[#A0A0A5] font-medium">Nilai Stok</p>
@@ -146,14 +138,28 @@
           <p id="dash-stock-value" class="text-3xl font-bold text-white tracking-tight">Rp 0</p>
         </div>
 
+        <!-- 3. Valuasi Stok (Modal) -->
         <div class="card card-stat p-5">
           <div class="flex items-center justify-between gap-3 mb-3">
             <p class="text-xs text-[#A0A0A5] font-medium">Valuasi Stok (Modal)</p>
-            <span class="w-8 h-8 rounded-lg bg-[#32ADE6]/10 text-[#32ADE6] grid place-items-center">
+            <span class="w-8 h-8 rounded-lg bg-[#FF9500]/10 text-[#FF9500] grid place-items-center">
               <i data-lucide="wallet" class="w-4 h-4" aria-hidden="true"></i>
             </span>
           </div>
           <p id="dash-stock-cost-value" class="text-3xl font-bold text-white tracking-tight">Rp 0</p>
+        </div>
+
+        <!-- 4. Potensi Laba Kotor -->
+        <div class="card card-stat p-5">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <p class="text-xs text-[#A0A0A5] font-medium">Potensi Laba Kotor</p>
+            <span class="w-8 h-8 rounded-lg bg-[#34C759]/10 text-[#34C759] grid place-items-center">
+              <i data-lucide="trending-up" class="w-4 h-4" aria-hidden="true"></i>
+            </span>
+          </div>
+          <p id="dash-potential-profit" class="text-3xl font-bold text-white tracking-tight">Rp 0</p>
+          <!-- Hidden backward-compatible spans -->
+          <span id="dash-total-items" class="hidden">0</span>
           <span id="dash-critical-stock" class="hidden">0</span>
         </div>
       </section>
