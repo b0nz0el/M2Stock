@@ -115,28 +115,26 @@
       const txRes = await Api.transactions.getAll({ limit: 150 });
       const transactions = txRes?.ok ? (txRes.data || []) : [];
 
-      // A. Recent Transactions (Top 5 dari keseluruhan)
+      // A. Transaksi Barang Keluar (Top 5 dari transaksi keluar)
       const recentTbody = document.getElementById('recent-transactions-tbody');
       if (recentTbody) {
-        if (transactions.length === 0) {
+        const outTransactions = transactions.filter(tx => tx.type === 'out');
+        if (outTransactions.length === 0) {
           recentTbody.innerHTML = `
             <tr class="empty-state-row table-row">
-              <td colspan="6" class="empty-state-cell px-5 py-8 text-center text-[#A0A0A5]">Belum ada transaksi</td>
+              <td colspan="6" class="empty-state-cell px-5 py-8 text-center text-[#A0A0A5]">Belum ada transaksi barang keluar</td>
             </tr>
           `;
         } else {
-          recentTbody.innerHTML = transactions.slice(0, 5).map(tx => {
+          recentTbody.innerHTML = outTransactions.slice(0, 5).map(tx => {
             const dateStr = formatTxDate(tx.created_at);
             const prodName = tx.products?.name || 'Produk #' + tx.product_id;
-            const channelBadge = tx.type === 'in' 
-              ? `<span class="badge bg-[#34C759]/15 text-[#34C759]">Masuk (${tx.suppliers?.name || 'Supplier'})</span>`
-              : getChannelBadge(tx.channel);
+            const channelBadge = getChannelBadge(tx.channel);
             const kasir = (typeof window.resolveUserName === 'function')
               ? window.resolveUserName(tx.created_by)
               : (typeof tx.created_by === 'string' && !tx.created_by.includes('-') ? tx.created_by : 'David');
-            const isOut = tx.type === 'out';
-            const qtyStr = isOut ? `-${tx.qty}` : `+${tx.qty}`;
-            const qtyClass = isOut ? 'text-[#FF3B30]' : 'text-[#34C759]';
+            const qtyStr = `-${tx.qty}`;
+            const qtyClass = 'text-[#FF3B30]';
             const total = (tx.qty || 0) * (tx.price || 0);
 
             return `
@@ -152,6 +150,35 @@
           }).join('');
         }
         if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+      }
+
+      // B. Transaksi Barang Masuk (Card Ringkasan Masuk)
+      const recentInContainer = document.getElementById('recent-in-transactions-list');
+      if (recentInContainer) {
+        const inTransactions = transactions.filter(tx => tx.type === 'in');
+        if (inTransactions.length === 0) {
+          recentInContainer.innerHTML = '<p class="text-xs text-[#A0A0A5] py-4 text-center">Belum ada transaksi barang masuk</p>';
+        } else {
+          recentInContainer.innerHTML = inTransactions.slice(0, 3).map(tx => {
+            const dateStr = formatTxDate(tx.created_at);
+            const prodName = tx.products?.name || 'Produk #' + tx.product_id;
+            const supplierName = tx.suppliers?.name || 'Supplier';
+            const totalCost = (tx.qty || 0) * (tx.cost_price || tx.price || 0);
+
+            return `
+              <div class="flex items-center justify-between gap-3 border-b border-white/5 pb-2.5 last:border-b-0 last:pb-0">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium truncate text-white" title="${escapeHtml(prodName)}">${escapeHtml(prodName)}</p>
+                  <p class="text-xs text-[#A0A0A5] truncate">${dateStr} · <span class="text-[#32ADE6]">${escapeHtml(supplierName)}</span></p>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="text-xs font-bold text-[#34C759] block">+${tx.qty} unit</span>
+                  <span class="text-xs text-[#A0A0A5] font-medium block">${formatRupiahVal(totalCost)}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
       }
 
       // Hitung batas waktu filter periode
