@@ -527,13 +527,18 @@ export async function createBarcodePdf(products, layoutKey = currentLayout, JsBa
         });
 
         if (bcCanvas.width > 0 && bcCanvas.height > 0 && typeof ctx.drawImage === 'function') {
-          const targetW = w - 12;
-          const targetH = 205;
-          const s = Math.min(targetW / bcCanvas.width, targetH / bcCanvas.height, 1.25);
-          const finalW = Math.round(bcCanvas.width * s);
-          const finalH = Math.round(bcCanvas.height * s);
-          const drawX = x + Math.round((w - finalW) / 2);
-          const drawY = y + 42 + Math.round((targetH - finalH) / 2);
+          // Bentangkan barcode semaksimal mungkin ke sisi kiri dan kanan (quiet zone aman 8px)
+          const targetW = w - 16;
+          const targetH = 210;
+          const scaleW = targetW / bcCanvas.width;
+          const scaleH = targetH / bcCanvas.height;
+          // Skala proporsional tinggi dengan batas targetH
+          const finalW = targetW;
+          const finalH = Math.min(targetH, Math.max(140, Math.round(bcCanvas.height * Math.min(scaleW, scaleH, 1.4))));
+          const drawX = x + 8;
+          const drawY = y + 38 + Math.round((targetH - finalH) / 2);
+
+          ctx.imageSmoothingEnabled = false;
           ctx.drawImage(bcCanvas, drawX, drawY, finalW, finalH);
         }
       }
@@ -552,7 +557,7 @@ export async function createBarcodePdf(products, layoutKey = currentLayout, JsBa
   function getJpegBytesFromCanvas(canvas) {
     let dataUrl = '';
     try {
-      dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     } catch (_) {}
     if (!dataUrl || dataUrl === 'data:image/jpeg;base64,') {
       dataUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
