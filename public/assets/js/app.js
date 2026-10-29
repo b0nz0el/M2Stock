@@ -543,10 +543,12 @@ if (typeof window !== 'undefined') {
         try { reg.update(); } catch (_) {}
       });
 
-      // 4. Periksa pembaruan berkala setiap 15 menit
+      // 4. Periksa pembaruan berkala setiap 2 menit saat online dan aktif
       setInterval(() => {
-        try { reg.update(); } catch (_) {}
-      }, 15 * 60 * 1000);
+        if (navigator.onLine && document.visibilityState === 'visible') {
+          try { reg.update(); } catch (_) {}
+        }
+      }, 2 * 60 * 1000);
 
       // 5. Jika ada worker baru yang sedang menunggu, aktifkan segera
       if (reg.waiting) {
