@@ -9,6 +9,17 @@
   let pendingItemId = null;
   let pendingSaveLocalMeta = null;
 
+  function parseNumericValue(value) {
+    if (value === null || value === undefined) return 0;
+    const digitsOnly = String(value).replace(/\D+/g, '');
+    return digitsOnly ? Number(digitsOnly) : 0;
+  }
+
+  function formatNumberInput(value) {
+    const num = parseNumericValue(value);
+    return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '0';
+  }
+
   function normalizeNumericInputValue(value) {
     if (value === null || value === undefined) return '0';
     const digitsOnly = String(value).replace(/\D+/g, '');
@@ -19,14 +30,20 @@
 
   function sanitizeNumericInputElement(input) {
     if (!input) return;
-    input.value = normalizeNumericInputValue(input.value);
+    if (input.matches('#item-cost-price, #item-sell-price, #bulk-price-nominal-input')) {
+      const cleanDigits = String(input.value).replace(/\D/g, '');
+      const num = cleanDigits === '' ? 0 : Number(cleanDigits);
+      input.value = num > 0 ? new Intl.NumberFormat('id-ID').format(num) : (input.value === '' ? '' : '0');
+    } else {
+      input.value = normalizeNumericInputValue(input.value);
+    }
   }
 
   if (typeof document !== 'undefined') {
     document.addEventListener('input', (event) => {
       const target = event.target;
       if (!target || typeof target.matches !== 'function') return;
-      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock')) {
+      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock, #bulk-price-nominal-input')) {
         sanitizeNumericInputElement(target);
       }
     }, true);
@@ -34,7 +51,7 @@
     document.addEventListener('blur', (event) => {
       const target = event.target;
       if (!target || typeof target.matches !== 'function') return;
-      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock')) {
+      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock, #bulk-price-nominal-input')) {
         sanitizeNumericInputElement(target);
       }
     }, true);
@@ -906,10 +923,10 @@
         return;
       }
       const supplier_id = supplierSelect?.value ? Number(supplierSelect.value) : null;
-      const stock = Number(document.getElementById('item-stock').value);
-      const cost_price = Number(document.getElementById('item-cost-price').value);
-      const sell_price = Number(document.getElementById('item-sell-price').value);
-      const min_stock = Number(document.getElementById('item-min-stock').value);
+      const stock = parseNumericValue(document.getElementById('item-stock')?.value);
+      const cost_price = parseNumericValue(document.getElementById('item-cost-price')?.value);
+      const sell_price = parseNumericValue(document.getElementById('item-sell-price')?.value);
+      const min_stock = parseNumericValue(document.getElementById('item-min-stock')?.value);
 
       // Read current values directly from DOM rows to capture latest edits
       const channelRows = document.querySelectorAll('#item-channels-list .channel-row');
@@ -1596,7 +1613,7 @@
     if (!selectedAdjustmentProduct) return;
     const currentStock = Number(selectedAdjustmentProduct.stock || 0);
     const actualInput = document.getElementById('adj-actual-stock');
-    const actualStock = Number(actualInput?.value || 0);
+    const actualStock = parseNumericValue(actualInput?.value);
     const unit = selectedAdjustmentProduct.unit || 'pcs';
 
     const diff = actualStock - currentStock;
@@ -1627,7 +1644,7 @@
     }
 
     const prodId = document.getElementById('adj-product-id')?.value;
-    const actualStock = Number(document.getElementById('adj-actual-stock')?.value);
+    const actualStock = parseNumericValue(document.getElementById('adj-actual-stock')?.value);
     const reason = document.getElementById('adj-reason')?.value || 'Stock Opname Fisik';
     const notes = document.getElementById('adj-notes')?.value.trim() || '';
 
@@ -2382,7 +2399,7 @@
     if (!tbody) return;
 
     const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
-    const nominalVal = Number(document.getElementById('bulk-price-nominal-input')?.value);
+    const nominalVal = parseNumericValue(document.getElementById('bulk-price-nominal-input')?.value);
     const percentVal = Number(document.getElementById('bulk-price-percent-input')?.value);
 
     tbody.innerHTML = selectedItems.map(item => {
@@ -2425,7 +2442,7 @@
     const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
     if (selectedItems.length === 0) return;
 
-    const nominalVal = Number(document.getElementById('bulk-price-nominal-input')?.value);
+    const nominalVal = parseNumericValue(document.getElementById('bulk-price-nominal-input')?.value);
     const percentVal = Number(document.getElementById('bulk-price-percent-input')?.value);
 
     const updates = [];

@@ -8,6 +8,12 @@
   let deleteInId = null;
   let isSubmittingIn = false;
 
+  function parseNumericValue(value) {
+    if (value === null || value === undefined) return 0;
+    const digitsOnly = String(value).replace(/\D+/g, '');
+    return digitsOnly ? Number(digitsOnly) : 0;
+  }
+
   function normalizeNumericInputValue(value) {
     if (value === null || value === undefined) return '0';
     const digitsOnly = String(value).replace(/\D+/g, '');
@@ -820,7 +826,7 @@
 
     if (selectedExistingProduct) {
       const curStock = Number(selectedExistingProduct.stock || 0);
-      const qty = Number(document.getElementById('in-qty')?.value || 0);
+      const qty = parseNumericValue(document.getElementById('in-qty')?.value);
       const unit = selectedExistingProduct.unit || 'pcs';
       const totalNew = curStock + qty;
       let text = `Stok Saat Ini: ${curStock} + Masuk: ${qty} = Total Baru: ${totalNew} ${unit}`;
@@ -835,8 +841,8 @@
   }
 
   function calculateInTotal() {
-    const qty = Number(document.getElementById('in-qty')?.value || 0);
-    const price = Number(document.getElementById('in-price')?.value || 0);
+    const qty = parseNumericValue(document.getElementById('in-qty')?.value);
+    const price = parseNumericValue(document.getElementById('in-price')?.value);
     const total = qty * price;
     const preview = document.getElementById('in-total-preview');
     if (preview) {
@@ -933,8 +939,8 @@
       let productId = document.getElementById('in-product-id')?.value || '';
       const productName = document.getElementById('in-product-search')?.value.trim() || '';
       const supplierId = document.getElementById('in-supplier-id')?.value || '';
-      const qty = Number(document.getElementById('in-qty')?.value || 0);
-      const price = Number(document.getElementById('in-price')?.value || 0);
+      const qty = parseNumericValue(document.getElementById('in-qty')?.value);
+      const price = parseNumericValue(document.getElementById('in-price')?.value);
       const note = document.getElementById('in-note')?.value?.trim() || '';
 
       if (!productName) {
@@ -985,7 +991,7 @@
       if (!productId) {
         const categoryId = document.getElementById('in-category-id')?.value || null;
         const unitId = document.getElementById('in-unit-id')?.value || 1;
-        const sellPrice = Number(document.getElementById('in-sell-price')?.value || 0);
+        const sellPrice = parseNumericValue(document.getElementById('in-sell-price')?.value);
         const barcodeVal = document.getElementById('in-barcode')?.value.trim() || null;
         const brandVal = document.getElementById('in-brand')?.value.trim() || 'Lokal';
         let skuVal = document.getElementById('in-sku')?.value.trim();

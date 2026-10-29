@@ -2871,8 +2871,11 @@
 
     <!-- INPUT FIELDS -->
     <div id="bulk-price-nominal-section" class="space-y-1">
-      <label class="block text-xs font-medium text-[#A0A0A5]">Harga Jual Baru (Rp)</label>
-      <input type="number" id="bulk-price-nominal-input" min="0" step="500" placeholder="Contoh: 150000" oninput="updateBulkPricePreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+      <label for="bulk-price-nominal-input" class="block text-xs font-medium text-[#A0A0A5]">Harga Jual Baru (Rp)</label>
+      <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+        <span class="pl-3.5 pr-2.5 text-xs font-semibold text-[#0088CC] select-none shrink-0 border-r border-white/5">Rp</span>
+        <input type="text" id="bulk-price-nominal-input" inputmode="numeric" pattern="[0-9]*" placeholder="0" oninput="updateBulkPricePreview()" class="w-full bg-transparent px-3.5 py-2.5 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+      </div>
     </div>
 
     <div id="bulk-price-percent-section" class="hidden space-y-1">
@@ -3180,18 +3183,27 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label for="item-cost-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Beli (Rp)</label>
-          <input type="number" id="item-cost-price" min="0" value="0" inputmode="numeric" step="1" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+            <span class="pl-3 pr-2 text-xs font-semibold text-[#A0A0A5] select-none shrink-0 border-r border-white/5">Rp</span>
+            <input type="text" id="item-cost-price" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="0" class="w-full bg-transparent px-3 py-2 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+          </div>
         </div>
         <div>
           <label for="item-sell-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Jual (Rp) <span class="text-[#FF3B30]">*</span></label>
-          <input type="number" id="item-sell-price" min="0" value="0" required="" inputmode="numeric" step="1" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+            <span class="pl-3 pr-2 text-xs font-semibold text-[#0088CC] select-none shrink-0 border-r border-white/5">Rp</span>
+            <input type="text" id="item-sell-price" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="0" required="" class="w-full bg-transparent px-3 py-2 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+          </div>
         </div>
         <div>
           <label for="item-min-stock" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Min. Stok</label>
-          <input type="number" id="item-min-stock" min="0" value="3" inputmode="numeric" step="1" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+            <input type="text" id="item-min-stock" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="3" class="w-full bg-transparent px-3 py-2 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+            <span class="pr-3 pl-1 text-xs text-[#A0A0A5] select-none shrink-0">unit</span>
+          </div>
         </div>
       </div>
 
@@ -3302,7 +3314,7 @@
           <div class="stock-opname-count__card stock-opname-count__card--actual">
             <label class="stock-opname-label" for="adj-actual-stock">STOK FISIK AKTUAL <span aria-hidden="true">*</span></label>
             <div class="stock-opname-input-wrap">
-              <input type="number" id="adj-actual-stock" min="0" step="any" inputmode="decimal" required oninput="calculateAdjustmentDifference()" aria-describedby="stock-opname-count-hint" class="stock-opname-input">
+              <input type="text" id="adj-actual-stock" inputmode="decimal" pattern="[0-9]*" required oninput="calculateAdjustmentDifference()" aria-describedby="stock-opname-count-hint" class="stock-opname-input">
               <span id="stock-opname-count-unit" class="stock-opname-unit">pcs</span>
             </div>
             <p id="stock-opname-count-hint" class="stock-opname-hint">Hitung unit yang tersedia secara fisik.</p>
@@ -3575,7 +3587,10 @@
           </div>
           <div>
             <label for="in-sell-price" class="block text-xs font-medium text-[#A0A0A5] mb-1">Harga Jual Satuan (Rp) <span class="text-[#FF3B30]">*</span></label>
-            <input type="number" id="in-sell-price" min="0" value="0" placeholder="0" inputmode="numeric" step="1" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+            <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+              <span class="pl-3 pr-2 text-xs font-semibold text-[#0088CC] select-none shrink-0 border-r border-white/5">Rp</span>
+              <input type="text" id="in-sell-price" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="0" class="w-full bg-transparent px-3 py-2 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+            </div>
           </div>
         </div>
         <div>
@@ -3637,7 +3652,9 @@
         </div>
         <div>
           <label for="in-qty" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Jumlah Masuk <span class="text-[#FF3B30]">*</span></label>
-          <input type="number" id="in-qty" min="1" value="1" required="" inputmode="numeric" step="1" oninput="calculateInTotal()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+            <input type="text" id="in-qty" inputmode="numeric" pattern="[0-9]*" value="1" required="" oninput="calculateInTotal()" class="w-full bg-transparent px-3.5 py-2 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+          </div>
         </div>
       </div>
 
@@ -3653,7 +3670,10 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label for="in-price" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Harga Beli Satuan (Rp) <span class="text-[#FF3B30]">*</span></label>
-          <input type="number" id="in-price" min="0" value="0" required="" inputmode="numeric" step="1" oninput="calculateInTotal()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm focus:border-[#0088CC] focus:outline-none">
+          <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+            <span class="pl-3 pr-2 text-xs font-semibold text-[#A0A0A5] select-none shrink-0 border-r border-white/5">Rp</span>
+            <input type="text" id="in-price" inputmode="numeric" pattern="[0-9]*" value="0" required="" oninput="calculateInTotal()" class="w-full bg-transparent px-3 py-2 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+          </div>
         </div>
         <div>
           <label class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Total Biaya</label>
@@ -4810,7 +4830,10 @@
         <!-- Nominal -->
         <div>
           <label for="cash-form-amount" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1.5">Nominal (Rp)</label>
-          <input type="text" id="cash-form-amount" inputmode="numeric" inputMode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" class="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+          <div class="relative flex items-center rounded-xl bg-[#121214] border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+            <span class="pl-3.5 pr-2.5 text-xs font-semibold text-[#0088CC] select-none shrink-0 border-r border-white/5">Rp</span>
+            <input type="text" id="cash-form-amount" inputmode="numeric" inputMode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" class="w-full bg-transparent px-3.5 py-2.5 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+          </div>
         </div>
 
         <!-- Kategori & Metode -->
@@ -4886,8 +4909,11 @@
         <!-- Nominal & Jatuh Tempo (Side-by-side) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Nominal (Rp)</label>
-            <input type="number" id="debt-nominal" required="" min="1000" step="1000" placeholder="0" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#0088CC]">
+            <label for="debt-nominal" class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Nominal (Rp)</label>
+            <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
+              <span class="pl-3.5 pr-2.5 text-xs font-semibold text-[#0088CC] select-none shrink-0 border-r border-white/5">Rp</span>
+              <input type="text" id="debt-nominal" inputmode="numeric" pattern="[0-9]*" placeholder="0" required="" class="w-full bg-transparent px-3.5 py-2.5 text-sm text-white font-medium focus:outline-none placeholder-white/30">
+            </div>
           </div>
           <div>
             <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Tanggal Jatuh Tempo</label>

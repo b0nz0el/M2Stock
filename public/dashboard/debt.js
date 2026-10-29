@@ -348,7 +348,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     const tipe = document.getElementById('debt-tipe')?.value || 'hutang';
     const pihak = document.getElementById('debt-pihak')?.value || '';
-    const nominal = Number(document.getElementById('debt-nominal')?.value || 0);
+    const nominal = Number((document.getElementById('debt-nominal')?.value || '').replace(/\D/g, '')) || 0;
     const jatuh_tempo = document.getElementById('debt-jatuh-tempo')?.value || null;
     const status = document.getElementById('debt-status')?.value || 'belum_bayar';
     const catatan = document.getElementById('debt-catatan')?.value || '';
@@ -501,6 +501,16 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const form = document.getElementById('form-debt');
     if (form) {
       form.addEventListener('submit', handleSubmitForm);
+    }
+
+    // Auto-format nominal with thousand separators
+    const nominalInput = document.getElementById('debt-nominal');
+    if (nominalInput) {
+      nominalInput.addEventListener('input', (e) => {
+        const cleanDigits = e.target.value.replace(/\D/g, '');
+        const rawNumber = cleanDigits === '' ? 0 : Number(cleanDigits);
+        e.target.value = rawNumber > 0 ? new Intl.NumberFormat('id-ID').format(rawNumber) : '';
+      });
     }
 
     // Delegation for Action Buttons in lists (Mark Lunas & Delete)
