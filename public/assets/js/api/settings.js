@@ -137,12 +137,16 @@ export const settings = {
         .maybeSingle();
 
       if (!error && data?.value && data.value.name) {
+        const val = {
+          ...data.value,
+          logo_url: data.value.logo_url || (data.value.name?.toLowerCase().includes('habitic') ? '/assets/images/habitic-logo.png' : '')
+        };
         if (typeof localStorage !== 'undefined') {
           try {
-            localStorage.setItem('aquastock_store_info', JSON.stringify(data.value));
+            localStorage.setItem('aquastock_store_info', JSON.stringify(val));
           } catch (_) {}
         }
-        return data.value;
+        return val;
       }
     } catch (_) {}
 
@@ -152,7 +156,12 @@ export const settings = {
         const cached = localStorage.getItem('aquastock_store_info');
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed && parsed.name) return parsed;
+          if (parsed && parsed.name) {
+            if (!parsed.logo_url && String(parsed.name).toLowerCase().includes('habitic')) {
+              parsed.logo_url = '/assets/images/habitic-logo.png';
+            }
+            return parsed;
+          }
         }
       } catch (_) {}
     }
@@ -162,7 +171,8 @@ export const settings = {
       slogan: 'Perlengkapan Aksesoris Aquarium',
       email: 'jtmaquarium@gmail.com',
       phone: '0812-9662-8052',
-      address: 'Jl. Mangga No. 67, Jatimakmur, Pondok Gede, Kota Bekasi'
+      address: 'Jl. Mangga No. 67, Jatimakmur, Pondok Gede, Kota Bekasi',
+      logo_url: '/assets/images/habitic-logo.png'
     };
   },
 

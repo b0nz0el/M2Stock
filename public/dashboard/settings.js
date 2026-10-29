@@ -440,12 +440,17 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     const shopEmail = document.getElementById('setting-shop-email');
     const shopPhone = document.getElementById('setting-shop-phone');
     const shopAddress = document.getElementById('setting-shop-address');
+    const shopLogo = document.getElementById('setting-shop-logo');
+    const shopLogoPreview = document.getElementById('setting-shop-logo-preview');
 
     if (shopName) shopName.value = store.name || '';
     if (shopSlogan) shopSlogan.value = store.slogan || '';
     if (shopEmail) shopEmail.value = store.email || '';
     if (shopPhone) shopPhone.value = store.phone || '';
     if (shopAddress) shopAddress.value = store.address || '';
+    const logoVal = store.logo_url || (String(store.name || '').toLowerCase().includes('habitic') ? '/assets/images/habitic-logo.png' : '/assets/images/habitic-logo.png');
+    if (shopLogo) shopLogo.value = store.logo_url || '';
+    if (shopLogoPreview) shopLogoPreview.src = logoVal;
 
     // 2. POS Config
     const pos = currentSettings.pos_config || {};
@@ -500,7 +505,8 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
         slogan: document.getElementById('setting-shop-slogan')?.value.trim() || '',
         email: document.getElementById('setting-shop-email')?.value.trim() || '',
         phone: document.getElementById('setting-shop-phone')?.value.trim() || '',
-        address: document.getElementById('setting-shop-address')?.value.trim() || ''
+        address: document.getElementById('setting-shop-address')?.value.trim() || '',
+        logo_url: document.getElementById('setting-shop-logo')?.value.trim() || '/assets/images/habitic-logo.png'
       };
 
       const res = await settingsApi.save('store_info', payload);
@@ -681,6 +687,30 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     // Forms event listeners
     const formStore = document.getElementById('form-setting-store');
     if (formStore) formStore.addEventListener('submit', handleSaveStore);
+
+    const shopLogoInput = document.getElementById('setting-shop-logo');
+    const shopLogoPreview = document.getElementById('setting-shop-logo-preview');
+    const btnUseHabiticLogo = document.getElementById('btn-use-habitic-logo');
+
+    if (shopLogoInput && shopLogoPreview) {
+      shopLogoInput.addEventListener('input', () => {
+        const val = shopLogoInput.value.trim();
+        shopLogoPreview.src = val || '/assets/images/habitic-logo.png';
+      });
+      shopLogoPreview.addEventListener('error', () => {
+        shopLogoPreview.src = '/assets/images/habitic-logo.png';
+      });
+    }
+
+    if (btnUseHabiticLogo && shopLogoInput && shopLogoPreview) {
+      btnUseHabiticLogo.addEventListener('click', () => {
+        shopLogoInput.value = '/assets/images/habitic-logo.png';
+        shopLogoPreview.src = '/assets/images/habitic-logo.png';
+        if (typeof showToast === 'function') {
+          showToast('Logo Habitic dipilih', 'info');
+        }
+      });
+    }
 
     const formPOS = document.getElementById('form-setting-pos');
     if (formPOS) formPOS.addEventListener('submit', handleSavePOS);

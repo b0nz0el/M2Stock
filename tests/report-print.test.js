@@ -354,4 +354,43 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
     btn.click();
     expect(printSpy).toHaveBeenCalled();
   });
+
+  it('menyinkronkan logo resmi Habitic, slogan, alamat, dan kontak dari Informasi Profil Toko', () => {
+    localStorage.setItem('aquastock_store_info', JSON.stringify({
+      name: 'Habitic',
+      slogan: 'Aquarium Lifestyle Solutions',
+      address: 'Jl. Mangga No. 67, Jatimakmur, Kota Bekasi',
+      phone: '0812-9662-8052',
+      email: 'halo.habitic@gmail.com',
+      logo_url: '/assets/images/habitic-logo.png'
+    }));
+
+    const html = window.generateReportPrintHTML();
+
+    // Verifikasi kop resmi berlogo dan beridentitas Habitic
+    expect(html).toContain('doc-logo-img');
+    expect(html).toContain('/assets/images/habitic-logo.png');
+    expect(html).toContain('Diterbitkan oleh');
+    expect(html).toContain('Habitic');
+    expect(html).toContain('Aquarium Lifestyle Solutions');
+    expect(html).toContain('Jl. Mangga No. 67, Jatimakmur, Kota Bekasi');
+    expect(html).toContain('0812-9662-8052');
+    expect(html).toContain('halo.habitic@gmail.com');
+  });
+
+  it('mendukung custom logo_url dari profil toko pada kop laporan', () => {
+    localStorage.setItem('aquastock_store_info', JSON.stringify({
+      name: 'Habitic Megastore',
+      slogan: 'Premium Aquatic Center',
+      address: 'Jl. Jendral Sudirman Kav. 50, Jakarta',
+      phone: '081122334455',
+      email: 'info@habitic.com',
+      logo_url: 'https://cdn.example.com/custom-habitic-logo.png'
+    }));
+
+    const html = window.generateReportPrintHTML();
+    expect(html).toContain('https://cdn.example.com/custom-habitic-logo.png');
+    expect(html).toContain('Habitic Megastore');
+    expect(html).toContain('Premium Aquatic Center');
+  });
 });

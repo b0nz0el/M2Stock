@@ -539,6 +539,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         }
         const docStoreSign = document.getElementById('doc-po-sign-name');
         if (docStoreSign && storeInfo.name) docStoreSign.textContent = storeInfo.name;
+        const docStoreLogo = document.querySelector('.po-document-logo');
+        if (docStoreLogo && storeInfo.logo_url) {
+          docStoreLogo.src = storeInfo.logo_url;
+        }
       }
     } catch (_) {}
 

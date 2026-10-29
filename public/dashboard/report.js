@@ -15,6 +15,22 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   let currentPeriod = '30d'; // 'today' | '7d' | 'month' | '30d' | 'year' | 'all'
   let reportData = null;
   let chartInstance = null;
+  let activeStoreInfo = null;
+
+  async function loadStoreInfo() {
+    try {
+      if (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo) {
+        activeStoreInfo = await window.Api.settings.getStoreInfo();
+      }
+    } catch (_) {}
+    if (!activeStoreInfo && typeof localStorage !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) activeStoreInfo = JSON.parse(cached);
+      } catch (_) {}
+    }
+    return activeStoreInfo;
+  }
 
   function formatRupiah(num) {
     return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
@@ -435,21 +451,48 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function generateReportPrintHTML() {
-    let storeName = 'Aquastock Pro';
-    let storeAddress = 'Spesialis Perlengkapan & Akuarium';
-    let storePhone = '-';
-    let storeEmail = '-';
+    let storeName = 'Habitic';
+    let storeSlogan = 'Aquarium Lifestyle Solutions';
+    let storeAddress = 'Jl. Mangga No. 67, Jatimakmur, Kota Bekasi';
+    let storePhone = '0812-9662-8052';
+    let storeEmail = 'halo.habitic@gmail.com';
+    let storeLogoUrl = '/assets/images/habitic-logo.png';
 
+    let info = null;
     try {
       const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.name) storeName = parsed.name;
-        if (parsed.address) storeAddress = parsed.address;
-        if (parsed.phone) storePhone = parsed.phone;
-        if (parsed.email) storeEmail = parsed.email;
-      }
+      if (cached) info = JSON.parse(cached);
     } catch (_) {}
+    if (!info) info = activeStoreInfo;
+
+    if (info) {
+      if (info.name) storeName = info.name;
+      if (info.slogan) storeSlogan = info.slogan;
+      if (info.address) storeAddress = info.address;
+      if (info.phone) storePhone = info.phone;
+      if (info.email) storeEmail = info.email;
+      if (info.logo_url) storeLogoUrl = info.logo_url;
+    }
+
+    if (!storeLogoUrl || storeLogoUrl.trim() === '') {
+      if (String(storeName).toLowerCase().includes('habitic')) {
+        storeLogoUrl = '/assets/images/habitic-logo.png';
+      }
+    }
+
+    const contactParts = [];
+    if (storePhone && storePhone !== '-') {
+      const cleanPhone = escapeHtml(storePhone);
+      if (cleanPhone.toLowerCase().includes('telp') || cleanPhone.toLowerCase().includes('wa')) {
+        contactParts.push(cleanPhone);
+      } else {
+        contactParts.push(`WA / Telp: ${cleanPhone}`);
+      }
+    }
+    if (storeEmail && storeEmail !== '-') {
+      contactParts.push(`Email: ${escapeHtml(storeEmail)}`);
+    }
+    const contactLine = contactParts.join(' | ');
 
     let currentUserName = 'David (Owner)';
     try {
@@ -852,26 +895,59 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       margin: 0 auto;
       padding: 2mm 0;
     }
-    /* Header Kop Laporan */
+    /* Header Kop Laporan Resmi (Presisi A4 Portrait) */
     .doc-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 5mm;
+      gap: 6mm;
       padding-bottom: 4mm;
       margin-bottom: 4.5mm;
-      border-bottom: 2pt solid #0088CC;
+      border-bottom: 1.5pt solid #174c89;
     }
     .doc-brand {
       display: flex;
-      align-items: center;
-      gap: 3.5mm;
+      align-items: flex-start;
+      gap: 5mm;
       min-width: 0;
     }
-    .doc-logo {
+    .doc-logo-wrap {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 0.5mm;
+    }
+    .doc-logo-img {
+      display: block;
+      width: 36mm;
+      max-width: 38mm;
+      height: auto;
+      max-height: 16mm;
+      object-fit: contain;
+    }
+    .doc-logo-fallback {
       width: 12mm;
       height: 12mm;
-      flex-shrink: 0;
+      border-radius: 2mm;
+      background: #174c89;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 10pt;
+    }
+    .doc-identity {
+      min-width: 0;
+    }
+    .doc-issuer-label {
+      color: #174c89;
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin: 0 0 1mm;
     }
     .store-name {
       font-size: 13pt;
@@ -879,26 +955,36 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       color: #0f172a;
       letter-spacing: -0.02em;
       margin: 0;
+      line-height: 1.2;
     }
-    .store-meta {
-      font-size: 7.5pt;
-      color: #64748b;
-      margin: 1mm 0 0;
+    .store-slogan {
+      margin: 0.8mm 0 0;
+      color: #475467;
+      font-size: 8pt;
+      font-weight: 600;
       line-height: 1.25;
+    }
+    .store-contact {
+      margin: 0.5mm 0 0;
+      color: #475467;
+      font-size: 7.5pt;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
     }
     .doc-badge-col {
       text-align: right;
       flex-shrink: 0;
+      min-width: 50mm;
     }
     .doc-badge {
       display: inline-block;
-      padding: 1.5mm 3mm;
-      background: #0088CC;
+      padding: 1.5mm 3.5mm;
+      background: #174c89;
       color: #ffffff;
       font-size: 7.5pt;
       font-weight: 700;
       border-radius: 1mm;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
     .doc-title {
@@ -906,6 +992,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       font-weight: 800;
       color: #0f172a;
       margin: 1.5mm 0 0.5mm;
+      line-height: 1.2;
     }
     .doc-period-meta {
       font-size: 7.5pt;
@@ -1064,23 +1151,23 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 </head>
 <body>
   <main class="report-sheet">
-    <!-- Header Kop Dokumen -->
+    <!-- Header Kop Dokumen Resmi -->
     <header class="doc-header">
       <div class="doc-brand">
-        <svg viewBox="0 0 100 100" class="doc-logo" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="print-aq-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#32ADE6"/>
-              <stop offset="100%" stop-color="#0088CC"/>
-            </linearGradient>
-          </defs>
-          <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#print-aq-gradient)"/>
-          <path d="M50 26 L32 66 L38 66 L42 58 L58 58 L62 66 L68 66 L50 26 Z M45 53 L50 42 L55 53 Z" fill="#FFFFFF"/>
-          <circle cx="50" cy="72" r="3.5" fill="#FFFFFF"/>
-        </svg>
-        <div>
+        <div class="doc-logo-wrap">
+          ${storeLogoUrl ? `
+            <img class="doc-logo-img" src="${escapeHtml(storeLogoUrl)}" alt="${escapeHtml(storeName)}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+            <div class="doc-logo-fallback" style="display:none;">${escapeHtml(storeName.slice(0, 2).toUpperCase())}</div>
+          ` : `
+            <div class="doc-logo-fallback">${escapeHtml(storeName.slice(0, 2).toUpperCase())}</div>
+          `}
+        </div>
+        <div class="doc-identity">
+          <p class="doc-issuer-label">Diterbitkan oleh</p>
           <h1 class="store-name">${escapeHtml(storeName)}</h1>
-          <p class="store-meta">${escapeHtml(storeAddress)}${storePhone !== '-' ? ' · Telp: ' + escapeHtml(storePhone) : ''}</p>
+          ${storeSlogan ? `<p class="store-slogan">${escapeHtml(storeSlogan)}</p>` : ''}
+          <p class="store-contact">${escapeHtml(storeAddress)}</p>
+          ${contactLine ? `<p class="store-contact">${contactLine}</p>` : ''}
         </div>
       </div>
       <div class="doc-badge-col">
@@ -1161,76 +1248,103 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       return;
     }
 
-    const htmlContent = generateReportPrintHTML();
+    const executePrint = () => {
+      const htmlContent = generateReportPrintHTML();
 
-    // 1. Coba buka dedicated print window
-    let printWindow = null;
-    try {
-      printWindow = window.open('', '_blank');
-    } catch (_) {}
-
-    if (printWindow) {
+      // 1. Coba buka dedicated print window
+      let printWindow = null;
       try {
-        printWindow.document.open();
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
+        printWindow = window.open('', '_blank');
+      } catch (_) {}
 
-        const triggerPrint = async () => {
+      if (printWindow) {
+        try {
+          printWindow.document.open();
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+
+          const triggerPrint = async () => {
+            try {
+              if (printWindow.document.fonts && printWindow.document.fonts.ready) {
+                await printWindow.document.fonts.ready;
+              }
+              if (printWindow.document.images && printWindow.document.images.length) {
+                await Promise.all(Array.from(printWindow.document.images, img => {
+                  if (img.complete) return Promise.resolve();
+                  return new Promise(res => {
+                    img.onload = res;
+                    img.onerror = res;
+                    setTimeout(res, 800);
+                  });
+                }));
+              }
+            } catch (_) {}
+            printWindow.focus();
+            printWindow.print();
+          };
+
+          if (printWindow.document.readyState === 'complete') {
+            setTimeout(triggerPrint, 250);
+          } else {
+            printWindow.onload = () => setTimeout(triggerPrint, 250);
+          }
+          return;
+        } catch (err) {
+          console.warn('Gagal cetak via window.open, mencoba fallback iframe:', err);
+        }
+      }
+
+      // 2. Fallback: Hidden iframe (anti popup blocker di mobile / Safari iOS)
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.style.visibility = 'hidden';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow ? (iframe.contentWindow.document || iframe.contentDocument) : null;
+        if (iframeDoc) {
+          iframeDoc.open();
+          iframeDoc.write(htmlContent);
+          iframeDoc.close();
+        }
+
+        const runIframePrint = () => {
           try {
-            if (printWindow.document.fonts && printWindow.document.fonts.ready) {
-              await printWindow.document.fonts.ready;
+            if (iframe.contentWindow) {
+              if (typeof iframe.contentWindow.focus === 'function') iframe.contentWindow.focus();
+              if (typeof iframe.contentWindow.print === 'function') iframe.contentWindow.print();
             }
           } catch (_) {}
-          printWindow.focus();
-          printWindow.print();
+          setTimeout(() => {
+            try { iframe.remove(); } catch (_) {}
+          }, 2000);
         };
 
-        if (printWindow.document.readyState === 'complete') {
-          setTimeout(triggerPrint, 250);
+        if (iframeDoc && iframeDoc.images && iframeDoc.images.length) {
+          Promise.all(Array.from(iframeDoc.images, img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 800); });
+          })).then(() => setTimeout(runIframePrint, 200)).catch(() => setTimeout(runIframePrint, 200));
         } else {
-          printWindow.onload = () => setTimeout(triggerPrint, 250);
+          setTimeout(runIframePrint, 350);
         }
-        return;
-      } catch (err) {
-        console.warn('Gagal cetak via window.open, mencoba fallback iframe:', err);
+      } catch (fallbackErr) {
+        console.error('Semua metode cetak gagal:', fallbackErr);
+        if (typeof showToast === 'function') {
+          showToast('Gagal membuka dialog cetak: ' + fallbackErr.message, 'error');
+        }
       }
-    }
+    };
 
-    // 2. Fallback: Hidden iframe (anti popup blocker di mobile / Safari iOS)
-    try {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.style.visibility = 'hidden';
-      document.body.appendChild(iframe);
-
-      const iframeDoc = iframe.contentWindow ? (iframe.contentWindow.document || iframe.contentDocument) : null;
-      if (iframeDoc) {
-        iframeDoc.open();
-        iframeDoc.write(htmlContent);
-        iframeDoc.close();
-      }
-
-      setTimeout(() => {
-        try {
-          if (iframe.contentWindow) {
-            if (typeof iframe.contentWindow.focus === 'function') iframe.contentWindow.focus();
-            if (typeof iframe.contentWindow.print === 'function') iframe.contentWindow.print();
-          }
-        } catch (_) {}
-        setTimeout(() => {
-          try { iframe.remove(); } catch (_) {}
-        }, 2000);
-      }, 350);
-    } catch (fallbackErr) {
-      console.error('Semua metode cetak gagal:', fallbackErr);
-      if (typeof showToast === 'function') {
-        showToast('Gagal membuka dialog cetak: ' + fallbackErr.message, 'error');
-      }
+    if (!activeStoreInfo) {
+      loadStoreInfo().then(() => executePrint()).catch(() => executePrint());
+    } else {
+      executePrint();
     }
   }
 
@@ -1297,6 +1411,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   // Inisialisasi saat DOM siap
   async function initReport() {
     setupEventHandlers();
+    loadStoreInfo();
     await applyReadOnlyUI();
     await loadReport();
   }
