@@ -177,6 +177,7 @@ export const report = {
       const pName = prod.name || t.products?.name || `Produk #${pid}`;
       const brand = prod.brand || t.products?.brand || '-';
       const category = prod.categories?.name || t.products?.categories?.name || 'Umum';
+      const channel = t.channel || prod.channel || 'Offline';
 
       const key = pid || pName;
       if (!productSalesMap[key]) {
@@ -185,21 +186,33 @@ export const report = {
           name: pName,
           brand,
           category,
+          channel,
+          channels: {},
           qty: 0,
           revenue: 0,
           profit: 0
         };
       }
+      const ch = t.channel || prod.channel || 'Offline';
+      productSalesMap[key].channels[ch] = (productSalesMap[key].channels[ch] || 0) + qty;
       productSalesMap[key].qty += qty;
       productSalesMap[key].revenue += revenue;
       productSalesMap[key].profit += profit;
     });
 
     const topProducts = Object.values(productSalesMap)
-      .map(p => ({
-        ...p,
-        margin: p.revenue > 0 ? Math.round((p.profit / p.revenue) * 100) : 0
-      }))
+      .map(p => {
+        let topChannel = p.channel || 'Offline';
+        if (p.channels) {
+          const sortedCh = Object.entries(p.channels).sort((a, b) => b[1] - a[1]);
+          if (sortedCh.length > 0) topChannel = sortedCh[0][0];
+        }
+        return {
+          ...p,
+          channel: topChannel,
+          margin: p.revenue > 0 ? Math.round((p.profit / p.revenue) * 100) : 0
+        };
+      })
       .sort((a, b) => b.revenue - a.revenue);
 
     // 3. Tab Laba (Daily Trend Penjualan vs Laba)

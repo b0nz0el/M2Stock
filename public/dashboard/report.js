@@ -245,7 +245,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     if (currentTab === 'sales') {
       if (tableTitle) tableTitle.textContent = 'Barang Terlaris (Berdasarkan Omzet)';
-      columns = ['#', 'Barang', 'Brand', 'Kategori', 'Terjual', 'Pendapatan', 'Laba', 'Margin'];
+      columns = ['No', 'Barang', 'Channel', 'Kategori', 'Terjual', 'Pendapatan', 'Laba', 'Margin'];
       const items = reportData?.topProducts || [];
       hasData = items.length > 0;
 
@@ -253,7 +253,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         <tr class="table-row border-b border-white/5">
           <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-white/5 text-[#A0A0A5] grid place-items-center text-xs font-bold">${idx + 1}</span></td>
           <td class="px-5 py-3.5 font-medium text-white">${p.name}</td>
-          <td class="px-5 py-3.5 text-[#A0A0A5]">${p.brand}</td>
+          <td class="px-5 py-3.5"><span class="badge bg-white/5 text-[#A0A0A5] px-2 py-0.5 rounded text-xs font-medium">${p.channel || 'Offline'}</span></td>
           <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${p.category}</span></td>
           <td class="px-5 py-3.5 text-right font-semibold">${p.qty} unit</td>
           <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(p.revenue)}</td>
@@ -398,9 +398,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     let filename = `laporan-${currentTab}-${currentPeriod}.csv`;
 
     if (currentTab === 'sales') {
-      csvContent += 'No,Nama Produk,Brand,Kategori,Terjual,Pendapatan,Laba,Margin\n';
+      csvContent += 'No,Nama Produk,Channel,Kategori,Terjual,Pendapatan,Laba,Margin\n';
       (reportData.topProducts || []).forEach((p, idx) => {
-        csvContent += `"${idx + 1}","${p.name}","${p.brand}","${p.category}","${p.qty}","${p.revenue}","${p.profit}","${p.margin}%"\n`;
+        csvContent += `"${idx + 1}","${p.name}","${p.channel || 'Offline'}","${p.category}","${p.qty}","${p.revenue}","${p.profit}","${p.margin}%"\n`;
       });
     } else if (currentTab === 'profit') {
       csvContent += 'Tanggal,Jumlah Transaksi,Total Omzet,Laba Kotor,Margin\n';
@@ -542,7 +542,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         <tr>
           <th style="width: 5%;" class="text-center">#</th>
           <th style="width: 32%;">Nama Produk</th>
-          <th style="width: 14%;">Brand</th>
+          <th style="width: 14%;">Channel</th>
           <th style="width: 13%;">Kategori</th>
           <th style="width: 8%;" class="text-right">Terjual</th>
           <th style="width: 12%;" class="text-right">Pendapatan</th>
@@ -566,7 +566,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
             <tr>
               <td class="text-center font-bold text-muted">${idx + 1}</td>
               <td class="font-bold text-dark">${escapeHtml(p.name)}</td>
-              <td class="text-muted">${escapeHtml(p.brand || '-')}</td>
+              <td><span class="badge-cat" style="background:#f1f5f9; color:#475467;">${escapeHtml(p.channel || p.brand || 'Offline')}</span></td>
               <td><span class="badge-cat">${escapeHtml(p.category || 'Umum')}</span></td>
               <td class="text-right font-bold">${Number(p.qty || 0).toLocaleString('id-ID')} unit</td>
               <td class="text-right font-bold text-dark">${formatRupiah(p.revenue)}</td>
