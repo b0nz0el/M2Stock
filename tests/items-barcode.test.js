@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../public/assets/js/api/_client.js', () => ({
@@ -183,4 +185,22 @@ describe('product barcode API mapping', () => {
     expect(update).toHaveBeenNthCalledWith(1, { supplier_id: 5, cost_price: 37500 });
     expect(update).toHaveBeenNthCalledWith(2, { supplier_id: null, cost_price: 0 });
   });
+
+  it('renders Export Barcode action in Master Barang table and modal with PDF export support', () => {
+    const itemsJs = readFileSync(resolve(process.cwd(), 'public/dashboard/items.js'), 'utf8');
+    const indexHtml = readFileSync(resolve(process.cwd(), 'public/dashboard/index.html'), 'utf8');
+
+    // 1. Table action button in Master Barang
+    expect(itemsJs).toContain('data-action="export-barcode"');
+    expect(itemsJs).toContain('data-item-action="export-barcode"');
+    expect(itemsJs).toContain('title="Export Barcode"');
+    expect(itemsJs).toContain('exportProductBarcode');
+    expect(itemsJs).toContain('shareSingleProductBarcodePdf');
+
+    // 2. Modal action button in Master Barang
+    expect(indexHtml).toContain('id="btn-print-item-barcode"');
+    expect(indexHtml).toContain('title="Export Barcode"');
+    expect(indexHtml).toContain('aria-label="Export barcode produk"');
+  });
 });
+

@@ -2022,7 +2022,7 @@
             <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-[#FF9500]/15 hover:border-[#FF9500]/30 border border-transparent rounded-lg text-[#FF9500] transition active:scale-95">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
             </button>
-            <button type="button" data-action="print-barcode" data-item-action="print-barcode" data-item-id="${escapeHtml(String(item.id))}" title="Cetak Label Barcode" aria-label="Cetak Label Barcode" class="p-1.5 hover:bg-[#34C759]/15 hover:border-[#34C759]/30 border border-transparent rounded-lg text-[#34C759] transition active:scale-95">
+            <button type="button" data-action="export-barcode" data-item-action="export-barcode" data-item-id="${escapeHtml(String(item.id))}" title="Export Barcode" aria-label="Export Barcode" class="p-1.5 hover:bg-[#34C759]/15 hover:border-[#34C759]/30 border border-transparent rounded-lg text-[#34C759] transition active:scale-95">
               <i data-lucide="scan-line" class="w-4 h-4" aria-hidden="true"></i>
             </button>
             <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" title="Edit Produk" aria-label="Edit" class="p-1.5 hover:bg-[#32ADE6]/15 hover:border-[#32ADE6]/30 border border-transparent rounded-lg text-[#32ADE6] transition active:scale-95">
@@ -2834,6 +2834,27 @@
   window.calculateAdjustmentDifference = calculateAdjustmentDifference;
   window.handleStockAdjustmentSubmit = handleStockAdjustmentSubmit;
 
+  async function exportProductBarcode(itemOrId) {
+    try {
+      if (typeof window.shareSingleProductBarcodePdf === 'function') {
+        await window.shareSingleProductBarcodePdf(itemOrId);
+        return;
+      }
+      const module = await import('./settings-barcode.js');
+      if (typeof module.shareSingleProductBarcodePdf === 'function') {
+        await module.shareSingleProductBarcodePdf(itemOrId);
+      } else if (typeof module.printSingleProductBarcode === 'function') {
+        await module.printSingleProductBarcode(itemOrId, undefined, 'pdf');
+      }
+    } catch (err) {
+      console.error('Gagal export barcode:', err);
+      if (typeof showToast === 'function') {
+        showToast('Gagal export barcode: ' + (err.message || err), 'error');
+      }
+    }
+  }
+  window.exportProductBarcode = exportProductBarcode;
+
   // Tutup modal saat klik pada backdrop atau tekan Escape
   window.addEventListener('click', function (e) {
     const historyTrigger = e.target.closest('#btn-show-adjustment-history');
@@ -2845,13 +2866,9 @@
     if (itemAction) {
       const itemId = itemAction.dataset.itemId;
       if (itemAction.dataset.itemAction === 'adjust-stock') openStockAdjustmentModal(itemId);
-      if (itemAction.dataset.itemAction === 'print-barcode') {
+      if (itemAction.dataset.itemAction === 'export-barcode' || itemAction.dataset.itemAction === 'print-barcode') {
         const item = currentItems.find(i => String(i.id) === String(itemId));
-        if (typeof window.printSingleProductBarcode === 'function') {
-          window.printSingleProductBarcode(item || itemId);
-        } else {
-          showToast('Fitur cetak barcode belum siap. Muat ulang halaman.', 'error');
-        }
+        exportProductBarcode(item || itemId);
       }
       if (itemAction.dataset.itemAction === 'edit') openEditItemModal(itemId);
       if (itemAction.dataset.itemAction === 'delete') openDeleteItemModal(itemId);
@@ -2913,7 +2930,7 @@
       const id = document.getElementById('item-id')?.value;
       if (!id) {
         if (typeof showToast === 'function') {
-          showToast('Simpan produk terlebih dahulu sebelum mencetak barcode', 'warning');
+          showToast('Simpan produk terlebih dahulu sebelum export barcode', 'warning');
         }
         return;
       }
@@ -2923,13 +2940,7 @@
         barcode: document.getElementById('item-barcode')?.value,
         sell_price: document.getElementById('item-sell-price')?.value
       };
-      if (typeof window.printSingleProductBarcode === 'function') {
-        window.printSingleProductBarcode(item);
-      } else {
-        if (typeof showToast === 'function') {
-          showToast('Fitur cetak barcode belum siap. Muat ulang halaman.', 'error');
-        }
-      }
+      exportProductBarcode(item);
     });
   }
 
