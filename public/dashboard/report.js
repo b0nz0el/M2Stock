@@ -540,7 +540,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       const items = reportData?.topProducts || [];
       tableHeadersHtml = `
         <tr>
-          <th style="width: 5%;" class="text-center">#</th>
+          <th style="width: 5%;" class="text-center">No</th>
           <th style="width: 32%;">Nama Produk</th>
           <th style="width: 14%;">Channel</th>
           <th style="width: 13%;">Kategori</th>
