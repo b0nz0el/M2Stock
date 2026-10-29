@@ -268,9 +268,16 @@
       let totalPeriodSales = 0;
       let totalPeriodProfit = 0;
 
+      const prodMap = {};
+      products.forEach(p => {
+        if (p && p.id != null) prodMap[String(p.id)] = p;
+      });
+
       filteredOutTransactions.forEach(t => {
-        const rev = (t.qty || 0) * (t.price || 0);
-        const cost = (t.qty || 0) * (t.products?.cost_price || 0);
+        const prod = t.products || prodMap[String(t.product_id)] || {};
+        const rev = (Number(t.qty) || 0) * (Number(t.price) || Number(prod.sell_price) || 0);
+        const unitCost = Number(t.cost_price) > 0 ? Number(t.cost_price) : Number(prod.cost_price || 0);
+        const cost = (Number(t.qty) || 0) * unitCost;
         const pft = Math.max(0, rev - cost);
 
         totalPeriodSales += rev;

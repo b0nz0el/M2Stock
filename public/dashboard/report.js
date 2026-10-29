@@ -12,7 +12,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   'use strict';
 
   let currentTab = 'sales'; // 'sales' | 'profit' | 'stock' | 'category' | 'channel' | 'supplier' | 'cashier'
-  let currentPeriod = 'month'; // 'today' | '7d' | 'month' | '30d' | 'year' | 'all'
+  let currentPeriod = '30d'; // 'today' | '7d' | 'month' | '30d' | 'year' | 'all'
   let reportData = null;
   let chartInstance = null;
 
@@ -28,10 +28,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (Math.abs(n) >= 1_000_000) {
       return 'Rp ' + (n / 1_000_000).toFixed(1).replace('.0', '') + 'jt';
     }
-    if (Math.abs(n) >= 1_000) {
-      return 'Rp ' + (n / 1_000).toFixed(1).replace('.0', '') + 'rb';
-    }
-    return 'Rp ' + n.toLocaleString('id-ID');
+    // Nilai di bawah 1 juta ditampilkan format penuh (contoh: Rp 52.000, Rp 17.200) agar sinkron dengan Dashboard POS
+    return formatRupiah(n);
   }
 
   function getPeriodDates(period) {
@@ -62,6 +60,11 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   async function loadReport(showFeedback = false) {
+    const periodSelect = document.getElementById('report-period');
+    if (periodSelect && periodSelect.value) {
+      currentPeriod = periodSelect.value;
+    }
+
     const refreshBtn = document.getElementById('btn-refresh-report');
     const refreshIcon = refreshBtn ? refreshBtn.querySelector('i, svg') : null;
     if (refreshBtn) refreshBtn.classList.add('opacity-50', 'pointer-events-none');
@@ -105,8 +108,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const elStock = document.getElementById('kpi-stock-val');
     const elStockUnit = document.getElementById('kpi-stock-qty');
 
-    if (elSales) elSales.textContent = formatShortNumber(kpi.totalSales);
-    if (elProfit) elProfit.textContent = formatShortNumber(kpi.grossProfit);
+    if (elSales) {
+      elSales.textContent = formatShortNumber(kpi.totalSales);
+      elSales.setAttribute('title', formatRupiah(kpi.totalSales));
+    }
+    if (elProfit) {
+      elProfit.textContent = formatShortNumber(kpi.grossProfit);
+      elProfit.setAttribute('title', formatRupiah(kpi.grossProfit));
+    }
     if (elMargin) elMargin.textContent = `Margin ${kpi.profitMargin}%`;
     if (elTx) elTx.textContent = Number(kpi.totalTxOut).toLocaleString('id-ID');
     if (elQty) elQty.textContent = `${Number(kpi.totalQtySold).toLocaleString('id-ID')} unit terjual`;

@@ -112,25 +112,40 @@ export const report = {
     const inTransactions = transactions.filter(t => t.type === 'in');
 
     // 1. Overall Metrics
+    const productMap = {};
+    products.forEach(p => {
+      if (p && p.id != null) productMap[String(p.id)] = p;
+    });
+
+    const getTxPricing = (t) => {
+      const pid = String(t.product_id || t.products?.id || '');
+      const prod = t.products || productMap[pid] || {};
+      const qty = Number(t.qty) || 0;
+      const sellPrice = Number(t.price) || Number(prod.sell_price) || 0;
+      // Prioritaskan snapshot HPP historis jika > 0, fallback ke cost_price master produk (IAS 2)
+      const costPrice = (Number(t.cost_price) > 0)
+        ? Number(t.cost_price)
+        : (Number(prod.cost_price) || 0);
+
+      const revenue = qty * sellPrice;
+      const cogs = qty * costPrice;
+      const profit = Math.max(0, revenue - cogs);
+
+      return { prod, pid, qty, sellPrice, costPrice, revenue, cogs, profit };
+    };
+
     let totalSales = 0;
     let totalCogs = 0; // HPP (Cost of Goods Sold)
     let totalQtySold = 0;
 
     outTransactions.forEach(t => {
-      const qty = Number(t.qty) || 0;
-      const sellPrice = Number(t.price) || Number(t.products?.sell_price) || 0;
-      // Prioritaskan snapshot HPP transaksi historis (IAS 2)
-      const costPrice = Number(t.cost_price ?? t.products?.cost_price ?? 0);
-
-      const subtotal = qty * sellPrice;
-      const subCogs = qty * costPrice;
-
-      totalSales += subtotal;
-      totalCogs += subCogs;
+      const { qty, revenue, cogs } = getTxPricing(t);
+      totalSales += revenue;
+      totalCogs += cogs;
       totalQtySold += qty;
     });
 
-    const grossProfit = totalSales - totalCogs;
+    const grossProfit = Math.max(0, totalSales - totalCogs);
     const profitMargin = totalSales > 0 ? Math.round((grossProfit / totalSales) * 100) : 0;
     const totalTxOut = outTransactions.length;
 
@@ -158,18 +173,14 @@ export const report = {
     // 2. Tab Penjualan (Top Selling Products)
     const productSalesMap = {};
     outTransactions.forEach(t => {
-      const pid = t.product_id || (t.products && t.products.id) || 0;
-      const pName = t.products?.name || `Produk #${pid}`;
-      const brand = t.products?.brand || '-';
-      const category = t.products?.categories?.name || 'Umum';
-      const qty = Number(t.qty) || 0;
-      const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
-      const revenue = qty * price;
-      const profit = revenue - (qty * cost);
+      const { prod, pid, qty, revenue, profit } = getTxPricing(t);
+      const pName = prod.name || t.products?.name || `Produk #${pid}`;
+      const brand = prod.brand || t.products?.brand || '-';
+      const category = prod.categories?.name || t.products?.categories?.name || 'Umum';
 
-      if (!productSalesMap[pid]) {
-        productSalesMap[pid] = {
+      const key = pid || pName;
+      if (!productSalesMap[key]) {
+        productSalesMap[key] = {
           id: pid,
           name: pName,
           brand,
@@ -179,9 +190,9 @@ export const report = {
           profit: 0
         };
       }
-      productSalesMap[pid].qty += qty;
-      productSalesMap[pid].revenue += revenue;
-      productSalesMap[pid].profit += profit;
+      productSalesMap[key].qty += qty;
+      productSalesMap[key].revenue += revenue;
+      productSalesMap[key].profit += profit;
     });
 
     const topProducts = Object.values(productSalesMap)
@@ -196,11 +207,7 @@ export const report = {
     outTransactions.forEach(t => {
       const dateKey = (t.created_at || '').substring(0, 10);
       if (!dateKey) return;
-      const qty = Number(t.qty) || 0;
-      const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
-      const revenue = qty * price;
-      const profit = revenue - (qty * cost);
+      const { revenue, profit } = getTxPricing(t);
 
       if (!dailyMap[dateKey]) {
         dailyMap[dateKey] = { date: dateKey, revenue: 0, profit: 0, txCount: 0 };
@@ -215,12 +222,8 @@ export const report = {
     // 4. Tab Kategori
     const categoryMap = {};
     outTransactions.forEach(t => {
-      const catName = t.products?.categories?.name || 'Umum';
-      const qty = Number(t.qty) || 0;
-      const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
-      const revenue = qty * price;
-      const profit = revenue - (qty * cost);
+      const { prod, qty, revenue, profit } = getTxPricing(t);
+      const catName = prod.categories?.name || t.products?.categories?.name || 'Umum';
 
       if (!categoryMap[catName]) {
         categoryMap[catName] = { category: catName, qty: 0, revenue: 0, profit: 0, txCount: 0 };
@@ -241,12 +244,8 @@ export const report = {
     // 5. Tab Channel
     const channelMap = {};
     outTransactions.forEach(t => {
+      const { qty, revenue, profit } = getTxPricing(t);
       const chName = (t.channel || 'offline').toUpperCase();
-      const qty = Number(t.qty) || 0;
-      const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const cost = Number(t.cost_price ?? t.products?.cost_price ?? 0);
-      const revenue = qty * price;
-      const profit = revenue - (qty * cost);
 
       if (!channelMap[chName]) {
         channelMap[chName] = { channel: chName, qty: 0, revenue: 0, profit: 0, txCount: 0 };
@@ -280,18 +279,17 @@ export const report = {
     // 7. Tab Kasir
     const cashierMap = {};
     outTransactions.forEach(t => {
+      const { qty, revenue, profit } = getTxPricing(t);
       const kasir = (typeof window !== 'undefined' && typeof window.resolveUserName === 'function')
         ? window.resolveUserName(t.created_by)
         : (t.created_by && !t.created_by.includes('-') ? t.created_by : 'David');
-      const qty = Number(t.qty) || 0;
-      const price = Number(t.price) || Number(t.products?.sell_price) || 0;
-      const revenue = qty * price;
 
       if (!cashierMap[kasir]) {
-        cashierMap[kasir] = { cashier: kasir, qty: 0, revenue: 0, txCount: 0 };
+        cashierMap[kasir] = { cashier: kasir, qty: 0, revenue: 0, profit: 0, txCount: 0 };
       }
       cashierMap[kasir].qty += qty;
       cashierMap[kasir].revenue += revenue;
+      cashierMap[kasir].profit += profit;
       cashierMap[kasir].txCount += 1;
     });
 
