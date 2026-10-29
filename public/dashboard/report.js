@@ -404,15 +404,846 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (typeof showToast === 'function') showToast(`Laporan ${currentTab} berhasil diexport`, 'success');
   }
 
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function formatDateTimeID(date = new Date()) {
+    const d = new Date(date);
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${day} ${month} ${year}, ${hh}:${mm} WIB`;
+  }
+
+  function generateReportPrintHTML() {
+    let storeName = 'Aquastock Pro';
+    let storeAddress = 'Spesialis Perlengkapan & Akuarium';
+    let storePhone = '-';
+    let storeEmail = '-';
+
+    try {
+      const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.name) storeName = parsed.name;
+        if (parsed.address) storeAddress = parsed.address;
+        if (parsed.phone) storePhone = parsed.phone;
+        if (parsed.email) storeEmail = parsed.email;
+      }
+    } catch (_) {}
+
+    let currentUserName = 'David (Owner)';
+    try {
+      const userEmail = document.getElementById('sidebar-user-email')?.textContent?.trim() || '';
+      const userRole = document.getElementById('sidebar-user-role')?.textContent?.trim() || '';
+      if (userEmail) currentUserName = `${userEmail} (${userRole || 'Staff'})`;
+    } catch (_) {}
+
+    const periodLabels = {
+      today: 'Hari Ini',
+      '7d': '7 Hari Terakhir',
+      month: 'Bulan Ini',
+      '30d': '30 Hari Terakhir',
+      year: 'Tahun Ini',
+      all: 'Semua Waktu'
+    };
+    const periodText = periodLabels[currentPeriod] || 'Bulan Ini';
+
+    const tabTitles = {
+      sales: 'Laporan Penjualan (Produk Terlaris)',
+      profit: 'Laporan Analisis Laba Kotor Harian',
+      stock: 'Laporan Analisis Valuasi Stok & Inventori',
+      category: 'Laporan Kinerja Penjualan per Kategori',
+      channel: 'Laporan Kontribusi Saluran Penjualan (Channel)',
+      supplier: 'Laporan Pengadaan Barang per Supplier',
+      cashier: 'Laporan Kinerja Transaksi per Kasir'
+    };
+    const reportTitle = tabTitles[currentTab] || 'Laporan Bisnis & Analisis Operasional';
+
+    const kpi = reportData?.kpi || {
+      totalSales: 0,
+      grossProfit: 0,
+      profitMargin: 0,
+      totalTxOut: 0,
+      totalQtySold: 0,
+      totalStockCostValue: 0,
+      totalStockQty: 0
+    };
+
+    let tableHeadersHtml = '';
+    let tableRowsHtml = '';
+    let tableFooterHtml = '';
+
+    if (currentTab === 'sales') {
+      const items = reportData?.topProducts || [];
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 5%;" class="text-center">#</th>
+          <th style="width: 32%;">Nama Produk</th>
+          <th style="width: 14%;">Brand</th>
+          <th style="width: 13%;">Kategori</th>
+          <th style="width: 8%;" class="text-right">Terjual</th>
+          <th style="width: 12%;" class="text-right">Pendapatan</th>
+          <th style="width: 10%;" class="text-right">Laba Kotor</th>
+          <th style="width: 6%;" class="text-right">Margin</th>
+        </tr>
+      `;
+
+      let totQty = 0;
+      let totRev = 0;
+      let totProfit = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="8" class="text-center empty-cell">Tidak ada data transaksi penjualan pada periode ini</td></tr>`;
+      } else {
+        tableRowsHtml = items.map((p, idx) => {
+          totQty += Number(p.qty) || 0;
+          totRev += Number(p.revenue) || 0;
+          totProfit += Number(p.profit) || 0;
+          return `
+            <tr>
+              <td class="text-center font-bold text-muted">${idx + 1}</td>
+              <td class="font-bold text-dark">${escapeHtml(p.name)}</td>
+              <td class="text-muted">${escapeHtml(p.brand || '-')}</td>
+              <td><span class="badge-cat">${escapeHtml(p.category || 'Umum')}</span></td>
+              <td class="text-right font-bold">${Number(p.qty || 0).toLocaleString('id-ID')} unit</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(p.revenue)}</td>
+              <td class="text-right font-bold text-green">${formatRupiah(p.profit)}</td>
+              <td class="text-right font-bold">${p.margin}%</td>
+            </tr>
+          `;
+        }).join('');
+
+        const overallMargin = totRev > 0 ? Math.round((totProfit / totRev) * 100) : 0;
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td colspan="4" class="text-right font-bold">TOTAL KESELURUHAN</td>
+            <td class="text-right font-bold">${totQty.toLocaleString('id-ID')} unit</td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totRev)}</td>
+            <td class="text-right font-bold text-green">${formatRupiah(totProfit)}</td>
+            <td class="text-right font-bold">${overallMargin}%</td>
+          </tr>
+        `;
+      }
+    } else if (currentTab === 'profit') {
+      const items = (reportData?.dailyTrend || []).slice().reverse();
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 25%;">Tanggal Transaksi</th>
+          <th style="width: 18%;" class="text-center">Jumlah Transaksi</th>
+          <th style="width: 23%;" class="text-right">Total Omzet (Penjualan)</th>
+          <th style="width: 20%;" class="text-right">Laba Kotor</th>
+          <th style="width: 14%;" class="text-right">Margin Laba</th>
+        </tr>
+      `;
+
+      let totTx = 0;
+      let totRev = 0;
+      let totProfit = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="5" class="text-center empty-cell">Tidak ada data laba harian pada periode ini</td></tr>`;
+      } else {
+        tableRowsHtml = items.map(d => {
+          totTx += Number(d.txCount) || 0;
+          totRev += Number(d.revenue) || 0;
+          totProfit += Number(d.profit) || 0;
+          const margin = d.revenue > 0 ? Math.round((d.profit / d.revenue) * 100) : 0;
+          return `
+            <tr>
+              <td class="font-bold text-dark">${escapeHtml(d.date)}</td>
+              <td class="text-center">${Number(d.txCount || 0).toLocaleString('id-ID')} transaksi</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(d.revenue)}</td>
+              <td class="text-right font-bold text-green">${formatRupiah(d.profit)}</td>
+              <td class="text-right font-bold">${margin}%</td>
+            </tr>
+          `;
+        }).join('');
+
+        const overallMargin = totRev > 0 ? Math.round((totProfit / totRev) * 100) : 0;
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td class="font-bold">TOTAL PERIODE</td>
+            <td class="text-center font-bold">${totTx.toLocaleString('id-ID')} transaksi</td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totRev)}</td>
+            <td class="text-right font-bold text-green">${formatRupiah(totProfit)}</td>
+            <td class="text-right font-bold">${overallMargin}%</td>
+          </tr>
+        `;
+      }
+    } else if (currentTab === 'stock') {
+      const items = reportData?.stockReport || [];
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 12%;">SKU</th>
+          <th style="width: 28%;">Nama Barang</th>
+          <th style="width: 12%;">Kategori</th>
+          <th style="width: 8%;" class="text-right">Stok</th>
+          <th style="width: 10%;" class="text-right">Harga Modal</th>
+          <th style="width: 10%;" class="text-right">Harga Jual</th>
+          <th style="width: 10%;" class="text-right">Nilai Modal</th>
+          <th style="width: 10%;" class="text-right">Potensi Laba</th>
+        </tr>
+      `;
+
+      let totStock = 0;
+      let totCost = 0;
+      let totPotProfit = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="8" class="text-center empty-cell">Tidak ada data stok produk</td></tr>`;
+      } else {
+        tableRowsHtml = items.map(p => {
+          totStock += Number(p.stock) || 0;
+          totCost += Number(p.totalCost) || 0;
+          totPotProfit += Number(p.potentialProfit) || 0;
+          return `
+            <tr>
+              <td class="font-mono text-muted">${escapeHtml(p.sku || '-')}</td>
+              <td class="font-bold text-dark">${escapeHtml(p.name)}</td>
+              <td><span class="badge-cat">${escapeHtml(p.category || 'Umum')}</span></td>
+              <td class="text-right font-bold ${p.isLow ? 'text-red' : ''}">${Number(p.stock || 0).toLocaleString('id-ID')} unit</td>
+              <td class="text-right text-muted">${formatRupiah(p.cost)}</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(p.sell)}</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(p.totalCost)}</td>
+              <td class="text-right font-bold text-green">${formatRupiah(p.potentialProfit)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td colspan="3" class="text-right font-bold">TOTAL VALUASI INVENTORI</td>
+            <td class="text-right font-bold">${totStock.toLocaleString('id-ID')} unit</td>
+            <td colspan="2"></td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totCost)}</td>
+            <td class="text-right font-bold text-green">${formatRupiah(totPotProfit)}</td>
+          </tr>
+        `;
+      }
+    } else if (currentTab === 'category') {
+      const items = reportData?.categoryReport || [];
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 30%;">Kategori Produk</th>
+          <th style="width: 15%;" class="text-center">Transaksi</th>
+          <th style="width: 15%;" class="text-right">Unit Terjual</th>
+          <th style="width: 18%;" class="text-right">Pendapatan (Omzet)</th>
+          <th style="width: 14%;" class="text-right">Laba Kotor</th>
+          <th style="width: 8%;" class="text-right">Margin</th>
+        </tr>
+      `;
+
+      let totTx = 0;
+      let totQty = 0;
+      let totRev = 0;
+      let totProfit = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="6" class="text-center empty-cell">Tidak ada data transaksi kategori pada periode ini</td></tr>`;
+      } else {
+        tableRowsHtml = items.map(c => {
+          totTx += Number(c.txCount) || 0;
+          totQty += Number(c.qty) || 0;
+          totRev += Number(c.revenue) || 0;
+          totProfit += Number(c.profit) || 0;
+          return `
+            <tr>
+              <td class="font-bold text-dark">${escapeHtml(c.category)}</td>
+              <td class="text-center">${Number(c.txCount || 0).toLocaleString('id-ID')} tx</td>
+              <td class="text-right font-bold">${Number(c.qty || 0).toLocaleString('id-ID')} unit</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(c.revenue)}</td>
+              <td class="text-right font-bold text-green">${formatRupiah(c.profit)}</td>
+              <td class="text-right font-bold">${c.margin}%</td>
+            </tr>
+          `;
+        }).join('');
+
+        const overallMargin = totRev > 0 ? Math.round((totProfit / totRev) * 100) : 0;
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td class="font-bold">TOTAL SEMUA KATEGORI</td>
+            <td class="text-center font-bold">${totTx.toLocaleString('id-ID')} tx</td>
+            <td class="text-right font-bold">${totQty.toLocaleString('id-ID')} unit</td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totRev)}</td>
+            <td class="text-right font-bold text-green">${formatRupiah(totProfit)}</td>
+            <td class="text-right font-bold">${overallMargin}%</td>
+          </tr>
+        `;
+      }
+    } else if (currentTab === 'channel') {
+      const items = reportData?.channelReport || [];
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 32%;">Saluran Penjualan (Channel)</th>
+          <th style="width: 16%;" class="text-center">Jumlah Transaksi</th>
+          <th style="width: 16%;" class="text-right">Unit Terjual</th>
+          <th style="width: 20%;" class="text-right">Total Omzet</th>
+          <th style="width: 16%;" class="text-right">Laba Kotor</th>
+        </tr>
+      `;
+
+      let totTx = 0;
+      let totQty = 0;
+      let totRev = 0;
+      let totProfit = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="5" class="text-center empty-cell">Tidak ada data channel penjualan pada periode ini</td></tr>`;
+      } else {
+        tableRowsHtml = items.map(ch => {
+          totTx += Number(ch.txCount) || 0;
+          totQty += Number(ch.qty) || 0;
+          totRev += Number(ch.revenue) || 0;
+          totProfit += Number(ch.profit) || 0;
+          return `
+            <tr>
+              <td class="font-bold text-dark"><span class="badge-cat">${escapeHtml(ch.channel)}</span></td>
+              <td class="text-center">${Number(ch.txCount || 0).toLocaleString('id-ID')} tx</td>
+              <td class="text-right font-bold">${Number(ch.qty || 0).toLocaleString('id-ID')} unit</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(ch.revenue)}</td>
+              <td class="text-right font-bold text-green">${formatRupiah(ch.profit)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td class="font-bold">TOTAL SEMUA CHANNEL</td>
+            <td class="text-center font-bold">${totTx.toLocaleString('id-ID')} tx</td>
+            <td class="text-right font-bold">${totQty.toLocaleString('id-ID')} unit</td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totRev)}</td>
+            <td class="text-right font-bold text-green">${formatRupiah(totProfit)}</td>
+          </tr>
+        `;
+      }
+    } else if (currentTab === 'supplier') {
+      const items = reportData?.supplierReport || [];
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 40%;">Nama Supplier</th>
+          <th style="width: 18%;" class="text-center">Frekuensi Masuk</th>
+          <th style="width: 18%;" class="text-right">Unit Diterima</th>
+          <th style="width: 24%;" class="text-right">Total Nilai Pembelian Modal</th>
+        </tr>
+      `;
+
+      let totTx = 0;
+      let totQty = 0;
+      let totBuy = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="4" class="text-center empty-cell">Tidak ada data pengadaan supplier pada periode ini</td></tr>`;
+      } else {
+        tableRowsHtml = items.map(s => {
+          totTx += Number(s.txCount) || 0;
+          totQty += Number(s.qty) || 0;
+          totBuy += Number(s.totalBuy) || 0;
+          return `
+            <tr>
+              <td class="font-bold text-dark">${escapeHtml(s.supplier)}</td>
+              <td class="text-center">${Number(s.txCount || 0).toLocaleString('id-ID')} kali</td>
+              <td class="text-right font-bold text-green">+${Number(s.qty || 0).toLocaleString('id-ID')} unit</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(s.totalBuy)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td class="font-bold">TOTAL PENGADAAN</td>
+            <td class="text-center font-bold">${totTx.toLocaleString('id-ID')} kali</td>
+            <td class="text-right font-bold text-green">+${totQty.toLocaleString('id-ID')} unit</td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totBuy)}</td>
+          </tr>
+        `;
+      }
+    } else if (currentTab === 'cashier') {
+      const items = reportData?.cashierReport || [];
+      tableHeadersHtml = `
+        <tr>
+          <th style="width: 40%;">Kasir / Operator</th>
+          <th style="width: 18%;" class="text-center">Transaksi Dilayani</th>
+          <th style="width: 18%;" class="text-right">Total Unit Keluar</th>
+          <th style="width: 24%;" class="text-right">Total Omzet Penjualan</th>
+        </tr>
+      `;
+
+      let totTx = 0;
+      let totQty = 0;
+      let totRev = 0;
+
+      if (items.length === 0) {
+        tableRowsHtml = `<tr><td colspan="4" class="text-center empty-cell">Tidak ada data kinerja kasir pada periode ini</td></tr>`;
+      } else {
+        tableRowsHtml = items.map(k => {
+          totTx += Number(k.txCount) || 0;
+          totQty += Number(k.qty) || 0;
+          totRev += Number(k.revenue) || 0;
+          return `
+            <tr>
+              <td class="font-bold text-dark">${escapeHtml(k.cashier)}</td>
+              <td class="text-center">${Number(k.txCount || 0).toLocaleString('id-ID')} tx</td>
+              <td class="text-right font-bold">${Number(k.qty || 0).toLocaleString('id-ID')} unit</td>
+              <td class="text-right font-bold text-dark">${formatRupiah(k.revenue)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        tableFooterHtml = `
+          <tr class="total-row">
+            <td class="font-bold">TOTAL TRANSAKSI KASIR</td>
+            <td class="text-center font-bold">${totTx.toLocaleString('id-ID')} tx</td>
+            <td class="text-right font-bold">${totQty.toLocaleString('id-ID')} unit</td>
+            <td class="text-right font-bold text-dark">${formatRupiah(totRev)}</td>
+          </tr>
+        `;
+      }
+    }
+
+    const printTimestamp = formatDateTimeID();
+
+    return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Laporan - ${escapeHtml(reportTitle)} - ${escapeHtml(storeName)}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm 10mm;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #1e293b;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 8.5pt;
+      line-height: 1.35;
+    }
+    .report-sheet {
+      width: 100%;
+      max-width: 190mm;
+      margin: 0 auto;
+      padding: 2mm 0;
+    }
+    /* Header Kop Laporan */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 5mm;
+      padding-bottom: 4mm;
+      margin-bottom: 4.5mm;
+      border-bottom: 2pt solid #0088CC;
+    }
+    .doc-brand {
+      display: flex;
+      align-items: center;
+      gap: 3.5mm;
+      min-width: 0;
+    }
+    .doc-logo {
+      width: 12mm;
+      height: 12mm;
+      flex-shrink: 0;
+    }
+    .store-name {
+      font-size: 13pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .store-meta {
+      font-size: 7.5pt;
+      color: #64748b;
+      margin: 1mm 0 0;
+      line-height: 1.25;
+    }
+    .doc-badge-col {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .doc-badge {
+      display: inline-block;
+      padding: 1.5mm 3mm;
+      background: #0088CC;
+      color: #ffffff;
+      font-size: 7.5pt;
+      font-weight: 700;
+      border-radius: 1mm;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .doc-title {
+      font-size: 10.5pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 1.5mm 0 0.5mm;
+    }
+    .doc-period-meta {
+      font-size: 7.5pt;
+      color: #64748b;
+    }
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3mm;
+      margin-bottom: 4.5mm;
+    }
+    .kpi-card {
+      background: #f8fafc;
+      border: 0.75pt solid #e2e8f0;
+      border-radius: 1.5mm;
+      padding: 2.5mm 3mm;
+    }
+    .kpi-label {
+      font-size: 6.8pt;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0 0 1mm;
+    }
+    .kpi-value {
+      font-size: 10.5pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0;
+    }
+    .kpi-sub {
+      font-size: 6.8pt;
+      color: #0088CC;
+      font-weight: 600;
+      margin-top: 0.8mm;
+    }
+    .kpi-sub.profit {
+      color: #16a34a;
+    }
+    /* Section & Table */
+    .section-heading {
+      font-size: 9pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 2mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5mm;
+      font-size: 7.8pt;
+    }
+    .report-table thead {
+      display: table-header-group;
+    }
+    .report-table tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .report-table th {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 7.2pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 2mm 2.2mm;
+      border: 0.5pt solid #0f172a;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .report-table td {
+      padding: 1.8mm 2.2mm;
+      border: 0.5pt solid #cbd5e1;
+      color: #334155;
+      vertical-align: middle;
+    }
+    .report-table tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .report-table .total-row td {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 800;
+      border-top: 1.5pt solid #0f172a;
+      border-bottom: 1.5pt solid #0f172a;
+      font-size: 8pt;
+    }
+    .text-right { text-align: right !important; }
+    .text-center { text-align: center !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; font-size: 7.2pt !important; }
+    .text-dark { color: #0f172a !important; }
+    .text-muted { color: #64748b !important; }
+    .text-green { color: #16a34a !important; }
+    .text-red { color: #dc2626 !important; }
+    .empty-cell { padding: 8mm !important; color: #94a3b8 !important; font-style: italic; }
+    .badge-cat {
+      display: inline-block;
+      padding: 0.4mm 1.5mm;
+      border-radius: 0.8mm;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 6.8pt;
+      font-weight: 600;
+    }
+    /* Signature */
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6mm;
+      padding-top: 2mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .sig-box {
+      width: 48mm;
+      text-align: center;
+      font-size: 7.5pt;
+      color: #475467;
+    }
+    .sig-role {
+      font-weight: 600;
+      margin-bottom: 16mm;
+    }
+    .sig-name {
+      font-weight: 700;
+      color: #0f172a;
+      padding-top: 1mm;
+      border-top: 0.75pt solid #94a3b8;
+    }
+    /* Footer */
+    .report-footer {
+      margin-top: 5mm;
+      padding-top: 2.5mm;
+      border-top: 0.5pt solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 6.8pt;
+      color: #94a3b8;
+    }
+    @media screen {
+      body { padding: 10mm; background: #e2e8f0; }
+      .report-sheet { background: #fff; padding: 10mm; box-shadow: 0 2mm 8mm rgba(0,0,0,0.1); border-radius: 2mm; }
+    }
+    @media print {
+      body { padding: 0; background: #fff; }
+      .report-sheet { width: 100%; max-width: 100%; margin: 0; padding: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-sheet">
+    <!-- Header Kop Dokumen -->
+    <header class="doc-header">
+      <div class="doc-brand">
+        <svg viewBox="0 0 100 100" class="doc-logo" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="print-aq-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#32ADE6"/>
+              <stop offset="100%" stop-color="#0088CC"/>
+            </linearGradient>
+          </defs>
+          <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#print-aq-gradient)"/>
+          <path d="M50 26 L32 66 L38 66 L42 58 L58 58 L62 66 L68 66 L50 26 Z M45 53 L50 42 L55 53 Z" fill="#FFFFFF"/>
+          <circle cx="50" cy="72" r="3.5" fill="#FFFFFF"/>
+        </svg>
+        <div>
+          <h1 class="store-name">${escapeHtml(storeName)}</h1>
+          <p class="store-meta">${escapeHtml(storeAddress)}${storePhone !== '-' ? ' · Telp: ' + escapeHtml(storePhone) : ''}</p>
+        </div>
+      </div>
+      <div class="doc-badge-col">
+        <span class="doc-badge">Laporan Resmi Bisnis</span>
+        <div class="doc-title">${escapeHtml(reportTitle)}</div>
+        <div class="doc-period-meta">Periode: <strong>${escapeHtml(periodText)}</strong> · Dicetak oleh: ${escapeHtml(currentUserName)}</div>
+      </div>
+    </header>
+
+    <!-- Executive KPI Metrics Grid -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Penjualan</div>
+        <div class="kpi-value">${formatRupiah(kpi.totalSales)}</div>
+        <div class="kpi-sub">Margin Laba: ${kpi.profitMargin}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Laba Kotor</div>
+        <div class="kpi-value text-green">${formatRupiah(kpi.grossProfit)}</div>
+        <div class="kpi-sub profit">Pendapatan - HPP Modal</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Transaksi Keluar</div>
+        <div class="kpi-value">${Number(kpi.totalTxOut).toLocaleString('id-ID')}</div>
+        <div class="kpi-sub">${Number(kpi.totalQtySold).toLocaleString('id-ID')} unit terjual</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Valuasi Stok (Modal)</div>
+        <div class="kpi-value">${formatRupiah(kpi.totalStockCostValue)}</div>
+        <div class="kpi-sub">${Number(kpi.totalStockQty).toLocaleString('id-ID')} unit total</div>
+      </div>
+    </section>
+
+    <!-- Table Section -->
+    <div class="section-heading">
+      <span>${escapeHtml(reportTitle)}</span>
+      <span class="doc-period-meta">Data Per ${escapeHtml(periodText)}</span>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        ${tableHeadersHtml}
+      </thead>
+      <tbody>
+        ${tableRowsHtml}
+      </tbody>
+      ${tableFooterHtml ? `<tfoot>${tableFooterHtml}</tfoot>` : ''}
+    </table>
+
+    <!-- Signature Section -->
+    <section class="signature-section">
+      <div class="sig-box">
+        <div class="sig-role">Kasir / Pembuat Laporan</div>
+        <div class="sig-name">${escapeHtml(currentUserName)}</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-role">Pemilik Toko / Penanggung Jawab</div>
+        <div class="sig-name">${escapeHtml(storeName)}</div>
+      </div>
+    </section>
+
+    <!-- Footer Timestamp & App Version -->
+    <footer class="report-footer">
+      <span>Dicetak otomatis via Aquastock Pro pada: ${printTimestamp}</span>
+      <span>Dokumen ini sah dan bersifat rahasia untuk operasional internal toko</span>
+    </footer>
+  </main>
+</body>
+</html>`;
+  }
+
+  function printReportPDF() {
+    if (!reportData) {
+      if (typeof showToast === 'function') showToast('Data laporan belum siap dicetak. Sedang memuat ulang...', 'warning');
+      loadReport().then(() => {
+        if (reportData) printReportPDF();
+      });
+      return;
+    }
+
+    const htmlContent = generateReportPrintHTML();
+
+    // 1. Coba buka dedicated print window
+    let printWindow = null;
+    try {
+      printWindow = window.open('', '_blank');
+    } catch (_) {}
+
+    if (printWindow) {
+      try {
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+
+        const triggerPrint = async () => {
+          try {
+            if (printWindow.document.fonts && printWindow.document.fonts.ready) {
+              await printWindow.document.fonts.ready;
+            }
+          } catch (_) {}
+          printWindow.focus();
+          printWindow.print();
+        };
+
+        if (printWindow.document.readyState === 'complete') {
+          setTimeout(triggerPrint, 250);
+        } else {
+          printWindow.onload = () => setTimeout(triggerPrint, 250);
+        }
+        return;
+      } catch (err) {
+        console.warn('Gagal cetak via window.open, mencoba fallback iframe:', err);
+      }
+    }
+
+    // 2. Fallback: Hidden iframe (anti popup blocker di mobile / Safari iOS)
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow ? (iframe.contentWindow.document || iframe.contentDocument) : null;
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(htmlContent);
+        iframeDoc.close();
+      }
+
+      setTimeout(() => {
+        try {
+          if (iframe.contentWindow) {
+            if (typeof iframe.contentWindow.focus === 'function') iframe.contentWindow.focus();
+            if (typeof iframe.contentWindow.print === 'function') iframe.contentWindow.print();
+          }
+        } catch (_) {}
+        setTimeout(() => {
+          try { iframe.remove(); } catch (_) {}
+        }, 2000);
+      }, 350);
+    } catch (fallbackErr) {
+      console.error('Semua metode cetak gagal:', fallbackErr);
+      if (typeof showToast === 'function') {
+        showToast('Gagal membuka dialog cetak: ' + fallbackErr.message, 'error');
+      }
+    }
+  }
+
+  function setReportTab(tab) {
+    currentTab = tab || 'sales';
+    const tabButtons = document.querySelectorAll('#report-filter-tabs button');
+    tabButtons.forEach(b => {
+      if (b.getAttribute('data-tab') === currentTab) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+    renderTabTable();
+  }
+
   function setupEventHandlers() {
     // Tab switching
     const tabButtons = document.querySelectorAll('#report-filter-tabs button');
     tabButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTab = btn.getAttribute('data-tab') || 'sales';
-        renderTabTable();
+        setReportTab(btn.getAttribute('data-tab') || 'sales');
       });
     });
 
@@ -445,18 +1276,18 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const btnExportPdf = document.getElementById('btn-export-pdf');
     if (btnExportPdf) {
       btnExportPdf.addEventListener('click', () => {
-        window.print();
+        if (typeof window.printReportPDF === 'function') {
+          window.printReportPDF();
+        } else {
+          printReportPDF();
+        }
       });
     }
   }
 
   // Inisialisasi saat DOM siap
-  let reportEventsSetup = false;
   async function initReport() {
-    if (!reportEventsSetup) {
-      setupEventHandlers();
-      reportEventsSetup = true;
-    }
+    setupEventHandlers();
     await applyReadOnlyUI();
     await loadReport();
   }
@@ -466,6 +1297,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     window.loadReport = loadReport;
     window.initReport = initReport;
     window.exportReportCSV = exportReportCSV;
+    window.generateReportPrintHTML = generateReportPrintHTML;
+    window.printReportPDF = printReportPDF;
+    window.setReportTab = setReportTab;
   }
 
   if (document.readyState === 'loading') {
