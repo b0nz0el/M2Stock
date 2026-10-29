@@ -274,4 +274,56 @@ describe('Internal product barcode creation', () => {
     expect(labels[1].querySelector('.product-price').textContent).toBe('Rp 35.000');
     expect(labels[1].querySelector('.barcode')).not.toBeNull();
   });
+
+  it('generates a valid 80mm x 30mm PDF document using buildPdfFromJpegs and createBarcodePdf', async () => {
+    const { buildPdfFromJpegs, createBarcodePdf, BARCODE_LAYOUTS } = await import('../public/dashboard/settings-barcode.js');
+
+    expect(BARCODE_LAYOUTS['40x30_double'].widthMm).toBe(80);
+    expect(BARCODE_LAYOUTS['40x30_double'].heightMm).toBe(30);
+
+    const dummyJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0xff, 0xd9]);
+    const pdfBytes = buildPdfFromJpegs([{ jpegBytes: dummyJpeg, widthPx: 960, heightPx: 360 }], 80, 30);
+
+    expect(pdfBytes).toBeInstanceOf(Uint8Array);
+    const pdfStr = Buffer.from(pdfBytes).toString();
+    expect(pdfStr).toContain('%PDF-1.4');
+    expect(pdfStr).toContain('/MediaBox [0 0 226.77 85.04]'); // 80mm x 30mm in points
+    expect(pdfStr).toContain('%%EOF');
+
+    const products = [
+      { id: 'p1', name: 'Acriflavine 100ml', barcode: 'AS9607831977', sell_price: 5000 }
+    ];
+    const jsBarcodeMock = vi.fn((canvas, code) => {
+      canvas.width = 400;
+      canvas.height = 150;
+    });
+
+    const result = await createBarcodePdf(products, '40x30_double', jsBarcodeMock);
+    expect(result.blob.type).toBe('application/pdf');
+    expect(result.filename).toBe('Label-Barcode-80mm.pdf');
+    expect(result.byteLength).toBeGreaterThan(100);
+    expect(result.pageCount).toBe(1);
+  });
+
+  it('shares PDF via navigator.share when available and falls back to download', async () => {
+    const { shareOrDownloadPdf } = await import('../public/dashboard/settings-barcode.js');
+    const blob = new Blob(['%PDF-1.4 mock pdf content'], { type: 'application/pdf' });
+
+    // Mock navigator.share
+    const shareMock = vi.fn().mockResolvedValue(undefined);
+    navigator.share = shareMock;
+    navigator.canShare = vi.fn().mockReturnValue(true);
+
+    const shareResult = await shareOrDownloadPdf(blob, 'Label-Test.pdf');
+    expect(shareResult.method).toBe('share');
+    expect(shareResult.success).toBe(true);
+    expect(shareMock).toHaveBeenCalledOnce();
+
+    // Test fallback when navigator.canShare is false
+    navigator.canShare = vi.fn().mockReturnValue(false);
+    vi.spyOn(window, 'open').mockReturnValue(null);
+    const downloadResult = await shareOrDownloadPdf(blob, 'Label-Test.pdf');
+    expect(downloadResult.method).toBe('download');
+    expect(downloadResult.success).toBe(true);
+  });
 });

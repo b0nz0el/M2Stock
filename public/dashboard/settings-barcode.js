@@ -13,48 +13,54 @@ export const BARCODE_LAYOUTS = {
   '50x30_single': {
     id: '50x30_single',
     name: '50 × 30 mm (1 Kolom - Standar)',
+    widthMm: 50,
+    heightMm: 30,
     columns: 1,
     css: `
       @page { size: 50mm 30mm; margin: 0; }
       * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      html, body { width: 50mm; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
-      .barcode-sheet { display: block; }
-      .barcode-label { width: 50mm; height: 30mm; max-height: 30mm; padding: 0.5mm 1.5mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
+      html, body { width: 100%; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
+      .barcode-sheet { display: block; width: 100%; max-width: 50mm; margin: 0 auto; }
+      .barcode-label { width: 100%; height: 30mm; max-height: 30mm; padding: 0.5mm 1mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
       .barcode-label:last-child { page-break-after: auto; break-after: auto; }
       .product-name { width: 100%; max-height: 5.5mm; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8.5pt; font-weight: 700; line-height: 1.15; }
-      .barcode { width: 100%; max-width: 47mm; height: 17mm; display: block; margin: 0 auto; }
+      .barcode { width: 100%; max-width: 48mm; height: 18mm; display: block; margin: 0 auto; }
       .product-price { width: 100%; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 9.5pt; font-weight: 800; line-height: 1.15; }
     `
   },
   '40x30_double': {
     id: '40x30_double',
     name: '40 × 30 mm (2 Kolom - Printer 80mm)',
+    widthMm: 80,
+    heightMm: 30,
     columns: 2,
     css: `
       @page { size: 80mm 30mm; margin: 0; }
       * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      html, body { width: 80mm; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
-      .barcode-sheet { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2mm; width: 80mm; max-width: 80mm; height: 30mm; max-height: 30mm; margin: 0 auto; padding: 0.5mm 2mm; align-items: center; justify-content: center; overflow: hidden; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
+      html, body { width: 100%; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
+      .barcode-sheet { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1mm; width: 100%; max-width: 80mm; height: 30mm; max-height: 30mm; margin: 0 auto; padding: 0.5mm 0.5mm; align-items: center; justify-content: center; overflow: hidden; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
       .barcode-sheet:last-child { page-break-after: auto; break-after: auto; }
-      .barcode-label { width: 100%; height: 29mm; max-height: 29mm; padding: 0.5mm 0.5mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; }
+      .barcode-label { width: 100%; height: 29mm; max-height: 29mm; padding: 0.2mm 0.5mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; }
       .product-name { width: 100%; max-height: 5.5mm; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8pt; font-weight: 700; line-height: 1.15; }
-      .barcode { width: 100%; max-width: 36mm; height: 17mm; display: block; margin: 0 auto; }
+      .barcode { width: 100%; max-width: 39mm; height: 18mm; display: block; margin: 0 auto; }
       .product-price { width: 100%; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 9pt; font-weight: 800; line-height: 1.15; }
     `
   },
   '40x30_single': {
     id: '40x30_single',
     name: '40 × 30 mm (1 Kolom)',
+    widthMm: 40,
+    heightMm: 30,
     columns: 1,
     css: `
       @page { size: 40mm 30mm; margin: 0; }
       * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      html, body { width: 40mm; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
-      .barcode-sheet { display: block; }
-      .barcode-label { width: 40mm; height: 30mm; max-height: 30mm; padding: 0.5mm 1mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
+      html, body { width: 100%; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
+      .barcode-sheet { display: block; width: 100%; max-width: 40mm; margin: 0 auto; }
+      .barcode-label { width: 100%; height: 30mm; max-height: 30mm; padding: 0.5mm 1mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
       .barcode-label:last-child { page-break-after: auto; break-after: auto; }
       .product-name { width: 100%; max-height: 5.5mm; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8pt; font-weight: 700; line-height: 1.15; }
-      .barcode { width: 100%; max-width: 37mm; height: 17mm; display: block; margin: 0 auto; }
+      .barcode { width: 100%; max-width: 38.5mm; height: 18mm; display: block; margin: 0 auto; }
       .product-price { width: 100%; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 9pt; font-weight: 800; line-height: 1.15; }
     `
   }
@@ -158,15 +164,20 @@ function renderMissingProducts() {
     ? `${filteredProducts.length} dari ${pool.length} produk cocok`
     : `${pool.length} produk ${filterLabel}`;
 
+  const shareButton = document.getElementById('btn-share-pdf-barcodes');
   if (selectButton) selectButton.disabled = filteredProducts.length === 0;
   generateButton.disabled = selectedProductIds.size === 0;
+  if (shareButton) shareButton.disabled = selectedProductIds.size === 0;
 
   // Update text tombol batch
   const span = generateButton.querySelector('span') || generateButton;
+  const spanShare = shareButton?.querySelector('span') || shareButton;
   if (activeFilterMode === 'missing') {
-    span.textContent = 'Buat & cetak barcode terpilih';
+    span.textContent = 'Cetak browser';
+    if (spanShare) spanShare.textContent = 'Buat & Bagikan PDF';
   } else {
-    span.textContent = 'Cetak barcode terpilih';
+    span.textContent = 'Cetak browser';
+    if (spanShare) spanShare.textContent = 'Bagikan PDF (Thermal 80mm)';
   }
 
   if (pool.length === 0) {
@@ -219,22 +230,48 @@ function renderMissingProducts() {
     }
     details.append(name, meta);
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.action = 'edit';
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'shrink-0 flex items-center gap-1.5 flex-wrap sm:flex-nowrap';
+
     if (hasBarcode) {
-      button.dataset.printBarcode = String(product.id);
-      button.className = 'shrink-0 rounded-lg border border-[#34C759]/30 bg-[#34C759]/10 hover:bg-[#34C759]/20 text-[#34C759] px-3 py-2 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer active:scale-95';
-      button.innerHTML = '<span>Cetak label</span>';
-      button.setAttribute('aria-label', `Cetak barcode label untuk ${product.name || 'produk'}`);
+      const shareBtn = document.createElement('button');
+      shareBtn.type = 'button';
+      shareBtn.dataset.action = 'edit';
+      shareBtn.dataset.shareBarcode = String(product.id);
+      shareBtn.className = 'rounded-lg border border-[#34C759]/30 bg-[#34C759]/10 hover:bg-[#34C759]/20 text-[#34C759] px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 cursor-pointer active:scale-95';
+      shareBtn.innerHTML = '<i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>Bagikan PDF</span>';
+      shareBtn.setAttribute('aria-label', `Bagikan PDF label barcode untuk ${product.name || 'produk'}`);
+
+      const printBtn = document.createElement('button');
+      printBtn.type = 'button';
+      printBtn.dataset.action = 'edit';
+      printBtn.dataset.printBarcode = String(product.id);
+      printBtn.className = 'rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 cursor-pointer active:scale-95';
+      printBtn.innerHTML = '<span>Cetak</span>';
+      printBtn.setAttribute('aria-label', `Cetak barcode label untuk ${product.name || 'produk'}`);
+
+      btnGroup.append(shareBtn, printBtn);
     } else {
-      button.dataset.generateBarcode = String(product.id);
-      button.className = 'shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 transition flex items-center gap-1.5 cursor-pointer active:scale-95';
-      button.innerHTML = '<span>Buat barcode</span>';
-      button.setAttribute('aria-label', `Buat barcode untuk ${product.name || 'produk'}`);
+      const shareBtn = document.createElement('button');
+      shareBtn.type = 'button';
+      shareBtn.dataset.action = 'edit';
+      shareBtn.dataset.shareBarcode = String(product.id);
+      shareBtn.className = 'rounded-lg border border-[#34C759]/30 bg-[#34C759]/10 hover:bg-[#34C759]/20 text-[#34C759] px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 cursor-pointer active:scale-95';
+      shareBtn.innerHTML = '<i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>PDF</span>';
+      shareBtn.setAttribute('aria-label', `Buat barcode dan bagikan PDF untuk ${product.name || 'produk'}`);
+
+      const genBtn = document.createElement('button');
+      genBtn.type = 'button';
+      genBtn.dataset.action = 'edit';
+      genBtn.dataset.generateBarcode = String(product.id);
+      genBtn.className = 'rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-white/10 transition flex items-center gap-1 cursor-pointer active:scale-95';
+      genBtn.innerHTML = '<span>Buat</span>';
+      genBtn.setAttribute('aria-label', `Buat barcode untuk ${product.name || 'produk'}`);
+
+      btnGroup.append(shareBtn, genBtn);
     }
 
-    row.append(checkbox, details, button);
+    row.append(checkbox, details, btnGroup);
     list.appendChild(row);
   });
   updateSelectionControls(filteredProducts);
@@ -289,12 +326,12 @@ function createSingleLabelElement(doc, product, JsBarcode, isCompact = false) {
   JsBarcode(barcode, product.barcode, {
     format: 'CODE128',
     lineColor: '#000',
-    width: isCompact ? 1.4 : 1.6,
-    height: isCompact ? 60 : 65,
+    width: isCompact ? 1.85 : 2.0,
+    height: isCompact ? 58 : 65,
     displayValue: true,
     fontSize: isCompact ? 11 : 12,
     textMargin: 1,
-    margin: 1
+    margin: 0
   });
 
   const price = doc.createElement('p');
@@ -340,6 +377,276 @@ function renderPrintLabels(printWindow, products, JsBarcode, layoutKey = current
   }, 450);
 }
 
+export function buildPdfFromJpegs(pages, widthMm, heightMm) {
+  const widthPt = Number(((widthMm / 25.4) * 72).toFixed(2));
+  const heightPt = Number(((heightMm / 25.4) * 72).toFixed(2));
+
+  const chunks = [];
+  const offsets = [];
+  let currentOffset = 0;
+
+  function write(chunk) {
+    if (typeof chunk === 'string') {
+      const len = chunk.length;
+      const buf = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        buf[i] = chunk.charCodeAt(i) & 0xff;
+      }
+      chunks.push(buf);
+      currentOffset += len;
+    } else if (chunk instanceof Uint8Array) {
+      chunks.push(chunk);
+      currentOffset += chunk.length;
+    }
+  }
+
+  write('%PDF-1.4\n%\xff\xff\xff\xff\n');
+
+  const numPages = pages.length;
+  const pageObjIds = [];
+  let nextId = 3;
+
+  for (let i = 0; i < numPages; i++) {
+    pageObjIds.push({
+      pageId: nextId++,
+      contentId: nextId++,
+      imageId: nextId++
+    });
+  }
+
+  const totalObjs = nextId;
+
+  // Obj 1: Catalog
+  offsets[1] = currentOffset;
+  write('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+
+  // Obj 2: Pages
+  offsets[2] = currentOffset;
+  const kidsStr = pageObjIds.map(p => `${p.pageId} 0 R`).join(' ');
+  write(`2 0 obj\n<< /Type /Pages /Kids [${kidsStr}] /Count ${numPages} >>\nendobj\n`);
+
+  for (let i = 0; i < numPages; i++) {
+    const { pageId, contentId, imageId } = pageObjIds[i];
+    const { jpegBytes, widthPx, heightPx } = pages[i];
+
+    offsets[pageId] = currentOffset;
+    write(
+      `${pageId} 0 obj\n` +
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${widthPt} ${heightPt}] ` +
+      `/Contents ${contentId} 0 R ` +
+      `/Resources << /ProcSet [/PDF /ImageC] /XObject << /Im${imageId} ${imageId} 0 R >> >> >>\n` +
+      `endobj\n`
+    );
+
+    offsets[contentId] = currentOffset;
+    const streamContent = `q\n${widthPt} 0 0 ${heightPt} 0 0 cm\n/Im${imageId} Do\nQ\n`;
+    write(
+      `${contentId} 0 obj\n` +
+      `<< /Length ${streamContent.length} >>\n` +
+      `stream\n${streamContent}endstream\nendobj\n`
+    );
+
+    offsets[imageId] = currentOffset;
+    write(
+      `${imageId} 0 obj\n` +
+      `<< /Type /XObject /Subtype /Image /Width ${widthPx} /Height ${heightPx} ` +
+      `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode ` +
+      `/Length ${jpegBytes.length} >>\n` +
+      `stream\n`
+    );
+    write(jpegBytes);
+    write('\nendstream\nendobj\n');
+  }
+
+  const xrefOffset = currentOffset;
+  write(`xref\n0 ${totalObjs}\n0000000000 65535 f \n`);
+  for (let i = 1; i < totalObjs; i++) {
+    const offStr = String(offsets[i]).padStart(10, '0');
+    write(`${offStr} 00000 n \n`);
+  }
+
+  write(`trailer\n<< /Size ${totalObjs} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+
+  let totalLength = 0;
+  for (const c of chunks) totalLength += c.length;
+  const result = new Uint8Array(totalLength);
+  let pos = 0;
+  for (const c of chunks) {
+    result.set(c, pos);
+    pos += c.length;
+  }
+  return result;
+}
+
+export async function createBarcodePdf(products, layoutKey = currentLayout, JsBarcode) {
+  const layout = BARCODE_LAYOUTS[layoutKey] || BARCODE_LAYOUTS['40x30_double'];
+  const isDoubleColumn = layout.columns === 2;
+  const widthMm = layout.widthMm || (isDoubleColumn ? 80 : 50);
+  const heightMm = layout.heightMm || 30;
+
+  // Skala: 12 px per mm (~300 DPI) untuk hasil cetak thermal tajam
+  const scale = 12;
+  const pagePxW = Math.round(widthMm * scale);
+  const pagePxH = Math.round(heightMm * scale);
+
+  const pages = [];
+
+  function drawSingleLabel(ctx, product, x, y, w, h) {
+    const centerX = x + w / 2;
+
+    // 1. Nama Produk (Atas)
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+
+    let nameText = String(product.name || 'Produk');
+    const maxTextW = w - 16;
+    if (ctx.measureText && ctx.measureText(nameText).width > maxTextW) {
+      while (nameText.length > 3 && ctx.measureText(nameText + '...').width > maxTextW) {
+        nameText = nameText.slice(0, -1);
+      }
+      nameText += '...';
+    }
+    ctx.fillText(nameText, centerX, y + 10);
+
+    // 2. Barcode Batang (Tengah)
+    const bcCanvas = document.createElement('canvas');
+    try {
+      if (typeof JsBarcode === 'function') {
+        JsBarcode(bcCanvas, String(product.barcode || ''), {
+          format: 'CODE128',
+          lineColor: '#000000',
+          width: isDoubleColumn ? 2.6 : 3.0,
+          height: 130,
+          displayValue: true,
+          fontSize: 22,
+          font: 'Arial, sans-serif',
+          textMargin: 3,
+          margin: 0
+        });
+
+        if (bcCanvas.width > 0 && bcCanvas.height > 0 && typeof ctx.drawImage === 'function') {
+          const targetW = w - 12;
+          const targetH = 205;
+          const s = Math.min(targetW / bcCanvas.width, targetH / bcCanvas.height, 1.25);
+          const finalW = Math.round(bcCanvas.width * s);
+          const finalH = Math.round(bcCanvas.height * s);
+          const drawX = x + Math.round((w - finalW) / 2);
+          const drawY = y + 42 + Math.round((targetH - finalH) / 2);
+          ctx.drawImage(bcCanvas, drawX, drawY, finalW, finalH);
+        }
+      }
+    } catch (e) {
+      console.warn('Gagal render JsBarcode canvas:', e);
+    }
+
+    // 3. Harga Jual (Bawah)
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+    ctx.fillText(formatCurrency(product.sell_price), centerX, y + h - 8);
+  }
+
+  function getJpegBytesFromCanvas(canvas) {
+    let dataUrl = '';
+    try {
+      dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    } catch (_) {}
+    if (!dataUrl || dataUrl === 'data:image/jpeg;base64,') {
+      dataUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+    }
+    const base64 = dataUrl.split(',')[1];
+    const binary = globalThis.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  if (isDoubleColumn) {
+    for (let i = 0; i < products.length; i += 2) {
+      const canvas = document.createElement('canvas');
+      canvas.width = pagePxW;
+      canvas.height = pagePxH;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        if (typeof ctx.fillRect === 'function') {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, pagePxW, pagePxH);
+        }
+        const colW = Math.round(pagePxW / 2);
+        const prod1 = products[i];
+        const prod2 = products[i + 1] || prod1; // duplikasi jika ganjil untuk efisiensi kertas roll 80mm
+
+        drawSingleLabel(ctx, prod1, 0, 0, colW, pagePxH);
+        drawSingleLabel(ctx, prod2, colW, 0, colW, pagePxH);
+      }
+      const jpegBytes = getJpegBytesFromCanvas(canvas);
+      pages.push({ jpegBytes, widthPx: pagePxW, heightPx: pagePxH });
+    }
+  } else {
+    for (const product of products) {
+      const canvas = document.createElement('canvas');
+      canvas.width = pagePxW;
+      canvas.height = pagePxH;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        if (typeof ctx.fillRect === 'function') {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, pagePxW, pagePxH);
+        }
+        drawSingleLabel(ctx, product, 0, 0, pagePxW, pagePxH);
+      }
+      const jpegBytes = getJpegBytesFromCanvas(canvas);
+      pages.push({ jpegBytes, widthPx: pagePxW, heightPx: pagePxH });
+    }
+  }
+
+  const pdfBytes = buildPdfFromJpegs(pages, widthMm, heightMm);
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const filename = `Label-Barcode-${widthMm}mm.pdf`;
+  return { blob, filename, byteLength: pdfBytes.length, pageCount: pages.length };
+}
+
+export async function shareOrDownloadPdf(blob, filename = 'Label-Barcode-80mm.pdf') {
+  const file = new File([blob], filename, { type: 'application/pdf' });
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    const canShareFiles = typeof navigator.canShare === 'function'
+      ? navigator.canShare({ files: [file] })
+      : false;
+    if (canShareFiles) {
+      try {
+        await navigator.share({
+          title: 'Label Barcode Produk',
+          text: 'Cetak label barcode via Printer Thermal (PrinterJTM / Bluetooth Print)',
+          files: [file]
+        });
+        return { method: 'share', success: true };
+      } catch (shareErr) {
+        if (shareErr.name === 'AbortError') {
+          return { method: 'share', canceled: true };
+        }
+        console.warn('Navigator share error, falling back to download/open:', shareErr);
+      }
+    }
+  }
+
+  // Fallback: unduh file & buka URL blob
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return { method: 'download', success: true };
+}
+
 async function assignBarcode(product) {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const barcode = createInternalBarcode();
@@ -360,7 +667,7 @@ async function assignBarcode(product) {
   throw new Error('Tidak berhasil membuat kode unik setelah beberapa percobaan. Coba lagi.');
 }
 
-async function generateAndPrint(products, trigger, layoutKey = currentLayout) {
+export async function generateAndPrint(products, trigger, layoutKey = currentLayout, mode = 'print') {
   if (processing) return;
   if (!products.length) {
     showMessage('Pilih minimal satu produk.');
@@ -371,21 +678,27 @@ async function generateAndPrint(products, trigger, layoutKey = currentLayout) {
     return;
   }
 
-  let printWindow;
-  try {
-    printWindow = openPrintWindow(layoutKey);
-  } catch (error) {
-    showMessage(error.message);
-    return;
+  let printWindow = null;
+  if (mode === 'print') {
+    try {
+      printWindow = openPrintWindow(layoutKey);
+    } catch (error) {
+      showMessage(error.message);
+      return;
+    }
   }
 
   processing = true;
   if (trigger) trigger.disabled = true;
-  document.querySelectorAll('#missing-barcode-list [data-generate-barcode], #missing-barcode-list [data-print-barcode]').forEach(button => {
+  document.querySelectorAll('#missing-barcode-list button').forEach(button => {
     button.disabled = true;
   });
   const refreshButton = document.getElementById('btn-refresh-missing-barcodes');
+  const shareBtn = document.getElementById('btn-share-pdf-barcodes');
+  const generateBtn = document.getElementById('btn-generate-selected-barcodes');
   if (refreshButton) refreshButton.disabled = true;
+  if (shareBtn) shareBtn.disabled = true;
+  if (generateBtn) generateBtn.disabled = true;
 
   const toPrint = [];
   try {
@@ -402,38 +715,36 @@ async function generateAndPrint(products, trigger, layoutKey = currentLayout) {
       }
     }
 
-    renderPrintLabels(printWindow, toPrint, JsBarcode, layoutKey);
-    const msg = newlyCreated > 0
-      ? `${newlyCreated} barcode baru dibuat dan total ${toPrint.length} label siap dicetak.`
-      : `${toPrint.length} barcode siap dicetak.`;
-    showMessage(msg, 'success');
+    if (mode === 'pdf') {
+      const { blob, filename } = await createBarcodePdf(toPrint, layoutKey, JsBarcode);
+      await shareOrDownloadPdf(blob, filename);
+      const msg = newlyCreated > 0
+        ? `${newlyCreated} barcode baru dibuat dan PDF label siap dibagikan ke printer.`
+        : `PDF ${toPrint.length} barcode berhasil dibuat untuk printer thermal.`;
+      showMessage(msg, 'success');
+    } else {
+      renderPrintLabels(printWindow, toPrint, JsBarcode, layoutKey);
+      const msg = newlyCreated > 0
+        ? `${newlyCreated} barcode baru dibuat dan total ${toPrint.length} label siap dicetak.`
+        : `${toPrint.length} barcode siap dicetak.`;
+      showMessage(msg, 'success');
+    }
     await loadMissingProducts();
   } catch (error) {
     console.error('Gagal memproses barcode produk:', error);
-    if (toPrint.length) {
-      try {
-        const JsBarcode = await loadBarcodeRenderer();
-        renderPrintLabels(printWindow, toPrint, JsBarcode, layoutKey);
-        showMessage(`${toPrint.length} barcode tersimpan dan siap dicetak; produk lainnya gagal diproses: ${error.message}`, 'error');
-        await loadMissingProducts();
-        return;
-      } catch (printError) {
-        console.error('Gagal menyiapkan cetak barcode:', printError);
-      }
-    }
-    printWindow.close();
+    if (printWindow) printWindow.close();
     showMessage(error.message || 'Gagal memproses barcode.');
   } finally {
     processing = false;
     if (refreshButton) refreshButton.disabled = false;
-    document.querySelectorAll('#missing-barcode-list [data-generate-barcode], #missing-barcode-list [data-print-barcode]').forEach(button => {
+    document.querySelectorAll('#missing-barcode-list button').forEach(button => {
       button.disabled = false;
     });
     updateSelectionControls();
   }
 }
 
-export async function printSingleProductBarcode(productOrId, layoutKey = currentLayout) {
+export async function printSingleProductBarcode(productOrId, layoutKey = currentLayout, mode = 'print') {
   let targetProduct = null;
   if (typeof productOrId === 'object' && productOrId !== null) {
     targetProduct = { ...productOrId };
@@ -459,12 +770,19 @@ export async function printSingleProductBarcode(productOrId, layoutKey = current
     return;
   }
 
-  await generateAndPrint([targetProduct], null, layoutKey);
+  await generateAndPrint([targetProduct], null, layoutKey, mode);
+}
+
+export async function shareSingleProductBarcodePdf(productOrId, layoutKey = currentLayout) {
+  return printSingleProductBarcode(productOrId, layoutKey, 'pdf');
 }
 
 function updateGenerateButton() {
   const button = document.getElementById('btn-generate-selected-barcodes');
-  if (button && !loading) button.disabled = selectedProductIds.size === 0;
+  const shareBtn = document.getElementById('btn-share-pdf-barcodes');
+  const hasSelection = selectedProductIds.size > 0 && !loading;
+  if (button) button.disabled = !hasSelection;
+  if (shareBtn) shareBtn.disabled = !hasSelection;
 }
 
 function updateSelectionControls(products = filterProductsWithoutBarcode(
@@ -515,6 +833,7 @@ export function initBarcodeSettings() {
   // Expose global window helper
   if (typeof window !== 'undefined') {
     window.printSingleProductBarcode = printSingleProductBarcode;
+    window.shareSingleProductBarcodePdf = shareSingleProductBarcodePdf;
   }
 
   // Restore saved layout dropdown value
@@ -567,11 +886,19 @@ export function initBarcodeSettings() {
   });
 
   list.addEventListener('click', event => {
+    const shareButton = event.target.closest('[data-share-barcode]');
+    if (shareButton) {
+      const pool = getActiveProductPool();
+      const product = pool.find(item => String(item.id) === shareButton.dataset.shareBarcode);
+      if (product) generateAndPrint([product], shareButton, currentLayout, 'pdf');
+      return;
+    }
+
     const genButton = event.target.closest('[data-generate-barcode]');
     if (genButton) {
       const pool = getActiveProductPool();
       const product = pool.find(item => String(item.id) === genButton.dataset.generateBarcode);
-      if (product) generateAndPrint([product], genButton, currentLayout);
+      if (product) generateAndPrint([product], genButton, currentLayout, 'print');
       return;
     }
 
@@ -579,13 +906,19 @@ export function initBarcodeSettings() {
     if (printButton) {
       const pool = getActiveProductPool();
       const product = pool.find(item => String(item.id) === printButton.dataset.printBarcode);
-      if (product) generateAndPrint([product], printButton, currentLayout);
+      if (product) generateAndPrint([product], printButton, currentLayout, 'print');
     }
+  });
+
+  document.getElementById('btn-share-pdf-barcodes')?.addEventListener('click', event => {
+    const pool = getActiveProductPool();
+    const selected = pool.filter(product => selectedProductIds.has(String(product.id)));
+    if (selected.length) generateAndPrint(selected, event.currentTarget, currentLayout, 'pdf');
   });
 
   document.getElementById('btn-generate-selected-barcodes')?.addEventListener('click', event => {
     const pool = getActiveProductPool();
     const selected = pool.filter(product => selectedProductIds.has(String(product.id)));
-    if (selected.length) generateAndPrint(selected, event.currentTarget, currentLayout);
+    if (selected.length) generateAndPrint(selected, event.currentTarget, currentLayout, 'print');
   });
 }
