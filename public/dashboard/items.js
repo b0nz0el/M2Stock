@@ -2022,6 +2022,9 @@
             <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-[#FF9500]/15 hover:border-[#FF9500]/30 border border-transparent rounded-lg text-[#FF9500] transition active:scale-95">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
             </button>
+            <button type="button" data-action="print-barcode" data-item-action="print-barcode" data-item-id="${escapeHtml(String(item.id))}" title="Cetak Label Barcode" aria-label="Cetak Label Barcode" class="p-1.5 hover:bg-[#34C759]/15 hover:border-[#34C759]/30 border border-transparent rounded-lg text-[#34C759] transition active:scale-95">
+              <i data-lucide="scan-line" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
             <button type="button" data-action="edit" data-item-action="edit" data-item-id="${escapeHtml(String(item.id))}" title="Edit Produk" aria-label="Edit" class="p-1.5 hover:bg-[#32ADE6]/15 hover:border-[#32ADE6]/30 border border-transparent rounded-lg text-[#32ADE6] transition active:scale-95">
               <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
             </button>
@@ -2842,6 +2845,14 @@
     if (itemAction) {
       const itemId = itemAction.dataset.itemId;
       if (itemAction.dataset.itemAction === 'adjust-stock') openStockAdjustmentModal(itemId);
+      if (itemAction.dataset.itemAction === 'print-barcode') {
+        const item = currentItems.find(i => String(i.id) === String(itemId));
+        if (typeof window.printSingleProductBarcode === 'function') {
+          window.printSingleProductBarcode(item || itemId);
+        } else {
+          showToast('Fitur cetak barcode belum siap. Muat ulang halaman.', 'error');
+        }
+      }
       if (itemAction.dataset.itemAction === 'edit') openEditItemModal(itemId);
       if (itemAction.dataset.itemAction === 'delete') openDeleteItemModal(itemId);
     }
@@ -2893,6 +2904,32 @@
         input.focus();
         if (typeof showToast === 'function') showToast('Barcode berhasil dipindai', 'success');
       });
+    });
+  }
+
+  const printItemBarcodeButton = document.getElementById('btn-print-item-barcode');
+  if (printItemBarcodeButton) {
+    printItemBarcodeButton.addEventListener('click', function () {
+      const id = document.getElementById('item-id')?.value;
+      if (!id) {
+        if (typeof showToast === 'function') {
+          showToast('Simpan produk terlebih dahulu sebelum mencetak barcode', 'warning');
+        }
+        return;
+      }
+      const item = currentItems.find(i => String(i.id) === String(id)) || {
+        id,
+        name: document.getElementById('item-name')?.value,
+        barcode: document.getElementById('item-barcode')?.value,
+        sell_price: document.getElementById('item-sell-price')?.value
+      };
+      if (typeof window.printSingleProductBarcode === 'function') {
+        window.printSingleProductBarcode(item);
+      } else {
+        if (typeof showToast === 'function') {
+          showToast('Fitur cetak barcode belum siap. Muat ulang halaman.', 'error');
+        }
+      }
     });
   }
 

@@ -147,6 +147,8 @@ describe('Internal product barcode creation', () => {
     expect(productRows[1].barcode).toBe('OLD12345');
     expect(printDocument.body.textContent).toContain('Filter Aquarium');
     expect(printDocument.querySelector('.barcode')?.getAttribute('data-barcode-value')).toBe(productRows[0].barcode);
+    expect(printDocument.body.textContent).not.toContain('SKU:');
+    expect(printDocument.querySelector('.product-price')).not.toBeNull();
   });
 
   it('filters visible products and selects only search results while retaining hidden selections', async () => {
@@ -193,5 +195,73 @@ describe('Internal product barcode creation', () => {
     await vi.waitFor(() => {
       expect(print).toHaveBeenCalledOnce();
     });
+  });
+
+  it('allows switching to existing barcodes filter and re-printing them', async () => {
+    // Tambahkan tombol filter ke DOM
+    const filterBtn = document.createElement('button');
+    filterBtn.id = 'btn-filter-barcode-existing';
+    document.body.appendChild(filterBtn);
+
+    const printDocument = document.implementation.createHTMLDocument('Print labels');
+    const print = vi.fn();
+    vi.spyOn(window, 'open').mockReturnValue({
+      document: printDocument,
+      setTimeout: callback => callback(),
+      focus: vi.fn(),
+      print,
+      close: vi.fn()
+    });
+
+    const { initBarcodeSettings } = await import('../public/dashboard/settings-barcode.js');
+    initBarcodeSettings();
+    document.querySelector('[data-tab="barcode"]').click();
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('#missing-barcode-list').textContent).toContain('Filter Aquarium');
+    });
+
+    // Klik filter "Sudah Ada Barcode (Cetak Ulang)"
+    filterBtn.click();
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('#missing-barcode-list').textContent).toContain('Lampu LED');
+      expect(document.querySelector('#missing-barcode-list').textContent).toContain('OLD12345');
+    });
+
+    const printBtn = document.querySelector('#missing-barcode-list [data-print-barcode="product-2"]');
+    expect(printBtn).not.toBeNull();
+    printBtn.click();
+
+    await vi.waitFor(() => {
+      expect(print).toHaveBeenCalledOnce();
+    });
+    expect(printDocument.body.textContent).toContain('Lampu LED');
+    expect(printDocument.body.textContent).not.toContain('SKU:');
+  });
+
+  it('supports 40x30 2-column layout for 80mm thermal printer via printSingleProductBarcode', async () => {
+    const printDocument = document.implementation.createHTMLDocument('Print labels');
+    const print = vi.fn();
+    vi.spyOn(window, 'open').mockReturnValue({
+      document: printDocument,
+      setTimeout: callback => callback(),
+      focus: vi.fn(),
+      print,
+      close: vi.fn()
+    });
+
+    const { printSingleProductBarcode } = await import('../public/dashboard/settings-barcode.js');
+    const testProduct = { id: 99, name: 'Pelet Ikan Kura', barcode: 'AS1234567890', sell_price: 35000 };
+
+    await printSingleProductBarcode(testProduct, '40x30_double');
+
+    await vi.waitFor(() => {
+      expect(print).toHaveBeenCalledOnce();
+    });
+    expect(printDocument.body.textContent).toContain('Pelet Ikan Kura');
+    expect(printDocument.body.textContent).toContain('Rp 35.000');
+    expect(printDocument.body.textContent).not.toContain('SKU:');
+    expect(printDocument.querySelector('.barcode-sheet')).not.toBeNull();
   });
 });

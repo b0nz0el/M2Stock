@@ -2515,6 +2515,29 @@
             Barcode ini adalah <strong class="text-white">kode internal toko (Code 128)</strong>, bukan nomor EAN/UPC resmi GS1. Kode yang sudah tersimpan tidak akan ditimpa.
           </div>
 
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-black/30 border border-white/5 rounded-xl">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-semibold text-[#A0A0A5] mr-1">Status:</span>
+              <button type="button" id="btn-filter-barcode-missing" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0088CC] text-white shadow-sm transition">
+                Belum Ada Barcode
+              </button>
+              <button type="button" id="btn-filter-barcode-existing" class="px-3 py-1.5 rounded-lg text-xs font-medium text-[#A0A0A5] hover:text-white hover:bg-white/5 transition">
+                Sudah Ada Barcode (Cetak Ulang)
+              </button>
+              <button type="button" id="btn-filter-barcode-all" class="px-3 py-1.5 rounded-lg text-xs font-medium text-[#A0A0A5] hover:text-white hover:bg-white/5 transition">
+                Semua Produk
+              </button>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <label for="select-barcode-layout" class="text-xs font-medium text-[#A0A0A5]">Format Kertas:</label>
+              <select id="select-barcode-layout" class="bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-1.5 text-xs font-medium text-white focus:border-[#0088CC] focus:outline-none cursor-pointer">
+                <option value="50x30_single">50 × 30 mm (1 Kolom - Standar)</option>
+                <option value="40x30_double">40 × 30 mm (2 Kolom - Printer 80mm)</option>
+                <option value="40x30_single">40 × 30 mm (1 Kolom)</option>
+              </select>
+            </div>
+          </div>
+
           <div class="space-y-3 border-b border-white/5 pb-4">
             <label class="relative block">
               <span class="sr-only">Cari nama atau SKU produk tanpa barcode</span>
@@ -2528,7 +2551,7 @@
                 Pilih semua
               </button>
               <button type="button" id="btn-generate-selected-barcodes" data-action="edit" disabled class="rounded-xl bg-[#0088CC] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0077BB] disabled:cursor-not-allowed disabled:opacity-50 transition">
-                Buat &amp; cetak barcode terpilih
+                <span>Buat &amp; cetak barcode terpilih</span>
               </button>
             </div>
             </div>
@@ -3000,6 +3023,9 @@
             <input type="text" id="item-barcode" inputmode="text" autocomplete="off" placeholder="Scan atau masukkan barcode" class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm font-mono focus:border-[#0088CC] focus:outline-none">
             <button type="button" id="btn-scan-item-barcode" aria-label="Pindai barcode produk" title="Pindai barcode" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#32ADE6] transition hover:bg-white/10">
               <i data-lucide="scan-line" class="h-5 w-5" aria-hidden="true"></i>
+            </button>
+            <button type="button" id="btn-print-item-barcode" aria-label="Cetak label barcode produk" title="Cetak label barcode" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#34C759] transition hover:bg-white/10">
+              <i data-lucide="printer" class="h-5 w-5" aria-hidden="true"></i>
             </button>
           </div>
         </div>
