@@ -334,6 +334,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    if (typeof window.refreshNumericClearButtons === 'function') window.refreshNumericClearButtons();
   }
 
   function closeModal() {

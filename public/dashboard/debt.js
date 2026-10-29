@@ -329,6 +329,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     if (window.lucide) window.lucide.createIcons();
+    if (typeof window.refreshNumericClearButtons === 'function') window.refreshNumericClearButtons();
   }
 
   function closeModal() {

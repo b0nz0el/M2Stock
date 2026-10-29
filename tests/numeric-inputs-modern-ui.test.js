@@ -95,4 +95,75 @@ describe('Modern Custom UI & Mobile Numeric Numpad on Financial & Inventory Inpu
     expect(inJs).toContain('parseNumericValue');
     expect(debtJs).toContain('replace(/\\D/g');
   });
+
+  it('ensures all numeric inputs have Quick Clear (✕) buttons in index.html', () => {
+    const requiredClearButtons = [
+      'btn-clear-item-cost-price',
+      'btn-clear-item-sell-price',
+      'btn-clear-item-min-stock',
+      'btn-clear-bulk-price-nominal-input',
+      'btn-clear-adj-actual-stock',
+      'btn-clear-in-qty',
+      'btn-clear-in-price',
+      'btn-clear-in-sell-price',
+      'btn-clear-cash-form-amount',
+      'btn-clear-debt-nominal'
+    ];
+
+    for (const btnId of requiredClearButtons) {
+      expect(indexHtml).toContain(`id="${btnId}"`);
+      expect(indexHtml).toContain(`clearNumericInput('${btnId.replace('btn-clear-', '')}')`);
+    }
+  });
+
+  it('verifies clearNumericInput clears the input value and dispatches input/change events', () => {
+    const { clearNumericInput, updateNumericClearButton } = require('../public/assets/js/app.js');
+
+    // Create mock input and clear button elements
+    const mockInput = {
+      id: 'test-num-input',
+      value: '150.000',
+      eventsDispatched: [],
+      focused: false,
+      dispatchEvent(event) {
+        this.eventsDispatched.push(event.type);
+      },
+      focus() {
+        this.focused = true;
+      }
+    };
+
+    const mockButton = {
+      id: 'btn-clear-test-num-input',
+      classList: {
+        classes: new Set(['hidden']),
+        add(c) { this.classes.add(c); },
+        remove(c) { this.classes.delete(c); },
+        contains(c) { return this.classes.has(c); }
+      }
+    };
+
+    global.document = {
+      getElementById(id) {
+        if (id === 'test-num-input') return mockInput;
+        if (id === 'btn-clear-test-num-input') return mockButton;
+        return null;
+      }
+    };
+    global.Event = class {
+      constructor(type) { this.type = type; }
+    };
+
+    // When value is non-empty, button should show
+    updateNumericClearButton(mockInput);
+    expect(mockButton.classList.contains('hidden')).toBe(false);
+
+    // Call clearNumericInput
+    clearNumericInput('test-num-input');
+    expect(mockInput.value).toBe('');
+    expect(mockButton.classList.contains('hidden')).toBe(true);
+    expect(mockInput.eventsDispatched).toContain('input');
+    expect(mockInput.eventsDispatched).toContain('change');
+    expect(mockInput.focused).toBe(true);
+  });
 });

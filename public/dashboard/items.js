@@ -755,6 +755,9 @@
     if (typeof window.refreshIcons === 'function') {
       window.refreshIcons();
     }
+    if (typeof window.refreshNumericClearButtons === 'function') {
+      window.refreshNumericClearButtons();
+    }
     setTimeout(function () {
       const skuInput = document.getElementById('item-sku');
       if (skuInput) skuInput.focus();
@@ -875,6 +878,9 @@
     }
     if (typeof window.refreshIcons === 'function') {
       window.refreshIcons();
+    }
+    if (typeof window.refreshNumericClearButtons === 'function') {
+      window.refreshNumericClearButtons();
     }
     setTimeout(function () {
       const nameInput = document.getElementById('item-name');
@@ -1376,6 +1382,7 @@
       modal.classList.add('flex');
     }
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    if (typeof window.refreshNumericClearButtons === 'function') window.refreshNumericClearButtons();
     setTimeout(() => actualInput?.focus(), 50);
   }
 

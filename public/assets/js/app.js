@@ -912,6 +912,98 @@ if (typeof window !== 'undefined') {
   }, { passive: false });
 }
 
+/* ═══════════════════════════════════════════════
+   QUICK CLEAR HELPER FOR NUMERIC & MODERN INPUTS
+   ═══════════════════════════════════════════════ */
+function updateNumericClearButton(input) {
+  if (!input) return;
+  const id = typeof input === 'string' ? input : input.id;
+  const inputEl = typeof input === 'string' ? document.getElementById(input) : input;
+  if (!inputEl || !id) return;
+  const btn = document.getElementById('btn-clear-' + id);
+  if (!btn) return;
+  const val = String(inputEl.value || '').trim();
+  if (val !== '') {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+
+function clearNumericInput(inputId) {
+  const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+  if (!input) return;
+  input.value = '';
+  updateNumericClearButton(input);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  try {
+    input.focus();
+  } catch (_) {}
+}
+
+function refreshNumericClearButtons(container = document) {
+  if (!container || typeof container.querySelectorAll !== 'function') return;
+  const buttons = container.querySelectorAll('[id^="btn-clear-"]');
+  buttons.forEach((btn) => {
+    const inputId = btn.id.replace('btn-clear-', '');
+    const input = document.getElementById(inputId);
+    if (input) {
+      updateNumericClearButton(input);
+    }
+  });
+  if (typeof refreshIcons === 'function') {
+    refreshIcons();
+  } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+    lucide.createIcons();
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.updateNumericClearButton = updateNumericClearButton;
+  window.clearNumericInput = clearNumericInput;
+  window.refreshNumericClearButtons = refreshNumericClearButtons;
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.id && document.getElementById('btn-clear-' + e.target.id)) {
+      updateNumericClearButton(e.target);
+    }
+  });
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target && e.target.id && document.getElementById('btn-clear-' + e.target.id)) {
+      updateNumericClearButton(e.target);
+    }
+  });
+
+  const setupModalObserver = () => {
+    refreshNumericClearButtons();
+
+    if (typeof MutationObserver !== 'undefined') {
+      const modalObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const target = mutation.target;
+            if (target && target.id && target.id.startsWith('modal-') && !target.classList.contains('hidden')) {
+              refreshNumericClearButtons(target);
+            }
+          }
+        }
+      });
+
+      document.querySelectorAll('[id^="modal-"]').forEach((modal) => {
+        modalObserver.observe(modal, { attributes: true, attributeFilter: ['class'] });
+      });
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupModalObserver);
+  } else {
+    setupModalObserver();
+  }
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     syncTableLabels,
@@ -919,7 +1011,10 @@ if (typeof module !== 'undefined' && module.exports) {
     openImageViewer,
     closeImageViewer,
     navigateImageViewer,
-    setImageViewerIndex
+    setImageViewerIndex,
+    updateNumericClearButton,
+    clearNumericInput,
+    refreshNumericClearButtons
   };
 }
 

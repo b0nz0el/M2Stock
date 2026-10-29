@@ -562,6 +562,9 @@
     const priceInput = document.getElementById('in-price');
     if (priceInput && !selectedPriceManuallyChanged) {
       priceInput.value = String(prod.cost_price || 0);
+      if (typeof window.updateNumericClearButton === 'function') {
+        window.updateNumericClearButton(priceInput);
+      }
     }
 
     const barcodeInput = document.getElementById('in-barcode');
@@ -866,6 +869,7 @@
       modal.classList.add('flex');
     }
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    if (typeof window.refreshNumericClearButtons === 'function') window.refreshNumericClearButtons();
     setTimeout(() => {
       document.getElementById('in-product-search')?.focus();
     }, 50);
