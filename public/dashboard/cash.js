@@ -310,11 +310,23 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     }
   }
 
+  let currentCashAmount = 0;
+
   function openModal() {
     const modal = document.getElementById('modal-cash');
     if (!modal) return;
     const form = document.getElementById('form-cash');
     if (form) form.reset();
+
+    currentCashAmount = 0;
+    const amountInput = document.getElementById('cash-form-amount');
+    if (amountInput) amountInput.value = '';
+
+    const typeHidden = document.getElementById('cash-form-type');
+    if (typeHidden) typeHidden.value = 'IN';
+
+    const inRadio = form?.querySelector('input[name="cash_type"][value="IN"]');
+    if (inRadio) inRadio.checked = true;
 
     const dateInput = document.getElementById('cash-form-date');
     if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
@@ -329,6 +341,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (!modal) return;
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+
+    currentCashAmount = 0;
+    const amountInput = document.getElementById('cash-form-amount');
+    if (amountInput) amountInput.value = '';
   }
 
   function escapeHtml(str) {
@@ -362,20 +378,40 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const cancelBtn = document.getElementById('btn-cancel-cash-modal');
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
+    // Format & Parse Nominal Input
+    const amountInput = document.getElementById('cash-form-amount');
+    if (amountInput) {
+      amountInput.addEventListener('input', (e) => {
+        const cleanDigits = e.target.value.replace(/\D/g, '');
+        const rawNumber = cleanDigits === '' ? 0 : Number(cleanDigits);
+        currentCashAmount = isNaN(rawNumber) ? 0 : rawNumber;
+        e.target.value = currentCashAmount > 0
+          ? new Intl.NumberFormat('id-ID').format(currentCashAmount)
+          : '';
+      });
+    }
+
     // Form Submit
     const form = document.getElementById('form-cash');
     if (form) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const type = document.getElementById('cash-form-type')?.value || 'IN';
-        const amount = Number(document.getElementById('cash-form-amount')?.value) || 0;
+        const amountEl = document.getElementById('cash-form-amount');
+        const rawFromInput = Number((amountEl?.value || '').replace(/\D/g, '')) || 0;
+        const amount = currentCashAmount || rawFromInput;
         const tanggal = document.getElementById('cash-form-date')?.value || new Date().toISOString().slice(0, 10);
-        const keterangan = document.getElementById('cash-form-desc')?.value || '';
+        const keterangan = (document.getElementById('cash-form-desc')?.value || '').trim();
         const kategori = document.getElementById('cash-form-kategori')?.value || 'Lainnya';
         const metode = document.getElementById('cash-form-metode')?.value || 'Cash';
 
         if (amount <= 0) {
-          alert('Nominal harus lebih dari 0');
+          if (typeof showToast === 'function') {
+            showToast('Nominal harus lebih dari 0', 'error');
+          } else {
+            alert('Nominal harus lebih dari 0');
+          }
+          if (amountEl) amountEl.focus();
           return;
         }
 
