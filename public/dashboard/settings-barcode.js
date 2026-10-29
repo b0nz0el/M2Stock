@@ -607,7 +607,16 @@ export async function createBarcodePdf(products, layoutKey = currentLayout, JsBa
 
   const pdfBytes = buildPdfFromJpegs(pages, widthMm, heightMm);
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const filename = `Label-Barcode-${widthMm}mm.pdf`;
+  let filename = `Label-Barcode-${widthMm}mm.pdf`;
+  if (Array.isArray(products) && products.length === 1 && products[0]?.name) {
+    const cleanName = String(products[0].name)
+      .replace(/[/\\?%*:|"<>]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (cleanName) {
+      filename = `${cleanName}.pdf`;
+    }
+  }
   return { blob, filename, byteLength: pdfBytes.length, pageCount: pages.length };
 }
 
@@ -619,9 +628,10 @@ export async function shareOrDownloadPdf(blob, filename = 'Label-Barcode-80mm.pd
       : false;
     if (canShareFiles) {
       try {
+        const shareTitle = filename.replace(/\.pdf$/i, '');
         await navigator.share({
-          title: 'Label Barcode Produk',
-          text: 'Cetak label barcode via Printer Thermal (PrinterJTM / Bluetooth Print)',
+          title: shareTitle,
+          text: `Cetak label barcode via Printer Thermal (${shareTitle})`,
           files: [file]
         });
         return { method: 'share', success: true };

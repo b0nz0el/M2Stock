@@ -300,9 +300,20 @@ describe('Internal product barcode creation', () => {
 
     const result = await createBarcodePdf(products, '40x30_double', jsBarcodeMock);
     expect(result.blob.type).toBe('application/pdf');
-    expect(result.filename).toBe('Label-Barcode-80mm.pdf');
+    expect(result.filename).toBe('Acriflavine 100ml.pdf');
     expect(result.byteLength).toBeGreaterThan(100);
     expect(result.pageCount).toBe(1);
+
+    const multiResult = await createBarcodePdf([
+      { id: 'p1', name: 'Produk A', barcode: 'AS1' },
+      { id: 'p2', name: 'Produk B', barcode: 'AS2' }
+    ], '40x30_double', jsBarcodeMock);
+    expect(multiResult.filename).toBe('Label-Barcode-80mm.pdf');
+
+    const sanitizedResult = await createBarcodePdf([
+      { id: 'p3', name: 'Filter 1000L/h: Aqua*Pro', barcode: 'AS3' }
+    ], '40x30_double', jsBarcodeMock);
+    expect(sanitizedResult.filename).toBe('Filter 1000L-h- Aqua-Pro.pdf');
   });
 
   it('shares PDF via navigator.share when available and falls back to download', async () => {
