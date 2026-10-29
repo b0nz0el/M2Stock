@@ -44,6 +44,42 @@ describe('Dashboard Transaksi Barang Masuk & Keluar', () => {
     expect(indexHtml).toContain('/dashboard/in/');
   });
 
+  it('memastikan KPI Stok Kritis diganti dengan Valuasi Stok (Modal) pada dashboard', async () => {
+    expect(indexHtml).toContain('Valuasi Stok (Modal)');
+    expect(indexHtml).toContain('id="dash-stock-cost-value"');
+
+    document.body.innerHTML = `
+      <div id="dash-total-items"></div>
+      <div id="dash-total-stock"></div>
+      <div id="dash-stock-value"></div>
+      <div id="dash-stock-cost-value"></div>
+      <div id="dash-critical-stock"></div>
+      <div id="restock-list"></div>
+      <div id="recent-in-transactions-list"></div>
+      <table>
+        <tbody id="recent-transactions-tbody"></tbody>
+      </table>
+      <div id="top-products-list"></div>
+      <div id="dash-sales-summary"></div>
+    `;
+
+    window.Api.items.getAll.mockResolvedValue({
+      ok: true,
+      data: [
+        { id: 1, name: 'Pakan Ikan A', stock: 10, sell_price: 20000, cost_price: 15000, min_stock: 5 },
+        { id: 2, name: 'Filter Air B', stock: 5, sell_price: 50000, cost_price: 35000, min_stock: 2 }
+      ]
+    });
+
+    const runDashboard = new Function('window', 'document', 'Api', dashboardScript);
+    runDashboard(window, document, window.Api);
+    await window.loadDashboardData();
+
+    // 10*15.000 + 5*35.000 = 150.000 + 175.000 = Rp 325.000
+    const costValueEl = document.getElementById('dash-stock-cost-value');
+    expect(costValueEl.textContent).toContain('325.000');
+  });
+
   it('memisahkan transaksi masuk dan keluar secara tepat di dashboard', async () => {
     document.body.innerHTML = `
       <div id="dash-total-items"></div>

@@ -64,12 +64,18 @@
       const totalItems = products.length;
       let totalStock = 0;
       let stockValue = 0;
+      let stockCostValue = 0;
       const criticalProducts = [];
 
       products.forEach(p => {
-        const s = p.stock || 0;
+        const s = Number(p.stock) || 0;
+        const sellPrice = Number(p.sell_price || p.cost_price || 0);
+        const costPrice = Number(p.cost_price || 0);
+
         totalStock += s;
-        stockValue += s * (p.sell_price || p.cost_price || 0);
+        stockValue += s * sellPrice;
+        stockCostValue += s * costPrice;
+
         if (s <= (p.min_stock || 3)) {
           criticalProducts.push(p);
         }
@@ -78,11 +84,13 @@
       const elTotalItems = document.getElementById('dash-total-items');
       const elTotalStock = document.getElementById('dash-total-stock');
       const elStockValue = document.getElementById('dash-stock-value');
+      const elStockCostValue = document.getElementById('dash-stock-cost-value');
       const elCriticalStock = document.getElementById('dash-critical-stock');
 
       if (elTotalItems) elTotalItems.textContent = totalItems;
       if (elTotalStock) elTotalStock.textContent = totalStock;
       if (elStockValue) elStockValue.textContent = formatRupiahVal(stockValue);
+      if (elStockCostValue) elStockCostValue.textContent = formatRupiahVal(stockCostValue);
       if (elCriticalStock) elCriticalStock.textContent = criticalProducts.length;
 
       // Render Restock List
