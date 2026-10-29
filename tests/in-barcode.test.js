@@ -53,7 +53,7 @@ describe('Barang Masuk barcode lookup', () => {
 
     expect(document.getElementById('in-barcode').value).toBe('0123456789012');
     expect(document.getElementById('in-product-id').value).toBe('7');
-    expect(document.getElementById('in-price').value).toBe('25000');
+    expect(document.getElementById('in-price').value).toBe('25.000');
     expect(document.getElementById('in-supplier-id').value).toBe('5');
     expect(document.getElementById('in-barcode-status').textContent).toContain('Filter Aquarium');
   });
@@ -73,7 +73,7 @@ describe('Barang Masuk barcode lookup', () => {
     await window.handleInBarcodeLookup('flt-007');
 
     expect(document.getElementById('in-product-id').value).toBe('7');
-    expect(document.getElementById('in-price').value).toBe('25000');
+    expect(document.getElementById('in-price').value).toBe('25.000');
   });
 
   it('uses the latest master purchase price when selecting an existing product', async () => {
@@ -84,7 +84,7 @@ describe('Barang Masuk barcode lookup', () => {
     await window.selectInProduct(product.id);
 
     expect(window.Api.items.getById).toHaveBeenCalledWith(product.id);
-    expect(document.getElementById('in-price').value).toBe('37500');
+    expect(document.getElementById('in-price').value).toBe('37.500');
     expect(document.getElementById('in-total-preview').textContent).toContain('37.500');
     expect(document.getElementById('in-supplier-id').value).toBe('5');
   });
@@ -167,8 +167,8 @@ describe('Barang Masuk barcode lookup', () => {
     input.value = '000125000';
     input.dispatchEvent(new Event('input'));
 
-    expect(input.value).toBe('125000');
-    expect(Number(input.value)).toBe(125000);
+    expect(input.value).toBe('125.000');
+    expect(window.parseNumericValue(input.value)).toBe(125000);
   });
 
   it('strips leading zeros from incoming quantities', () => {

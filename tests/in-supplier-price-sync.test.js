@@ -112,7 +112,7 @@ describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk Aquastock Pro', () =
 
     // Verifikasi: Supplier ID tetap 6, TIDAK tertimpa oleh default supplier produk (5)
     expect(supSelect.value).toBe('6');
-    expect(document.getElementById('in-price').value).toBe('25000');
+    expect(document.getElementById('in-price').value).toBe('25.000');
   });
 
   it('2. Menangani race condition loadDropdowns(): supplier default terpasang saat opsi selesai dimuat (Fix Repro 2)', async () => {
@@ -140,7 +140,7 @@ describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk Aquastock Pro', () =
 
     // Verifikasi: Supplier default (5) berhasil dipilih karena dropdown ditunggu dan diaplikasikan ulang
     expect(supSelect.value).toBe('5');
-    expect(document.getElementById('in-price').value).toBe('25000');
+    expect(document.getElementById('in-price').value).toBe('25.000');
   });
 
   it('3. Tidak menimpa harga faktur yang diinput manual oleh pengguna saat refreshSelectedProductPrice selesai (Fix Repro 3)', async () => {
@@ -167,8 +167,8 @@ describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk Aquastock Pro', () =
     resolveFreshItem({ ok: true, data: { ...sampleProduct, cost_price: 25000 } });
     await selectPromise;
 
-    // Verifikasi: Harga faktur 27500 tidak tertimpa kembali ke 25000
-    expect(priceInput.value).toBe('27500');
+    // Verifikasi: Harga faktur 27.500 tidak tertimpa kembali ke 25.000
+    expect(priceInput.value).toBe('27.500');
     expect(document.getElementById('in-total-preview').textContent).toContain('27.500');
   });
 
@@ -183,7 +183,7 @@ describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk Aquastock Pro', () =
     const priceInput = document.getElementById('in-price');
     const supSelect = document.getElementById('in-supplier-id');
 
-    expect(priceInput.value).toBe('28000');
+    expect(priceInput.value).toBe('28.000');
     expect(supSelect.value).toBe('8');
     expect(document.getElementById('in-total-preview').textContent).toContain('28.000');
   });
@@ -219,7 +219,7 @@ describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk Aquastock Pro', () =
     await window.loadDropdowns();
     await window.selectInProduct(7);
 
-    expect(document.getElementById('in-price').value).toBe('32000');
+    expect(document.getElementById('in-price').value).toBe('32.000');
     expect(document.getElementById('in-supplier-id').value).toBe('8');
   });
 

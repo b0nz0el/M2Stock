@@ -166,4 +166,32 @@ describe('Modern Custom UI & Mobile Numeric Numpad on Financial & Inventory Inpu
     expect(mockInput.eventsDispatched).toContain('change');
     expect(mockInput.focused).toBe(true);
   });
+
+  it('verifies automatic thousand separator formatting on nominal inputs in items.js and in.js', () => {
+    // Both items.js and in.js should match #item-cost-price / #in-price with Intl.NumberFormat('id-ID')
+    expect(itemsJs).toContain("new Intl.NumberFormat('id-ID').format(num)");
+    expect(inJs).toContain("new Intl.NumberFormat('id-ID').format(num)");
+
+    // Test formatter helper
+    function formatNumberInput(value) {
+      const cleanDigits = String(value || '').replace(/\D/g, '');
+      const num = cleanDigits === '' ? 0 : Number(cleanDigits);
+      return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : (value === '' ? '' : '0');
+    }
+
+    expect(formatNumberInput('50000')).toBe('50.000');
+    expect(formatNumberInput('1500000')).toBe('1.500.000');
+    expect(formatNumberInput('0')).toBe('0');
+    expect(formatNumberInput('')).toBe('');
+
+    // Ensure state extraction extracts pure numeric integer
+    function parseNumericValue(value) {
+      if (value === null || value === undefined) return 0;
+      const digitsOnly = String(value).replace(/\D+/g, '');
+      return digitsOnly ? Number(digitsOnly) : 0;
+    }
+
+    expect(parseNumericValue(formatNumberInput('50000'))).toBe(50000);
+    expect(parseNumericValue(formatNumberInput('1500000'))).toBe(1500000);
+  });
 });

@@ -14,6 +14,11 @@
     return digitsOnly ? Number(digitsOnly) : 0;
   }
 
+  function formatNumberInput(value) {
+    const num = parseNumericValue(value);
+    return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '0';
+  }
+
   function normalizeNumericInputValue(value) {
     if (value === null || value === undefined) return '0';
     const digitsOnly = String(value).replace(/\D+/g, '');
@@ -24,7 +29,13 @@
 
   function sanitizeNumericInputElement(input) {
     if (!input) return;
-    input.value = normalizeNumericInputValue(input.value);
+    if (input.matches('#in-price, #in-sell-price')) {
+      const cleanDigits = String(input.value).replace(/\D/g, '');
+      const num = cleanDigits === '' ? 0 : Number(cleanDigits);
+      input.value = num > 0 ? new Intl.NumberFormat('id-ID').format(num) : (input.value === '' ? '' : '0');
+    } else {
+      input.value = normalizeNumericInputValue(input.value);
+    }
   }
 
   if (typeof document !== 'undefined') {
@@ -561,7 +572,7 @@
 
     const priceInput = document.getElementById('in-price');
     if (priceInput && !selectedPriceManuallyChanged) {
-      priceInput.value = String(prod.cost_price || 0);
+      priceInput.value = formatNumberInput(prod.cost_price);
       if (typeof window.updateNumericClearButton === 'function') {
         window.updateNumericClearButton(priceInput);
       }
@@ -606,7 +617,7 @@
       }
       const priceInput = document.getElementById('in-price');
       if (priceInput && !selectedPriceManuallyChanged) {
-        priceInput.value = String(freshProduct.cost_price ?? 0);
+        priceInput.value = formatNumberInput(freshProduct.cost_price);
       }
 
       const badge = document.getElementById('in-product-badge');
@@ -635,7 +646,7 @@
     const priceInput = document.getElementById('in-price');
     if (prod && priceInput) {
       if (!selectedPriceManuallyChanged) {
-        priceInput.value = String(prod.cost_price || 0);
+        priceInput.value = formatNumberInput(prod.cost_price);
       }
       selectedExistingProduct = prod;
       if (!selectedSupplierManuallyChanged) {

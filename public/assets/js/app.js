@@ -942,6 +942,18 @@ function clearNumericInput(inputId) {
   } catch (_) {}
 }
 
+function parseNumericValue(value) {
+  if (value === null || value === undefined) return 0;
+  const digitsOnly = String(value).replace(/\D+/g, '');
+  return digitsOnly ? Number(digitsOnly) : 0;
+}
+
+function formatNumberInput(value) {
+  const cleanDigits = String(value || '').replace(/\D/g, '');
+  const num = cleanDigits === '' ? 0 : Number(cleanDigits);
+  return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : (value === '' ? '' : '0');
+}
+
 function refreshNumericClearButtons(container = document) {
   if (!container || typeof container.querySelectorAll !== 'function') return;
   const buttons = container.querySelectorAll('[id^="btn-clear-"]');
@@ -960,6 +972,8 @@ function refreshNumericClearButtons(container = document) {
 }
 
 if (typeof window !== 'undefined') {
+  window.parseNumericValue = parseNumericValue;
+  window.formatNumberInput = formatNumberInput;
   window.updateNumericClearButton = updateNumericClearButton;
   window.clearNumericInput = clearNumericInput;
   window.refreshNumericClearButtons = refreshNumericClearButtons;
@@ -1014,7 +1028,9 @@ if (typeof module !== 'undefined' && module.exports) {
     setImageViewerIndex,
     updateNumericClearButton,
     clearNumericInput,
-    refreshNumericClearButtons
+    refreshNumericClearButtons,
+    parseNumericValue,
+    formatNumberInput
   };
 }
 
