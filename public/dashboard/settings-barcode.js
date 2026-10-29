@@ -318,10 +318,8 @@ function renderPrintLabels(printWindow, products, JsBarcode, layoutKey = current
       if (products[i + 1]) {
         sheet.appendChild(createSingleLabelElement(doc, products[i + 1], JsBarcode, isCompact));
       } else {
-        // Placeholder kosong agar posisi label tunggal ganjil tetap di kolom kiri
-        const dummy = doc.createElement('div');
-        dummy.className = 'barcode-label';
-        sheet.appendChild(dummy);
+        // Efisiensi kertas printer 80mm: jika kolom kanan kosong, cetak ulang barcode produk yang sama di sampingnya sehingga ada 2 barcode
+        sheet.appendChild(createSingleLabelElement(doc, products[i], JsBarcode, isCompact));
       }
       doc.body.appendChild(sheet);
     }

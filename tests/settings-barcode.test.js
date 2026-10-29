@@ -263,5 +263,15 @@ describe('Internal product barcode creation', () => {
     expect(printDocument.body.textContent).toContain('Rp 35.000');
     expect(printDocument.body.textContent).not.toContain('SKU:');
     expect(printDocument.querySelector('.barcode-sheet')).not.toBeNull();
+
+    // Pastikan kedua kolom terisi barcode yang sama (2 barcode dalam 1 sheet 80mm) agar stiker tidak terbuang
+    const labels = printDocument.querySelectorAll('.barcode-sheet .barcode-label');
+    expect(labels.length).toBe(2);
+    expect(labels[0].querySelector('.product-name').textContent).toBe('Pelet Ikan Kura');
+    expect(labels[0].querySelector('.product-price').textContent).toBe('Rp 35.000');
+    expect(labels[0].querySelector('.barcode')).not.toBeNull();
+    expect(labels[1].querySelector('.product-name').textContent).toBe('Pelet Ikan Kura');
+    expect(labels[1].querySelector('.product-price').textContent).toBe('Rp 35.000');
+    expect(labels[1].querySelector('.barcode')).not.toBeNull();
   });
 });
