@@ -15,15 +15,15 @@ export const BARCODE_LAYOUTS = {
     name: '50 × 30 mm (1 Kolom - Standar)',
     columns: 1,
     css: `
-      @page { size: 50mm 30mm; margin: 1mm; }
-      * { box-sizing: border-box; }
-      body { margin: 0; color: #000; font: 8pt Arial, sans-serif; background: #fff; }
+      @page { size: 50mm 30mm; margin: 0; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html, body { width: 50mm; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
       .barcode-sheet { display: block; }
-      .barcode-label { width: 48mm; height: 28mm; padding: 1mm; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; page-break-after: always; break-after: page; }
+      .barcode-label { width: 50mm; height: 30mm; max-height: 30mm; padding: 0.5mm 1.5mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
       .barcode-label:last-child { page-break-after: auto; break-after: auto; }
-      .product-name { width: 100%; max-height: 7.5mm; margin: 0 0 0.5mm; overflow: hidden; text-align: center; font-size: 8pt; font-weight: 700; line-height: 1.15; }
-      .barcode { width: 43mm; height: 14mm; }
-      .product-price { width: 100%; margin: 0.5mm 0 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8.5pt; font-weight: 800; }
+      .product-name { width: 100%; max-height: 5.5mm; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8.5pt; font-weight: 700; line-height: 1.15; }
+      .barcode { width: 100%; max-width: 47mm; height: 17mm; display: block; margin: 0 auto; }
+      .product-price { width: 100%; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 9.5pt; font-weight: 800; line-height: 1.15; }
     `
   },
   '40x30_double': {
@@ -31,15 +31,15 @@ export const BARCODE_LAYOUTS = {
     name: '40 × 30 mm (2 Kolom - Printer 80mm)',
     columns: 2,
     css: `
-      @page { size: 82mm 30mm; margin: 1mm; }
-      * { box-sizing: border-box; }
-      body { margin: 0; color: #000; font: 7.5pt Arial, sans-serif; background: #fff; }
-      .barcode-sheet { display: grid; grid-template-columns: 39mm 39mm; gap: 2mm; width: 80mm; page-break-after: always; break-after: page; }
+      @page { size: 80mm 30mm; margin: 0; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html, body { width: 80mm; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
+      .barcode-sheet { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2mm; width: 80mm; max-width: 80mm; height: 30mm; max-height: 30mm; margin: 0 auto; padding: 0.5mm 2mm; align-items: center; justify-content: center; overflow: hidden; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
       .barcode-sheet:last-child { page-break-after: auto; break-after: auto; }
-      .barcode-label { width: 39mm; height: 28mm; padding: 0.8mm; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-      .product-name { width: 100%; max-height: 6.5mm; margin: 0 0 0.5mm; overflow: hidden; text-align: center; font-size: 7.5pt; font-weight: 700; line-height: 1.1; }
-      .barcode { width: 36mm; height: 13.5mm; }
-      .product-price { width: 100%; margin: 0.5mm 0 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8pt; font-weight: 800; }
+      .barcode-label { width: 100%; height: 29mm; max-height: 29mm; padding: 0.5mm 0.5mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; }
+      .product-name { width: 100%; max-height: 5.5mm; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8pt; font-weight: 700; line-height: 1.15; }
+      .barcode { width: 100%; max-width: 36mm; height: 17mm; display: block; margin: 0 auto; }
+      .product-price { width: 100%; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 9pt; font-weight: 800; line-height: 1.15; }
     `
   },
   '40x30_single': {
@@ -47,15 +47,15 @@ export const BARCODE_LAYOUTS = {
     name: '40 × 30 mm (1 Kolom)',
     columns: 1,
     css: `
-      @page { size: 40mm 30mm; margin: 1mm; }
-      * { box-sizing: border-box; }
-      body { margin: 0; color: #000; font: 7.5pt Arial, sans-serif; background: #fff; }
+      @page { size: 40mm 30mm; margin: 0; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html, body { width: 40mm; margin: 0; padding: 0; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fff; }
       .barcode-sheet { display: block; }
-      .barcode-label { width: 38mm; height: 28mm; padding: 0.8mm; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; page-break-after: always; break-after: page; }
+      .barcode-label { width: 40mm; height: 30mm; max-height: 30mm; padding: 0.5mm 1mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; box-sizing: border-box; text-align: center; page-break-inside: avoid; break-inside: avoid; page-break-after: always; break-after: page; }
       .barcode-label:last-child { page-break-after: auto; break-after: auto; }
-      .product-name { width: 100%; max-height: 6.5mm; margin: 0 0 0.5mm; overflow: hidden; text-align: center; font-size: 7.5pt; font-weight: 700; line-height: 1.1; }
-      .barcode { width: 36mm; height: 13.5mm; }
-      .product-price { width: 100%; margin: 0.5mm 0 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8pt; font-weight: 800; }
+      .product-name { width: 100%; max-height: 5.5mm; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 8pt; font-weight: 700; line-height: 1.15; }
+      .barcode { width: 100%; max-width: 37mm; height: 17mm; display: block; margin: 0 auto; }
+      .product-price { width: 100%; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: 9pt; font-weight: 800; line-height: 1.15; }
     `
   }
 };
@@ -266,7 +266,9 @@ function openPrintWindow(layoutKey = currentLayout) {
 
   printWindow.document.open();
   printWindow.document.write(`<!doctype html>
-    <html lang="id"><head><meta charset="utf-8"><title>Label Barcode Produk</title>
+    <html lang="id"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Label Barcode Produk</title>
     <style>
       ${layout.css}
     </style></head><body></body></html>`);
@@ -288,9 +290,10 @@ function createSingleLabelElement(doc, product, JsBarcode, isCompact = false) {
     format: 'CODE128',
     lineColor: '#000',
     width: isCompact ? 1.4 : 1.6,
-    height: isCompact ? 32 : 36,
+    height: isCompact ? 60 : 65,
     displayValue: true,
-    fontSize: isCompact ? 9 : 10,
+    fontSize: isCompact ? 11 : 12,
+    textMargin: 1,
     margin: 1
   });
 
@@ -334,7 +337,7 @@ function renderPrintLabels(printWindow, products, JsBarcode, layoutKey = current
   printWindow.setTimeout(() => {
     printWindow.focus();
     printWindow.print();
-  }, 300);
+  }, 450);
 }
 
 async function assignBarcode(product) {
