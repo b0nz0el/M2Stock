@@ -359,12 +359,51 @@
     }).join('');
   }
 
+  function parseNumericValue(val) {
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    if (!val) return 0;
+    const digits = String(val).replace(/\D/g, '');
+    return digits === '' ? 0 : (Number(digits) || 0);
+  }
+
+  function formatNumberInput(num) {
+    if (!num || num === 0) return '';
+    return new Intl.NumberFormat('id-ID').format(num);
+  }
+
+  function clearPosDiscount() {
+    const input = document.getElementById('pos-discount-input');
+    if (input) {
+      input.value = '';
+      calculatePosTotal();
+      input.focus();
+    }
+  }
+
+  function clearPosCash() {
+    const input = document.getElementById('pos-cash-input');
+    if (input) {
+      input.value = '';
+      calculatePosChange();
+      input.focus();
+    }
+  }
+
   function calculatePosTotal() {
     const rawSubtotal = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
     const totalUnits = posCart.reduce((sum, it) => sum + it.qty, 0);
 
     const discountInput = document.getElementById('pos-discount-input');
-    const discountVal = discountInput ? Math.max(0, Number(discountInput.value) || 0) : 0;
+    const discountVal = discountInput ? Math.max(0, parseNumericValue(discountInput.value)) : 0;
+
+    const clearDiscountBtn = document.getElementById('btn-clear-pos-discount');
+    if (clearDiscountBtn) {
+      if (discountVal > 0) {
+        clearDiscountBtn.classList.remove('hidden');
+      } else {
+        clearDiscountBtn.classList.add('hidden');
+      }
+    }
 
     const taxToggle = document.getElementById('pos-tax-toggle');
     const hasTax = taxToggle ? taxToggle.checked : false;
@@ -408,7 +447,7 @@
   function calculatePosChange() {
     const rawSubtotal = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
     const discountInput = document.getElementById('pos-discount-input');
-    const discountVal = discountInput ? Math.max(0, Number(discountInput.value) || 0) : 0;
+    const discountVal = discountInput ? Math.max(0, parseNumericValue(discountInput.value)) : 0;
     const taxToggle = document.getElementById('pos-tax-toggle');
     const hasTax = taxToggle ? taxToggle.checked : false;
     const afterDiscount = Math.max(0, rawSubtotal - discountVal);
@@ -419,35 +458,45 @@
     const cashInput = document.getElementById('pos-cash-input');
     const preview = document.getElementById('pos-change-preview');
 
+    const inputVal = parseNumericValue(cashInput?.value);
+
+    const clearCashBtn = document.getElementById('btn-clear-pos-cash');
+    if (clearCashBtn) {
+      if (inputVal > 0) {
+        clearCashBtn.classList.remove('hidden');
+      } else {
+        clearCashBtn.classList.add('hidden');
+      }
+    }
+
     if (!preview) return;
 
     if (method !== 'Cash') {
       preview.textContent = 'Rp 0 (Non-Tunai)';
-      preview.className = 'font-bold text-sm text-[#32ADE6]';
+      preview.className = 'font-bold font-mono text-base text-[#32ADE6]';
       return;
     }
 
-    const inputVal = Number(cashInput?.value || 0);
     if (!inputVal || inputVal === 0) {
       preview.textContent = 'Rp 0';
-      preview.className = 'font-bold text-sm text-[#A0A0A5]';
+      preview.className = 'font-extrabold font-mono text-base text-[#A0A0A5]';
       return;
     }
 
     const diff = inputVal - totalAmount;
     if (diff >= 0) {
       preview.textContent = formatRupiahVal(diff);
-      preview.className = 'font-bold text-sm text-[#34C759]';
+      preview.className = 'font-extrabold font-mono text-base text-[#34C759]';
     } else {
       preview.textContent = `Kurang ${formatRupiahVal(Math.abs(diff))}`;
-      preview.className = 'font-bold text-sm text-[#FF3B30]';
+      preview.className = 'font-extrabold font-mono text-base text-[#FF3B30]';
     }
   }
 
   function quickSetPosCash(typeOrAmount) {
     const rawSubtotal = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
     const discountInput = document.getElementById('pos-discount-input');
-    const discountVal = discountInput ? Math.max(0, Number(discountInput.value) || 0) : 0;
+    const discountVal = discountInput ? Math.max(0, parseNumericValue(discountInput.value)) : 0;
     const taxToggle = document.getElementById('pos-tax-toggle');
     const hasTax = taxToggle ? taxToggle.checked : false;
     const afterDiscount = Math.max(0, rawSubtotal - discountVal);
@@ -458,12 +507,14 @@
     if (!cashInput) return;
 
     if (typeOrAmount === 'exact') {
-      cashInput.value = totalAmount;
+      cashInput.value = totalAmount > 0 ? formatNumberInput(totalAmount) : '';
     } else if (typeof typeOrAmount === 'number') {
-      const current = Number(cashInput.value) || 0;
-      cashInput.value = current + typeOrAmount;
+      const current = parseNumericValue(cashInput.value);
+      const nextVal = current + typeOrAmount;
+      cashInput.value = nextVal > 0 ? formatNumberInput(nextVal) : '';
     }
     calculatePosChange();
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
   }
 
   function handleOutProductSearchInput(e) {
@@ -549,6 +600,10 @@
 
     const cashInput = document.getElementById('pos-cash-input');
     if (cashInput) cashInput.value = '';
+    const discountInput = document.getElementById('pos-discount-input');
+    if (discountInput) discountInput.value = '';
+    document.getElementById('btn-clear-pos-cash')?.classList.add('hidden');
+    document.getElementById('btn-clear-pos-discount')?.classList.add('hidden');
 
     handlePosPaymentMethodChange();
     calculatePosTotal();
@@ -616,7 +671,7 @@
     const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
     const cashInput = document.getElementById('pos-cash-input');
     const paidAmount = paymentMethod === 'Cash'
-      ? (Number(cashInput?.value) || totalAmount)
+      ? (parseNumericValue(cashInput?.value) || totalAmount)
       : totalAmount;
 
     const submitBtn = document.getElementById('btn-submit-out');
@@ -2007,7 +2062,10 @@ window.addToPosCart = addToPosCart;
 window.updatePosCartQty = updatePosCartQty;
 window.removeFromPosCart = removeFromPosCart;
 window.clearPosCart = clearPosCart;
+window.calculatePosTotal = calculatePosTotal;
 window.calculatePosChange = calculatePosChange;
+window.clearPosDiscount = clearPosDiscount;
+window.clearPosCash = clearPosCash;
 window.quickSetPosCash = quickSetPosCash;
 window.handlePosPaymentMethodChange = handlePosPaymentMethodChange;
 window.openAddOutModal = openAddOutModal;
@@ -2027,6 +2085,24 @@ window.openPackingListModal = openPackingListModal;
 window.closePackingListModal = closePackingListModal;
 
 document.addEventListener('DOMContentLoaded', () => {
+  const discountInput = document.getElementById('pos-discount-input');
+  if (discountInput) {
+    discountInput.addEventListener('input', (e) => {
+      const raw = parseNumericValue(e.target.value);
+      e.target.value = raw > 0 ? formatNumberInput(raw) : '';
+      calculatePosTotal();
+    });
+  }
+
+  const cashInput = document.getElementById('pos-cash-input');
+  if (cashInput) {
+    cashInput.addEventListener('input', (e) => {
+      const raw = parseNumericValue(e.target.value);
+      e.target.value = raw > 0 ? formatNumberInput(raw) : '';
+      calculatePosChange();
+    });
+  }
+
   const outSearchInput = document.getElementById('out-product-search');
   outSearchInput?.addEventListener('input', handleOutProductSearchInput);
 

@@ -55,6 +55,26 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outHtml).toContain("quickSetPosCash(50000)");
       expect(outHtml).toContain("quickSetPosCash(100000)");
     });
+
+    it('uses numeric keyboard inputmode and custom UI for discount and cash inputs', () => {
+      // Diskon input
+      expect(outHtml).toMatch(/<input[^>]*id="pos-discount-input"[^>]*inputmode="numeric"/);
+      expect(outHtml).toMatch(/<input[^>]*id="pos-discount-input"[^>]*pattern="\[0-9\]\*"/);
+      expect(outHtml).toMatch(/<input[^>]*type="text"[^>]*id="pos-discount-input"/);
+      expect(outHtml).toContain('id="btn-clear-pos-discount"');
+
+      // Cash input
+      expect(outHtml).toMatch(/<input[^>]*id="pos-cash-input"[^>]*inputmode="numeric"/);
+      expect(outHtml).toMatch(/<input[^>]*id="pos-cash-input"[^>]*pattern="\[0-9\]\*"/);
+      expect(outHtml).toMatch(/<input[^>]*type="text"[^>]*id="pos-cash-input"/);
+      expect(outHtml).toContain('id="btn-clear-pos-cash"');
+
+      // JS parsing and helper
+      expect(outJsCode).toContain('parseNumericValue');
+      expect(outJsCode).toContain('formatNumberInput');
+      expect(outJsCode).toContain('window.clearPosDiscount');
+      expect(outJsCode).toContain('window.clearPosCash');
+    });
   });
 
   describe('createBatchOut API Implementation', () => {
