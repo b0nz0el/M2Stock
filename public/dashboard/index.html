@@ -3006,7 +3006,7 @@
       </button>
     </div>
 
-    <form id="item-form" class="space-y-4" onsubmit="handleItemSubmit(event)">
+    <form id="item-form" class="space-y-4" onsubmit="handleItemSubmit(event)" novalidate>
       <input type="hidden" id="item-id">
       <input type="hidden" id="item-image-url">
 
@@ -3296,7 +3296,7 @@
         </div>
       </header>
 
-      <form id="form-stock-adjustment" onsubmit="handleStockAdjustmentSubmit(event)" class="stock-opname-form">
+      <form id="form-stock-adjustment" onsubmit="handleStockAdjustmentSubmit(event)" class="stock-opname-form" novalidate>
         <input type="hidden" id="adj-product-id">
 
         <section class="stock-opname-product" aria-label="Informasi produk">
@@ -3531,7 +3531,7 @@
       </button>
     </div>
 
-    <form id="form-in" class="space-y-4" onsubmit="handleInSubmit(event)">
+    <form id="form-in" class="space-y-4" onsubmit="handleInSubmit(event)" novalidate>
       <!-- Tab Pilihan: Barang Lama vs Produk Baru (Masuk Master Barang) -->
       <div class="grid grid-cols-2 gap-2 p-1 bg-black/50 border border-white/10 rounded-xl">
         <button type="button" id="tab-in-existing" onclick="switchInMode('existing')" class="py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition bg-[#0088CC] text-white shadow-sm border border-transparent">
@@ -3773,7 +3773,7 @@
       </button>
     </div>
 
-    <form id="form-out" onsubmit="handleOutSubmit(event)">
+    <form id="form-out" onsubmit="handleOutSubmit(event)" novalidate>
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <!-- KOLOM KIRI: SCAN, KATALOG GRID & KERANJANG (Span 7) -->
         <div class="lg:col-span-7 space-y-3.5">
@@ -4917,7 +4917,7 @@
         </button>
       </div>
 
-      <form id="form-debt" class="space-y-4">
+      <form id="form-debt" class="space-y-4" novalidate>
         <!-- Tipe -->
         <div>
           <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-2">Tipe Catatan</label>

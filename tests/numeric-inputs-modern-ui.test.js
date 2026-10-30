@@ -194,4 +194,16 @@ describe('Modern Custom UI & Mobile Numeric Numpad on Financial & Inventory Inpu
     expect(parseNumericValue(formatNumberInput('50000'))).toBe(50000);
     expect(parseNumericValue(formatNumberInput('1500000'))).toBe(1500000);
   });
+
+  it('ensures all modal forms containing formatted numeric inputs have novalidate attribute to prevent browser constraint bubbles', () => {
+    // Memastikan form mematikan validasi kaku browser (seperti "Please match the requested format.")
+    // saat input diformat dengan pemisah ribuan titik (12.000) dan memiliki pattern="[0-9]*"
+    expect(indexHtml).toMatch(/<form id="item-form"[^>]*novalidate/);
+    expect(indexHtml).toMatch(/<form id="form-stock-adjustment"[^>]*novalidate/);
+    expect(indexHtml).toMatch(/<form id="form-in"[^>]*novalidate/);
+    expect(indexHtml).toMatch(/<form id="form-out"[^>]*novalidate/);
+    expect(indexHtml).toMatch(/<form id="form-debt"[^>]*novalidate/);
+    expect(indexHtml).toMatch(/<form id="form-cash"[^>]*novalidate/);
+  });
 });
+
