@@ -179,6 +179,32 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(res.error.message).toBe('Akses ditolak');
       expect(mockSupabase.from).not.toHaveBeenCalled();
     });
+
+    it('falls back to direct product stock update when Supabase hits stock_adjustments_previous_stock_check', async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: '23514',
+          message: 'new row for relation "stock_adjustments" violates check constraint "stock_adjustments_previous_stock_check"'
+        }
+      });
+
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({
+            data: [{ id: '19', stock: 0 }],
+            error: null
+          })
+        })
+      });
+      mockSupabase.from.mockReturnValue({ update: mockUpdate });
+
+      const res = await items.adjustStock(19, 0, 'Hasil penghitungan fisik');
+
+      expect(res.ok).toBe(true);
+      expect(res.data.stock).toBe(0);
+      expect(mockSupabase.from).toHaveBeenCalledWith('products');
+    });
   });
 
   describe('items.js Tambah Barang auto-create transaction and Stock Opname UI', () => {
