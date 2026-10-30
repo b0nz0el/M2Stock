@@ -205,6 +205,54 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(res.data.stock).toBe(0);
       expect(mockSupabase.from).toHaveBeenCalledWith('products');
     });
+
+    it('falls back to transaction reconciliation trigger when direct update is blocked by RLS', async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: '23514',
+          message: 'new row for relation "stock_adjustments" violates check constraint "stock_adjustments_previous_stock_check"'
+        }
+      });
+
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === 'products') {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockResolvedValue({ data: [], error: null }) // RLS blocks update
+              })
+            }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: 19, stock: -1, cost_price: 15000, name: 'Akari Super Vit' },
+                  error: null
+                })
+              })
+            })
+          };
+        }
+        if (table === 'transactions') {
+          return {
+            insert: vi.fn().mockReturnValue({
+              select: vi.fn().mockResolvedValue({
+                data: [{ id: 'tx-reconcile-1' }],
+                error: null
+              })
+            })
+          };
+        }
+        return {};
+      });
+
+      const res = await items.adjustStock(19, 0, 'Koreksi Stok Minus', 'Audit Fisik');
+
+      expect(res.ok).toBe(true);
+      expect(res.data.stock).toBe(0);
+      expect(res.meta.difference).toBe(1);
+      expect(res.meta.previousStock).toBe(-1);
+    });
   });
 
   describe('items.js Tambah Barang auto-create transaction and Stock Opname UI', () => {

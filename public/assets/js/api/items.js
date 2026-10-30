@@ -517,41 +517,110 @@ export const items = {
           if (rpcErr) {
             // Self-healing fallback: jika database Supabase melempar error check constraint
             // "stock_adjustments_previous_stock_check" karena saldo sebelumnya bernilai minus (< 0)
-            if (String(rpcErr.message || '').includes('stock_adjustments_previous_stock_check')) {
-              console.warn('[adjustStock] Terdeteksi constraint error saldo minus pada ledger opname, menjalankan update langsung...');
-              let updateQuery = window.supabase
-                .from('products')
-                .update({ stock: targetStock, updated_at: new Date().toISOString() })
-                .eq('id', id)
-                .select('id, stock');
+            const rpcErrMsg = (String(rpcErr.message || '') + ' ' + String(rpcErr.details || '')).toLowerCase();
+            if (rpcErrMsg.includes('stock_adjustments_previous_stock_check')) {
+              console.warn('[adjustStock] Terdeteksi constraint error saldo minus pada ledger opname, menjalankan self-healing fallback...');
 
-              if (opts && opts.signal) updateQuery = updateQuery.abortSignal(opts.signal);
-              const { data: updated, error: updateErr } = await updateQuery;
+              // 1. Coba update langsung ke table products jika permitted
+              try {
+                let updateQuery = window.supabase
+                  .from('products')
+                  .update({ stock: targetStock, updated_at: new Date().toISOString() })
+                  .eq('id', id)
+                  .select('id, stock');
 
-              if (!updateErr && updated && updated.length > 0) {
-                try {
-                  const auditRes = typeof logAudit === 'function' ? logAudit('UPDATE', 'products', id, {
-                    action: 'stock_opname_negative_balance_correction',
-                    reason,
-                    notes,
-                    stock: targetStock
-                  }) : null;
-                  if (auditRes && typeof auditRes.catch === 'function') auditRes.catch(() => {});
-                } catch (_) {}
+                if (opts && opts.signal) updateQuery = updateQuery.abortSignal(opts.signal);
+                const { data: updated, error: updateErr } = await updateQuery;
 
-                return formatResponse({
-                  ok: true,
-                  data: {
-                    id,
-                    stock: targetStock,
-                    adjustment_id: null
-                  },
-                  meta: {
-                    message: `Stok produk berhasil disesuaikan menjadi ${targetStock}`,
-                    previousStock: 0,
-                    difference: targetStock
+                if (!updateErr && updated && updated.length > 0) {
+                  try {
+                    const auditRes = typeof logAudit === 'function' ? logAudit('UPDATE', 'products', id, {
+                      action: 'stock_opname_negative_balance_correction',
+                      reason,
+                      notes,
+                      stock: targetStock
+                    }) : null;
+                    if (auditRes && typeof auditRes.catch === 'function') auditRes.catch(() => {});
+                  } catch (_) {}
+
+                  return formatResponse({
+                    ok: true,
+                    data: {
+                      id,
+                      stock: targetStock,
+                      adjustment_id: null
+                    },
+                    meta: {
+                      message: `Stok produk berhasil disesuaikan menjadi ${targetStock}`,
+                      previousStock: 0,
+                      difference: targetStock
+                    }
+                  });
+                }
+              } catch (_) {}
+
+              // 2. Jika direct update tidak mengubah baris (misal karena RLS), rekonsiliasi via transaksi
+              try {
+                const { data: prodData } = await window.supabase
+                  .from('products')
+                  .select('id, stock, cost_price, name')
+                  .eq('id', id)
+                  .maybeSingle();
+
+                const currentStock = Number(prodData?.stock) || 0;
+                const diff = targetStock - currentStock;
+
+                if (diff === 0) {
+                  return formatResponse({
+                    ok: true,
+                    data: { id, stock: targetStock, adjustment_id: null },
+                    meta: { message: `Stok produk sudah sesuai (${targetStock})`, previousStock: currentStock, difference: 0 }
+                  });
+                }
+
+                if (diff > 0) {
+                  let userId = null;
+                  try {
+                    const uRes = await window.supabase.auth?.getUser?.();
+                    userId = uRes?.data?.user?.id || null;
+                  } catch (_) {}
+
+                  const reconciliationRow = {
+                    type: 'in',
+                    product_id: isNaN(Number(id)) ? id : Number(id),
+                    qty: Math.round(diff),
+                    price: 0,
+                    cost_price: Number(prodData?.cost_price) || 0,
+                    channel: 'Offline',
+                    note: `[STOCK OPNAME] Koreksi Saldo Negatif (${currentStock} -> ${targetStock}): ${reason || 'Hasil penghitungan fisik'}${notes ? ' - ' + notes : ''}`,
+                    created_by: userId
+                  };
+
+                  const { data: txData, error: txErr } = await window.supabase
+                    .from('transactions')
+                    .insert([reconciliationRow])
+                    .select();
+
+                  if (!txErr && txData && txData.length > 0) {
+                    try {
+                      if (typeof logAudit === 'function') {
+                        logAudit('UPDATE', `Stock Opname Saldo Negatif (${currentStock} -> ${targetStock}): ${prodData?.name || id}`);
+                      }
+                    } catch (_) {}
+
+                    return formatResponse({
+                      ok: true,
+                      data: { id, stock: targetStock, adjustment_id: null, transaction_id: txData[0]?.id },
+                      meta: {
+                        message: `Stok produk berhasil disesuaikan menjadi ${targetStock}`,
+                        previousStock: currentStock,
+                        difference: diff
+                      }
+                    });
                   }
-                });
+                }
+              } catch (reconcileErr) {
+                console.error('[adjustStock] Self-healing reconciliation error:', reconcileErr);
               }
             }
 
