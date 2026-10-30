@@ -58,6 +58,15 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(htmlContent).toMatch(/id="in-qty"[^>]*inputmode="numeric"/);
       expect(htmlContent).toMatch(/id="adj-actual-stock"[^>]*inputmode="decimal"/);
     });
+
+    it('ensures stock_adjustments migrations permit negative previous_stock so negative balances can be corrected', () => {
+      const migration20261029 = readFileSync(resolve(process.cwd(), 'supabase/migrations/20261029_stock_adjustment_ledger.sql'), 'utf8');
+      const migration20261030 = readFileSync(resolve(process.cwd(), 'supabase/migrations/20261030_allow_negative_previous_stock_opname.sql'), 'utf8');
+
+      expect(migration20261029).not.toContain('previous_stock NUMERIC NOT NULL CHECK (previous_stock >= 0)');
+      expect(migration20261029).toContain('previous_stock NUMERIC NOT NULL');
+      expect(migration20261030).toContain('DROP CONSTRAINT IF EXISTS stock_adjustments_previous_stock_check');
+    });
   });
 
   describe('Api.items.adjustStock', () => {
@@ -129,6 +138,33 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       expect(res.ok).toBe(true);
       expect(res.meta.message).toContain('Stok sudah sesuai');
       expect(res.data.adjustment_id).toBeNull();
+    });
+
+    it('successfully adjusts physical stock to 0 when system stock is negative (-1)', async () => {
+      mockSupabase.rpc.mockImplementationOnce((_functionName, params) => Promise.resolve({
+        data: {
+          ok: true,
+          adjustment_id: 'adjustment-neg-1',
+          previous_stock: -1,
+          actual_stock: params.p_actual_stock,
+          difference: params.p_actual_stock - (-1), // 0 - (-1) = 1
+          message: 'Stok berhasil disesuaikan dan dicatat pada ledger opname.'
+        },
+        error: null
+      }));
+
+      const res = await items.adjustStock(19, 0, 'Koreksi salah input / data ganda', '');
+
+      expect(res.ok).toBe(true);
+      expect(res.data.stock).toBe(0);
+      expect(res.meta.previousStock).toBe(-1);
+      expect(res.meta.difference).toBe(1);
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('perform_stock_opname', {
+        p_product_id: '19',
+        p_actual_stock: 0,
+        p_reason: 'Koreksi salah input / data ganda',
+        p_notes: ''
+      });
     });
 
     it('does not fall back to browser-side writes when the adjustment RPC fails', async () => {

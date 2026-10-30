@@ -18,7 +18,7 @@ BEGIN
     'CREATE TABLE IF NOT EXISTS public.stock_adjustments (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       product_id %s NOT NULL REFERENCES public.products(id) ON DELETE RESTRICT,
-      previous_stock NUMERIC NOT NULL CHECK (previous_stock >= 0),
+      previous_stock NUMERIC NOT NULL,
       actual_stock NUMERIC NOT NULL CHECK (actual_stock >= 0),
       difference NUMERIC GENERATED ALWAYS AS (actual_stock - previous_stock) STORED,
       reason TEXT NOT NULL CHECK (char_length(btrim(reason)) > 0),
