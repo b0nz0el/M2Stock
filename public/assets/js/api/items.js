@@ -4,6 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit } from './_client.js';
+import { resolveProductStudioImage, getProductStudioImageMeta } from '../product-catalog-images.js';
 
 export function parseItemImages(rawImageUrl, rawImages) {
   if (Array.isArray(rawImages) && rawImages.length > 0) {
@@ -152,8 +153,17 @@ export const items = {
           }
 
           const mapped = (data || []).map(function (item) {
+            const studioImage = resolveProductStudioImage(item);
             const itemImages = parseItemImages(item.image_url, item.images);
-            const primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
+            let effectiveImages = itemImages;
+            let primaryImageUrl = null;
+            if (studioImage) {
+              primaryImageUrl = studioImage;
+              const cleanExisting = itemImages.filter(img => typeof img === 'string' && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'));
+              effectiveImages = [studioImage, ...cleanExisting.filter(img => img !== studioImage)];
+            } else {
+              primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
+            }
             const localMeta = getLocalChannelMeta(item.id, item.sku);
             const channels = parseItemChannels(item.channel, item.channel_link, localMeta);
             const effectiveChannel = (channels[0]?.channel) || ((item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline'));
@@ -183,7 +193,7 @@ export const items = {
               channel_link: effectiveLink,
               channels: channels,
               image_url: primaryImageUrl,
-              images: itemImages,
+              images: effectiveImages,
               created_at: item.created_at,
               updated_at: item.updated_at
             };
@@ -233,8 +243,17 @@ export const items = {
             });
           }
 
+          const studioImage = resolveProductStudioImage(data);
           const itemImages = parseItemImages(data.image_url, data.images);
-          const primaryImageUrl = itemImages[0] || (typeof data.image_url === 'string' && !data.image_url.startsWith('[') ? data.image_url : null);
+          let effectiveImages = itemImages;
+          let primaryImageUrl = null;
+          if (studioImage) {
+            primaryImageUrl = studioImage;
+            const cleanExisting = itemImages.filter(img => typeof img === 'string' && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'));
+            effectiveImages = [studioImage, ...cleanExisting.filter(img => img !== studioImage)];
+          } else {
+            primaryImageUrl = itemImages[0] || (typeof data.image_url === 'string' && !data.image_url.startsWith('[') ? data.image_url : null);
+          }
           const localMeta = getLocalChannelMeta(data.id, data.sku);
           const channels = parseItemChannels(data.channel, data.channel_link, localMeta);
           const effectiveChannel = (channels[0]?.channel) || ((data.channel && data.channel !== 'Offline') ? data.channel : ((localMeta && localMeta.channel) || data.channel || 'Offline'));
@@ -264,7 +283,7 @@ export const items = {
             channel_link: effectiveLink,
             channels: channels,
             image_url: primaryImageUrl,
-            images: itemImages,
+            images: effectiveImages,
             created_at: data.created_at,
             updated_at: data.updated_at
           };

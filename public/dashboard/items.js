@@ -1,3 +1,17 @@
+  const resolveStudioImage = function (item) {
+    if (typeof window !== 'undefined' && window.ProductCatalogImages && typeof window.ProductCatalogImages.resolveProductStudioImage === 'function') {
+      return window.ProductCatalogImages.resolveProductStudioImage(item);
+    }
+    return null;
+  };
+
+  const getStudioMeta = function (item) {
+    if (typeof window !== 'undefined' && window.ProductCatalogImages && typeof window.ProductCatalogImages.getProductStudioImageMeta === 'function') {
+      return window.ProductCatalogImages.getProductStudioImageMeta(item);
+    }
+    return null;
+  };
+
   let currentItems = [];
   let itemToDeleteId = null;
   let categoriesData = [];
@@ -837,7 +851,11 @@
     itemChannelsState = existingChannels.map(c => ({ channel: c.channel || 'Offline', link: c.link || '' }));
     renderItemChannelsList();
 
-    const existingImages = parseProductImages(item.images || item.image_url);
+    const studioImg = resolveStudioImage(item);
+    const rawParsedImages = parseProductImages(item.images || item.image_url);
+    const existingImages = studioImg
+      ? [studioImg, ...rawParsedImages.filter(img => typeof img === 'string' && img !== studioImg && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'))]
+      : rawParsedImages;
     if (existingImages.length > 0) {
       existingImages.forEach((url, i) => {
         productPhotos.push({
@@ -1982,8 +2000,14 @@
         return 'Rp ' + Number(num).toLocaleString('id-ID');
       };
 
-      const itemImages = parseProductImages(item.images || item.image_url);
-      const coverImage = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
+      const studioImg = resolveStudioImage(item);
+      const studioMeta = getStudioMeta(item);
+      const cdnUrl = studioMeta ? studioMeta.cdn : '';
+      const rawParsedImages = parseProductImages(item.images || item.image_url);
+      const itemImages = studioImg
+        ? [studioImg, ...rawParsedImages.filter(img => typeof img === 'string' && img !== studioImg && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'))]
+        : rawParsedImages;
+      const coverImage = studioImg || itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
       const hasMultipleImages = itemImages.length > 1;
       const imagesAttr = escapeHtml(JSON.stringify(itemImages.length > 0 ? itemImages : (coverImage ? [coverImage] : [])));
 
@@ -2000,7 +2024,12 @@
         <td class="px-4 py-3.5">
           ${coverImage ? `
             <div class="w-16 h-16 md:w-10 md:h-10 rounded-xl md:rounded-lg overflow-hidden border border-white/10 bg-black/40 flex-shrink-0 cursor-pointer group relative" title="Klik untuk lihat ${hasMultipleImages ? itemImages.length + ' foto produk' : 'foto ukuran penuh'}" onclick="window.openImageViewer(${imagesAttr}, '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.sku || '').replace(/'/g, "\\'")}', 0)">
-              <img src="${escapeHtml(coverImage)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover group-hover:scale-110 transition duration-200 product-thumbnail-img" data-zoomable data-title="${escapeHtml(item.name)}" data-sku="${escapeHtml(item.sku || '')}" data-gallery="${imagesAttr}" loading="lazy">
+              <img src="${escapeHtml(coverImage)}"
+                   data-cdn="${escapeHtml(cdnUrl)}"
+                   onerror="if(!this.dataset.triedCdn && this.dataset.cdn){ this.dataset.triedCdn='1'; this.src=this.dataset.cdn; }"
+                   alt="${escapeHtml(item.name)}"
+                   class="w-full h-full object-cover group-hover:scale-110 transition duration-200 product-thumbnail-img"
+                   data-zoomable data-title="${escapeHtml(item.name)}" data-sku="${escapeHtml(item.sku || '')}" data-gallery="${imagesAttr}" loading="lazy">
               ${hasMultipleImages ? `
                 <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] font-semibold text-white flex items-center gap-1 shadow pointer-events-none">
                   <i data-lucide="layers" class="w-2.5 h-2.5"></i> ${itemImages.length}
