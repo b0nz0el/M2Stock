@@ -2853,10 +2853,7 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
           const localChannels = Array.isArray(meta?.channels)
             ? meta.channels.filter(channel => channel && channel.channel && channel.link)
             : [];
-          const remoteUpdatedAt = Date.parse(item.updated_at || '');
-          const localUpdatedAt = Number(meta?.updated_at) || 0;
-          const localMetadataIsNewer = !Number.isFinite(remoteUpdatedAt) || localUpdatedAt >= remoteUpdatedAt;
-          if (item.channel_meta_source !== 'local' || localChannels.length === 0 || !localMetadataIsNewer) continue;
+          if (item.channel_meta_source !== 'local' || localChannels.length === 0) continue;
 
           const primaryChannel = localChannels[0].channel;
           const channelLink = localChannels.length > 1
@@ -2879,6 +2876,12 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
           item.channel_link = channelLink;
           item.channels = localChannels;
           item.channel_meta_source = 'cloud';
+          const saveLocalMeta = (typeof window !== 'undefined' && window.saveLocalChannelMeta)
+            ? window.saveLocalChannelMeta
+            : Api.items?.saveLocalChannelMeta;
+          if (typeof saveLocalMeta === 'function') {
+            saveLocalMeta(item.id, item.sku, primaryChannel, channelLink, localChannels);
+          }
           migratedChannelCount++;
         }
 

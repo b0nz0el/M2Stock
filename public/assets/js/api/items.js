@@ -192,14 +192,11 @@ export const items = {
             }
             const localMeta = getLocalChannelMeta(item.id, item.sku);
             const persistedChannels = parseItemChannels(item.channel, item.channel_link, null);
-            const cloudUpdatedAt = Date.parse(item.updated_at || '');
-            const localUpdatedAt = Number(localMeta?.updated_at) || 0;
-            const useLocalMeta = !Number.isFinite(cloudUpdatedAt) || localUpdatedAt >= cloudUpdatedAt;
             const channels = persistedChannels.length > 0
               ? persistedChannels
-              : parseItemChannels(item.channel, item.channel_link, useLocalMeta ? localMeta : null);
-            const effectiveChannel = (channels[0]?.channel) || ((item.channel && item.channel !== 'Offline') ? item.channel : ((useLocalMeta && localMeta && localMeta.channel) || item.channel || 'Offline'));
-            const effectiveLink = (channels[0]?.link) || (typeof item.channel_link === 'string' && !item.channel_link.startsWith('[') ? item.channel_link : (useLocalMeta && localMeta && localMeta.channel_link)) || '';
+              : parseItemChannels(item.channel, item.channel_link, localMeta);
+            const effectiveChannel = (channels[0]?.channel) || ((item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline'));
+            const effectiveLink = (channels[0]?.link) || (typeof item.channel_link === 'string' && !item.channel_link.startsWith('[') ? item.channel_link : (localMeta && localMeta.channel_link)) || '';
             return {
               id: item.id,
               sku: item.sku || '',
@@ -226,7 +223,7 @@ export const items = {
               channel: effectiveChannel,
               channel_link: effectiveLink,
               channels: channels,
-              channel_meta_source: persistedChannels.length > 0 ? 'cloud' : (channels.length > 0 && useLocalMeta ? 'local' : 'none'),
+              channel_meta_source: persistedChannels.length > 0 ? 'cloud' : (channels.length > 0 ? 'local' : 'none'),
               image_url: primaryImageUrl,
               images: effectiveImages,
               created_at: item.created_at,

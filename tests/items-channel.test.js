@@ -85,7 +85,7 @@ describe('Master Barang — Saluran & Link Channel', () => {
     }]);
   });
 
-  it('Api.items.getAll tidak menghidupkan kembali metadata lokal yang lebih lama dari data cloud', async () => {
+  it('Api.items.getAll tetap memakai metadata lokal saat cloud hanya memiliki channel default tanpa tautan', async () => {
     Api.items.saveLocalChannelMeta(4, 'SKU-004', 'Shopee', 'https://shopee.co.id/old-link');
     const orderMock = vi.fn().mockResolvedValue({
       data: [{
@@ -104,9 +104,12 @@ describe('Master Barang — Saluran & Link Channel', () => {
     const res = await Api.items.getAll();
 
     expect(res.ok).toBe(true);
-    expect(res.data[0].channel_meta_source).toBe('none');
-    expect(res.data[0].channels).toEqual([]);
-    expect(res.data[0].channel).toBe('Offline');
+    expect(res.data[0].channel_meta_source).toBe('local');
+    expect(res.data[0].channels).toEqual([{
+      channel: 'Shopee',
+      link: 'https://shopee.co.id/old-link'
+    }]);
+    expect(res.data[0].channel).toBe('Shopee');
   });
 
   it('Api.items.create menyertakan channel dan channel_link pada row insert', async () => {
