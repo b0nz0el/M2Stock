@@ -185,8 +185,17 @@ function triggerPageInit(pageId) {
 }
 
 /* Navigasi: SPA client routing (0ms transition) dengan fallback MPA clean URL */
-function showPage(pageId, pushState = true) {
+async function showPage(pageId, pushState = true) {
   if (!pageId) pageId = 'dashboard';
+
+  const rbac = typeof window !== 'undefined' ? window.RBAC : null;
+  if (rbac?.getUserRole && rbac?.hasAccess) {
+    const role = await rbac.getUserRole();
+    if (!rbac.hasAccess(role, pageId)) {
+      if (pageId !== 'dashboard') return showPage('dashboard', false);
+      return;
+    }
+  }
 
   const targetPageEl = document.getElementById('page-' + pageId);
   const isSpaMode = typeof document !== 'undefined' && document.querySelectorAll('.page').length > 1;

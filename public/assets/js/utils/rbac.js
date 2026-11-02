@@ -7,21 +7,21 @@ import { supabase } from '../supabase-client.js';
 
 export const MENU_ACCESS = {
   dashboard:  ['OWNER', 'STAFF', 'VIEWER'],
-  items:      ['OWNER', 'STAFF', 'VIEWER'],
-  in:         ['OWNER', 'STAFF', 'VIEWER'],
-  out:        ['OWNER', 'STAFF', 'VIEWER'],
-  po:         ['OWNER', 'STAFF'],
-  return:     ['OWNER', 'STAFF'],
+  items:      ['OWNER', 'STAFF'],
+  in:         ['OWNER', 'STAFF'],
+  out:        ['OWNER', 'STAFF'],
+  po:         ['OWNER', 'STAFF', 'VIEWER'],
+  return:     ['OWNER', 'STAFF', 'VIEWER'],
   suppliers:  ['OWNER', 'STAFF'],
   customers:  ['OWNER', 'STAFF'],
   cash:       ['OWNER', 'STAFF'],
   debt:       ['OWNER', 'STAFF'],
-  report:     ['OWNER', 'STAFF'],
-  users:      ['OWNER'],
-  audit:      ['OWNER'],
-  backup:     ['OWNER'],
-  settings:   ['OWNER'],
-  notif:      ['OWNER', 'STAFF', 'VIEWER'],
+  report:     ['OWNER'],
+  users:      ['OWNER', 'STAFF'],
+  audit:      ['OWNER', 'STAFF'],
+  backup:     ['OWNER', 'STAFF'],
+  settings:   ['OWNER', 'STAFF'],
+  notif:      ['OWNER', 'STAFF'],
 };
 
 const CACHE_KEY = 'rbac_user_role';

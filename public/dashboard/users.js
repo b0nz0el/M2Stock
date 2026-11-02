@@ -1,5 +1,6 @@
 let usersData = [];
 let searchQuery = '';
+let currentUserRole = 'VIEWER';
 
 const AVATAR_GRADIENTS = [
   'from-[#0088CC] to-[#32ADE6]',
@@ -40,6 +41,7 @@ function getRoleBadge(role) {
 async function loadUsers() {
   const tbody = document.getElementById('users-table-body');
   try {
+    currentUserRole = await window.RBAC?.getUserRole?.() || 'VIEWER';
     const res = await Api.users.getAll();
     if (!res.ok) {
       tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-[#FF3B30]">${res.error?.message || 'Gagal memuat daftar pengguna'}</td></tr>`;
@@ -122,9 +124,11 @@ function renderUsers() {
         </td>
         <td class="px-5 py-3.5 text-[#A0A0A5] text-xs">${lastLoginText}</td>
         <td class="px-5 py-3.5 text-right">
-          <button onclick="openRoleModal('${u.id}')" title="Edit Role" aria-label="Edit Role ${escapeHtml(u.email)}" class="btn-edit-role p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
-            <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
-          </button>
+          ${currentUserRole === 'OWNER' ? `
+            <button onclick="openRoleModal('${u.id}')" title="Edit Role" aria-label="Edit Role ${escapeHtml(u.email)}" class="btn-edit-role p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+              <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+            </button>
+          ` : '<span class="text-[#A0A0A5]">-</span>'}
         </td>
       </tr>
     `;
@@ -140,6 +144,8 @@ function handleSearch(val) {
 }
 
 function openRoleModal(userId) {
+  if (currentUserRole !== 'OWNER') return;
+
   const user = usersData.find(u => u.id === userId);
   if (!user) return;
 
@@ -161,6 +167,11 @@ function closeRoleModal() {
 
 async function handleSaveRole(e) {
   e.preventDefault();
+  if (currentUserRole !== 'OWNER') {
+    showToast('Hanya OWNER yang dapat mengubah role pengguna', 'error');
+    return;
+  }
+
   const userId = document.getElementById('role-target-user-id').value;
   const newRole = document.getElementById('select-user-role').value;
   const user = usersData.find(u => u.id === userId);
@@ -217,6 +228,8 @@ function escapeHtml(str) {
 }
 
 function openCreateUserModal() {
+  if (currentUserRole !== 'OWNER') return;
+
   const modal = document.getElementById('modal-create-user');
   if (!modal) return;
   modal.classList.remove('hidden');
@@ -239,6 +252,11 @@ function loadUsersFromBackend() {
 
 async function handleCreateUserSubmit(e) {
   e.preventDefault();
+  if (currentUserRole !== 'OWNER') {
+    showToast('Hanya OWNER yang dapat membuat pengguna', 'error');
+    return;
+  }
+
   const email = document.getElementById('new-user-email').value.trim();
   const password = document.getElementById('new-user-password').value;
   const full_name = document.getElementById('new-user-name').value.trim();

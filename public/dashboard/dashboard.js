@@ -110,7 +110,7 @@
             return `
               <div class="flex items-center justify-between">
                 <div class="min-w-0">
-                  <p class="text-sm font-medium truncate">${p.name}</p>
+                  <p class="text-sm font-medium truncate">${escapeHtml(p.name)}</p>
                   <p class="text-xs text-[#A0A0A5]">${p.stock || 0} unit</p>
                 </div>
                 <span class="badge ${badgeClass}">${badgeText}</span>
@@ -253,7 +253,7 @@
             return `
               <div>
                 <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-sm font-medium truncate max-w-[200px]">${item.name}</span>
+                  <span class="text-sm font-medium truncate max-w-[200px]">${escapeHtml(item.name)}</span>
                   <span class="text-sm font-bold text-white">${item.qty}</span>
                 </div>
                 <div class="w-full bg-white/5 rounded-full h-1.5">

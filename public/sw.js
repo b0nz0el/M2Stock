@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.5.4-pwa';
+const CACHE_NAME = 'aquastock-v3.5.4-pwa-logo';
 
 const STATIC_PRECACHE = [
   '/',
@@ -26,7 +26,6 @@ const STATIC_PRECACHE = [
   '/dashboard/settings-barcode.js',
   '/dashboard/notif/',
   '/manifest.json',
-  '/assets/images/logo.svg',
   '/assets/images/icons/icon-192x192.png',
   '/assets/images/icons/icon-512x512.png',
   '/assets/fonts/InterVariable.woff2',

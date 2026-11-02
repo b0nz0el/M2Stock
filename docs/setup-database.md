@@ -12,6 +12,19 @@ Dokumen ini berisi SQL bootstrap lama dan panduan migrasi untuk basis data **Aqu
 4. Untuk project yang sudah berjalan, jalankan hanya migrasi yang belum diterapkan sesuai riwayat database; jangan mengulang bootstrap secara buta.
 5. Konfigurasikan bucket Storage, Auth, RLS, dan kredensial sesuai checklist deployment. Jangan nonaktifkan konfirmasi email di produksi.
 
+## Matriks Hak Akses
+
+| Modul | OWNER | STAFF | VIEWER |
+|---|---|---|---|
+| Dashboard | Penuh | Penuh | Baca saja |
+| Master Barang, Barang Masuk/Keluar, POS | Penuh | Buat, baca, ubah | Tidak ada akses |
+| Purchase Order dan Retur | Penuh | Buat, baca, ubah | Baca saja |
+| Supplier, Customer, Kas, Hutang/Piutang | Penuh | Buat, baca, ubah | Tidak ada akses |
+| Laporan | Penuh | Tidak ada akses | Tidak ada akses |
+| Manajemen Pengguna, Audit Log, Backup, Pengaturan | Penuh | Baca saja | Tidak ada akses |
+
+Perubahan hak akses diberlakukan oleh `20261103_z_rbac_matrix.sql` pada RLS/RPC dan oleh route guard/UI. Terapkan migrasi setelah migrasi keamanan `20261103_security_hardening.sql`.
+
 Saldo akibat barang masuk/keluar berubah melalui trigger database; frontend tidak melakukan fallback update stok. Penyesuaian stok fisik dicatat terpisah pada `stock_adjustments` dan diproses atomik melalui `perform_stock_opname`, sehingga tidak muncul sebagai penjualan/barang keluar. Terapkan migrasi `20261029_stock_adjustment_ledger.sql` setelah `20261028_inventory_single_stock_trigger.sql`. Riwayat mencatat saldo sebelum, saldo fisik, selisih, alasan, petugas, dan waktu; akses perubahan hanya melalui RPC untuk OWNER/STAFF.
 
 Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan berurutan, termasuk `20261028_inventory_single_stock_trigger.sql`, lalu verifikasi trigger `trg_transaction_stock_update` ada dan enabled sebelum mencatat transaksi. Migrasi trigger tersebut aman dijalankan ulang, membersihkan trigger stok lama `trg_transactions_auto_stock`/fungsi stok legacy, dan tidak mengubah saldo yang telah tercatat.
@@ -253,33 +266,36 @@ create trigger trg_transaction_stock_update
   after insert or delete on public.transactions
   for each row execute function public.handle_transaction_stock_update();
 
--- 3.4 RPC: get_auth_users (Daftar Pengguna Sistem untuk Owner)
+-- 3.4 RPC: get_auth_users (Daftar Pengguna Sistem untuk Owner & Staff)
 create or replace function public.get_auth_users()
 returns table (
   id uuid,
   email text,
-  name text,
+  full_name text,
   role text,
-  created_at timestamptz,
-  last_sign_in_at timestamptz
+  last_sign_in_at timestamptz,
+  created_at timestamptz
 )
 language plpgsql
 security definer
 set search_path = public, auth
 as $$
 begin
-  if not public.is_owner() then
-    raise exception 'Akses ditolak: Hanya Owner yang berhak melihat daftar pengguna.';
+  if not exists (
+    select 1 from public.profiles
+    where id = auth.uid() and upper(role) in ('OWNER', 'STAFF')
+  ) then
+    raise exception 'Akses ditolak: Hanya Owner atau Staff yang berhak melihat daftar pengguna.';
   end if;
 
   return query
   select
     u.id,
     u.email::text,
-    coalesce(p.name, split_part(u.email, '@', 1))::text as name,
+    coalesce(to_jsonb(p)->>'full_name', to_jsonb(p)->>'name', split_part(u.email, '@', 1))::text as full_name,
     coalesce(p.role, 'VIEWER')::text as role,
-    u.created_at,
-    u.last_sign_in_at
+    u.last_sign_in_at,
+    u.created_at
   from auth.users u
   left join public.profiles p on p.id = u.id
   order by u.created_at desc;
@@ -288,36 +304,35 @@ $$;
 
 -- 3.5 RPC: update_user_role (Ubah Role Pengguna)
 create or replace function public.update_user_role(target_user_id uuid, new_role text)
-returns jsonb
+returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
   owner_count integer;
+  normalized_role text := upper(trim(new_role));
 begin
   if not public.is_owner() then
     raise exception 'Akses ditolak: Hanya Owner yang berhak memperbarui role pengguna.';
   end if;
 
-  if new_role not in ('OWNER', 'STAFF', 'VIEWER') then
+  if normalized_role is null or normalized_role not in ('OWNER', 'STAFF', 'VIEWER') then
     raise exception 'Nilai role tidak valid. Pilihan: OWNER, STAFF, VIEWER.';
   end if;
 
   -- Lindungi agar tidak terjadi ketiadaan Owner dalam sistem
-  if auth.uid() = target_user_id and new_role != 'OWNER' then
-    select count(*) into owner_count from public.profiles where role = 'OWNER';
+  if auth.uid() = target_user_id and normalized_role != 'OWNER' then
+    select count(*) into owner_count from public.profiles where upper(role) = 'OWNER';
     if owner_count <= 1 then
       raise exception 'Tidak dapat menurunkan role: Sistem harus memiliki minimal satu Owner aktif.';
     end if;
   end if;
 
   update public.profiles
-  set role = new_role,
+  set role = normalized_role,
       updated_at = now()
   where id = target_user_id;
-
-  return jsonb_build_object('success', true, 'target_user_id', target_user_id, 'new_role', new_role);
 end;
 $$;
 
@@ -337,8 +352,10 @@ alter table public.notifications enable row level security;
 create policy "profiles_select_auth" on public.profiles
   for select to authenticated using (true);
 
-create policy "profiles_update_self_or_owner" on public.profiles
-  for update to authenticated using (auth.uid() = id or public.is_owner());
+create policy "profiles_update_owner_only" on public.profiles
+  for update to authenticated
+  using (public.is_owner())
+  with check (public.is_owner());
 
 -- 4.2 Categories
 create policy "categories_select_auth" on public.categories
