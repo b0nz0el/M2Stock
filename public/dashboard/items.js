@@ -2918,6 +2918,61 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
     }
   }
 
+  async function syncMarketplaceLinksToHabitic() {
+    const button = document.getElementById('btn-sync-habitic-links');
+    if (!window.supabase?.auth || !button) {
+      if (typeof showToast === 'function') showToast('Fitur sinkronisasi belum siap. Muat ulang halaman.', 'error');
+      return;
+    }
+
+    if (!window.confirm('Kirim link marketplace Aquastock ke katalog Habitic berdasarkan SKU? Harga, stok, deskripsi, dan data produk lain tidak akan diubah. Link kosong akan dilewati.')) {
+      return;
+    }
+
+    let session;
+    try {
+      const { data, error } = await window.supabase.auth.getSession();
+      session = error ? null : data?.session;
+    } catch (sessionError) {
+      console.error('Gagal membaca sesi untuk sinkronisasi Habitic:', sessionError);
+    }
+    if (!session?.access_token) {
+      if (typeof showToast === 'function') showToast('Sesi Aquastock tidak tersedia. Silakan login ulang.', 'error');
+      return;
+    }
+
+    const previousContent = button.innerHTML;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i><span>Menyinkronkan...</span>';
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+
+    try {
+      const response = await fetch('/api/integrations/habitic', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'X-Supabase-Key': window.supabase.supabaseKey || ''
+        }
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || result?.success !== true) {
+        throw new Error(result?.error || `Sinkronisasi gagal (HTTP ${response.status}).`);
+      }
+
+      const summary = result.summary || {};
+      const message = `${Number(summary.updatedProducts) || 0} produk diperbarui, ${Number(summary.updatedLinks) || 0} link disinkronkan; SKU tidak cocok: ${Number(summary.unmatchedSkus) || 0}, SKU ganda: ${Number(summary.ambiguousSkus) || 0}.`;
+      if (typeof showToast === 'function') showToast(message, 'success', 7000);
+    } catch (syncError) {
+      if (typeof showToast === 'function') showToast(syncError.message || 'Sinkronisasi link ke Habitic gagal.', 'error', 7000);
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.innerHTML = previousContent;
+      if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    }
+  }
+
   function handleItemStockInput() {
     const val = Number(document.getElementById('item-stock')?.value || 0);
     const warnBanner = document.getElementById('item-stock-warning-banner');
@@ -2945,6 +3000,7 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
   window.closeDeleteModal = closeDeleteModal;
   window.confirmDeleteItem = confirmDeleteItem;
   window.loadItemsFromBackend = loadItemsFromBackend;
+  window.syncMarketplaceLinksToHabitic = syncMarketplaceLinksToHabitic;
   window.autoGenerateSkuForItem = autoGenerateSkuForItem;
 
   // Fitur Fase 4.8 & Sorting

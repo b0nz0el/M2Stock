@@ -78,6 +78,18 @@ const SUPABASE_ANON_KEY = '<production-anon-key>';
 3. **Database Backup**:
    - Aktifkan fitur *Point-in-Time Recovery (PITR)* atau jadwalkan *Daily Automated Backup* pada proyek Supabase.
 
+### 3.3 Sinkronisasi Link Marketplace ke Habitic
+Function `POST /api/integrations/habitic` membaca SKU dan URL marketplace dengan sesi Supabase pengguna yang sedang login, lalu mengirim URL saja ke endpoint Habitic. Nilai sesi dan rahasia integrasi tidak dikirim ke browser tujuan.
+
+Atur satu nilai rahasia acak yang sama di **Cloudflare Pages → Settings → Variables and Secrets → Production**:
+
+| Project | Secret |
+|---|---|
+| `aquastock-pro` | `HABITIC_SYNC_SECRET` |
+| `habitic` | `AQUASTOCK_SYNC_SECRET` |
+
+Jangan masukkan nilai secret ke kode, file `.env` yang di-commit, atau JavaScript publik. Setelah kedua project memiliki secret yang sama, gunakan tombol **Sinkron Link Habitic** di halaman Master Barang. Sinkronisasi dibatasi 250 produk per proses dan hanya mengubah link marketplace pada produk Habitic yang memiliki SKU unik yang cocok.
+
 ---
 
 ## 4. Checklist Pra-Deployment (Pre-Flight Verification)

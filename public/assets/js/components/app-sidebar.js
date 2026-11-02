@@ -590,7 +590,7 @@ class AppSidebar extends HTMLElement {
           </a>
           <button type="button" onclick="window.checkForPwaUpdate()" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#32ADE6] hover:bg-[#32ADE6]/10 transition cursor-pointer" data-action="check-update" title="Periksa dan update pembaruan PWA">
             <i data-lucide="refresh-cw" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Cek Pembaruan
-            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold" data-app-version-sidebar>v3.4.109</span>
+            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold" data-app-version-sidebar>v3.5.0</span>
           </button>
 
           <!-- Tombol Keluar Langsung di Drawer Mobile -->
