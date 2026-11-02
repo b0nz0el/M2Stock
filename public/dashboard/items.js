@@ -496,8 +496,8 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
         return {
           label: 'Lazada',
           icon: getChannelIconConfig(ch).icon,
-          badgeClasses: 'bg-[#0088CC]/15 text-[#32ADE6] border-[#0088CC]/30 hover:bg-[#0088CC]/25',
-          iconColor: 'text-[#32ADE6]',
+          badgeClasses: 'bg-[#F36F21]/10 text-[#F36F21] border-[#F36F21]/25 hover:bg-[#F36F21]/20',
+          iconColor: 'text-[#F36F21]',
           hasLink
         };
       case 'WhatsApp':

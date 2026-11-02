@@ -122,7 +122,7 @@ describe('settings catalog actions', () => {
     const editButton = channelList.querySelector('[data-catalog-action="edit"]');
     const deleteButton = channelList.querySelector('[data-catalog-action="delete"]');
 
-    expect(channelList.querySelector('[data-lucide="shopping-bag"]')).not.toBeNull();
+    expect(channelList.querySelector('[data-lucide="brand-shopee"]')).not.toBeNull();
     expect(editButton.querySelector('[data-lucide="pencil"]')).not.toBeNull();
     expect(editButton.getAttribute('aria-label')).toBe('Edit Shopee');
     expect(editButton.title).toBe('Edit Shopee');

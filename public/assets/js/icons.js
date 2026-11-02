@@ -1,12 +1,17 @@
 /* ═══════════════════════════════════════════════════
    Aquastock Pro — icons.js
-   Local Lucide SVG Subset (74 icons)
+   Local SVG Icon Registry
    ═══════════════════════════════════════════════════ */
 (function() {
   const ICONS = {
   "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\"></path>",
   "alert-circle": "<circle cx=\"12\" cy=\"12\" r=\"10\"></circle><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"></line><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"></line>",
   "alert-triangle": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"></path><path d=\"M12 9v4\"></path><path d=\"M12 17h.01\"></path>",
+  "brand-shopee": "<path d=\"M19.5 7.5h-2.2c-.4-2.8-2.3-5-5.3-5s-4.9 2.2-5.3 5H4.5C3.7 7.5 3 8.2 3 9l1.4 11.2c.1 1 .9 1.8 1.9 1.8h11.4c1 0 1.8-.8 1.9-1.8L21 9c0-.8-.7-1.5-1.5-1.5zm-7.5-3.5c1.9 0 3.3 1.5 3.7 3.5H8.3c.4-2 1.8-3.5 3.7-3.5zm.2 13.5c-2.3 0-3.5-1.1-3.6-2.5h1.7c.1.6.8 1.2 1.9 1.2 1.2 0 1.8-.6 1.8-1.2 0-.6-.5-1-1.6-1.3l-.9-.2c-1.8-.4-2.7-1.3-2.7-2.6 0-1.5 1.3-2.6 3.3-2.6 1.9 0 3.2.9 3.4 2.3h-1.6c-.2-.6-.7-1-1.8-1-1 0-1.6.5-1.6 1.1 0 .5.4.9 1.4 1.1l.9.2c2 .5 2.9 1.4 2.9 2.7-.1 1.7-1.4 2.8-3.2 2.8z\" fill=\"currentColor\"></path>",
+  "brand-tokopedia": "<path d=\"M96 28c-9.504 0-17.78 5.307-22.008 13.127C82.736 42.123 88.89 44 96 47.332c7.11-3.332 13.264-5.209 22.008-6.205C113.781 33.31 105.506 28 96 28Zm0-12c-15.973 0-29.568 10.117-34.754 24.28C52.932 40 42.462 40 28.53 40H28a6 6 0 0 0-6 6v124a6 6 0 0 0 6 6h92c27.614 0 50-22.386 50-50V46a6 6 0 0 0-6-6h-.531c-13.931 0-24.401 0-32.715.28C125.566 26.113 111.97 16 96 16ZM34 52.001V164h86c20.987 0 38-17.013 38-38V52.001c-18.502.009-29.622.098-37.872.966-8.692.915-13.999 2.677-21.445 6.4a6 6 0 0 1-5.366 0c-7.446-3.723-12.753-5.485-21.445-6.4-8.25-.868-19.37-.957-37.872-.966ZM50 96c0-9.941 8.059-18 18-18s18 8.059 18 18-8.059 18-18 18-18-8.059-18-18Zm18-30c-16.569 0-30 13.431-30 30 0 16.569 13.431 30 30 30 1.126 0 2.238-.062 3.332-.183l20.425 20.426a6 6 0 0 0 8.486 0l20.425-20.426c1.094.121 2.206.183 3.332.183 16.569 0 30-13.431 30-30 0-16.569-13.431-30-30-30-12.764 0-23.666 7.971-28 19.207C91.666 73.971 80.764 66 68 66Zm40.082 55.433A30.1 30.1 0 0 1 96 106.793a30.101 30.101 0 0 1-12.082 14.64L96 133.515l12.082-12.082ZM124 78c-9.941 0-18 8.059-18 18s8.059 18 18 18 18-8.059 18-18-8.059-18-18-18ZM76 96a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm48 8a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z\" fill=\"currentColor\" fill-rule=\"evenodd\" clip-rule=\"evenodd\"></path>",
+  "brand-tiktok-shop": "<path fill=\"#25F4EE\" d=\"M137.17 156.98v-15.56c-5.34-.73-10.76-1.18-16.29-1.18C54.23 140.24 0 194.47 0 261.13c0 40.9 20.43 77.09 51.61 98.97-20.12-21.6-32.46-50.53-32.46-82.31 0-65.7 52.69-119.28 118.03-120.81Z\"></path><path fill=\"#25F4EE\" d=\"M140.02 333c29.74 0 54-23.66 55.1-53.13l.11-263.2h48.08c-1-5.41-1.55-10.97-1.55-16.67h-65.67l-.11 263.2c-1.1 29.47-25.36 53.13-55.1 53.13-9.24 0-17.95-2.31-25.61-6.34C105.3 323.9 121.6 333 140.02 333ZM333.13 106V91.37c-18.34 0-35.43-5.45-49.76-14.8 12.76 14.65 30.09 25.22 49.76 29.43Z\"></path><path fill=\"#FE2C55\" d=\"M283.38 76.57c-13.98-16.05-22.47-37-22.47-59.91h-17.59c4.63 25.02 19.48 46.49 40.06 59.91ZM120.88 205.92c-30.44 0-55.21 24.77-55.21 55.21 0 21.2 12.03 39.62 29.6 48.86-6.55-9.08-10.45-20.18-10.45-32.2 0-30.44 24.77-55.21 55.21-55.21 5.68 0 11.13.94 16.29 2.55v-67.05c-5.34-.73-10.76-1.18-16.29-1.18-.96 0-1.9.05-2.85.07v51.49c-5.16-1.61-10.61-2.55-16.29-2.55Z\"></path><path fill=\"#FE2C55\" d=\"M333.13 106v51.04c-34.05 0-65.61-10.89-91.37-29.38v133.47c0 66.66-54.23 120.88-120.88 120.88-25.76 0-49.64-8.12-69.28-21.91 22.08 23.71 53.54 38.57 88.42 38.57 66.66 0 120.88-54.23 120.88-120.88V144.33c25.76 18.49 57.32 29.38 91.37 29.38v-65.68c-6.57 0-12.97-.71-19.14-2.03Z\"></path><path fill=\"#FFFFFF\" d=\"M241.76 261.13V127.66c25.76 18.49 57.32 29.38 91.37 29.38V106c-19.67-4.21-37-14.77-49.76-29.43-20.58-13.42-35.43-34.88-40.06-59.91h-48.08l-.11 263.2c-1.1 29.47-25.36 53.13-55.1 53.13-18.42 0-34.72-9.1-44.75-23.01-17.57-9.25-29.6-27.67-29.6-48.86 0-30.44 24.77-55.21 55.21-55.21 5.68 0 11.13.94 16.29 2.55v-51.49C71.83 158.5 19.14 212.08 19.14 277.78c0 31.78 12.34 60.71 32.46 82.31C71.23 373.87 95.12 382 120.88 382c66.65 0 120.88-54.23 120.88-120.88Z\"></path>",
+  "brand-lazada": "<path d=\"m34.3823,6.2796l-6.4263,3.7102c-2.1825,1.2601-5.7322,1.2537-7.9285,-0.0143l-6.4666,-3.7335-9.0608,5.2313,19.561,11.2936,19.439,-11.2231-9.1177,-5.2641Z\"></path><path d=\"m43.5,11.5437v19.2712l-18.5339,10.7006c-.5601.3233-1.2501.3233-1.8101,0L4.5,30.7445V11.4733\"></path><line x1=\"24.061\" y1=\"22.7668\" x2=\"24.061\" y2=\"41.754\"></line>",
+  "brand-whatsapp": "<path d=\"M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.79 14.12c-.24.68-1.39 1.3-1.93 1.38-.5.08-1.13.11-3.64-.93-3.05-1.26-5-4.37-5.15-4.57-.15-.2-1.24-1.65-1.24-3.15 0-1.5.78-2.24 1.06-2.55.28-.31.61-.39.81-.39.2 0 .41 0 .59.01.19.01.44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.03.53-.1.2-.15.33-.3.51-.15.18-.32.4-.46.54-.15.15-.31.31-.13.62.18.31.79 1.3 1.7 2.11 1.17 1.04 2.15 1.36 2.46 1.51.31.15.49.13.67-.08.18-.21.78-.91.99-1.22.21-.31.42-.26.7-.15.28.11 1.78.84 2.09.99.31.15.51.23.59.36.08.13.08.76-.16 1.44z\" fill=\"currentColor\"></path>",
   "arrow-down": "<path d=\"M12 5v14\"></path><path d=\"m19 12-7 7-7-7\"></path>",
   "arrow-up": "<path d=\"m5 12 7-7 7 7\"></path><path d=\"M12 19V5\"></path>",
   "arrow-up-down": "<path d=\"m21 16-4 4-4-4\"></path><path d=\"M17 20V4\"></path><path d=\"m3 8 4-4 4 4\"></path><path d=\"M7 4v16\"></path>",
@@ -142,6 +147,13 @@
   "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"></path><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"></path>",
   "x": "<path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path>"
 };
+  const CUSTOM_ICON_ATTRIBUTES = {
+    "brand-shopee": { viewBox: "0 0 24 24", fill: "currentColor", stroke: "none" },
+    "brand-tokopedia": { viewBox: "0 0 192 192", fill: "currentColor", stroke: "none" },
+    "brand-tiktok-shop": { viewBox: "0 0 352 398", fill: "none", stroke: "none" },
+    "brand-lazada": { viewBox: "0 0 48 48", fill: "none", stroke: "currentColor", strokeWidth: "1.2", strokeLinecap: "round", strokeLinejoin: "round" },
+    "brand-whatsapp": { viewBox: "0 0 24 24", fill: "currentColor", stroke: "none" }
+  };
 
   function refreshIcons(root) {
     const container = root && root.querySelectorAll ? root : document;
@@ -150,9 +162,15 @@
       const name = el.getAttribute('data-lucide');
       const inner = ICONS[name];
       if (!inner) return;
+      const customAttributes = CUSTOM_ICON_ATTRIBUTES[name];
 
       if (el.tagName.toLowerCase() === 'svg') {
         el.innerHTML = inner;
+        if (customAttributes) {
+          Object.entries(customAttributes).forEach(function([attribute, value]) {
+            el.setAttribute(attribute.replace(/[A-Z]/g, function(letter) { return '-' + letter.toLowerCase(); }), value);
+          });
+        }
         const baseClass = (el.getAttribute('class') || '').replace(/\blucide(-\S+)?\b/g, '').trim();
         el.setAttribute('class', ('lucide lucide-' + name + ' ' + baseClass).trim());
         return;
@@ -162,12 +180,12 @@
       svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       svg.setAttribute('width', '24');
       svg.setAttribute('height', '24');
-      svg.setAttribute('viewBox', '0 0 24 24');
-      svg.setAttribute('fill', 'none');
-      svg.setAttribute('stroke', 'currentColor');
-      svg.setAttribute('stroke-width', '2');
-      svg.setAttribute('stroke-linecap', 'round');
-      svg.setAttribute('stroke-linejoin', 'round');
+      svg.setAttribute('viewBox', customAttributes?.viewBox || '0 0 24 24');
+      svg.setAttribute('fill', customAttributes?.fill || 'none');
+      svg.setAttribute('stroke', customAttributes?.stroke || 'currentColor');
+      svg.setAttribute('stroke-width', customAttributes?.strokeWidth || '2');
+      svg.setAttribute('stroke-linecap', customAttributes?.strokeLinecap || 'round');
+      svg.setAttribute('stroke-linejoin', customAttributes?.strokeLinejoin || 'round');
       svg.setAttribute('data-lucide', name);
 
       const existingClass = el.getAttribute('class') || '';
