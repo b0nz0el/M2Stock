@@ -67,6 +67,10 @@ const STAFF_DELETE_SELECTOR_STRING = STAFF_DELETE_SELECTORS.join(', ');
 
 function hideMatchingElements(root, selector) {
   if (!root || typeof root.querySelectorAll !== 'function') return;
+  if (root.nodeType === 1 && root.matches(selector)) {
+    root.style.display = 'none';
+    if ('disabled' in root) root.disabled = true;
+  }
   root.querySelectorAll(selector).forEach(el => {
     el.style.display = 'none';
     if ('disabled' in el) el.disabled = true;
@@ -75,37 +79,85 @@ function hideMatchingElements(root, selector) {
 
 function disableMatchingElements(root, selector) {
   if (!root || typeof root.querySelectorAll !== 'function') return;
+  if (root.nodeType === 1 && root.matches(selector) && 'disabled' in root) {
+    root.disabled = true;
+  }
   root.querySelectorAll(selector).forEach(el => {
     if ('disabled' in el) el.disabled = true;
   });
 }
 
-function applyRoleRestrictions(role) {
-  if (role === 'VIEWER' && typeof document !== 'undefined') {
-    document.body.classList.add('rbac-hidden');
-    hideMatchingElements(document, READONLY_SELECTOR_STRING);
-  } else if (typeof document !== 'undefined') {
-    document.body.classList.remove('rbac-hidden');
+function applyPageRestrictions(pageId, root, role) {
+  hideMatchingElements(root, READONLY_SELECTOR_STRING);
+
+  if (pageId === 'backup') {
+    hideMatchingElements(root, 'button, input, select, textarea');
+  } else if (pageId === 'settings') {
+    hideMatchingElements(root, 'button:not(.settings-tab-btn)');
+    disableMatchingElements(root, 'input, select, textarea');
+  }
+}
+
+function applyRoleRestrictions(role, root = document) {
+  if (!root || typeof document === 'undefined') return;
+
+  if (root === document) {
+    if (role === 'VIEWER') {
+      document.body.classList.add('rbac-hidden');
+    } else {
+      document.body.classList.remove('rbac-hidden');
+    }
   }
 
-  if (role === 'STAFF' && typeof document !== 'undefined') {
-    hideMatchingElements(document, STAFF_DELETE_SELECTOR_STRING);
+  if (role === 'VIEWER') {
+    hideMatchingElements(root, READONLY_SELECTOR_STRING);
+  } else if (role === 'STAFF') {
+    hideMatchingElements(root, STAFF_DELETE_SELECTOR_STRING);
   }
 
   const readOnlyPages = READ_ONLY_PAGES[role] || [];
-  readOnlyPages.forEach(pageId => {
-    const page = document.getElementById(`page-${pageId}`);
-    if (!page) return;
 
-    hideMatchingElements(page, READONLY_SELECTOR_STRING);
+  if (root === document) {
+    readOnlyPages.forEach(pageId => {
+      const page = document.getElementById(`page-${pageId}`);
+      if (page) applyPageRestrictions(pageId, page, role);
+    });
+    return;
+  }
 
-    if (pageId === 'backup') {
-      hideMatchingElements(page, 'button, input, select, textarea');
-    } else if (pageId === 'settings') {
-      hideMatchingElements(page, 'button:not(.settings-tab-btn)');
-      disableMatchingElements(page, 'input, select, textarea');
+  const applyToAddedContent = (node) => {
+    if (node.nodeType !== 1) return;
+    const page = node.matches('.page') ? node : node.closest('.page');
+    const pageId = page?.id.startsWith('page-') ? page.id.slice(5) : null;
+    if (pageId && readOnlyPages.includes(pageId)) {
+      applyPageRestrictions(pageId, node, role);
+      return;
     }
+
+    node.querySelectorAll('.page').forEach(childPage => {
+      const childPageId = childPage.id.startsWith('page-') ? childPage.id.slice(5) : null;
+      if (childPageId && readOnlyPages.includes(childPageId)) {
+        applyPageRestrictions(childPageId, childPage, role);
+      }
+    });
+  };
+
+  applyToAddedContent(root);
+}
+
+function installRoleObserver(role) {
+  if (typeof window === 'undefined' || window._rbacObserverInstalled || typeof MutationObserver === 'undefined') {
+    return;
+  }
+
+  window._rbacObserverInstalled = true;
+  const observer = new MutationObserver((mutations) => {
+    const currentRole = document.body.dataset.rbacRole || role;
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => applyRoleRestrictions(currentRole, node));
+    });
   });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -119,15 +171,7 @@ export async function applyReadOnlyUI() {
   const effectiveRole = role || 'VIEWER';
   document.body.dataset.rbacRole = effectiveRole;
   applyRoleRestrictions(effectiveRole);
-
-  if (typeof window !== 'undefined' && !window._rbacObserverInstalled && typeof MutationObserver !== 'undefined') {
-    window._rbacObserverInstalled = true;
-    const observer = new MutationObserver(() => {
-      const currentRole = document.body.dataset.rbacRole || effectiveRole;
-      applyRoleRestrictions(currentRole);
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
+  installRoleObserver(effectiveRole);
 
   return role;
 }

@@ -26,9 +26,7 @@
 <!-- RBAC Route Guard (Layer 2) & Read-Only UI (Layer 1) -->
 <script type="module">
   import { guardRoute } from '../assets/js/utils/rbac.js';
-  import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
   await guardRoute('dashboard');
-  applyReadOnlyUI();
 </script>
 
 <!-- Inter font (self-host) -->
