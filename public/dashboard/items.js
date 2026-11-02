@@ -471,16 +471,16 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
         return {
           label: 'Shopee',
           icon: getChannelIconConfig(ch).icon,
-          badgeClasses: 'bg-[#EE4D2D]/15 text-[#EE4D2D] border-[#EE4D2D]/30 hover:bg-[#EE4D2D]/25',
-          iconColor: 'text-[#EE4D2D]',
+          badgeClasses: 'bg-[#EE4D2D] text-white border-transparent hover:bg-[#D94426]',
+          iconColor: 'text-white',
           hasLink
         };
       case 'Tokopedia':
         return {
           label: 'Tokopedia',
           icon: getChannelIconConfig(ch).icon,
-          badgeClasses: 'bg-[#03AC0E]/15 text-[#00AA5B] border-[#03AC0E]/30 hover:bg-[#03AC0E]/25',
-          iconColor: 'text-[#00AA5B]',
+          badgeClasses: 'bg-[#00AA5B] text-white border-transparent hover:bg-[#00994F]',
+          iconColor: 'text-white',
           hasLink
         };
       case 'TikTok':
@@ -488,24 +488,24 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
         return {
           label: 'TikTok Shop',
           icon: getChannelIconConfig(ch).icon,
-          badgeClasses: 'bg-[#00F2FE]/10 text-[#00F2FE] border-[#00F2FE]/25 hover:bg-[#00F2FE]/20',
-          iconColor: 'text-[#00F2FE]',
+          badgeClasses: 'bg-black text-white border-[#303030] hover:bg-[#171717]',
+          iconColor: 'text-white',
           hasLink
         };
       case 'Lazada':
         return {
           label: 'Lazada',
           icon: getChannelIconConfig(ch).icon,
-          badgeClasses: 'bg-[#F36F21]/10 text-[#F36F21] border-[#F36F21]/25 hover:bg-[#F36F21]/20',
-          iconColor: 'text-[#F36F21]',
+          badgeClasses: 'bg-[#F3F4F6] text-[#D1D5DB] border-transparent hover:bg-[#E5E7EB]',
+          iconColor: 'text-[#D1D5DB]',
           hasLink
         };
       case 'WhatsApp':
         return {
           label: 'WhatsApp',
           icon: getChannelIconConfig(ch).icon,
-          badgeClasses: 'bg-[#25D366]/15 text-[#25D366] border-[#25D366]/30 hover:bg-[#25D366]/25',
-          iconColor: 'text-[#25D366]',
+          badgeClasses: 'bg-[#16A34A] text-white border-transparent hover:bg-[#15803D]',
+          iconColor: 'text-white',
           hasLink
         };
       case 'Offline':
@@ -546,9 +546,8 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
       if (!cfg) return '';
       if (cfg.hasLink) {
         return `
-          <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="relative inline-flex h-7 w-7 items-center justify-center rounded-lg border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}" aria-label="Buka etalase produk di ${escapeHtml(cfg.label)}">
-            <i data-lucide="${cfg.icon}" class="h-4 w-4" aria-hidden="true"></i>
-            <i data-lucide="external-link" class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-sm bg-[#1C1C1E]" aria-hidden="true"></i>
+          <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}" aria-label="Buka etalase produk di ${escapeHtml(cfg.label)}">
+            <i data-lucide="${cfg.icon}" class="h-5 w-5" aria-hidden="true"></i>
           </a>
         `;
       }
@@ -2096,12 +2095,15 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
               const chList = (Array.isArray(item.channels) && item.channels.length > 0)
                 ? item.channels.filter(c => c && c.link)
                 : (item.channel_link ? [{ channel: item.channel, link: item.channel_link }] : []);
-              return chList.map(c => `
-                <a href="${escapeHtml(c.link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}" class="relative h-8 w-8 hover:bg-white/5 rounded-lg ${getChannelIconConfig(c.channel).color} inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}">
-                  <i data-lucide="${getChannelIconConfig(c.channel).icon}" class="w-4 h-4" aria-hidden="true"></i>
-                  <i data-lucide="external-link" class="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-sm bg-[#1C1C1E]" aria-hidden="true"></i>
+              return chList.map(c => {
+                const config = getChannelBadgeConfig(c.channel, c.link) || {};
+                const label = config.label || c.channel || 'Marketplace';
+                return `
+                <a href="${escapeHtml(c.link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml(label)}" class="relative h-9 w-9 rounded-xl border inline-flex items-center justify-center transition active:scale-95 shadow-sm ${config.badgeClasses || 'bg-white/5 text-[#32ADE6] border-white/10'}" title="Buka produk di ${escapeHtml(label)}">
+                  <i data-lucide="${config.icon || getChannelIconConfig(c.channel).icon}" class="w-5 h-5" aria-hidden="true"></i>
                 </a>
-              `).join('');
+              `;
+              }).join('');
             })()}
             <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-[#FF9500]/15 hover:border-[#FF9500]/30 border border-transparent rounded-lg text-[#FF9500] transition active:scale-95">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>

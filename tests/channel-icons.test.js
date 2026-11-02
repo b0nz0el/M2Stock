@@ -4,13 +4,13 @@ import '../public/assets/js/icons.js';
 
 describe('marketplace channel icons', () => {
   it.each([
-    ['Shopee', 'brand-shopee', 'text-[#EE4D2D]', '0 0 24 24'],
-    ['Tokopedia', 'brand-tokopedia', 'text-[#00AA5B]', '0 0 192 192'],
-    ['TikTok Shop', 'brand-tiktok-shop', 'text-[#00F2FE]', '0 0 352 398'],
-    ['Lazada', 'brand-lazada', 'text-[#F36F21]', '0 0 48 48'],
-    ['WhatsApp', 'brand-whatsapp', 'text-[#25D366]', '0 0 24 24']
-  ])('maps %s to its brand icon and color', (channel, icon, color) => {
-    expect(getChannelIconConfig(channel)).toMatchObject({ icon, color });
+    ['Shopee', 'brand-shopee', 'text-white', 'bg-[#EE4D2D]', '0 0 24 24'],
+    ['Tokopedia', 'brand-tokopedia', 'text-white', 'bg-[#00AA5B]', '0 0 192 192'],
+    ['TikTok Shop', 'brand-tiktok-shop', 'text-white', 'bg-black', '0 0 352 398'],
+    ['Lazada', 'brand-lazada', 'text-[#D1D5DB]', 'bg-[#F3F4F6]', '0 0 48 48'],
+    ['WhatsApp', 'brand-whatsapp', 'text-white', 'bg-[#16A34A]', '0 0 24 24']
+  ])('maps %s to its brand icon and filled tile style', (channel, icon, color, background) => {
+    expect(getChannelIconConfig(channel)).toMatchObject({ icon, color, background });
   });
 
   it('matches channel names without case sensitivity and provides a fallback', () => {

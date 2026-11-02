@@ -198,14 +198,18 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(html).toContain('id="po-auto-status-indicator"');
   });
 
-  it('Master Barang menampilkan ikon marketplace dan indikator aksi tautan eksternal', () => {
+  it('Master Barang menampilkan ikon marketplace pada tile berwarna sesuai brand', () => {
     const itemsPath = path.resolve(__dirname, '../public/dashboard/items.js');
     const itemsJs = fs.readFileSync(itemsPath, 'utf8');
 
-    expect(itemsJs).toContain('getChannelIconConfig(c.channel).icon');
-    expect(itemsJs).toContain('getChannelIconConfig(c.channel).color');
+    expect(itemsJs).toContain('class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border');
+    expect(itemsJs).toContain('bg-[#EE4D2D] text-white');
+    expect(itemsJs).toContain('bg-[#00AA5B] text-white');
+    expect(itemsJs).toContain('bg-black text-white');
+    expect(itemsJs).toContain('bg-[#F3F4F6] text-[#D1D5DB]');
+    expect(itemsJs).toContain('bg-[#16A34A] text-white');
     expect(itemsJs).toContain('getChannelBadgeConfig(item.channel, item.link)');
-    expect(itemsJs).toContain('data-lucide="external-link"');
+    expect(itemsJs).toContain('data-lucide="${cfg.icon}"');
     expect(itemsJs).toContain('aria-label="Buka produk di ${escapeHtml');
   });
 
