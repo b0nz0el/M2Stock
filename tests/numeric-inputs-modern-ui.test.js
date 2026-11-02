@@ -27,6 +27,12 @@ describe('Modern Custom UI & Mobile Numeric Numpad on Financial & Inventory Inpu
     expect(sellInput).toContain('inputmode="numeric"');
     expect(sellInput).toContain('pattern="[0-9]*"');
 
+    // Harga Jual Online
+    const onlineSellInput = getInputTag(indexHtml, 'item-online-sell-price');
+    expect(onlineSellInput).toContain('type="text"');
+    expect(onlineSellInput).toContain('inputmode="numeric"');
+    expect(onlineSellInput).toContain('pattern="[0-9]*"');
+
     // Min Stok
     const minStockInput = getInputTag(indexHtml, 'item-min-stock');
     expect(minStockInput).toContain('type="text"');
@@ -100,6 +106,7 @@ describe('Modern Custom UI & Mobile Numeric Numpad on Financial & Inventory Inpu
     const requiredClearButtons = [
       'btn-clear-item-cost-price',
       'btn-clear-item-sell-price',
+      'btn-clear-item-online-sell-price',
       'btn-clear-item-min-stock',
       'btn-clear-bulk-price-nominal-input',
       'btn-clear-adj-actual-stock',
@@ -206,4 +213,3 @@ describe('Modern Custom UI & Mobile Numeric Numpad on Financial & Inventory Inpu
     expect(indexHtml).toMatch(/<form id="form-cash"[^>]*novalidate/);
   });
 });
-

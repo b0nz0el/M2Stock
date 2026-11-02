@@ -60,7 +60,7 @@
 
   function sanitizeNumericInputElement(input) {
     if (!input) return;
-    if (input.matches('#item-cost-price, #item-sell-price, #bulk-price-nominal-input')) {
+    if (input.matches('#item-cost-price, #item-sell-price, #item-online-sell-price, #bulk-price-nominal-input')) {
       const cleanDigits = String(input.value).replace(/\D/g, '');
       const num = cleanDigits === '' ? 0 : Number(cleanDigits);
       input.value = num > 0 ? new Intl.NumberFormat('id-ID').format(num) : (input.value === '' ? '' : '0');
@@ -73,7 +73,7 @@
     document.addEventListener('input', (event) => {
       const target = event.target;
       if (!target || typeof target.matches !== 'function') return;
-      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock, #bulk-price-nominal-input')) {
+      if (target.matches('#item-cost-price, #item-sell-price, #item-online-sell-price, #item-min-stock, #bulk-price-nominal-input')) {
         sanitizeNumericInputElement(target);
       }
     }, true);
@@ -81,7 +81,7 @@
     document.addEventListener('blur', (event) => {
       const target = event.target;
       if (!target || typeof target.matches !== 'function') return;
-      if (target.matches('#item-cost-price, #item-sell-price, #item-min-stock, #bulk-price-nominal-input')) {
+      if (target.matches('#item-cost-price, #item-sell-price, #item-online-sell-price, #item-min-stock, #bulk-price-nominal-input')) {
         sanitizeNumericInputElement(target);
       }
     }, true);
@@ -737,6 +737,8 @@
     if (unitSelect && defaultUnit) unitSelect.value = String(defaultUnit.id);
     resetImageForm();
     document.getElementById('item-id').value = '';
+    const onlinePriceInput = document.getElementById('item-online-sell-price');
+    if (onlinePriceInput) onlinePriceInput.value = '';
     const stockInput = document.getElementById('item-stock');
     if (stockInput) {
       stockInput.value = '0';
@@ -846,8 +848,11 @@
     if (warnBanner) warnBanner.classList.add('hidden');
     document.getElementById('item-cost-price').value = item.cost_price || 0;
     document.getElementById('item-sell-price').value = item.sell_price || 0;
+    const onlinePriceInput = document.getElementById('item-online-sell-price');
+    if (onlinePriceInput) onlinePriceInput.value = item.online_sell_price ?? item.onlineSellPrice ?? '';
     sanitizeNumericInputElement(document.getElementById('item-cost-price'));
     sanitizeNumericInputElement(document.getElementById('item-sell-price'));
+    sanitizeNumericInputElement(document.getElementById('item-online-sell-price'));
     document.getElementById('item-min-stock').value = item.min_stock || 3;
 
     const getLocalMeta = (typeof window !== 'undefined' && window.getLocalChannelMeta) ? window.getLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.getLocalChannelMeta ? Api.items.getLocalChannelMeta : null);
@@ -966,6 +971,8 @@
       const stock = parseNumericValue(document.getElementById('item-stock')?.value);
       const cost_price = parseNumericValue(document.getElementById('item-cost-price')?.value);
       const sell_price = parseNumericValue(document.getElementById('item-sell-price')?.value);
+      const onlinePriceInput = document.getElementById('item-online-sell-price')?.value ?? '';
+      const online_sell_price = onlinePriceInput.trim() === '' ? null : parseNumericValue(onlinePriceInput);
       const min_stock = parseNumericValue(document.getElementById('item-min-stock')?.value);
 
       // Read current values directly from DOM rows to capture latest edits
@@ -1141,6 +1148,7 @@
         image_url: finalImageUrl,
         images: finalUrls
       };
+      if (online_sell_price !== null) payload.online_sell_price = online_sell_price;
       let res;
       if (id) {
         // Cek apakah ada perubahan cost_price atau supplier_id

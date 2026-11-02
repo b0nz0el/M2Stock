@@ -16,6 +16,7 @@ const sampleItem = {
   supplier_id: 5,
   cost_price: 25000,
   sell_price: 35000,
+  online_sell_price: 37500,
   stock: 15,
   min_stock: 3,
   channel: 'Offline',
@@ -78,6 +79,7 @@ describe('Master Barang — Izin Notifikasi Koreksi Riwayat Barang Masuk', () =>
             <div id="item-stock-warning-banner" class="hidden"></div>
             <input id="item-cost-price" value="25000">
             <input id="item-sell-price" value="35000">
+            <input id="item-online-sell-price" value="">
             <input id="item-min-stock" value="3">
             <select id="item-channel"><option value="Offline">Offline</option></select>
             <input id="item-channel-link" value="">
@@ -285,11 +287,30 @@ describe('Master Barang — Izin Notifikasi Koreksi Riwayat Barang Masuk', () =>
         expect.objectContaining({
           name: 'Pelet Ikan Super Grow - New Formula',
           sell_price: 40000,
+          online_sell_price: 37500,
           cost_price: 25000,
           supplier_id: 5
         })
       );
       expect(window.Api.transactions.updateHistoryInByProduct).not.toHaveBeenCalled();
+    });
+
+    it('menyimpan harga jual offline dan online dari field edit barang', async () => {
+      await window.loadItemsFromBackend();
+      await openEditAndWait(10);
+
+      document.getElementById('item-sell-price').value = '41000';
+      document.getElementById('item-online-sell-price').value = '52000';
+
+      await window.handleItemSubmit(new Event('submit', { cancelable: true }));
+
+      expect(window.Api.items.update).toHaveBeenCalledWith(
+        '10',
+        expect.objectContaining({
+          sell_price: 41000,
+          online_sell_price: 52000
+        })
+      );
     });
   });
 });
