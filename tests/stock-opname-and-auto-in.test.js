@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { getChannelIconConfig } from '../public/assets/js/utils/channel-icons.js';
 
 const htmlContent = readFileSync(resolve(process.cwd(), 'public/dashboard/index.html'), 'utf8');
 
@@ -256,7 +257,11 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
   });
 
   describe('items.js Tambah Barang auto-create transaction and Stock Opname UI', () => {
-    const itemsScript = readFileSync(resolve(process.cwd(), 'public/dashboard/items.js'), 'utf8');
+    const itemsScript = readFileSync(resolve(process.cwd(), 'public/dashboard/items.js'), 'utf8')
+      .replace(
+        "import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';",
+        'const getChannelIconConfig = window.getChannelIconConfig;'
+      );
 
     beforeEach(() => {
       document.body.innerHTML = `
@@ -348,6 +353,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       };
 
       window.showToast = vi.fn();
+      window.getChannelIconConfig = getChannelIconConfig;
       window.eval(itemsScript);
     });
 

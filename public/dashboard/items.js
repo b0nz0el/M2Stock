@@ -1,3 +1,5 @@
+import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
+
   const resolveStudioImage = function (item) {
     if (typeof window !== 'undefined' && window.ProductCatalogImages && typeof window.ProductCatalogImages.resolveProductStudioImage === 'function') {
       return window.ProductCatalogImages.resolveProductStudioImage(item);
@@ -468,7 +470,7 @@
       case 'Shopee':
         return {
           label: 'Shopee',
-          icon: 'external-link',
+          icon: getChannelIconConfig(ch).icon,
           badgeClasses: 'bg-[#EE4D2D]/15 text-[#EE4D2D] border-[#EE4D2D]/30 hover:bg-[#EE4D2D]/25',
           iconColor: 'text-[#EE4D2D]',
           hasLink
@@ -476,7 +478,7 @@
       case 'Tokopedia':
         return {
           label: 'Tokopedia',
-          icon: 'external-link',
+          icon: getChannelIconConfig(ch).icon,
           badgeClasses: 'bg-[#03AC0E]/15 text-[#00AA5B] border-[#03AC0E]/30 hover:bg-[#03AC0E]/25',
           iconColor: 'text-[#00AA5B]',
           hasLink
@@ -485,7 +487,7 @@
       case 'TikTok Shop':
         return {
           label: 'TikTok Shop',
-          icon: 'external-link',
+          icon: getChannelIconConfig(ch).icon,
           badgeClasses: 'bg-[#00F2FE]/10 text-[#00F2FE] border-[#00F2FE]/25 hover:bg-[#00F2FE]/20',
           iconColor: 'text-[#00F2FE]',
           hasLink
@@ -493,7 +495,7 @@
       case 'Lazada':
         return {
           label: 'Lazada',
-          icon: 'external-link',
+          icon: getChannelIconConfig(ch).icon,
           badgeClasses: 'bg-[#0088CC]/15 text-[#32ADE6] border-[#0088CC]/30 hover:bg-[#0088CC]/25',
           iconColor: 'text-[#32ADE6]',
           hasLink
@@ -501,7 +503,7 @@
       case 'WhatsApp':
         return {
           label: 'WhatsApp',
-          icon: 'external-link',
+          icon: getChannelIconConfig(ch).icon,
           badgeClasses: 'bg-[#25D366]/15 text-[#25D366] border-[#25D366]/30 hover:bg-[#25D366]/25',
           iconColor: 'text-[#25D366]',
           hasLink
@@ -544,9 +546,9 @@
       if (!cfg) return '';
       if (cfg.hasLink) {
         return `
-          <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}">
-            <span>${escapeHtml(cfg.label)}</span>
-            <i data-lucide="external-link" class="w-3 h-3 opacity-80" aria-hidden="true"></i>
+          <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="relative inline-flex h-7 w-7 items-center justify-center rounded-lg border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}" aria-label="Buka etalase produk di ${escapeHtml(cfg.label)}">
+            <i data-lucide="${cfg.icon}" class="h-4 w-4" aria-hidden="true"></i>
+            <i data-lucide="external-link" class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-sm bg-[#1C1C1E]" aria-hidden="true"></i>
           </a>
         `;
       }
@@ -2095,8 +2097,9 @@
                 ? item.channels.filter(c => c && c.link)
                 : (item.channel_link ? [{ channel: item.channel, link: item.channel_link }] : []);
               return chList.map(c => `
-                <a href="${escapeHtml(c.link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}" class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}">
-                  <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+                <a href="${escapeHtml(c.link)}" target="_blank" rel="noopener noreferrer" aria-label="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}" class="relative h-8 w-8 hover:bg-white/5 rounded-lg ${getChannelIconConfig(c.channel).color} inline-flex items-center justify-center transition" title="Buka produk di ${escapeHtml((getChannelBadgeConfig(c.channel, c.link) || {}).label || c.channel || 'Marketplace')}">
+                  <i data-lucide="${getChannelIconConfig(c.channel).icon}" class="w-4 h-4" aria-hidden="true"></i>
+                  <i data-lucide="external-link" class="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-sm bg-[#1C1C1E]" aria-hidden="true"></i>
                 </a>
               `).join('');
             })()}

@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { catalogData, supabaseMock } = vi.hoisted(() => {
   const catalogData = {
     categories: [{ id: 1, name: 'Pakan' }],
-    units: [{ id: 1, name: 'pcs' }, { id: 2, name: 'botol' }]
+    units: [{ id: 1, name: 'pcs' }, { id: 2, name: 'botol' }],
+    channels: [{ id: 1, name: 'Shopee' }]
   };
 
   const supabaseMock = {
@@ -36,7 +37,11 @@ const { catalogData, supabaseMock } = vi.hoisted(() => {
 });
 
 vi.mock('../public/assets/js/api/settings.js', () => ({
-  settings: { getAll: vi.fn().mockResolvedValue({ ok: true, data: {} }) }
+  settings: {
+    getAll: vi.fn().mockResolvedValue({ ok: true, data: {} }),
+    getChannels: vi.fn().mockImplementation(() => Promise.resolve(catalogData.channels)),
+    saveChannels: vi.fn().mockResolvedValue([])
+  }
 }));
 vi.mock('../public/assets/js/supabase-client.js', () => ({ supabase: supabaseMock }));
 vi.mock('../public/assets/js/utils/rbac-ui.js', () => ({ applyReadOnlyUI: vi.fn() }));
@@ -45,6 +50,7 @@ describe('settings catalog actions', () => {
   beforeEach(async () => {
     catalogData.categories.splice(0, catalogData.categories.length, { id: 1, name: 'Pakan' });
     catalogData.units.splice(0, catalogData.units.length, { id: 1, name: 'pcs' }, { id: 2, name: 'botol' });
+    catalogData.channels.splice(0, catalogData.channels.length, { id: 1, name: 'Shopee' });
     document.body.innerHTML = `
       <button class="settings-tab-btn" data-tab="catalog"></button>
       <div id="tab-content-catalog" class="settings-tab-content"></div>
@@ -52,9 +58,11 @@ describe('settings catalog actions', () => {
       <form id="form-add-unit"><input id="setting-unit-name"><button id="btn-add-unit"></button></form>
       <ul id="setting-category-list"></ul>
       <ul id="setting-unit-list"></ul>
+      <ul id="setting-channel-list"></ul>
     `;
     window.confirm = vi.fn(() => true);
     window.showToast = vi.fn();
+    window.refreshIcons = vi.fn();
     await import('../public/dashboard/settings.js');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.waitFor(() => {
@@ -103,5 +111,24 @@ describe('settings catalog actions', () => {
     expect(buttons[0].title).toContain('default');
     expect(buttons[1].disabled).toBe(true);
     expect(buttons[1].title).toContain('default');
+  });
+
+  it('shows marketplace and accessible action icons for channel settings', async () => {
+    await vi.waitFor(() => {
+      expect(document.querySelector('#setting-channel-list li')).not.toBeNull();
+    });
+
+    const channelList = document.querySelector('#setting-channel-list');
+    const editButton = channelList.querySelector('[data-catalog-action="edit"]');
+    const deleteButton = channelList.querySelector('[data-catalog-action="delete"]');
+
+    expect(channelList.querySelector('[data-lucide="shopping-bag"]')).not.toBeNull();
+    expect(editButton.querySelector('[data-lucide="pencil"]')).not.toBeNull();
+    expect(editButton.getAttribute('aria-label')).toBe('Edit Shopee');
+    expect(editButton.title).toBe('Edit Shopee');
+    expect(deleteButton.querySelector('[data-lucide="trash-2"]')).not.toBeNull();
+    expect(deleteButton.getAttribute('aria-label')).toBe('Hapus Shopee');
+    expect(deleteButton.title).toBe('Hapus Shopee');
+    expect(window.refreshIcons).toHaveBeenCalledWith(channelList);
   });
 });

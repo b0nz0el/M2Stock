@@ -198,14 +198,15 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(html).toContain('id="po-auto-status-indicator"');
   });
 
-  it('Master Barang menggunakan Icon Link Original (external-link) pada badge saluran dan aksi tabel', () => {
+  it('Master Barang menampilkan ikon marketplace dan indikator aksi tautan eksternal', () => {
     const itemsPath = path.resolve(__dirname, '../public/dashboard/items.js');
     const itemsJs = fs.readFileSync(itemsPath, 'utf8');
 
-    // Memastikan aksi link di baris tabel menggunakan icon link original external-link
-    expect(itemsJs).toContain('<i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>');
-    // Memastikan badge saluran menggunakan icon link original external-link
-    expect(itemsJs).toContain('<i data-lucide="external-link" class="w-3 h-3 opacity-80" aria-hidden="true"></i>');
+    expect(itemsJs).toContain('getChannelIconConfig(c.channel).icon');
+    expect(itemsJs).toContain('getChannelIconConfig(c.channel).color');
+    expect(itemsJs).toContain('getChannelBadgeConfig(item.channel, item.link)');
+    expect(itemsJs).toContain('data-lucide="external-link"');
+    expect(itemsJs).toContain('aria-label="Buka produk di ${escapeHtml');
   });
 
   it('Dual-layer persistence: saveLocalChannelMeta dan getLocalChannelMeta menjaga data channel dan link tetap tersimpan', async () => {

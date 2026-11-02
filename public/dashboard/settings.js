@@ -5,6 +5,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { settings as settingsApi } from '../assets/js/api/settings.js';
+import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
 import { initBarcodeSettings } from './settings-barcode.js';
 import { supabase } from '../assets/js/supabase-client.js';
 import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
@@ -61,8 +62,19 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       row.dataset.catalogId = String(entry.id);
 
       const name = document.createElement('span');
-      name.className = 'font-medium text-white';
-      name.textContent = entry.name;
+      name.className = 'flex min-w-0 items-center gap-2 font-medium text-white';
+      if (elementId === 'setting-channel-list') {
+        const channelIcon = getChannelIconConfig(entry.name);
+        const iconBadge = document.createElement('span');
+        iconBadge.className = `grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${channelIcon.background} ${channelIcon.border} ${channelIcon.color}`;
+        iconBadge.setAttribute('aria-hidden', 'true');
+        iconBadge.innerHTML = `<i data-lucide="${channelIcon.icon}" class="h-4 w-4"></i>`;
+        name.appendChild(iconBadge);
+      }
+      const nameText = document.createElement('span');
+      nameText.className = 'truncate';
+      nameText.textContent = entry.name;
+      name.appendChild(nameText);
 
       const actions = document.createElement('div');
       actions.className = 'flex shrink-0 items-center gap-2';
@@ -71,17 +83,19 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       editButton.type = 'button';
       editButton.dataset.catalogAction = 'edit';
       editButton.dataset.action = 'edit';
-      editButton.className = 'rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#32ADE6] hover:bg-white/5';
-      editButton.textContent = 'Edit';
+      editButton.className = 'grid h-9 w-9 place-items-center rounded-lg text-[#32ADE6] hover:bg-[#0088CC]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#32ADE6]';
+      editButton.title = `Edit ${entry.name}`;
       editButton.setAttribute('aria-label', `Edit ${entry.name}`);
+      editButton.innerHTML = '<i data-lucide="pencil" class="h-4 w-4" aria-hidden="true"></i>';
 
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
       deleteButton.dataset.catalogAction = 'delete';
       deleteButton.dataset.action = 'delete';
-      deleteButton.className = 'rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#FF6961] hover:bg-[#FF3B30]/10';
-      deleteButton.textContent = 'Hapus';
+      deleteButton.className = 'grid h-9 w-9 place-items-center rounded-lg text-[#FF6961] hover:bg-[#FF3B30]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6961]';
+      deleteButton.title = `Hapus ${entry.name}`;
       deleteButton.setAttribute('aria-label', `Hapus ${entry.name}`);
+      deleteButton.innerHTML = '<i data-lucide="trash-2" class="h-4 w-4" aria-hidden="true"></i>';
 
       const isProtectedUnit = elementId === 'setting-unit-list' && entry.name.trim().toLowerCase() === 'pcs';
       const isProtectedChannel = elementId === 'setting-channel-list' && entry.name.trim().toLowerCase() === 'offline';
@@ -100,6 +114,7 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       row.append(name, actions);
       list.appendChild(row);
     });
+    if (typeof window.refreshIcons === 'function') window.refreshIcons(list);
   }
 
   async function loadCatalogLists() {
@@ -140,13 +155,17 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 
     const saveButton = document.createElement('button');
     saveButton.type = 'button';
-    saveButton.className = 'rounded-lg px-2.5 py-2 text-xs font-semibold text-[#34C759] hover:bg-white/5';
-    saveButton.textContent = 'Simpan';
+    saveButton.className = 'grid h-9 w-9 place-items-center rounded-lg text-[#34C759] hover:bg-[#34C759]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#34C759]';
+    saveButton.title = 'Simpan';
+    saveButton.setAttribute('aria-label', 'Simpan');
+    saveButton.innerHTML = '<i data-lucide="check" class="h-4 w-4" aria-hidden="true"></i>';
 
     const cancelButton = document.createElement('button');
     cancelButton.type = 'button';
-    cancelButton.className = 'rounded-lg px-2.5 py-2 text-xs font-medium text-[#A0A0A5] hover:bg-white/5';
-    cancelButton.textContent = 'Batal';
+    cancelButton.className = 'grid h-9 w-9 place-items-center rounded-lg text-[#A0A0A5] hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50';
+    cancelButton.title = 'Batal';
+    cancelButton.setAttribute('aria-label', 'Batal');
+    cancelButton.innerHTML = '<i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>';
 
     const cancel = () => renderCatalogList(
       table === 'categories' ? 'setting-category-list' : (table === 'units' ? 'setting-unit-list' : 'setting-channel-list'),
@@ -218,6 +237,7 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       }
     });
     row.append(input, saveButton, cancelButton);
+    if (typeof window.refreshIcons === 'function') window.refreshIcons(row);
     input.focus();
     input.select();
   }
