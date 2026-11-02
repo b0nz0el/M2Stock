@@ -48,6 +48,7 @@ interface ApiMeta {
       "min_stock": 5,
       "cost_price": 65000,
       "sell_price": 85000,
+      "online_sell_price": 81250,
       "image_url": "https://xyz.supabase.co/storage/v1/object/public/product-images/prod-123.webp",
       "created_at": "2026-10-12T04:00:00.000Z"
     }
@@ -102,6 +103,8 @@ Diakses via `Api.items.*`:
 - `POST /rest/v1/products`: Menambah produk baru.
 - `PATCH /rest/v1/products?id=eq.{id}`: Memperbarui data produk / harga / stok.
 - `DELETE /rest/v1/products?id=eq.{id}`: Menghapus produk (ditolak jika memiliki transaksi terikat).
+
+Harga offline tersimpan pada `sell_price`; harga online tersimpan terpisah pada `online_sell_price`. Persentase markup keduanya dihitung dari `cost_price`, bukan disimpan sebagai angka. Edit harga massal menerima satu harga offline atau online per produk; perubahan online memerlukan migrasi `20261103_product_online_price.sql`. Harga online produk lama diisi saat migrasi dengan rumus harga beli +25%.
 
 ### 2.3 Transaksi Inventaris (`transactions`)
 Diakses via `Api.transactions.*`:
@@ -220,6 +223,7 @@ create table public.products (
   min_stock integer not null default 5,
   cost_price numeric(15, 2) not null default 0,
   sell_price numeric(15, 2) not null default 0,
+  online_sell_price numeric(15, 2) not null default 0,
   image_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

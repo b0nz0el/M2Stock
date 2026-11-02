@@ -34,14 +34,19 @@
     return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '0';
   }
 
-  function getOnlinePricing(costPrice) {
+  function getOnlinePricing(costPrice, onlinePrice) {
     const cost = Number(costPrice) || 0;
-    if (cost <= 0) return { price: 0, markup: 0 };
+    const storedPrice = onlinePrice === null || onlinePrice === undefined || onlinePrice === ''
+      ? Number.NaN
+      : Number(onlinePrice);
+    const price = Number.isFinite(storedPrice) && storedPrice >= 0
+      ? storedPrice
+      : Math.round(cost * 1.25);
+    if (cost <= 0) return { price, markup: 0 };
 
-    const price = cost + Math.round(cost * 0.25);
     return {
       price,
-      markup: Math.round(((price - cost) / cost) * 100)
+      markup: Math.round(((price - cost) / cost) * 10000) / 100
     };
   }
 
@@ -1785,7 +1790,8 @@
   let currentPage = 1;
   const pageSize = 10;
   let selectedItemIds = new Set();
-  let bulkPriceMode = 'nominal'; // 'nominal' | 'percent'
+  let bulkPriceMode = 'nominal'; // 'nominal' | 'percent' (markup dari harga beli)
+  let bulkPriceTarget = 'offline';
 
   function filterItems() {
     const list = currentItems.filter(function (item) {
@@ -1999,7 +2005,7 @@
       const costPrice = Number(item.cost_price || item.costPrice) || 0;
       const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const markup = costPrice > 0 ? Math.round(((sellPrice - costPrice) / costPrice) * 100) : (sellPrice > 0 ? 100 : 0);
-      const onlinePricing = getOnlinePricing(costPrice);
+      const onlinePricing = getOnlinePricing(costPrice, item.online_sell_price);
       const markupColor = markup >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]';
       const isLow = stock <= minStock;
       const isChecked = selectedItemIds.has(String(item.id));
@@ -2073,7 +2079,7 @@
         <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
-        <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${onlinePricing.markup}%</td>
+        <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${Number(onlinePricing.markup).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
             ${(function () {
@@ -2244,9 +2250,9 @@
     const bulkBar = document.getElementById('bulk-bar');
     const bulkCountText = document.getElementById('bulk-count');
     const bulkCountBadge = document.getElementById('bulk-count-badge');
-    const btnBulkPrice = document.getElementById('btn-bulk-price');
-    const btnBulkDelete = document.getElementById('btn-bulk-delete');
-    const btnBulkMeta = document.getElementById('btn-bulk-meta');
+    const btnBulkPrice = document.getElementById('bulk-btn-price');
+    const btnBulkDelete = document.getElementById('bulk-btn-delete');
+    const btnBulkMeta = document.getElementById('bulk-btn-meta');
 
     const filtered = filterItems();
     if (bulkBar && bulkCountText) {
@@ -2404,7 +2410,9 @@
     const modal = document.getElementById('modal-bulk-price');
     if (!modal) return;
 
+    bulkPriceTarget = 'offline';
     bulkPriceMode = 'nominal';
+    switchBulkPriceChannel('offline');
     switchBulkPriceTab('nominal');
     document.getElementById('bulk-price-nominal-input').value = '';
     document.getElementById('bulk-price-percent-input').value = '';
@@ -2429,19 +2437,77 @@
     const tabPercent = document.getElementById('tab-bulk-percent');
     const secNominal = document.getElementById('bulk-price-nominal-section');
     const secPercent = document.getElementById('bulk-price-percent-section');
+    const nominalLabel = document.getElementById('bulk-price-nominal-label');
+    const percentLabel = document.getElementById('bulk-price-percent-label');
+    const isOnline = bulkPriceTarget === 'online';
 
     if (mode === 'nominal') {
       tabNominal.className = 'flex-1 py-2 text-xs font-semibold rounded-lg bg-[#0088CC] text-white transition';
       tabPercent.className = 'flex-1 py-2 text-xs font-medium rounded-lg text-[#A0A0A5] hover:text-white transition';
       secNominal.classList.remove('hidden');
       secPercent.classList.add('hidden');
+      if (nominalLabel) nominalLabel.textContent = `Harga Jual ${isOnline ? 'Online' : 'Offline'} Baru (Rp)`;
     } else {
       tabPercent.className = 'flex-1 py-2 text-xs font-semibold rounded-lg bg-[#0088CC] text-white transition';
       tabNominal.className = 'flex-1 py-2 text-xs font-medium rounded-lg text-[#A0A0A5] hover:text-white transition';
       secPercent.classList.remove('hidden');
       secNominal.classList.add('hidden');
+      if (percentLabel) percentLabel.textContent = `Markup ${isOnline ? 'Online' : 'Offline'} dari Harga Beli (%)`;
     }
     updateBulkPricePreview();
+  }
+
+  function switchBulkPriceChannel(target) {
+    bulkPriceTarget = target === 'online' ? 'online' : 'offline';
+    const tabOffline = document.getElementById('tab-bulk-offline');
+    const tabOnline = document.getElementById('tab-bulk-online');
+    if (tabOffline && tabOnline) {
+      tabOffline.className = bulkPriceTarget === 'offline'
+        ? 'flex-1 py-2 text-xs font-semibold rounded-lg bg-[#0088CC] text-white transition'
+        : 'flex-1 py-2 text-xs font-medium rounded-lg text-[#A0A0A5] hover:text-white transition';
+      tabOnline.className = bulkPriceTarget === 'online'
+        ? 'flex-1 py-2 text-xs font-semibold rounded-lg bg-[#0088CC] text-white transition'
+        : 'flex-1 py-2 text-xs font-medium rounded-lg text-[#A0A0A5] hover:text-white transition';
+    }
+    switchBulkPriceTab(bulkPriceMode);
+  }
+
+  function getBulkPriceProjection(item, nominalValue, percentValue, hasValue) {
+    const cost = Number(item.cost_price || item.costPrice) || 0;
+    const offlinePrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
+    const online = getOnlinePricing(cost, item.online_sell_price);
+    const oldPrice = bulkPriceTarget === 'online' ? online.price : offlinePrice;
+    const oldMarkup = cost > 0
+      ? (bulkPriceTarget === 'online'
+          ? online.markup
+          : Math.round(((offlinePrice - cost) / cost) * 100))
+      : 0;
+
+    if (!hasValue) {
+      return { oldPrice, oldMarkup, newPrice: oldPrice, newMarkup: oldMarkup, update: null };
+    }
+
+    let newPrice;
+    let newMarkup;
+    let update;
+    if (bulkPriceMode === 'nominal') {
+      newPrice = nominalValue;
+      newMarkup = cost > 0 ? Math.round(((newPrice - cost) / cost) * 10000) / 100 : 0;
+      if (bulkPriceTarget === 'online') {
+        update = { online_sell_price: newPrice };
+      } else {
+        update = { sell_price: newPrice };
+      }
+    } else {
+      const requestedMarkup = Math.round(percentValue * 100) / 100;
+      newPrice = cost > 0 ? Math.max(0, Math.round(cost * (1 + requestedMarkup / 100))) : 0;
+      newMarkup = cost > 0 ? Math.round(((newPrice - cost) / cost) * 10000) / 100 : 0;
+      update = bulkPriceTarget === 'online'
+        ? { online_sell_price: newPrice }
+        : { sell_price: newPrice };
+    }
+
+    return { oldPrice, oldMarkup, newPrice, newMarkup, update };
   }
 
   function updateBulkPricePreview() {
@@ -2449,34 +2515,28 @@
     if (!tbody) return;
 
     const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
-    const nominalVal = parseNumericValue(document.getElementById('bulk-price-nominal-input')?.value);
-    const percentVal = Number(document.getElementById('bulk-price-percent-input')?.value);
+    const nominalInput = document.getElementById('bulk-price-nominal-input')?.value ?? '';
+    const percentInput = document.getElementById('bulk-price-percent-input')?.value ?? '';
+    const nominalVal = parseNumericValue(nominalInput);
+    const percentVal = Number(percentInput);
+    const hasValue = bulkPriceMode === 'nominal' ? String(nominalInput).trim() !== '' : String(percentInput).trim() !== '';
+    const hasValidValue = hasValue && (bulkPriceMode === 'nominal'
+      ? /^\d+$/.test(String(nominalInput).replace(/\D/g, ''))
+      : Number.isFinite(percentVal) && percentVal >= -100 && percentVal <= 99999.99);
 
     tbody.innerHTML = selectedItems.map(item => {
-      const oldPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
-      let newPrice = oldPrice;
-
-      if (bulkPriceMode === 'nominal') {
-        if (!isNaN(nominalVal) && nominalVal > 0) {
-          newPrice = nominalVal;
-        }
-      } else {
-        if (!isNaN(percentVal) && percentVal !== 0) {
-          newPrice = Math.max(0, Math.round(oldPrice * (1 + (percentVal / 100))));
-        }
-      }
-
+      const projection = getBulkPriceProjection(item, nominalVal, percentVal, hasValidValue);
       const formatRp = n => 'Rp ' + Number(n).toLocaleString('id-ID');
-      const isChanged = newPrice !== oldPrice;
+      const formatPercent = n => `${Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%`;
+      const isChanged = projection.newPrice !== projection.oldPrice || projection.newMarkup !== projection.oldMarkup;
 
       return `
         <tr class="hover:bg-white/[0.02]">
-          <td class="py-2 px-2 text-white font-medium">${item.name}</td>
-          <td class="py-2 px-2 text-right text-[#A0A0A5]">${formatRp(oldPrice)}</td>
-          <td class="py-2 px-2 text-center text-[#A0A0A5]">&rarr;</td>
-          <td class="py-2 px-2 text-right font-bold ${isChanged ? 'text-[#34C759]' : 'text-white'}">
-            ${formatRp(newPrice)}
-          </td>
+          <td class="py-2 px-2 text-white font-medium">${escapeHtml(item.name)}</td>
+          <td class="py-2 px-2 text-right text-[#A0A0A5] whitespace-nowrap">${formatRp(projection.oldPrice)}</td>
+          <td class="py-2 px-2 text-right font-bold whitespace-nowrap ${isChanged ? 'text-[#34C759]' : 'text-white'}">${formatRp(projection.newPrice)}</td>
+          <td class="py-2 px-2 text-right text-[#A0A0A5] whitespace-nowrap">${formatPercent(projection.oldMarkup)}</td>
+          <td class="py-2 px-2 text-right font-bold whitespace-nowrap ${isChanged ? 'text-[#34C759]' : 'text-white'}">${formatPercent(projection.newMarkup)}</td>
         </tr>
       `;
     }).join('');
@@ -2492,34 +2552,34 @@
     const selectedItems = currentItems.filter(i => selectedItemIds.has(String(i.id)));
     if (selectedItems.length === 0) return;
 
-    const nominalVal = parseNumericValue(document.getElementById('bulk-price-nominal-input')?.value);
-    const percentVal = Number(document.getElementById('bulk-price-percent-input')?.value);
+    const nominalInput = document.getElementById('bulk-price-nominal-input')?.value ?? '';
+    const percentInput = document.getElementById('bulk-price-percent-input')?.value ?? '';
+    const nominalVal = parseNumericValue(nominalInput);
+    const percentVal = Number(percentInput);
+    const hasValue = bulkPriceMode === 'nominal' ? String(nominalInput).trim() !== '' : String(percentInput).trim() !== '';
+    if (!hasValue) {
+      if (typeof showToast === 'function') showToast('Masukkan harga jual atau markup yang ingin diterapkan', 'error');
+      return;
+    }
+    if (bulkPriceMode === 'percent' && (!Number.isFinite(percentVal) || percentVal < -100 || percentVal > 99999.99)) {
+      if (typeof showToast === 'function') showToast('Markup harus antara -100% sampai 99.999,99%', 'error');
+      return;
+    }
 
     const updates = [];
     for (let i = 0; i < selectedItems.length; i++) {
       const item = selectedItems[i];
-      const oldPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
-      let newPrice = oldPrice;
-
-      if (bulkPriceMode === 'nominal') {
-        if (isNaN(nominalVal) || nominalVal < 0) {
-          if (typeof showToast === 'function') showToast('Harga jual harus berupa angka >= 0', 'error');
-          return;
-        }
-        newPrice = nominalVal;
-      } else {
-        if (isNaN(percentVal)) {
-          if (typeof showToast === 'function') showToast('Persentase tidak valid', 'error');
-          return;
-        }
-        newPrice = Math.max(0, Math.round(oldPrice * (1 + (percentVal / 100))));
-      }
-
-      if (newPrice < 0) {
-        if (typeof showToast === 'function') showToast('Harga baru tidak boleh kurang dari 0', 'error');
+      const cost = Number(item.cost_price || item.costPrice) || 0;
+      if (bulkPriceTarget === 'online' && bulkPriceMode === 'percent' && cost <= 0) {
+        if (typeof showToast === 'function') showToast(`Harga beli produk "${item.name}" harus lebih dari Rp 0 untuk mengatur harga online`, 'error');
         return;
       }
-      updates.push({ id: item.id, sell_price: newPrice });
+      if (bulkPriceMode === 'nominal' && nominalVal < 0) {
+        if (typeof showToast === 'function') showToast('Harga jual harus berupa angka >= 0', 'error');
+        return;
+      }
+      const projection = getBulkPriceProjection(item, nominalVal, percentVal, true);
+      updates.push({ id: item.id, ...projection.update });
     }
 
     const btn = document.getElementById('btn-save-bulk-price');
@@ -2771,7 +2831,7 @@
       const c = Number(item.cost_price || item.costPrice) || 0;
       const p = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const m = c > 0 ? Math.round(((p - c) / c) * 100) : (p > 0 ? 100 : 0);
-      const onlinePricing = getOnlinePricing(c);
+      const onlinePricing = getOnlinePricing(c, item.online_sell_price);
       const studioImg = resolveStudioImage(item);
       const itemImages = parseProductImages(item.images || item.image_url);
       const photo = studioImg || itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : '-');
@@ -2887,6 +2947,7 @@
   window.openBulkPriceModal = openBulkPriceModal;
   window.closeBulkPriceModal = closeBulkPriceModal;
   window.switchBulkPriceTab = switchBulkPriceTab;
+  window.switchBulkPriceChannel = switchBulkPriceChannel;
   window.updateBulkPricePreview = updateBulkPricePreview;
   window.executeBulkPriceUpdate = executeBulkPriceUpdate;
   window.openBulkMetaModal = openBulkMetaModal;

@@ -16,6 +16,8 @@ Saldo akibat barang masuk/keluar berubah melalui trigger database; frontend tida
 
 Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan berurutan, termasuk `20261028_inventory_single_stock_trigger.sql`, lalu verifikasi trigger `trg_transaction_stock_update` ada dan enabled sebelum mencatat transaksi. Migrasi trigger tersebut aman dijalankan ulang, membersihkan trigger stok lama `trg_transactions_auto_stock`/fungsi stok legacy, dan tidak mengubah saldo yang telah tercatat.
 
+Fitur edit harga online massal membutuhkan migrasi `20261103_product_online_price.sql`. Migrasi ini menambahkan `products.online_sell_price` dan mengisi harga online produk yang sudah ada menjadi harga beli +25%; persentase markup online selanjutnya diturunkan dari harga jual online dan harga beli.
+
 ---
 
 ## Skrip Bootstrap SQL Awal

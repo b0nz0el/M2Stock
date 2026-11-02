@@ -6,6 +6,12 @@
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit } from './_client.js';
 import { resolveProductStudioImage, getProductStudioImageMeta } from '../product-catalog-images.js';
 
+function isMissingOnlineSellPriceColumn(error) {
+  const message = String(error?.message || '');
+  return /column .*online_sell_price.* does not exist/i.test(message)
+    || (error?.code === 'PGRST204' && /online_sell_price/i.test(message));
+}
+
 export function parseItemImages(rawImageUrl, rawImages) {
   if (Array.isArray(rawImages) && rawImages.length > 0) {
     return rawImages.filter(Boolean);
@@ -188,6 +194,8 @@ export const items = {
               cost_price: Number(item.cost_price) || 0,
               sellPrice: Number(item.sell_price) || 0,
               sell_price: Number(item.sell_price) || 0,
+              onlineSellPrice: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) * 1.25)),
+              online_sell_price: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) * 1.25)),
               unitPrice: Number(item.sell_price) || 0,
               channel: effectiveChannel,
               channel_link: effectiveLink,
@@ -278,6 +286,8 @@ export const items = {
             cost_price: Number(data.cost_price) || 0,
             sellPrice: Number(data.sell_price) || 0,
             sell_price: Number(data.sell_price) || 0,
+            onlineSellPrice: Number(data.online_sell_price ?? Math.round((Number(data.cost_price) || 0) * 1.25)),
+            online_sell_price: Number(data.online_sell_price ?? Math.round((Number(data.cost_price) || 0) * 1.25)),
             unitPrice: Number(data.sell_price) || 0,
             channel: effectiveChannel,
             channel_link: effectiveLink,
@@ -331,31 +341,44 @@ export const items = {
             min_stock: minStock !== undefined ? Number(minStock) : 0,
             cost_price: costPrice !== undefined ? Number(costPrice) : 0,
             sell_price: sellPrice !== undefined ? Number(sellPrice) : 0,
+            online_sell_price: data.online_sell_price !== undefined
+              ? Number(data.online_sell_price)
+              : (data.onlineSellPrice !== undefined
+                  ? Number(data.onlineSellPrice)
+                  : Math.round((Number(costPrice) || 0) * 1.25)),
             image_url: resolvedImageUrl
           };
 
-          let query = window.supabase
-            .from('products')
-            .insert([row])
-            .select();
+          const insertProduct = async (insertRow) => {
+            let query = window.supabase
+              .from('products')
+              .insert([insertRow])
+              .select();
+            if (opts && opts.signal) query = query.abortSignal(opts.signal);
+            return query;
+          };
 
-          if (opts && opts.signal) {
-            query = query.abortSignal(opts.signal);
-          }
-
-          let { data: inserted, error } = await query;
-          if (error && (String(error.message || '').includes('channel_link') || String(error.message || '').includes('channel'))) {
-            const fallbackRow = { ...row };
-            delete fallbackRow.channel;
-            delete fallbackRow.channel_link;
-            let retryQuery = window.supabase.from('products').insert([fallbackRow]).select();
-            if (opts && opts.signal) retryQuery = retryQuery.abortSignal(opts.signal);
-            const retryRes = await retryQuery;
-            if (!retryRes.error) {
-              inserted = retryRes.data;
-              error = null;
+          let insertRow = { ...row };
+          let insertResult = await insertProduct(insertRow);
+          for (let attempt = 0; insertResult.error && attempt < 2; attempt++) {
+            const errorMessage = String(insertResult.error.message || '');
+            const retryRow = { ...insertRow };
+            let removedLegacyColumn = false;
+            if (isMissingOnlineSellPriceColumn(insertResult.error) && 'online_sell_price' in retryRow) {
+              delete retryRow.online_sell_price;
+              removedLegacyColumn = true;
             }
+            if ((errorMessage.includes('channel_link') || errorMessage.includes('channel'))
+              && ('channel' in retryRow || 'channel_link' in retryRow)) {
+              delete retryRow.channel;
+              delete retryRow.channel_link;
+              removedLegacyColumn = true;
+            }
+            if (!removedLegacyColumn) break;
+            insertRow = retryRow;
+            insertResult = await insertProduct(insertRow);
           }
+          let { data: inserted, error } = insertResult;
           if (error) {
             return formatResponse({
               ok: false,
@@ -407,10 +430,15 @@ export const items = {
           if (row.costPrice !== undefined) { row.cost_price = row.costPrice; delete row.costPrice; }
           if (row.sellPrice !== undefined) { row.sell_price = row.sellPrice; delete row.sellPrice; }
           if (row.unitPrice !== undefined && row.sell_price === undefined) { row.sell_price = row.unitPrice; delete row.unitPrice; }
+          if (row.onlineSellPrice !== undefined && row.online_sell_price === undefined) {
+            row.online_sell_price = row.onlineSellPrice;
+            delete row.onlineSellPrice;
+          }
           if (row.stock !== undefined) row.stock = Number(row.stock);
           if (row.min_stock !== undefined) row.min_stock = Number(row.min_stock);
           if (row.cost_price !== undefined) row.cost_price = Number(row.cost_price);
           if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
+          if (row.online_sell_price !== undefined) row.online_sell_price = Number(row.online_sell_price);
           if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
           if (row.unit_id !== undefined) row.unit_id = Number(row.unit_id);
           if (row.supplier_id !== undefined) row.supplier_id = row.supplier_id == null || row.supplier_id === '' ? null : Number(row.supplier_id);
@@ -940,40 +968,79 @@ export const items = {
     },
 
     bulkUpdatePrice: async (updates, opts) => {
+      if (!Array.isArray(updates) || updates.length === 0) {
+        return formatResponse({ ok: false, error: { code: 'INVALID_INPUT', message: 'Tidak ada data harga untuk diperbarui' } });
+      }
+
+      const normalizedUpdates = [];
+      for (const update of updates) {
+        if (!update || update.id === null || update.id === undefined) {
+          return formatResponse({ ok: false, error: { code: 'INVALID_INPUT', message: 'Setiap perubahan harga harus memiliki ID produk' } });
+        }
+        const fields = ['sell_price', 'online_sell_price'].filter(field => Object.prototype.hasOwnProperty.call(update, field));
+        if (fields.length !== 1) {
+          return formatResponse({ ok: false, error: { code: 'INVALID_INPUT', message: 'Perubahan harus berisi tepat satu jenis harga' } });
+        }
+
+        const field = fields[0];
+        const rawValue = update[field];
+        const value = Number(rawValue);
+        const valid = Number.isFinite(value)
+          && rawValue !== null
+          && !(typeof rawValue === 'string' && rawValue.trim() === '')
+          && value >= 0;
+        if (!valid) {
+          return formatResponse({ ok: false, error: { code: 'INVALID_INPUT', message: field === 'sell_price'
+            ? 'Harga jual harus angka nol atau lebih'
+            : 'Harga jual online harus angka nol atau lebih' } });
+        }
+        normalizedUpdates.push({
+          id: String(update.id),
+          [field]: Math.round(value)
+        });
+      }
+
       if (isSupabaseAvailable()) {
         try {
-          if (!updates || !updates.length) {
-            return formatResponse({ ok: false, error: { message: 'Tidak ada data harga untuk diperbarui' } });
-          }
-
           const results = [];
           const failures = [];
-          for (let i = 0; i < updates.length; i++) {
-            const u = updates[i];
-            const productId = String(u.id);
-            const newPrice = Math.max(0, Math.round(Number(u.sell_price) || 0));
+          for (const update of normalizedUpdates) {
+            const productId = update.id;
+            const field = Object.prototype.hasOwnProperty.call(update, 'sell_price') ? 'sell_price' : 'online_sell_price';
+            const value = update[field];
 
             let query = window.supabase
               .from('products')
-              .update({ sell_price: newPrice })
+              .update({ [field]: value })
               .eq('id', productId);
 
             if (opts && opts.signal) query = query.abortSignal(opts.signal);
             const { error } = await query;
             if (error) {
               console.error(`Gagal update harga produk ID ${productId}:`, error);
-              failures.push({ id: productId, code: error.code || 'SUPABASE_ERROR', message: error.message || 'Gagal memperbarui harga' });
+              const missingOnlinePriceColumn = field === 'online_sell_price'
+                && isMissingOnlineSellPriceColumn(error);
+              failures.push({
+                id: productId,
+                code: missingOnlinePriceColumn ? 'MIGRATION_REQUIRED' : (error.code || 'SUPABASE_ERROR'),
+                message: missingOnlinePriceColumn
+                  ? 'Terapkan migrasi supabase/migrations/20261103_product_online_price.sql sebelum mengubah harga online.'
+                  : (error.message || 'Gagal memperbarui harga')
+              });
             } else {
               results.push(productId);
             }
           }
 
           if (failures.length) {
+            const migrationRequired = failures.some(failure => failure.code === 'MIGRATION_REQUIRED');
             return formatResponse({
               ok: false,
               error: {
                 code: 'PARTIAL_UPDATE',
-                message: `${results.length} produk berhasil diperbarui, ${failures.length} gagal.`,
+                message: migrationRequired
+                  ? `${results.length} produk berhasil diperbarui, ${failures.length} gagal. Terapkan migrasi harga online terlebih dahulu.`
+                  : `${results.length} produk berhasil diperbarui, ${failures.length} gagal.`,
                 details: failures
               },
               data: { updatedIds: results, failedIds: failures.map(failure => failure.id), updatedCount: results.length }
@@ -989,7 +1056,13 @@ export const items = {
           return handleError(err);
         }
       }
-      return formatResponse({ ok: true, data: { updatedCount: (updates || []).length } });
+      return formatResponse({
+        ok: false,
+        error: {
+          code: 'SUPABASE_UNAVAILABLE',
+          message: 'Perubahan harga massal tidak disimpan karena koneksi database tidak tersedia.'
+        }
+      });
     },
 
     bulkUpdateMeta: async (ids, metaData = {}, opts) => {

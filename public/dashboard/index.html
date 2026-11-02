@@ -402,8 +402,8 @@
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Hrg Beli</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap">Hrg Jual Offline</th>
               <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Persentase kenaikan harga jual offline dibanding harga beli">Markup Offline</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Harga beli + markup marketplace 25%">Hrg Jual Online</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Markup harga online dari harga beli: 25%">Markup Online</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Harga jual untuk marketplace online">Hrg Jual Online</th>
+              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Persentase kenaikan harga jual online dibanding harga beli">Markup Online</th>
               <th class="px-4 py-3 w-24"></th>
             </tr>
           </thead>
@@ -2853,7 +2853,7 @@
         </div>
         <div>
           <h3 id="modal-bulk-price-title" class="text-lg font-bold text-white">Edit Harga Massal</h3>
-          <p class="text-xs text-[#A0A0A5]">Perbarui harga jual untuk produk yang dipilih</p>
+          <p class="text-xs text-[#A0A0A5]">Atur harga jual atau markup produk terpilih</p>
         </div>
       </div>
       <button type="button" onclick="closeBulkPriceModal()" aria-label="Tutup modal" class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
@@ -2861,19 +2861,31 @@
       </button>
     </div>
 
-    <!-- TABS: Set Nominal vs Penyesuaian % -->
+    <div class="space-y-1">
+      <p class="text-xs font-medium text-[#A0A0A5]">Jenis Harga</p>
+      <div class="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/10">
+        <button type="button" id="tab-bulk-offline" onclick="switchBulkPriceChannel('offline')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-[#0088CC] text-white transition">
+          Harga Offline
+        </button>
+        <button type="button" id="tab-bulk-online" onclick="switchBulkPriceChannel('online')" class="flex-1 py-2 text-xs font-medium rounded-lg text-[#A0A0A5] hover:text-white transition">
+          Harga Online
+        </button>
+      </div>
+    </div>
+
+    <!-- MODE: Nominal Harga atau Markup dari Harga Beli -->
     <div class="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/10">
       <button type="button" id="tab-bulk-nominal" onclick="switchBulkPriceTab('nominal')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-[#0088CC] text-white transition">
-        Set Nominal Baru (Rp)
+        Set Harga Nominal (Rp)
       </button>
       <button type="button" id="tab-bulk-percent" onclick="switchBulkPriceTab('percent')" class="flex-1 py-2 text-xs font-medium rounded-lg text-[#A0A0A5] hover:text-white transition">
-        Penyesuaian Persentase (%)
+        Set Markup (%)
       </button>
     </div>
 
     <!-- INPUT FIELDS -->
     <div id="bulk-price-nominal-section" class="space-y-1">
-      <label for="bulk-price-nominal-input" class="block text-xs font-medium text-[#A0A0A5]">Harga Jual Baru (Rp)</label>
+      <label id="bulk-price-nominal-label" for="bulk-price-nominal-input" class="block text-xs font-medium text-[#A0A0A5]">Harga Jual Offline Baru (Rp)</label>
       <div class="relative flex items-center rounded-xl bg-black/40 border border-white/10 focus-within:border-[#0088CC] focus-within:ring-2 focus-within:ring-[#0088CC]/20 transition-all overflow-hidden">
         <span class="pl-3.5 pr-2.5 text-xs font-semibold text-[#0088CC] select-none shrink-0 border-r border-white/5">Rp</span>
         <input type="text" id="bulk-price-nominal-input" inputmode="numeric" pattern="[0-9]*" placeholder="0" oninput="updateBulkPricePreview()" class="w-full bg-transparent px-3.5 py-2.5 text-sm text-white font-medium focus:outline-none placeholder-white/30">
@@ -2884,11 +2896,12 @@
     </div>
 
     <div id="bulk-price-percent-section" class="hidden space-y-1">
-      <label class="block text-xs font-medium text-[#A0A0A5]">Penyesuaian Persentase (+/- %)</label>
+      <label id="bulk-price-percent-label" for="bulk-price-percent-input" class="block text-xs font-medium text-[#A0A0A5]">Markup Offline dari Harga Beli (%)</label>
       <div class="flex items-center gap-2">
-        <input type="number" id="bulk-price-percent-input" step="1" placeholder="Contoh: 10 untuk +10%, -5 untuk -5%" oninput="updateBulkPricePreview()" class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
+        <input type="number" id="bulk-price-percent-input" min="-100" step="0.01" placeholder="Contoh: 25 untuk markup 25%" oninput="updateBulkPricePreview()" class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#0088CC] focus:outline-none">
         <span class="text-sm font-semibold text-[#A0A0A5]">%</span>
       </div>
+      <p class="text-[11px] text-[#77777D]">Harga jual dihitung dari harga beli dan markup yang dipilih.</p>
     </div>
 
     <!-- PREVIEW PER PRODUK (Harga Lama -> Harga Baru) -->
@@ -2898,8 +2911,9 @@
           <tr>
             <th class="text-left py-1.5 px-2 font-medium">Produk</th>
             <th class="text-right py-1.5 px-2 font-medium">Harga Lama</th>
-            <th class="text-center py-1.5 px-2 font-medium w-6"></th>
             <th class="text-right py-1.5 px-2 font-medium">Harga Baru</th>
+            <th class="text-right py-1.5 px-2 font-medium">Markup Lama</th>
+            <th class="text-right py-1.5 px-2 font-medium">Markup Baru</th>
           </tr>
         </thead>
         <tbody id="bulk-price-preview-body" class="divide-y divide-white/[0.03]">

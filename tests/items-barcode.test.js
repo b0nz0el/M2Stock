@@ -35,7 +35,7 @@ describe('product barcode API mapping', () => {
     const result = await items.create(row);
 
     expect(result.ok).toBe(true);
-    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, image_url: null }]);
+    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, online_sell_price: 0, image_url: null }]);
   });
 
   it('stores the product supplier and preserves zero prices on create', async () => {
@@ -203,4 +203,3 @@ describe('product barcode API mapping', () => {
     expect(indexHtml).toContain('aria-label="Export barcode produk"');
   });
 });
-
