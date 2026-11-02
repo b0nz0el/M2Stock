@@ -151,6 +151,17 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
       expect(sw).toContain("url.pathname.startsWith('/assets/css/') || url.pathname.startsWith('/assets/js/')");
       expect(sw).toContain('SKIP_WAITING');
+      expect(sw).toContain('fetch(req, { cache: \'no-store\' })');
+    });
+
+    it('precaches marketplace icon modules and item screens for offline PWA consistency', () => {
+      const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
+      [
+        '/assets/js/icons.js',
+        '/assets/js/utils/channel-icons.js',
+        '/dashboard/items.js',
+        '/dashboard/settings.js'
+      ].forEach((asset) => expect(sw).toContain(`'${asset}'`));
     });
 
     it('verifies app.js registers SW with updateViaCache none and listens to controllerchange', () => {

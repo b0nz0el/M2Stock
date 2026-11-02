@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.4.99-pwa';
+const CACHE_NAME = 'aquastock-v3.4.100-pwa';
 
 const STATIC_PRECACHE = [
   '/',
@@ -45,10 +45,19 @@ const STATIC_PRECACHE = [
   '/assets/js/components/command-palette.js',
   '/assets/js/components/barcode-scanner.js',
   '/assets/js/pwa-register.js',
+  '/assets/js/icons.js',
+  '/assets/js/product-catalog-images.js',
+  '/assets/js/supabase-client.js',
+  '/assets/js/api/index.js',
+  '/assets/js/api/items.js',
+  '/assets/js/api/settings.js',
+  '/assets/js/utils/channel-icons.js',
   '/assets/js/vendor/jsbarcode.all.min.js',
   '/assets/js/vendor/html5-qrcode.min.js',
   '/assets/js/utils/offline-sync.js',
-  '/assets/js/utils/user-resolver.js'
+  '/assets/js/utils/user-resolver.js',
+  '/dashboard/items.js',
+  '/dashboard/settings.js'
 ];
 
 self.addEventListener('message', (event) => {
@@ -93,7 +102,7 @@ self.addEventListener('fetch', (event) => {
   // Navigasi HTML: Network-First dengan Cache Fallback
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((networkRes) => {
           if (networkRes && networkRes.status === 200) {
             const resClone = networkRes.clone();
@@ -114,7 +123,7 @@ self.addEventListener('fetch', (event) => {
   // Menjamin pembaruan layout dan skrip langsung aktif saat online tanpa tertahan cache basi
   if (url.pathname.startsWith('/assets/css/') || url.pathname.startsWith('/assets/js/') || (url.pathname.startsWith('/dashboard/') && url.pathname.endsWith('.js'))) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((networkRes) => {
           if (networkRes && networkRes.status === 200) {
             const resClone = networkRes.clone();
