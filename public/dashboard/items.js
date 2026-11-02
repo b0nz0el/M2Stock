@@ -520,45 +520,6 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
     }
   }
 
-  function renderChannelBadgeHtml(channel, link, channels = null) {
-    let channelList = [];
-    if (Array.isArray(channels) && channels.length > 0) {
-      channelList = channels.filter(c => c && c.channel);
-    } else {
-      const parser = (typeof parseItemChannels === 'function')
-        ? parseItemChannels
-        : ((typeof Api !== 'undefined' && Api.items?.parseItemChannels) ? Api.items.parseItemChannels : null);
-      if (typeof parser === 'function') {
-        const parsed = parser(channel, link, null);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          channelList = parsed;
-        }
-      }
-      if (channelList.length === 0 && (channel || link)) {
-        channelList = [{ channel: channel || 'Offline', link: link || '' }];
-      }
-    }
-
-    if (!channelList || channelList.length === 0) return '';
-
-    return channelList.map(item => {
-      const cfg = getChannelBadgeConfig(item.channel, item.link);
-      if (!cfg) return '';
-      if (cfg.hasLink) {
-        return `
-          <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border transition active:scale-95 shadow-sm ${cfg.badgeClasses}" title="Buka etalase produk di ${escapeHtml(cfg.label)}" aria-label="Buka etalase produk di ${escapeHtml(cfg.label)}">
-            <i data-lucide="${cfg.icon}" class="h-5 w-5" aria-hidden="true"></i>
-          </a>
-        `;
-      }
-      return `
-        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border ${cfg.badgeClasses}">
-          <span>${escapeHtml(cfg.label)}</span>
-        </span>
-      `;
-    }).join(' ');
-  }
-
   const AVAILABLE_CHANNELS = ['Offline', 'Shopee', 'Tokopedia', 'TikTok Shop', 'Lazada', 'WhatsApp'];
   let itemChannelsState = [];
 
@@ -2074,10 +2035,7 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
           `}
         </td>
         <td class="px-4 py-3.5 font-medium">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-white text-sm font-semibold">${escapeHtml(item.name)}</span>
-            ${renderChannelBadgeHtml(item.channel, item.channel_link, item.channels)}
-          </div>
+          <span class="text-white text-sm font-semibold">${escapeHtml(item.name)}</span>
         </td>
         <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
         <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.sku || '-')}</td>

@@ -202,15 +202,19 @@ describe('Master Barang — Saluran & Link Channel', () => {
     const itemsPath = path.resolve(__dirname, '../public/dashboard/items.js');
     const itemsJs = fs.readFileSync(itemsPath, 'utf8');
 
-    expect(itemsJs).toContain('class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border');
+    expect(itemsJs).toContain('class="relative h-9 w-9 rounded-xl border inline-flex items-center justify-center');
     expect(itemsJs).toContain('bg-[#EE4D2D] text-white');
     expect(itemsJs).toContain('bg-[#00AA5B] text-white');
     expect(itemsJs).toContain('bg-black text-white');
     expect(itemsJs).toContain('bg-[#F3F4F6] text-[#D1D5DB]');
     expect(itemsJs).toContain('bg-[#16A34A] text-white');
-    expect(itemsJs).toContain('getChannelBadgeConfig(item.channel, item.link)');
-    expect(itemsJs).toContain('data-lucide="${cfg.icon}"');
+    expect(itemsJs).toContain('getChannelBadgeConfig(c.channel, c.link)');
+    expect(itemsJs).toContain('data-lucide="${config.icon || getChannelIconConfig(c.channel).icon}"');
     expect(itemsJs).toContain('aria-label="Buka produk di ${escapeHtml');
+    expect(itemsJs).not.toContain('renderChannelBadgeHtml');
+    expect(itemsJs).not.toContain('${renderChannelBadgeHtml(item.channel');
+    expect(itemsJs).toContain('class="flex gap-1 justify-end"');
+    expect(itemsJs).toContain('aria-label="Buka produk di ${escapeHtml(label)}"');
   });
 
   it('Dual-layer persistence: saveLocalChannelMeta dan getLocalChannelMeta menjaga data channel dan link tetap tersimpan', async () => {
