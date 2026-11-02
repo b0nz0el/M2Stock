@@ -1,5 +1,14 @@
 # Changelog — Aquastock Pro
 
+## [3.5.7] - 2026-11-03
+
+### Keamanan, Inventori, dan Stabilitas
+- Batasi koreksi stok fisik/Stock Opname dan akses riwayat ledger hanya untuk OWNER, ditegakkan melalui UI, RLS, dan RPC Supabase.
+- Cegah perubahan kolom stok langsung lewat API; perubahan stok harus melalui transaksi atau RPC yang diotorisasi.
+- Hilangkan pembekuan dashboard STAFF dengan membatasi observasi RBAC pada subtree DOM yang baru ditambahkan.
+- Perbarui matriks hak akses di README agar sesuai dengan perilaku aplikasi.
+- Validasi: 50 file tes, 404 tes lulus.
+
 ## [2.0.0] - 2026-10-17
 ### Major Release: Local-First PWA & International Adaptive UI/UX Overhaul
 

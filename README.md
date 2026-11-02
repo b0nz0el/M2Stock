@@ -1,5 +1,5 @@
 # Aquastock Pro — Production Inventory & POS System
-> **Versi aplikasi:** ikuti `package.json` dan `public/version.json` (diverifikasi pada `v3.4.43`)
+> **Versi aplikasi:** ikuti `package.json` dan `public/version.json`
 > **Sistem:** Multi-Page Application (MPA) Inventory & Point of Sale  
 > **Toko:** Habitic, Pondok Gede, Bekasi)
 > **Live URL:** [https://aquastock-pro.pages.dev](https://aquastock-pro.pages.dev)  
@@ -212,15 +212,14 @@ Aplikasi menerapkan sistem hak akses 3 tingkat (*Role-Based Access Control*) yan
 | Modul / Fitur | OWNER | STAFF | VIEWER |
 | :--- | :---: | :---: | :---: |
 | **Dashboard & Ringkasan KPI** | Full | Full | Read-Only |
-| **Katalog Master Barang (Items)** | Full (CRUD) | Full (CRUD) | Read-Only |
-| **Barang Masuk & Keluar (In / Out / POS)** | Full | Full | Read-Only |
-| **Purchase Order & Retur** | Full | Full | Read-Only |
-| **Supplier & Customer** | Full | Full | Read-Only |
-| **Buku Kas & Hutang/Piutang** | Full | Full | Read-Only |
-| **Laporan & Analitik Keuangan** | Full | Full | ❌ Tidak Ada Akses |
-| **Manajemen Pengguna (Users)** | Full | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |
-| **Audit Log & Cadangan Data (Backup)** | Full | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |
-| **Pengaturan Profil Toko (Settings)** | Full | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |
+| **Master Barang, Barang Masuk/Keluar, POS** | Full | Buat/Baca/Ubah | ❌ Tidak Ada Akses |
+| **Koreksi Stok Fisik / Stock Opname** | Full | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |
+| **Purchase Order & Retur** | Full | Buat/Baca/Ubah | Read-Only |
+| **Supplier, Customer, Kas, Hutang/Piutang** | Full | Buat/Baca/Ubah | ❌ Tidak Ada Akses |
+| **Laporan & Analitik Keuangan** | Full | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |
+| **Manajemen Pengguna, Audit Log, Backup, Settings** | Full | Read-Only | ❌ Tidak Ada Akses |
+
+Koreksi stok fisik hanya tersedia bagi OWNER. Hak ini diberlakukan pada UI dan ditegakkan kembali oleh RLS, RPC `perform_stock_opname`, serta hak kolom database; STAFF/VIEWER tidak dapat membaca riwayat ledger atau mengubah kolom stok langsung melalui API.
 
 ---
 

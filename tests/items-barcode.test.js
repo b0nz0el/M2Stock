@@ -35,7 +35,21 @@ describe('product barcode API mapping', () => {
     const result = await items.create(row);
 
     expect(result.ok).toBe(true);
-    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, stock: 0, min_stock: 0, cost_price: 0, sell_price: 0, online_sell_price: 0, image_url: null }]);
+    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, min_stock: 0, cost_price: 0, sell_price: 0, online_sell_price: 0, image_url: null }]);
+  });
+
+  it('leaves initial stock at the database default instead of accepting an insert stock value', async () => {
+    const select = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
+    const insert = vi.fn(() => ({ select }));
+    window.supabase = { from: vi.fn(() => ({ insert })) };
+
+    await items.create({
+      name: 'Produk Baru',
+      sku: 'NEW-001',
+      stock: 500
+    });
+
+    expect(insert.mock.calls[0][0][0]).not.toHaveProperty('stock');
   });
 
   it('stores the product supplier and preserves zero prices on create', async () => {

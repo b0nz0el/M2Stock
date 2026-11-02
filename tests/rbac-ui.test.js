@@ -16,6 +16,7 @@ describe('role-based UI updates', () => {
       </section>
       <section id="page-items" class="page">
         <button data-action="delete">Delete item</button>
+        <button data-rbac-owner-only>Stock opname</button>
       </section>
     `;
     window._rbacObserverInstalled = false;
@@ -26,6 +27,7 @@ describe('role-based UI updates', () => {
     expect(document.querySelector('#page-settings input').disabled).toBe(true);
     expect(document.querySelector('#page-settings .settings-tab-btn').style.display).not.toBe('none');
     expect(document.querySelector('#page-items [data-action="delete"]').style.display).toBe('none');
+    expect(document.querySelector('#page-items [data-rbac-owner-only]').style.display).toBe('none');
 
     const queryDocument = vi.spyOn(document, 'querySelectorAll');
     const settingsButton = document.createElement('button');

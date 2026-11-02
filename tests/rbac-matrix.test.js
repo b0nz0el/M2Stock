@@ -37,4 +37,18 @@ describe('role access matrix', () => {
     expect(migration).toContain('DROP POLICY IF EXISTS "profiles_update"');
     expect(migration).toContain('GRANT EXECUTE ON FUNCTION public.get_auth_users() TO authenticated');
   });
+
+  it('restricts physical stock corrections and stock adjustment history to OWNER in the database', () => {
+    const migration = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261103_stock_opname_owner_only.sql'),
+      'utf8'
+    );
+
+    expect(migration).toContain("UPPER(BTRIM(profiles.role)) = 'OWNER'");
+    expect(migration).toContain("UPPER(BTRIM(COALESCE(v_user_role, ''))) <> 'OWNER'");
+    expect(migration).toContain('koreksi stok fisik hanya dapat dilakukan oleh OWNER');
+    expect(migration).toContain('GRANT EXECUTE ON FUNCTION public.perform_stock_opname(TEXT, NUMERIC, TEXT, TEXT)');
+    expect(migration).toContain("attribute.attname NOT IN ('id', 'stock')");
+    expect(migration).toContain('REVOKE INSERT, UPDATE ON TABLE public.products FROM PUBLIC, anon, authenticated');
+  });
 });

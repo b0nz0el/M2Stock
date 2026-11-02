@@ -1335,7 +1335,24 @@ import {
 
   let selectedAdjustmentProduct = null;
 
-  function openStockAdjustmentModal(productId) {
+  async function requireOwnerForStockOpname() {
+    let role = null;
+    try {
+      role = await window.RBAC?.getUserRole?.();
+    } catch (error) {
+      console.error('Gagal memverifikasi role untuk Stock Opname:', error);
+    }
+
+    if (String(role || '').trim().toUpperCase() === 'OWNER') return true;
+    if (typeof showToast === 'function') {
+      showToast('Koreksi stok fisik hanya dapat dilakukan oleh OWNER.', 'error');
+    }
+    return false;
+  }
+
+  async function openStockAdjustmentModal(productId) {
+    if (!await requireOwnerForStockOpname()) return;
+
     let item = currentItems.find(i => String(i.id) === String(productId));
     if (!item) {
       item = {
@@ -1433,6 +1450,8 @@ import {
   }
 
   async function openStockAdjustmentHistory(productIdOverride = null) {
+    if (!await requireOwnerForStockOpname()) return;
+
     const chosenId = productIdOverride ?? document.getElementById('adj-product-id')?.value ?? selectedAdjustmentProduct?.id;
     let targetProduct = selectedAdjustmentProduct;
 
@@ -1655,11 +1674,7 @@ import {
 
   async function handleStockAdjustmentSubmit(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
-    const role = (typeof window !== 'undefined' && window.RBAC) ? await window.RBAC.getUserRole() : null;
-    if (role === 'VIEWER') {
-      alert('Anda tidak punya akses untuk mengubah data.');
-      return;
-    }
+    if (!await requireOwnerForStockOpname()) return;
 
     const prodId = document.getElementById('adj-product-id')?.value;
     const actualStock = parseNumericValue(document.getElementById('adj-actual-stock')?.value);
@@ -2070,7 +2085,7 @@ import {
               `;
               }).join('');
             })()}
-            <button type="button" data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-[#FF9500]/15 hover:border-[#FF9500]/30 border border-transparent rounded-lg text-[#FF9500] transition active:scale-95">
+            <button type="button" data-rbac-owner-only data-action="adjust-stock" data-item-action="adjust-stock" data-item-id="${escapeHtml(String(item.id))}" onclick="openStockAdjustmentModal('${escapeHtml(String(item.id))}')" title="Penyesuaian Stok (Stock Opname)" aria-label="Penyesuaian Stok" class="p-1.5 hover:bg-[#FF9500]/15 hover:border-[#FF9500]/30 border border-transparent rounded-lg text-[#FF9500] transition active:scale-95">
               <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
             </button>
             <button type="button" data-action="export-barcode" data-item-action="export-barcode" data-item-id="${escapeHtml(String(item.id))}" title="Export Barcode" aria-label="Export Barcode" class="p-1.5 hover:bg-[#34C759]/15 hover:border-[#34C759]/30 border border-transparent rounded-lg text-[#34C759] transition active:scale-95">
@@ -3466,10 +3481,7 @@ import {
 
           // 3. Eksekusi INSERT untuk produk baru dengan stok awal terkunci 0
           if (toInsert.length > 0) {
-            const rowsToInsert = toInsert.map(p => ({
-              ...p,
-              stock: 0 // Selalu 0 di awal, penambahan fisik melalui mutasi penerimaan awal
-            }));
+            const rowsToInsert = toInsert.map(({ stock, ...product }) => product);
 
             const { data: createdProds, error: insErr } = await window.supabase
               .from('products')

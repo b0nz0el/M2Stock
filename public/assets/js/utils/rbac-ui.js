@@ -57,6 +57,10 @@ export const STAFF_DELETE_SELECTORS = [
   '.bulk-action-btn--danger'
 ];
 
+export const OWNER_ONLY_SELECTORS = [
+  '[data-rbac-owner-only]'
+];
+
 export const READ_ONLY_PAGES = {
   VIEWER: ['po', 'return'],
   STAFF: ['users', 'audit', 'backup', 'settings']
@@ -64,6 +68,7 @@ export const READ_ONLY_PAGES = {
 
 const READONLY_SELECTOR_STRING = READONLY_SELECTORS.join(', ');
 const STAFF_DELETE_SELECTOR_STRING = STAFF_DELETE_SELECTORS.join(', ');
+const OWNER_ONLY_SELECTOR_STRING = OWNER_ONLY_SELECTORS.join(', ');
 
 function hideMatchingElements(root, selector) {
   if (!root || typeof root.querySelectorAll !== 'function') return;
@@ -100,6 +105,17 @@ function applyPageRestrictions(pageId, root, role) {
 
 function applyRoleRestrictions(role, root = document) {
   if (!root || typeof document === 'undefined') return;
+
+  if (role !== 'OWNER') {
+    hideMatchingElements(root, OWNER_ONLY_SELECTOR_STRING);
+    if (root.nodeType === 1) {
+      const ownerOnlyParent = root.closest('[data-rbac-owner-only]');
+      if (ownerOnlyParent) {
+        ownerOnlyParent.style.display = 'none';
+        if ('disabled' in ownerOnlyParent) ownerOnlyParent.disabled = true;
+      }
+    }
+  }
 
   if (root === document) {
     if (role === 'VIEWER') {

@@ -361,7 +361,6 @@ export const items = {
             brand: data.brand || null,
             channel: primaryChannel,
             channel_link: primaryChannelLink,
-            stock: data.stock !== undefined ? Number(data.stock) : 0,
             min_stock: minStock !== undefined ? Number(minStock) : 0,
             cost_price: costPrice !== undefined ? Number(costPrice) : 0,
             sell_price: sellPrice !== undefined ? Number(sellPrice) : 0,

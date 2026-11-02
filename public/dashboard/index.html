@@ -3167,7 +3167,7 @@
         </div>
       </div>
 
-      <section id="item-stock-adjustment-action" class="hidden stock-adjustment-callout" aria-labelledby="item-stock-adjustment-title">
+      <section id="item-stock-adjustment-action" data-rbac-owner-only class="hidden stock-adjustment-callout" aria-labelledby="item-stock-adjustment-title">
         <div class="stock-adjustment-callout__copy">
           <div class="stock-adjustment-callout__icon" aria-hidden="true">
             <i data-lucide="clipboard-check" class="w-5 h-5"></i>
@@ -3331,7 +3331,7 @@
 </div>
 
 <!-- =========================== MODAL (ITEMS: modal-stock-adjustment) =========================== -->
-<div id="modal-stock-adjustment" class="hidden stock-opname-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-stock-adjustment-title">
+<div id="modal-stock-adjustment" data-rbac-owner-only class="hidden stock-opname-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-stock-adjustment-title">
   <section class="stock-opname-dialog">
     <!-- View 1: Form Koreksi Stok Fisik -->
     <div id="stock-opname-view-form" class="flex flex-col">
@@ -3508,7 +3508,7 @@
   </section>
 </div>
 
-<div id="modal-stock-adjustment-history" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="stock-adjustment-history-title">
+<div id="modal-stock-adjustment-history" data-rbac-owner-only class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="stock-adjustment-history-title">
   <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl p-6 space-y-4">
     <div class="flex items-center justify-between">
       <div>

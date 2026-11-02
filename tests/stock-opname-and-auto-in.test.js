@@ -361,6 +361,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       };
 
       window.showToast = vi.fn();
+      window.RBAC = { getUserRole: vi.fn().mockResolvedValue('OWNER') };
       window.getChannelIconConfig = getChannelIconConfig;
       window.MARKETPLACE_LINK_CSV_HEADERS = MARKETPLACE_LINK_CSV_HEADERS;
       window.prepareMarketplaceLinkImport = prepareMarketplaceLinkImport;
@@ -370,6 +371,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
     afterEach(() => {
       delete window.Api;
       delete window.showToast;
+      delete window.RBAC;
       delete window.MARKETPLACE_LINK_CSV_HEADERS;
       delete window.prepareMarketplaceLinkImport;
       document.body.innerHTML = '';
@@ -413,7 +415,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       await window.loadItemsFromBackend();
 
       // Buka modal penyesuaian stok untuk produk ID 10
-      window.openStockAdjustmentModal(10);
+      await window.openStockAdjustmentModal(10);
 
       expect(document.getElementById('adj-current-stock').textContent).toBe('2');
       expect(document.getElementById('adj-actual-stock').value).toBe('2');
@@ -491,7 +493,7 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
         }]
       });
       await window.loadItemsFromBackend();
-      window.openStockAdjustmentModal(10);
+      await window.openStockAdjustmentModal(10);
       await window.openStockAdjustmentHistory();
 
       expect(window.Api.items.getStockAdjustments).toHaveBeenCalledWith(10);
@@ -520,6 +522,24 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
         1,
         'Koreksi Salah Input / Dobel',
         'Koreksi dari 2 menjadi 1 pack'
+      );
+    });
+
+    it('blocks STAFF from opening, viewing, or submitting physical stock corrections', async () => {
+      window.RBAC.getUserRole.mockResolvedValue('STAFF');
+      document.getElementById('adj-product-id').value = '10';
+      document.getElementById('adj-actual-stock').value = '1';
+
+      await window.openStockAdjustmentModal(10);
+      await window.openStockAdjustmentHistory(10);
+      await window.handleStockAdjustmentSubmit(new Event('submit', { cancelable: true }));
+
+      expect(document.getElementById('modal-stock-adjustment').classList.contains('hidden')).toBe(true);
+      expect(window.Api.items.getStockAdjustments).not.toHaveBeenCalled();
+      expect(window.Api.items.adjustStock).not.toHaveBeenCalled();
+      expect(window.showToast).toHaveBeenCalledWith(
+        'Koreksi stok fisik hanya dapat dilakukan oleh OWNER.',
+        'error'
       );
     });
 
