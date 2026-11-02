@@ -2834,9 +2834,11 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
       currentItems = res.data || [];
       const getLocalMeta = (typeof window !== 'undefined' && window.getLocalChannelMeta) ? window.getLocalChannelMeta : (typeof Api !== 'undefined' && Api.items?.getLocalChannelMeta ? Api.items.getLocalChannelMeta : null);
       if (typeof getLocalMeta === 'function') {
+        let migratedChannelCount = 0;
+        let failedChannelSync = false;
         currentItems.forEach(function (item) {
           const meta = getLocalMeta(item.id, item.sku);
-          if (meta) {
+          if (meta && item.channel_meta_source === 'local') {
             if (!item.channel || item.channel === 'Offline') {
               item.channel = meta.channel || item.channel || 'Offline';
             }
@@ -2845,6 +2847,47 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
             }
           }
         });
+
+        for (const item of currentItems) {
+          const meta = getLocalMeta(item.id, item.sku);
+          const localChannels = Array.isArray(meta?.channels)
+            ? meta.channels.filter(channel => channel && channel.channel && channel.link)
+            : [];
+          const remoteUpdatedAt = Date.parse(item.updated_at || '');
+          const localUpdatedAt = Number(meta?.updated_at) || 0;
+          const localMetadataIsNewer = !Number.isFinite(remoteUpdatedAt) || localUpdatedAt >= remoteUpdatedAt;
+          if (item.channel_meta_source !== 'local' || localChannels.length === 0 || !localMetadataIsNewer) continue;
+
+          const primaryChannel = localChannels[0].channel;
+          const channelLink = localChannels.length > 1
+            ? JSON.stringify(localChannels)
+            : localChannels[0].link;
+          const syncResult = await Api.items.update(item.id, {
+            sku: item.sku,
+            channel: primaryChannel,
+            channel_link: channelLink,
+            channels: localChannels
+          }, { skipAudit: true });
+
+          if (!syncResult.ok) {
+            failedChannelSync = true;
+            console.error(`Gagal menyinkronkan channel produk ID ${item.id}:`, syncResult.error);
+            continue;
+          }
+
+          item.channel = primaryChannel;
+          item.channel_link = channelLink;
+          item.channels = localChannels;
+          item.channel_meta_source = 'cloud';
+          migratedChannelCount++;
+        }
+
+        if (migratedChannelCount > 0 && typeof showToast === 'function') {
+          showToast(`${migratedChannelCount} data marketplace dari perangkat ini berhasil disinkronkan`, 'success');
+        }
+        if (failedChannelSync && typeof showToast === 'function') {
+          showToast('Sebagian data marketplace belum berhasil disinkronkan. Periksa koneksi lalu muat ulang.', 'error');
+        }
       }
       // Urutkan default otomatis A-Z
       currentItems.sort(function (a, b) {

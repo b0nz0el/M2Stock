@@ -60,6 +60,55 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(res.data[1].channel_link).toBe('');
   });
 
+  it('Api.items.getAll memprioritaskan channel cloud di atas metadata lokal yang sudah usang', async () => {
+    Api.items.saveLocalChannelMeta(3, 'SKU-003', 'Shopee', 'https://shopee.co.id/old-link');
+    const orderMock = vi.fn().mockResolvedValue({
+      data: [{
+        id: 3,
+        sku: 'SKU-003',
+        name: 'Produk Uji',
+        channel: 'Tokopedia',
+        channel_link: 'https://tokopedia.com/current-link'
+      }],
+      error: null
+    });
+    const selectMock = vi.fn().mockReturnValue({ order: orderMock });
+    window.supabase = { from: vi.fn().mockReturnValue({ select: selectMock }) };
+
+    const res = await Api.items.getAll();
+
+    expect(res.ok).toBe(true);
+    expect(res.data[0].channel_meta_source).toBe('cloud');
+    expect(res.data[0].channels).toEqual([{
+      channel: 'Tokopedia',
+      link: 'https://tokopedia.com/current-link'
+    }]);
+  });
+
+  it('Api.items.getAll tidak menghidupkan kembali metadata lokal yang lebih lama dari data cloud', async () => {
+    Api.items.saveLocalChannelMeta(4, 'SKU-004', 'Shopee', 'https://shopee.co.id/old-link');
+    const orderMock = vi.fn().mockResolvedValue({
+      data: [{
+        id: 4,
+        sku: 'SKU-004',
+        name: 'Produk Uji',
+        channel: 'Offline',
+        channel_link: null,
+        updated_at: new Date(Date.now() + 60_000).toISOString()
+      }],
+      error: null
+    });
+    const selectMock = vi.fn().mockReturnValue({ order: orderMock });
+    window.supabase = { from: vi.fn().mockReturnValue({ select: selectMock }) };
+
+    const res = await Api.items.getAll();
+
+    expect(res.ok).toBe(true);
+    expect(res.data[0].channel_meta_source).toBe('none');
+    expect(res.data[0].channels).toEqual([]);
+    expect(res.data[0].channel).toBe('Offline');
+  });
+
   it('Api.items.create menyertakan channel dan channel_link pada row insert', async () => {
     const selectMock = vi.fn().mockResolvedValue({
       data: [{ id: 10, name: 'Lampu LED Aquascape', channel: 'Tokopedia', channel_link: 'https://tokopedia.com/lampu-led' }],
@@ -89,22 +138,32 @@ describe('Master Barang — Saluran & Link Channel', () => {
     ]);
   });
 
-  it('Api.items.update melakukan retry fallback jika kolom channel belum ada di Supabase', async () => {
+  it('Api.items.create tidak menyimpan produk diam-diam tanpa kolom channel', async () => {
+    const selectMock = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'column "channel_link" of relation "products" does not exist' }
+    });
+    const insertMock = vi.fn().mockReturnValue({ select: selectMock });
+    window.supabase = { from: vi.fn().mockReturnValue({ insert: insertMock }) };
+
+    const res = await Api.items.create({
+      name: 'Produk Uji',
+      channel: 'Shopee',
+      channel_link: 'https://shopee.co.id/test'
+    });
+
+    expect(res.ok).toBe(false);
+    expect(res.error.code).toBe('PRODUCT_CHANNEL_SCHEMA_MISSING');
+    expect(insertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('Api.items.update menampilkan error bila kolom channel belum ada di Supabase', async () => {
     const selectFail = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'column "channel_link" of relation "products" does not exist' }
     });
-    const selectSuccess = vi.fn().mockResolvedValue({
-      data: [{ id: 10, name: 'Lampu LED Aquascape' }],
-      error: null
-    });
-
     const eqFail = vi.fn().mockReturnValue({ select: selectFail });
-    const eqSuccess = vi.fn().mockReturnValue({ select: selectSuccess });
-
-    const updateMock = vi.fn()
-      .mockReturnValueOnce({ eq: eqFail })
-      .mockReturnValueOnce({ eq: eqSuccess });
+    const updateMock = vi.fn().mockReturnValue({ eq: eqFail });
 
     const fromMock = vi.fn().mockReturnValue({ update: updateMock });
 
@@ -116,13 +175,10 @@ describe('Master Barang — Saluran & Link Channel', () => {
       channel_link: 'https://tokopedia.com/lampu-led'
     });
 
-    expect(res.ok).toBe(true);
-    expect(updateMock).toHaveBeenCalledTimes(2);
-    // Panggilan kedua menghapus channel & channel_link agar tetap berhasil tersimpan
-    expect(updateMock).toHaveBeenNthCalledWith(2, expect.not.objectContaining({
-      channel: 'Tokopedia',
-      channel_link: 'https://tokopedia.com/lampu-led'
-    }));
+    expect(res.ok).toBe(false);
+    expect(res.error.code).toBe('PRODUCT_CHANNEL_SCHEMA_MISSING');
+    expect(res.error.message).toContain('20261028_product_channel_link.sql');
+    expect(updateMock).toHaveBeenCalledTimes(1);
   });
 
   it('HTML index.html tidak lagi memuat aksi massal di bawah tabel', () => {
@@ -247,6 +303,7 @@ describe('Master Barang — Saluran & Link Channel', () => {
     expect(res.ok).toBe(true);
     expect(res.data[0].channel).toBe('Shopee');
     expect(res.data[0].channel_link).toBe('https://shopee.co.id/ikan-cupang');
+    expect(res.data[0].channel_meta_source).toBe('local');
   });
 
   it('Multi-Channel CRUD: index.html menyediakan container #item-channels-list dan tombol #btn-add-item-channel', () => {

@@ -18,6 +18,8 @@ Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan ber
 
 Fitur edit harga online massal membutuhkan migrasi `20261103_product_online_price.sql`. Migrasi ini menambahkan `products.online_sell_price` dan mengisi harga online produk yang sudah ada menjadi harga beli +25%; persentase markup online selanjutnya diturunkan dari harga jual online dan harga beli.
 
+Sinkronisasi ikon dan tautan marketplace lintas perangkat membutuhkan migrasi `20261028_product_channel_link.sql`, yang menambahkan `products.channel` dan `products.channel_link`. Jika data channel lama hanya tersimpan di browser, buka Master Barang sekali pada perangkat tempat data tersebut dibuat setelah kolom tersedia agar aplikasi dapat memindahkannya ke Supabase.
+
 ---
 
 ## Skrip Bootstrap SQL Awal

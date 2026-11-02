@@ -12,6 +12,22 @@ function isMissingOnlineSellPriceColumn(error) {
     || (error?.code === 'PGRST204' && /online_sell_price/i.test(message));
 }
 
+function isMissingChannelColumn(error) {
+  const message = String(error?.message || '');
+  return /column .*channel(_link)?.*(does not exist|schema cache)/i.test(message)
+    || (error?.code === 'PGRST204' && /channel(_link)?/i.test(message));
+}
+
+function missingChannelColumnResponse() {
+  return formatResponse({
+    ok: false,
+    error: {
+      code: 'PRODUCT_CHANNEL_SCHEMA_MISSING',
+      message: 'Data marketplace belum tersimpan ke database. Terapkan migrasi supabase/migrations/20261028_product_channel_link.sql terlebih dahulu.'
+    }
+  });
+}
+
 export function parseItemImages(rawImageUrl, rawImages) {
   if (Array.isArray(rawImages) && rawImages.length > 0) {
     return rawImages.filter(Boolean);
@@ -36,12 +52,7 @@ export function parseItemImages(rawImageUrl, rawImages) {
 }
 
 export function parseItemChannels(rawChannel, rawChannelLink, localMeta) {
-  // 1. Cek dari localMeta.channels jika sudah ada array
-  if (localMeta && Array.isArray(localMeta.channels) && localMeta.channels.length > 0) {
-    return localMeta.channels.filter(c => c && typeof c === 'object' && c.channel);
-  }
-
-  // 2. Cek jika rawChannelLink berupa JSON array
+  // Persisted channel data is authoritative; local metadata is only a migration fallback.
   if (typeof rawChannelLink === 'string') {
     const trimmed = rawChannelLink.trim();
     if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
@@ -54,13 +65,22 @@ export function parseItemChannels(rawChannel, rawChannelLink, localMeta) {
     }
   }
 
-  // 3. Fallback jika ada channel_link atau rawChannel tunggal
-  const effectiveCh = (rawChannel && rawChannel !== 'Offline') ? rawChannel : ((localMeta && localMeta.channel) || rawChannel || 'Offline');
-  const effectiveLk = (typeof rawChannelLink === 'string' && !rawChannelLink.startsWith('[') ? rawChannelLink : (localMeta && localMeta.channel_link)) || '';
+  const persistedLink = typeof rawChannelLink === 'string' && !rawChannelLink.startsWith('[')
+    ? rawChannelLink
+    : '';
+  const persistedChannel = rawChannel && rawChannel !== 'Offline' ? rawChannel : '';
 
-  if (effectiveLk || (effectiveCh && effectiveCh !== 'Offline')) {
-    return [{ channel: effectiveCh, link: effectiveLk }];
+  if (persistedLink || persistedChannel) {
+    return [{ channel: persistedChannel || rawChannel || 'Offline', link: persistedLink }];
   }
+
+  if (localMeta && Array.isArray(localMeta.channels) && localMeta.channels.length > 0) {
+    return localMeta.channels.filter(c => c && typeof c === 'object' && c.channel);
+  }
+
+  const localChannel = localMeta?.channel || rawChannel || 'Offline';
+  const localLink = localMeta?.channel_link || '';
+  if (localLink || localChannel !== 'Offline') return [{ channel: localChannel, link: localLink }];
 
   return [];
 }
@@ -171,9 +191,15 @@ export const items = {
               primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
             }
             const localMeta = getLocalChannelMeta(item.id, item.sku);
-            const channels = parseItemChannels(item.channel, item.channel_link, localMeta);
-            const effectiveChannel = (channels[0]?.channel) || ((item.channel && item.channel !== 'Offline') ? item.channel : ((localMeta && localMeta.channel) || item.channel || 'Offline'));
-            const effectiveLink = (channels[0]?.link) || (typeof item.channel_link === 'string' && !item.channel_link.startsWith('[') ? item.channel_link : (localMeta && localMeta.channel_link)) || '';
+            const persistedChannels = parseItemChannels(item.channel, item.channel_link, null);
+            const cloudUpdatedAt = Date.parse(item.updated_at || '');
+            const localUpdatedAt = Number(localMeta?.updated_at) || 0;
+            const useLocalMeta = !Number.isFinite(cloudUpdatedAt) || localUpdatedAt >= cloudUpdatedAt;
+            const channels = persistedChannels.length > 0
+              ? persistedChannels
+              : parseItemChannels(item.channel, item.channel_link, useLocalMeta ? localMeta : null);
+            const effectiveChannel = (channels[0]?.channel) || ((item.channel && item.channel !== 'Offline') ? item.channel : ((useLocalMeta && localMeta && localMeta.channel) || item.channel || 'Offline'));
+            const effectiveLink = (channels[0]?.link) || (typeof item.channel_link === 'string' && !item.channel_link.startsWith('[') ? item.channel_link : (useLocalMeta && localMeta && localMeta.channel_link)) || '';
             return {
               id: item.id,
               sku: item.sku || '',
@@ -200,6 +226,7 @@ export const items = {
               channel: effectiveChannel,
               channel_link: effectiveLink,
               channels: channels,
+              channel_meta_source: persistedChannels.length > 0 ? 'cloud' : (channels.length > 0 && useLocalMeta ? 'local' : 'none'),
               image_url: primaryImageUrl,
               images: effectiveImages,
               created_at: item.created_at,
@@ -362,16 +389,13 @@ export const items = {
           let insertResult = await insertProduct(insertRow);
           for (let attempt = 0; insertResult.error && attempt < 2; attempt++) {
             const errorMessage = String(insertResult.error.message || '');
+            if (isMissingChannelColumn(insertResult.error)) {
+              return missingChannelColumnResponse();
+            }
             const retryRow = { ...insertRow };
             let removedLegacyColumn = false;
             if (isMissingOnlineSellPriceColumn(insertResult.error) && 'online_sell_price' in retryRow) {
               delete retryRow.online_sell_price;
-              removedLegacyColumn = true;
-            }
-            if ((errorMessage.includes('channel_link') || errorMessage.includes('channel'))
-              && ('channel' in retryRow || 'channel_link' in retryRow)) {
-              delete retryRow.channel;
-              delete retryRow.channel_link;
               removedLegacyColumn = true;
             }
             if (!removedLegacyColumn) break;
@@ -475,17 +499,8 @@ export const items = {
           }
 
           let { data: updated, error } = await query;
-          if (error && (String(error.message || '').includes('channel_link') || String(error.message || '').includes('channel'))) {
-            const fallbackRow = { ...row };
-            delete fallbackRow.channel;
-            delete fallbackRow.channel_link;
-            let retryQuery = window.supabase.from('products').update(fallbackRow).eq('id', id).select();
-            if (opts && opts.signal) retryQuery = retryQuery.abortSignal(opts.signal);
-            const retryRes = await retryQuery;
-            if (!retryRes.error) {
-              updated = retryRes.data;
-              error = null;
-            }
+          if (error && isMissingChannelColumn(error)) {
+            return missingChannelColumnResponse();
           }
           if (error) {
             return formatResponse({
@@ -515,7 +530,7 @@ export const items = {
           updatedProd.channel_link = finalLink;
           updatedProd.channels = formattedChannels || parseItemChannels(updatedProd.channel, updatedProd.channel_link, { channel: finalChannel, channel_link: finalLink });
           try {
-            if (typeof logAudit === 'function') {
+            if (!opts?.skipAudit && typeof logAudit === 'function') {
               logAudit('UPDATE', `Update Produk: ${updatedProd.name || data.name || id}`);
             }
           } catch (_) {}
