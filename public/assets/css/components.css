@@ -134,6 +134,9 @@ button:disabled:active {
 .card table {
   min-width: 900px;
 }
+#page-items .card table {
+  min-width: 1380px;
+}
 .card-table-wrap {
   overflow-x: auto;
 }

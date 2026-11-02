@@ -34,6 +34,17 @@
     return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '0';
   }
 
+  function getOnlinePricing(costPrice) {
+    const cost = Number(costPrice) || 0;
+    if (cost <= 0) return { price: 0, markup: 0 };
+
+    const price = cost + Math.round(cost * 0.25);
+    return {
+      price,
+      markup: Math.round(((price - cost) / cost) * 100)
+    };
+  }
+
   function normalizeNumericInputValue(value) {
     if (value === null || value === undefined) return '0';
     const digitsOnly = String(value).replace(/\D+/g, '');
@@ -1924,7 +1935,7 @@
     // 1. Kondisi jika database memang kosong
     if (currentItems.length === 0) {
       tbody.innerHTML = `
-        <tr class="empty-state-row"><td colspan="12" class="empty-state-cell text-center py-12 text-[#A0A0A5]">
+        <tr class="empty-state-row"><td colspan="14" class="empty-state-cell text-center py-12 text-[#A0A0A5]">
           <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
             <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
               <i data-lucide="package-open" class="w-6 h-6 text-[#A0A0A5]/40" aria-hidden="true"></i>
@@ -1948,7 +1959,7 @@
     // 2. Kondisi jika search / filter menghasilkan 0 baris (Empty State)
     if (totalFiltered === 0) {
       tbody.innerHTML = `
-        <tr class="empty-state-row"><td colspan="12" class="empty-state-cell text-center py-12 text-[#A0A0A5] w-full">
+        <tr class="empty-state-row"><td colspan="14" class="empty-state-cell text-center py-12 text-[#A0A0A5] w-full">
           <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-center">
             <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
               <i data-lucide="search-x" class="w-6 h-6 text-[#A0A0A5]/60" aria-hidden="true"></i>
@@ -1988,6 +1999,7 @@
       const costPrice = Number(item.cost_price || item.costPrice) || 0;
       const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const markup = costPrice > 0 ? Math.round(((sellPrice - costPrice) / costPrice) * 100) : (sellPrice > 0 ? 100 : 0);
+      const onlinePricing = getOnlinePricing(costPrice);
       const markupColor = markup >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]';
       const isLow = stock <= minStock;
       const isChecked = selectedItemIds.has(String(item.id));
@@ -2060,6 +2072,8 @@
         <td class="px-4 py-3.5 text-right">${formatRupiah(costPrice)}</td>
         <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
+        <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
+        <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${onlinePricing.markup}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
             ${(function () {
@@ -2750,14 +2764,18 @@
       return;
     }
 
-    const headers = ['ID', 'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori', 'Stok', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)', 'Markup (%)'];
+    const headers = ['ID', 'Foto', 'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori', 'Stok', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual Offline (Rp)', 'Markup Offline (%)', 'Harga Jual Online (Rp)', 'Markup Online (%)'];
     const rows = filtered.map(item => {
       const s = Number(item.stock) || 0;
       const min = Number(item.min_stock || item.minStock) || 0;
       const c = Number(item.cost_price || item.costPrice) || 0;
       const p = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const m = c > 0 ? Math.round(((p - c) / c) * 100) : (p > 0 ? 100 : 0);
-      return [item.id, item.sku || '-', item.barcode || '-', item.name, item.brand || '-', item.category || 'Umum', s, min, c, p, m];
+      const onlinePricing = getOnlinePricing(c);
+      const studioImg = resolveStudioImage(item);
+      const itemImages = parseProductImages(item.images || item.image_url);
+      const photo = studioImg || itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : '-');
+      return [item.id, photo, item.sku || '-', item.barcode || '-', item.name, item.brand || '-', item.category || 'Umum', s, min, c, p, m, onlinePricing.price, onlinePricing.markup];
     });
 
     const filename = `items-${new Date().toISOString().slice(0, 10)}.csv`;
