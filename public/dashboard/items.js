@@ -24,6 +24,9 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
   let pendingItemPayload = null;
   let pendingItemId = null;
   let pendingSaveLocalMeta = null;
+  let habiticSyncConfirmResolver = null;
+  let habiticSyncReturnFocus = null;
+  let habiticSyncHadBodyLock = false;
 
   function parseNumericValue(value) {
     if (value === null || value === undefined) return 0;
@@ -2925,9 +2928,7 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
       return;
     }
 
-    if (!window.confirm('Kirim link marketplace Aquastock ke katalog Habitic berdasarkan SKU? Harga, stok, deskripsi, dan data produk lain tidak akan diubah. Link kosong akan dilewati.')) {
-      return;
-    }
+    if (!await requestHabiticSyncConfirmation()) return;
 
     let session;
     try {
@@ -2972,6 +2973,77 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
       if (typeof window.refreshIcons === 'function') window.refreshIcons();
     }
   }
+
+  function requestHabiticSyncConfirmation() {
+    const modal = document.getElementById('modal-habitic-sync-confirm');
+    const cancelButton = document.getElementById('btn-cancel-habitic-sync');
+    if (!modal || !cancelButton || habiticSyncConfirmResolver) {
+      if (typeof showToast === 'function') showToast('Dialog konfirmasi sinkronisasi tidak tersedia.', 'error');
+      return Promise.resolve(false);
+    }
+
+    habiticSyncReturnFocus = document.activeElement;
+    habiticSyncHadBodyLock = document.body.classList.contains('overflow-hidden');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    cancelButton.focus();
+
+    return new Promise(resolve => {
+      habiticSyncConfirmResolver = resolve;
+    });
+  }
+
+  function closeHabiticSyncConfirmation(confirmed) {
+    const modal = document.getElementById('modal-habitic-sync-confirm');
+    if (!modal || !habiticSyncConfirmResolver) return;
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    if (!habiticSyncHadBodyLock) document.body.classList.remove('overflow-hidden');
+    const resolve = habiticSyncConfirmResolver;
+    habiticSyncConfirmResolver = null;
+    resolve(Boolean(confirmed));
+
+    if (habiticSyncReturnFocus instanceof HTMLElement) habiticSyncReturnFocus.focus();
+    habiticSyncReturnFocus = null;
+  }
+
+  function handleHabiticSyncDialogKeydown(event) {
+    const modal = document.getElementById('modal-habitic-sync-confirm');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeHabiticSyncConfirmation(false);
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(modal.querySelectorAll('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'));
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!modal.contains(document.activeElement)) {
+      event.preventDefault();
+      first.focus();
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  document.getElementById('btn-cancel-habitic-sync')?.addEventListener('click', () => closeHabiticSyncConfirmation(false));
+  document.getElementById('btn-confirm-habitic-sync')?.addEventListener('click', () => closeHabiticSyncConfirmation(true));
+  document.getElementById('modal-habitic-sync-confirm')?.addEventListener('click', event => {
+    if (event.target === event.currentTarget) closeHabiticSyncConfirmation(false);
+  });
+  document.addEventListener('keydown', handleHabiticSyncDialogKeydown);
 
   function handleItemStockInput() {
     const val = Number(document.getElementById('item-stock')?.value || 0);
