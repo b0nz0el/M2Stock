@@ -41,6 +41,15 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       expect(responsiveCss).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
       expect(responsiveCss).toContain('#page-in #in-filter-buttons > button');
     });
+
+    it('constrains Master Barang cards and wraps marketplace actions on mobile', () => {
+      const responsiveCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/responsive.css'), 'utf8');
+      expect(responsiveCss).toContain('#page-items .card table {');
+      expect(responsiveCss).toContain('max-width: 100% !important;');
+      expect(responsiveCss).toContain('#page-items .card table tbody td:last-child:has(button) .flex {');
+      expect(responsiveCss).toContain('grid-template-columns: repeat(4, 44px);');
+      expect(responsiveCss).toContain('overflow-wrap: anywhere;');
+    });
   });
 
   describe('Header Touch Targets & Safe Area Insets (iOS Notch & Dynamic Island)', () => {
