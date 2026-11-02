@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getChannelIconConfig } from '../public/assets/js/utils/channel-icons.js';
+import {
+  MARKETPLACE_LINK_CSV_HEADERS,
+  prepareMarketplaceLinkImport
+} from '../public/assets/js/utils/marketplace-link-import.js';
 
 const htmlContent = readFileSync(resolve(process.cwd(), 'public/dashboard/index.html'), 'utf8');
 
@@ -261,6 +265,10 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
       .replace(
         "import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';",
         'const getChannelIconConfig = window.getChannelIconConfig;'
+      )
+      .replace(
+        "import {\n  MARKETPLACE_LINK_CSV_HEADERS,\n  prepareMarketplaceLinkImport\n} from '../assets/js/utils/marketplace-link-import.js';",
+        'const MARKETPLACE_LINK_CSV_HEADERS = window.MARKETPLACE_LINK_CSV_HEADERS;\n  const prepareMarketplaceLinkImport = window.prepareMarketplaceLinkImport;'
       );
 
     beforeEach(() => {
@@ -354,12 +362,16 @@ describe('Professional Inventory Standard: Stock Opname & Auto-IN Transaction', 
 
       window.showToast = vi.fn();
       window.getChannelIconConfig = getChannelIconConfig;
+      window.MARKETPLACE_LINK_CSV_HEADERS = MARKETPLACE_LINK_CSV_HEADERS;
+      window.prepareMarketplaceLinkImport = prepareMarketplaceLinkImport;
       window.eval(itemsScript);
     });
 
     afterEach(() => {
       delete window.Api;
       delete window.showToast;
+      delete window.MARKETPLACE_LINK_CSV_HEADERS;
+      delete window.prepareMarketplaceLinkImport;
       document.body.innerHTML = '';
       vi.clearAllMocks();
     });

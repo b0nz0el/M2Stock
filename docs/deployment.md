@@ -90,6 +90,8 @@ Atur satu nilai rahasia acak yang sama di **Cloudflare Pages → Settings → Va
 
 Jangan masukkan nilai secret ke kode, file `.env` yang di-commit, atau JavaScript publik. Setelah kedua project memiliki secret yang sama, gunakan tombol **Sinkron Link Habitic** di halaman Master Barang. Sinkronisasi dibatasi 250 produk per proses dan hanya mengubah link marketplace pada produk Habitic yang memiliki SKU unik yang cocok.
 
+Untuk mengisi link channel Aquastock dari file CSV, gunakan tombol **Impor Link Channel** di **Dashboard → Master Barang**. File harus memiliki kolom `SKU`, `Shopee URL`, `Tokopedia URL`, `Lazada URL`, `TikTok URL`, dan/atau `WhatsApp URL`; kolom `Nama Produk` hanya untuk referensi. Impor mencocokkan SKU unik dan menampilkan pratinjau sebelum menyimpan. SKU yang tidak ditemukan akan dilewati dan ditampilkan pada pratinjau; SKU ganda/ambigu atau URL dengan domain yang tidak sesuai membatalkan impor. URL channel yang kosong mempertahankan link saat ini. Impor ini hanya memperbarui channel dan link, bukan harga, stok, atau detail barang lain.
+
 ---
 
 ## 4. Checklist Pra-Deployment (Pre-Flight Verification)

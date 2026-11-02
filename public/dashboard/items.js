@@ -1,4 +1,8 @@
 import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
+import {
+  MARKETPLACE_LINK_CSV_HEADERS,
+  prepareMarketplaceLinkImport
+} from '../assets/js/utils/marketplace-link-import.js';
 
   const resolveStudioImage = function (item) {
     if (typeof window !== 'undefined' && window.ProductCatalogImages && typeof window.ProductCatalogImages.resolveProductStudioImage === 'function') {
@@ -3514,6 +3518,65 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
             }
           };
         }
+      },
+      onComplete: loadItemsFromBackend
+    });
+  });
+
+  document.getElementById('btn-import-channel-links')?.addEventListener('click', function () {
+    if (typeof window.startCsvImport !== 'function') {
+      showToast('Fitur import belum siap. Muat ulang halaman dan coba lagi.', 'error');
+      return;
+    }
+
+    window.startCsvImport({
+      title: 'Link Channel',
+      templateName: 'template-link-channel.csv',
+      headers: MARKETPLACE_LINK_CSV_HEADERS,
+      requiredHeaders: ['SKU'],
+      instructions: [
+        'SKU harus sama dengan SKU barang di Aquastock. SKU yang tidak cocok atau ganda akan membatalkan impor.',
+        'Isi URL channel yang ingin ditambahkan atau diperbarui. Kolom URL kosong mempertahankan link yang sudah ada.',
+        'Hanya URL Shopee, Tokopedia, Lazada, TikTok Shop, dan WhatsApp yang sesuai domain resminya yang diterima.',
+        'Nama produk hanya untuk referensi. Harga, stok, deskripsi, foto, dan data barang lain tidak diubah.'
+      ],
+      validate: async function (records) {
+        const productsResult = await Api.items.getAll();
+        if (!productsResult?.ok) {
+          throw new Error(productsResult?.error?.message || 'Gagal memuat barang Aquastock untuk mencocokkan SKU.');
+        }
+        return prepareMarketplaceLinkImport(records, productsResult.data || []);
+      },
+      commit: async function (rows) {
+        const productsResult = await Api.items.getAll();
+        if (!productsResult?.ok) {
+          throw new Error(productsResult?.error?.message || 'Gagal memuat ulang barang sebelum menyimpan link channel.');
+        }
+
+        const latestRecords = rows.map(row => row.sourceRecord);
+        const latestPlan = prepareMarketplaceLinkImport(latestRecords, productsResult.data || []);
+        if (latestPlan.errors.length || latestPlan.skipped.length) {
+          throw new Error('Data barang berubah sejak pratinjau. Impor dibatalkan; pilih file kembali untuk memeriksa SKU terbaru.');
+        }
+
+        let updatedCount = 0;
+        for (const row of latestPlan.rows) {
+          const result = await Api.items.update(row.id, {
+            sku: row.sku,
+            channel: row.channel,
+            channel_link: row.channel_link,
+            channels: row.channels
+          });
+          if (!result?.ok) {
+            throw new Error(
+              updatedCount > 0
+                ? `Impor berhenti setelah ${updatedCount} barang diperbarui. Muat ulang data, lalu impor ulang file untuk melanjutkan. ${result?.error?.message || ''}`.trim()
+                : result?.error?.message || `Gagal memperbarui link channel SKU ${row.sku}.`
+            );
+          }
+          updatedCount += 1;
+        }
+        return { ok: true, data: { updated_count: updatedCount } };
       },
       onComplete: loadItemsFromBackend
     });

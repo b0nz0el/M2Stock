@@ -276,6 +276,7 @@
     modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm';
 
     const errors = validation.errors || [];
+    const skipped = validation.skipped || [];
     const previewHeaders = config.headers || [];
     const previewRows = records.slice(0, 10);
     const preview = previewRows.map(record => `
@@ -284,9 +285,16 @@
       </tr>`).join('');
     const errorList = errors.slice(0, 20).map(error => `
       <li>Baris ${escapeHtml(error.row)}: ${escapeHtml(error.message)}</li>`).join('');
+    const skippedList = skipped.slice(0, 20).map(item => `
+      <li>Baris ${escapeHtml(item.row)}: ${escapeHtml(item.message)}</li>`).join('');
     const summary = errors.length
       ? `${records.length} baris ditemukan, ${errors.length} masalah. Tidak ada data yang akan disimpan.`
-      : `${records.length} baris siap diimpor & disinkronkan. Periksa pratinjau sebelum melanjutkan.`;
+      : skipped.length
+        ? `${validation.rows.length} baris siap diimpor, ${skipped.length} baris dilewati. Periksa pratinjau sebelum melanjutkan.`
+        : `${records.length} baris siap diimpor & disinkronkan. Periksa pratinjau sebelum melanjutkan.`;
+    const confirmLabel = skipped.length
+      ? `Import ${validation.rows.length} baris`
+      : `Import / Sinkronkan ${records.length} baris`;
 
     modal.innerHTML = `
       <section class="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-[#1C1C1E] shadow-2xl flex flex-col" role="dialog" aria-modal="true" aria-labelledby="csv-import-title">
@@ -307,6 +315,12 @@
               <ul class="list-inside list-disc space-y-1 text-xs">${errorList}</ul>
               ${errors.length > 20 ? `<p class="mt-2 text-xs">dan ${errors.length - 20} masalah lainnya.</p>` : ''}
             </div>` : ''}
+          ${skipped.length ? `
+            <div class="rounded-xl border border-[#FF9F0A]/25 bg-[#FF9F0A]/[0.08] p-4 text-sm text-[#FFD18A]">
+              <p class="mb-2 font-semibold">SKU yang dilewati (tidak akan mengubah data):</p>
+              <ul class="list-inside list-disc space-y-1 text-xs">${skippedList}</ul>
+              ${skipped.length > 20 ? `<p class="mt-2 text-xs">dan ${skipped.length - 20} SKU lainnya.</p>` : ''}
+            </div>` : ''}
           <div class="overflow-x-auto rounded-xl border border-white/10">
             <table class="min-w-full text-left">
               <thead class="bg-white/5"><tr>${previewHeaders.map(header => `<th class="whitespace-nowrap px-3 py-2 text-[11px] font-semibold uppercase text-[#A0A0A5]">${escapeHtml(header)}</th>`).join('')}</tr></thead>
@@ -322,7 +336,7 @@
           </button>
           <div class="ml-auto flex gap-2">
             <button type="button" data-close-import class="rounded-lg bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10">Batal</button>
-            <button type="button" data-confirm-import ${errors.length || !records.length ? 'disabled' : ''} class="rounded-lg bg-[#0088CC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0077BB] disabled:cursor-not-allowed disabled:opacity-40">Import / Sinkronkan ${records.length} baris</button>
+            <button type="button" data-confirm-import ${errors.length || !validation.rows.length ? 'disabled' : ''} class="rounded-lg bg-[#0088CC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0077BB] disabled:cursor-not-allowed disabled:opacity-40">${escapeHtml(confirmLabel)}</button>
           </div>
         </footer>
       </section>`;
@@ -350,7 +364,12 @@
           throw new Error(result?.error?.message || 'Import gagal. Tidak ada baris yang disimpan.');
         }
         close();
-        showToast(`Berhasil memproses & menyinkronkan ${records.length} baris ${config.title}.`, 'success');
+        showToast(
+          skipped.length
+            ? `Berhasil memproses ${validation.rows.length} baris ${config.title}; ${skipped.length} baris dilewati.`
+            : `Berhasil memproses & menyinkronkan ${records.length} baris ${config.title}.`,
+          'success'
+        );
         try {
           await config.onComplete?.(result);
         } catch (error) {
@@ -361,7 +380,7 @@
         console.error(`Gagal mengimpor ${config.title}:`, error);
         showToast(error.message || 'Import gagal. Tidak ada baris yang disimpan.', 'error');
         confirmButton.disabled = false;
-        confirmButton.textContent = `Import ${records.length} baris`;
+        confirmButton.textContent = confirmLabel;
 
         // Tampilkan pesan error di dalam modal agar jelas terbaca oleh pengguna
         const bodyEl = modal.querySelector('div.space-y-4');
