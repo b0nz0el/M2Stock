@@ -107,6 +107,13 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain('receipt-calc-tax');
       expect(outHtml).toContain('id="receipt-calc-discount"');
     });
+
+    it('normalizes negative stock transaction quantities for table and receipt', () => {
+      expect(outJsCode).toContain('function getTransactionOutQty(txOrQty)');
+      expect(outJsCode).toContain('Math.abs(Number(typeof txOrQty === \'object\'');
+      expect(outJsCode).toContain('const qty = getTransactionOutQty(tx)');
+      expect(outJsCode).toContain('qty: getTransactionOutQty(t)');
+    });
   });
 
   describe('createBatchOut API Implementation', () => {

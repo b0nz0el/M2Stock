@@ -10,6 +10,11 @@
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
   }
 
+  function getTransactionOutQty(txOrQty) {
+    const qty = Math.abs(Number(typeof txOrQty === 'object' ? txOrQty?.qty : txOrQty) || 0);
+    return qty;
+  }
+
   function parsePosReceiptMeta(note) {
     const text = String(note || '');
     const read = (key) => {
@@ -872,7 +877,7 @@
 
     list.forEach(tx => {
       const tTime = new Date(tx.created_at).getTime();
-      const qty = tx.qty || 0;
+      const qty = getTransactionOutQty(tx);
       const sellPrice = tx.price || 0;
       // Prioritaskan snapshot modal saat transaksi terjadi (IAS 2: Historical Costing)
       const costPrice = Number(tx.cost_price ?? tx.products?.cost_price ?? 0);
@@ -1115,7 +1120,7 @@
       const channelBadge = getChannelBadge(tx.channel);
       const custName = tx.customers?.name || 'Umum';
       const kasir = formatCashierName(tx.created_by);
-      const qty = tx.qty || 0;
+      const qty = getTransactionOutQty(tx);
       const price = tx.price || 0;
       const total = qty * price;
 
@@ -1181,7 +1186,7 @@
           const prodName = tx.products?.name || ('Produk #' + tx.product_id);
           const channel = tx.channel || 'Offline';
           const cust = tx.customers?.name || 'Umum';
-          const qty = tx.qty || 0;
+          const qty = getTransactionOutQty(tx);
 
           return `
             <tr class="border-b border-white/5 print:border-gray-200">
@@ -1210,7 +1215,7 @@
           const prodName = tx.products?.name || ('Produk #' + tx.product_id);
           const channel = tx.channel || 'Offline';
           const cust = tx.customers?.name || 'Umum';
-          const qty = tx.qty || 0;
+          const qty = getTransactionOutQty(tx);
 
           return `
             <div class="p-3 bg-white/[0.03] border border-white/10 rounded-xl space-y-2">
@@ -1286,9 +1291,9 @@
       status = (txIdOrBatch.status || 'Lunas').toUpperCase();
       items = (txIdOrBatch.items || []).map(it => ({
         name: it.name || ('Produk #' + it.product_id),
-        qty: it.qty || 0,
+        qty: getTransactionOutQty(it),
         price: it.price || 0,
-        total: (it.qty || 0) * (it.price || 0)
+        total: getTransactionOutQty(it) * (it.price || 0)
       }));
       total = txIdOrBatch.total !== undefined ? txIdOrBatch.total : items.reduce((s, it) => s + it.total, 0);
       initialPaid = txIdOrBatch.paid !== undefined ? txIdOrBatch.paid : total;
@@ -1329,9 +1334,9 @@
         status = (tx.payment_status || 'Lunas').toUpperCase();
         items = siblingTxs.map(t => ({
           name: t.products?.name || ('Produk #' + t.product_id),
-          qty: t.qty || 0,
+          qty: getTransactionOutQty(t),
           price: t.price || 0,
-          total: (t.qty || 0) * (t.price || 0)
+          total: getTransactionOutQty(t) * (t.price || 0)
         }));
         total = items.reduce((s, it) => s + it.total, 0);
         const receiptMeta = parsePosReceiptMeta(siblingTxs[0]?.note);
@@ -1348,7 +1353,7 @@
         cashierName = formatCashierName(tx.created_by);
         method = tx.payment_method || 'Cash';
         status = (tx.payment_status || 'Lunas').toUpperCase();
-        const qty = tx.qty || 0;
+        const qty = getTransactionOutQty(tx);
         const price = tx.price || 0;
         items = [{
           name: tx.products?.name || ('Produk #' + tx.product_id),
@@ -1588,7 +1593,7 @@
       const channel = tx.channel || 'Offline';
       const custName = tx.customers?.name || 'Umum';
       const kasir = formatCashierName(tx.created_by);
-      const qty = tx.qty || 0;
+      const qty = getTransactionOutQty(tx);
       const price = tx.price || 0;
       const total = qty * price;
       const note = tx.note || '';
