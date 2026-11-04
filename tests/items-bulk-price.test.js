@@ -11,7 +11,7 @@ describe('Api.items.bulkUpdatePrice', () => {
     delete window.supabase;
   });
 
-  it('membaca harga online tersimpan dan mempertahankan default modal +25%', async () => {
+  it('membaca harga online tersimpan dan menghitung fallback dari Fee Marketplace', async () => {
     const records = [
       { id: 1, cost_price: 10000, sell_price: 15000, online_sell_price: 13250 },
       { id: 2, cost_price: 5000, sell_price: 7000, online_sell_price: null }
@@ -23,7 +23,7 @@ describe('Api.items.bulkUpdatePrice', () => {
     const result = await Api.items.getAll();
 
     expect(result.ok).toBe(true);
-    expect(result.data.map(item => item.online_sell_price)).toEqual([13250, 6250]);
+    expect(result.data.map(item => item.online_sell_price)).toEqual([13250, 8264]);
   });
 
   it('memperbarui harga jual offline dan online secara terpisah', async () => {
@@ -134,7 +134,7 @@ describe('Api.items.bulkUpdatePrice', () => {
 
     expect(result.ok, JSON.stringify(result)).toBe(true);
     expect(insertMock).toHaveBeenCalledTimes(2);
-    expect(insertMock.mock.calls[0][0][0].online_sell_price).toBe(12500);
+    expect(insertMock.mock.calls[0][0][0].online_sell_price).toBe(16529);
     expect(insertMock.mock.calls[1][0][0]).not.toHaveProperty('online_sell_price');
   });
 

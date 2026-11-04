@@ -45,13 +45,13 @@ import {
 
   function getOnlinePricing(costPrice, onlinePrice, marketplaceFee = 0.395) {
     const cost = Number(costPrice) || 0;
+    const fee = Math.min(0.999, Math.max(0, Number(marketplaceFee) || 0));
     const storedPrice = onlinePrice === null || onlinePrice === undefined || onlinePrice === ''
       ? Number.NaN
       : Number(onlinePrice);
     const price = Number.isFinite(storedPrice) && storedPrice >= 0
       ? storedPrice
-      : Math.round(cost * 1.25);
-    const fee = Math.min(1, Math.max(0, Number(marketplaceFee) || 0));
+      : Math.round(cost / (1 - fee));
     const netProfit = Math.round(price * (1 - fee) - cost);
     if (cost <= 0) return { price, markup: 0, netProfit, fee };
 

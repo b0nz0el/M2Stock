@@ -223,8 +223,8 @@ export const items = {
               cost_price: Number(item.cost_price) || 0,
               sellPrice: Number(item.sell_price) || 0,
               sell_price: Number(item.sell_price) || 0,
-              onlineSellPrice: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) * 1.25)),
-              online_sell_price: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) * 1.25)),
+              onlineSellPrice: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) / (1 - Math.min(0.999, Math.max(0, Number(item.marketplace_fee_percent ?? 0.395) || 0.395))))),
+              online_sell_price: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) / (1 - Math.min(0.999, Math.max(0, Number(item.marketplace_fee_percent ?? 0.395) || 0.395))))),
               marketplaceFeePercent: Number(item.marketplace_fee_percent ?? 0.395),
               marketplace_fee_percent: Number(item.marketplace_fee_percent ?? 0.395),
               unitPrice: Number(item.sell_price) || 0,
@@ -318,8 +318,8 @@ export const items = {
             cost_price: Number(data.cost_price) || 0,
             sellPrice: Number(data.sell_price) || 0,
             sell_price: Number(data.sell_price) || 0,
-            onlineSellPrice: Number(data.online_sell_price ?? Math.round((Number(data.cost_price) || 0) * 1.25)),
-            online_sell_price: Number(data.online_sell_price ?? Math.round((Number(data.cost_price) || 0) * 1.25)),
+            onlineSellPrice: Number(data.online_sell_price ?? Math.round((Number(data.cost_price) || 0) / (1 - Math.min(0.999, Math.max(0, Number(data.marketplace_fee_percent ?? 0.395) || 0.395))))),
+            online_sell_price: Number(data.online_sell_price ?? Math.round((Number(data.cost_price) || 0) / (1 - Math.min(0.999, Math.max(0, Number(data.marketplace_fee_percent ?? 0.395) || 0.395))))),
             unitPrice: Number(data.sell_price) || 0,
             channel: effectiveChannel,
             channel_link: effectiveLink,
@@ -358,6 +358,7 @@ export const items = {
           const minStock = data.min_stock !== undefined ? data.min_stock : data.minStock;
           const costPrice = data.cost_price !== undefined ? data.cost_price : data.costPrice;
           const sellPrice = data.sell_price !== undefined ? data.sell_price : (data.sellPrice !== undefined ? data.sellPrice : data.unitPrice);
+          const marketplaceFee = Number(data.marketplace_fee_percent ?? data.marketplaceFeePercent ?? 0.395) || 0.395;
           const requestedOnlineSellPrice = data.online_sell_price !== undefined
             ? data.online_sell_price
             : data.onlineSellPrice;
@@ -380,7 +381,7 @@ export const items = {
             sell_price: sellPrice !== undefined ? Number(sellPrice) : 0,
             online_sell_price: hasRequestedOnlineSellPrice
               ? Number(requestedOnlineSellPrice)
-              : Math.round((Number(costPrice) || 0) * 1.25),
+              : Math.round((Number(costPrice) || 0) / (1 - Math.min(0.999, Math.max(0, marketplaceFee)))),
             marketplace_fee_percent: data.marketplace_fee_percent !== undefined
               ? Number(data.marketplace_fee_percent)
               : (data.marketplaceFeePercent !== undefined ? Number(data.marketplaceFeePercent) : 0.395),

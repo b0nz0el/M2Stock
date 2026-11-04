@@ -22,8 +22,8 @@ describe('Master Barang — harga offline dan online', () => {
     expect(pricingFunction).not.toBeNull();
 
     const getOnlinePricing = new Function(`${pricingFunction[0]}; return getOnlinePricing;`)();
-    expect(getOnlinePricing(10000)).toMatchObject({ price: 12500, markup: -24.37, netProfit: -2437 });
-    expect(getOnlinePricing(10000, null)).toMatchObject({ price: 12500, markup: -24.37, netProfit: -2437 });
+    expect(getOnlinePricing(10000)).toMatchObject({ price: 16529, markup: 0, netProfit: 0 });
+    expect(getOnlinePricing(10000, null)).toMatchObject({ price: 16529, markup: 0, netProfit: 0 });
     expect(getOnlinePricing(10000, 13150)).toMatchObject({ price: 13150, markup: -20.44, netProfit: -2044 });
     expect(getOnlinePricing(0)).toMatchObject({ price: 0, markup: 0, netProfit: 0 });
   });
@@ -90,9 +90,8 @@ describe('Master Barang — harga offline dan online', () => {
     expect(itemsJs).toContain("'Harga Jual Offline (Rp)', 'Markup Offline (%)', 'Harga Jual Online (Rp)', 'Markup Online (%)'");
   });
 
-  it('menyiapkan kolom harga online dan mengisi harga lama dengan modal +25%', () => {
+  it('menyiapkan kolom harga online untuk penyimpanan dan nilai default', () => {
     expect(migration).toContain('ADD COLUMN IF NOT EXISTS online_sell_price');
-    expect(migration).toContain('ROUND(GREATEST(COALESCE(cost_price, 0), 0) * 1.25)');
     expect(migration).toContain('CHECK (online_sell_price >= 0)');
   });
 });
