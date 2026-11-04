@@ -573,6 +573,19 @@ export const items = {
               }
             });
           }
+          if (
+            row.marketplace_fee_percent !== undefined
+            && updatedProd.marketplace_fee_percent !== undefined
+            && Number(updatedProd.marketplace_fee_percent) !== Number(row.marketplace_fee_percent)
+          ) {
+            return formatResponse({
+              ok: false,
+              error: {
+                code: 'MARKETPLACE_FEE_NOT_PERSISTED',
+                message: 'Fee Marketplace tidak tersimpan di database. Refresh halaman lalu coba lagi.'
+              }
+            });
+          }
           const finalChannel = formattedChannels ? (formattedChannels[0]?.channel || 'Offline') : (row.channel || data.channel || 'Offline');
           const finalLink = formattedChannels ? (formattedChannels.length > 1 ? JSON.stringify(formattedChannels) : (formattedChannels[0]?.link || '')) : (row.channel_link || data.channel_link || '');
           saveLocalChannelMeta(id, data.sku, finalChannel, finalLink, formattedChannels);

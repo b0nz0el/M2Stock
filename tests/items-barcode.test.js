@@ -186,6 +186,34 @@ describe('product barcode API mapping', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('persists and verifies the marketplace fee on update', async () => {
+    const query = {
+      select: vi.fn().mockResolvedValue({ data: [{ id: 'product-id', marketplace_fee_percent: 0.10 }], error: null })
+    };
+    const eq = vi.fn(() => query);
+    const update = vi.fn(() => ({ eq }));
+    window.supabase = { from: vi.fn(() => ({ update })) };
+
+    const result = await items.update('product-id', { marketplace_fee_percent: 10 });
+
+    expect(update).toHaveBeenCalledWith({ marketplace_fee_percent: 0.10 });
+    expect(result.ok).toBe(true);
+  });
+
+  it('reports when Supabase returns a different marketplace fee', async () => {
+    const query = {
+      select: vi.fn().mockResolvedValue({ data: [{ id: 'product-id', marketplace_fee_percent: 0.395 }], error: null })
+    };
+    const eq = vi.fn(() => query);
+    const update = vi.fn(() => ({ eq }));
+    window.supabase = { from: vi.fn(() => ({ update })) };
+
+    const result = await items.update('product-id', { marketplace_fee_percent: 10 });
+
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('MARKETPLACE_FEE_NOT_PERSISTED');
+  });
+
   it('reports an error when Supabase updates no product rows', async () => {
     const query = {
       select: vi.fn().mockResolvedValue({ data: [], error: null })
