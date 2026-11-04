@@ -412,6 +412,93 @@ const sc3FinalPath = path.join(artifactsDir, 'skenario_3c_stok_akhir_pas_3pcs.pn
 await page.screenshot({ path: sc3FinalPath });
 console.log('Saved: ' + sc3FinalPath);
 
+// ════════════════════════════════════════════════════════════
+// BUKTI FEE MARKETPLACE DAN POS/DISKON/STRUK
+// ════════════════════════════════════════════════════════════
+console.log('Testing Fee Marketplace dan POS...');
+await page.evaluate(async () => {
+  window.showPage('items');
+  if (typeof window.loadItemsFromBackend === 'function') await window.loadItemsFromBackend();
+});
+await page.waitForTimeout(1200);
+
+const feeProduct = products[0];
+await page.evaluate((productId) => {
+  window.openEditItemModal(String(productId));
+  const feeInput = document.getElementById('item-marketplace-fee-percent');
+  if (feeInput) {
+    feeInput.value = '39.5';
+    feeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    feeInput.scrollIntoView({ block: 'center' });
+  }
+}, feeProduct.id);
+await page.waitForTimeout(800);
+
+const feeModalPath = path.join(artifactsDir, 'fee_marketplace_39_5_persen.png');
+await page.screenshot({ path: feeModalPath });
+console.log('Saved: ' + feeModalPath);
+
+await page.evaluate(async () => {
+  const form = document.getElementById('item-form');
+  if (form) form.dispatchEvent(new Event('submit', { cancelable: true }));
+});
+await page.waitForTimeout(1200);
+await page.evaluate(async () => {
+  window.showPage('items');
+  if (typeof window.loadItemsFromBackend === 'function') await window.loadItemsFromBackend();
+});
+await page.waitForTimeout(1200);
+await page.evaluate(() => {
+  const feeHeader = [...document.querySelectorAll('th')].find(el => el.textContent.includes('Fee MP'));
+  feeHeader?.scrollIntoView({ block: 'center', inline: 'center' });
+});
+await page.waitForTimeout(300);
+
+const feeTablePath = path.join(artifactsDir, 'fee_marketplace_tabel_39_5_persen.png');
+await page.screenshot({ path: feeTablePath });
+console.log('Saved: ' + feeTablePath);
+
+await page.evaluate(() => {
+  window.showPage('out');
+  window.openAddOutModal();
+});
+await page.waitForTimeout(1200);
+await page.evaluate(() => {
+  window.addPosCatalogProduct('10');
+  document.getElementById('out-note').value = 'RESI-VALID-001';
+  document.getElementById('pos-discount-input').value = '2500';
+  document.getElementById('pos-discount-input').dispatchEvent(new Event('input', { bubbles: true }));
+  if (typeof window.calculatePosTotal === 'function') window.calculatePosTotal();
+});
+await page.waitForTimeout(800);
+
+const posDiscountPath = path.join(artifactsDir, 'pos_diskon_rupiah_2500.png');
+await page.screenshot({ path: posDiscountPath });
+console.log('Saved: ' + posDiscountPath);
+
+await page.evaluate(() => {
+  window.openThermalReceiptModal({
+    invoice_no: 'INV-VALID-DISKON-001',
+    note: 'RESI-VALID-001',
+    items: [{ product_id: 10, name: 'Amara Aquarium filter cotton 8D 30x40cm (2pcs)', qty: 1, price: 55000 }],
+    subtotal: 55000,
+    discount: 2500,
+    tax: 0,
+    total: 52500,
+    paid: 60000,
+    change: 7500,
+    customer: 'Umum',
+    cashier: 'David',
+    method: 'Cash',
+    status: 'Lunas'
+  });
+});
+await page.waitForTimeout(1200);
+
+const receiptPath = path.join(artifactsDir, 'struk_diskon_resi_valid.png');
+await page.screenshot({ path: receiptPath });
+console.log('Saved: ' + receiptPath);
+
 await browser.close();
 console.log('SELESAI_LIVE_SCENARIOS_SUKSES');
 process.exit(0);
