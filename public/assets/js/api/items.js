@@ -18,6 +18,12 @@ function isMissingChannelColumn(error) {
     || (error?.code === 'PGRST204' && /channel(_link)?/i.test(message));
 }
 
+function isMissingMarketplaceFeeColumn(error) {
+  const message = String(error?.message || '');
+  return /column .*marketplace_fee_percent.*(does not exist|schema cache)/i.test(message)
+    || (error?.code === 'PGRST204' && /marketplace_fee_percent/i.test(message));
+}
+
 function missingChannelColumnResponse() {
   return formatResponse({
     ok: false,
@@ -219,6 +225,8 @@ export const items = {
               sell_price: Number(item.sell_price) || 0,
               onlineSellPrice: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) * 1.25)),
               online_sell_price: Number(item.online_sell_price ?? Math.round((Number(item.cost_price) || 0) * 1.25)),
+              marketplaceFeePercent: Number(item.marketplace_fee_percent ?? 0.395),
+              marketplace_fee_percent: Number(item.marketplace_fee_percent ?? 0.395),
               unitPrice: Number(item.sell_price) || 0,
               channel: effectiveChannel,
               channel_link: effectiveLink,
@@ -369,6 +377,9 @@ export const items = {
               : (data.onlineSellPrice !== undefined
                   ? Number(data.onlineSellPrice)
                   : Math.round((Number(costPrice) || 0) * 1.25)),
+            marketplace_fee_percent: data.marketplace_fee_percent !== undefined
+              ? Number(data.marketplace_fee_percent)
+              : (data.marketplaceFeePercent !== undefined ? Number(data.marketplaceFeePercent) : 0.395),
             image_url: resolvedImageUrl
           };
 
@@ -392,6 +403,10 @@ export const items = {
             let removedLegacyColumn = false;
             if (isMissingOnlineSellPriceColumn(insertResult.error) && 'online_sell_price' in retryRow) {
               delete retryRow.online_sell_price;
+              removedLegacyColumn = true;
+            }
+            if (isMissingMarketplaceFeeColumn(insertResult.error) && 'marketplace_fee_percent' in retryRow) {
+              delete retryRow.marketplace_fee_percent;
               removedLegacyColumn = true;
             }
             if (!removedLegacyColumn) break;
@@ -454,11 +469,16 @@ export const items = {
             row.online_sell_price = row.onlineSellPrice;
             delete row.onlineSellPrice;
           }
+          if (row.marketplaceFeePercent !== undefined && row.marketplace_fee_percent === undefined) {
+            row.marketplace_fee_percent = row.marketplaceFeePercent;
+          }
+          if (row.marketplaceFeePercent !== undefined) delete row.marketplaceFeePercent;
           if (row.stock !== undefined) row.stock = Number(row.stock);
           if (row.min_stock !== undefined) row.min_stock = Number(row.min_stock);
           if (row.cost_price !== undefined) row.cost_price = Number(row.cost_price);
           if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
           if (row.online_sell_price !== undefined) row.online_sell_price = Number(row.online_sell_price);
+          if (row.marketplace_fee_percent !== undefined) row.marketplace_fee_percent = Number(row.marketplace_fee_percent);
           if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
           if (row.unit_id !== undefined) row.unit_id = Number(row.unit_id);
           if (row.supplier_id !== undefined) row.supplier_id = row.supplier_id == null || row.supplier_id === '' ? null : Number(row.supplier_id);
@@ -494,7 +514,22 @@ export const items = {
             query = query.abortSignal(opts.signal);
           }
 
-          let { data: updated, error } = await query;
+          let queryResult = await query;
+          if (
+            queryResult.error
+            && isMissingMarketplaceFeeColumn(queryResult.error)
+            && 'marketplace_fee_percent' in row
+          ) {
+            delete row.marketplace_fee_percent;
+            let retryQuery = window.supabase
+              .from('products')
+              .update(row)
+              .eq('id', id)
+              .select();
+            if (opts && opts.signal) retryQuery = retryQuery.abortSignal(opts.signal);
+            queryResult = await retryQuery;
+          }
+          let { data: updated, error } = queryResult;
           if (error && isMissingChannelColumn(error)) {
             return missingChannelColumnResponse();
           }

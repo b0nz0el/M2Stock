@@ -103,6 +103,7 @@
           });
           if (currentVal) prodSelect.value = currentVal;
         }
+
       }
 
       const custRes = await Api.customers.getAll();
@@ -119,11 +120,16 @@
           });
           if (currentCustVal) custSelect.value = currentCustVal;
         }
+
       }
     } catch (err) {
       console.error('Error loading dropdowns:', err);
     }
   }
+
+  window.addEventListener('aquastock:products-updated', () => {
+    loadDropdowns().catch(console.error);
+  });
 
   function escapeHtml(str) {
     if (!str) return '';

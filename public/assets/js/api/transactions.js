@@ -5,6 +5,12 @@
 
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit, notifyOwner } from './_client.js';
 
+function notifyProductsUpdated(detail = {}) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('aquastock:products-updated', { detail }));
+  }
+}
+
 function mapTransaction(row) {
   const qty = Number(row.qty ?? row.quantity) || 0;
   const price = Number(row.price ?? row.unit_price) || 0;
@@ -161,6 +167,7 @@ export const transactions = {
           });
 
           if (!rpcErr && rpcData && rpcData.ok) {
+            notifyProductsUpdated({ type: 'out', invoice_no: invoiceNo });
             // Sukses atomik dari database
             try {
               if (typeof logAudit === 'function') {
@@ -444,6 +451,8 @@ export const transactions = {
               }
             });
           }
+
+          notifyProductsUpdated({ type: data.type, product_id: productId, quantity });
 
           // Stock is mutated by the PostgreSQL transaction trigger only. A client-side
           // fallback can race with the trigger and apply the same movement twice.

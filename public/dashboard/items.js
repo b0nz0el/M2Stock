@@ -43,7 +43,7 @@ import {
     return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '0';
   }
 
-  function getOnlinePricing(costPrice, onlinePrice) {
+  function getOnlinePricing(costPrice, onlinePrice, marketplaceFee = 0.395) {
     const cost = Number(costPrice) || 0;
     const storedPrice = onlinePrice === null || onlinePrice === undefined || onlinePrice === ''
       ? Number.NaN
@@ -51,11 +51,15 @@ import {
     const price = Number.isFinite(storedPrice) && storedPrice >= 0
       ? storedPrice
       : Math.round(cost * 1.25);
-    if (cost <= 0) return { price, markup: 0 };
+    const fee = Math.min(1, Math.max(0, Number(marketplaceFee) || 0));
+    const netProfit = Math.round(price * (1 - fee) - cost);
+    if (cost <= 0) return { price, markup: 0, netProfit, fee };
 
     return {
       price,
-      markup: Math.round(((price - cost) / cost) * 10000) / 100
+      markup: Math.round((netProfit / cost) * 10000) / 100,
+      netProfit,
+      fee
     };
   }
 
@@ -819,6 +823,8 @@ import {
     document.getElementById('item-sell-price').value = item.sell_price || 0;
     const onlinePriceInput = document.getElementById('item-online-sell-price');
     if (onlinePriceInput) onlinePriceInput.value = item.online_sell_price ?? item.onlineSellPrice ?? '';
+    const feeInput = document.getElementById('item-marketplace-fee-percent');
+    if (feeInput) feeInput.value = Number((item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.395) * 100).toLocaleString('id-ID', { maximumFractionDigits: 3 });
     sanitizeNumericInputElement(document.getElementById('item-cost-price'));
     sanitizeNumericInputElement(document.getElementById('item-sell-price'));
     sanitizeNumericInputElement(document.getElementById('item-online-sell-price'));
@@ -942,6 +948,8 @@ import {
       const sell_price = parseNumericValue(document.getElementById('item-sell-price')?.value);
       const onlinePriceInput = document.getElementById('item-online-sell-price')?.value ?? '';
       const online_sell_price = onlinePriceInput.trim() === '' ? null : parseNumericValue(onlinePriceInput);
+      const feePercentInput = document.getElementById('item-marketplace-fee-percent')?.value ?? '39.5';
+      const marketplace_fee_percent = Number(String(feePercentInput).replace(',', '.')) / 100;
       const min_stock = parseNumericValue(document.getElementById('item-min-stock')?.value);
 
       // Read current values directly from DOM rows to capture latest edits
@@ -1118,6 +1126,9 @@ import {
         images: finalUrls
       };
       if (online_sell_price !== null) payload.online_sell_price = online_sell_price;
+      if (Number.isFinite(marketplace_fee_percent) && marketplace_fee_percent >= 0 && marketplace_fee_percent <= 1) {
+        payload.marketplace_fee_percent = marketplace_fee_percent;
+      }
       let res;
       if (id) {
         // Cek apakah ada perubahan cost_price atau supplier_id
@@ -1997,7 +2008,9 @@ import {
       const costPrice = Number(item.cost_price || item.costPrice) || 0;
       const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const markup = costPrice > 0 ? Math.round(((sellPrice - costPrice) / costPrice) * 100) : (sellPrice > 0 ? 100 : 0);
-      const onlinePricing = getOnlinePricing(costPrice, item.online_sell_price);
+      const fee = item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.395;
+      const onlinePricing = getOnlinePricing(costPrice, item.online_sell_price, fee);
+      const offlineProfit = sellPrice - costPrice;
       const markupColor = markup >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]';
       const isLow = stock <= minStock;
       const isChecked = selectedItemIds.has(String(item.id));
@@ -2056,18 +2069,22 @@ import {
             </div>
           `}
         </td>
+        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.sku || '-')}</td>
+        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.barcode || '-')}</td>
         <td class="px-4 py-3.5 font-medium">
           <span class="text-white text-sm font-semibold">${escapeHtml(item.name)}</span>
         </td>
         <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
-        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.sku || '-')}</td>
-        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.barcode || '-')}</td>
         <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${escapeHtml(item.category || 'Umum')}</span></td>
         <td class="px-4 py-3.5 text-right">${stockDisplay}</td>
+        <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${minStock.toLocaleString('id-ID')}</td>
         <td class="px-4 py-3.5 text-right">${formatRupiah(costPrice)}</td>
         <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
+        <td class="px-4 py-3.5 text-right ${offlineProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-semibold">${formatRupiah(offlineProfit)}</td>
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
+        <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
+        <td class="px-4 py-3.5 text-right ${onlinePricing.netProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.netProfit)}</td>
         <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${Number(onlinePricing.markup).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">
@@ -2468,7 +2485,8 @@ import {
   function getBulkPriceProjection(item, nominalValue, percentValue, hasValue) {
     const cost = Number(item.cost_price || item.costPrice) || 0;
     const offlinePrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
-    const online = getOnlinePricing(cost, item.online_sell_price);
+    const marketplaceFee = item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.395;
+    const online = getOnlinePricing(cost, item.online_sell_price, marketplaceFee);
     const oldPrice = bulkPriceTarget === 'online' ? online.price : offlinePrice;
     const oldMarkup = cost > 0
       ? (bulkPriceTarget === 'online'
@@ -2485,7 +2503,12 @@ import {
     let update;
     if (bulkPriceMode === 'nominal') {
       newPrice = nominalValue;
-      newMarkup = cost > 0 ? Math.round(((newPrice - cost) / cost) * 10000) / 100 : 0;
+      if (bulkPriceTarget === 'online') {
+        const netProfit = Math.round(newPrice * (1 - Number(marketplaceFee || 0)) - cost);
+        newMarkup = cost > 0 ? Math.round((netProfit / cost) * 10000) / 100 : 0;
+      } else {
+        newMarkup = cost > 0 ? Math.round(((newPrice - cost) / cost) * 10000) / 100 : 0;
+      }
       if (bulkPriceTarget === 'online') {
         update = { online_sell_price: newPrice };
       } else {
@@ -2493,8 +2516,17 @@ import {
       }
     } else {
       const requestedMarkup = Math.round(percentValue * 100) / 100;
-      newPrice = cost > 0 ? Math.max(0, Math.round(cost * (1 + requestedMarkup / 100))) : 0;
-      newMarkup = cost > 0 ? Math.round(((newPrice - cost) / cost) * 10000) / 100 : 0;
+      if (bulkPriceTarget === 'online') {
+        const fee = Math.min(1, Math.max(0, Number(marketplaceFee) || 0));
+        newPrice = cost > 0 && fee < 1
+          ? Math.max(0, Math.round(cost * (1 + requestedMarkup / 100) / (1 - fee)))
+          : 0;
+        const netProfit = Math.round(newPrice * (1 - fee) - cost);
+        newMarkup = cost > 0 ? Math.round((netProfit / cost) * 10000) / 100 : 0;
+      } else {
+        newPrice = cost > 0 ? Math.max(0, Math.round(cost * (1 + requestedMarkup / 100))) : 0;
+        newMarkup = cost > 0 ? Math.round(((newPrice - cost) / cost) * 10000) / 100 : 0;
+      }
       update = bulkPriceTarget === 'online'
         ? { online_sell_price: newPrice }
         : { sell_price: newPrice };
@@ -3276,17 +3308,18 @@ import {
 
     const headers = [
       'SKU', 'Barcode', 'Nama Barang', 'Brand', 'Kategori',
-      'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)'
+      'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual Offline (Rp)',
+      'Harga Jual Online (Rp)', 'Fee MP (%)'
     ];
     window.startCsvImport({
       title: 'Barang',
       templateName: 'template-barang.csv',
       headers,
-      requiredHeaders: ['SKU', 'Nama Barang', 'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual (Rp)'],
+      requiredHeaders: ['SKU', 'Nama Barang', 'Stok Awal', 'Min Stok', 'Harga Beli (Rp)', 'Harga Jual Offline (Rp)', 'Harga Jual Online (Rp)', 'Fee MP (%)'],
       templateRows: [
-        ['PAK-LOK-001', '8991234567890', 'Pelet Kura Kura 1mm 100g', 'Lokal', 'Pakan', '10', '3', '15000', '25000'],
-        ['POM-RES-002', '8999876543210', 'Pompa Celup SP-1200', 'Resun', 'Pompa Aquarium', '5', '2', '45000', '70000'],
-        ['MED-BLU-003', '', 'Obat Ikan Blitz Ich Blue 100ml', 'Lokal', 'Obat', '20', '5', '8000', '15000']
+        ['PAK-LOK-001', '8991234567890', 'Pelet Kura Kura 1mm 100g', 'Lokal', 'Pakan', '10', '3', '15000', '25000', '35000', '39.5'],
+        ['POM-RES-002', '8999876543210', 'Pompa Celup SP-1200', 'Resun', 'Pompa Aquarium', '5', '2', '45000', '70000', '112500', '39.5'],
+        ['MED-BLU-003', '', 'Obat Ikan Blitz Ich Blue 100ml', 'Lokal', 'Obat', '20', '5', '8000', '15000', '20000', '39.5']
       ],
       instructions: [
         'SKU dan Nama Barang wajib diisi dan tidak boleh duplikat.',
@@ -3344,8 +3377,10 @@ import {
           const initialStock = parseNumber(record['Stok Awal'], 'Stok awal', rowNumber, true);
           const minStock = parseNumber(record['Min Stok'], 'Min stok', rowNumber, true);
           const costPrice = parseNumber(record['Harga Beli (Rp)'], 'Harga beli', rowNumber);
-          const sellPrice = parseNumber(record['Harga Jual (Rp)'], 'Harga jual', rowNumber);
-          if ([initialStock, minStock, costPrice, sellPrice].some(value => value === null)) return;
+          const sellPrice = parseNumber(record['Harga Jual Offline (Rp)'], 'Harga jual offline', rowNumber);
+          const onlineSellPrice = parseNumber(record['Harga Jual Online (Rp)'], 'Harga jual online', rowNumber);
+          const feePercent = parseNumber(record['Fee MP (%)'], 'Fee marketplace', rowNumber);
+          if ([initialStock, minStock, costPrice, sellPrice, onlineSellPrice, feePercent].some(value => value === null)) return;
           if (errors.length !== rowErrorsBefore) return;
           seenSkus.add(skuKey);
           if (barcode) seenBarcodes.add(barcode);
@@ -3358,7 +3393,9 @@ import {
             initial_stock: initialStock,
             min_stock: minStock,
             cost_price: costPrice,
-            sell_price: sellPrice
+            sell_price: sellPrice,
+            online_sell_price: onlineSellPrice,
+            marketplace_fee_percent: feePercent > 1 ? feePercent / 100 : feePercent
           });
         });
         return { rows, errors };
@@ -3429,6 +3466,8 @@ import {
                 min_stock: Number(r.min_stock) || 3,
                 cost_price: Number(r.cost_price) || 0,
                 sell_price: Number(r.sell_price) || 0,
+                online_sell_price: Number(r.online_sell_price) || 0,
+                marketplace_fee_percent: Number(r.marketplace_fee_percent) || 0.395,
                 target_stock: targetStock,
                 current_stock: currentStock,
                 updated_at: new Date().toISOString()
@@ -3445,6 +3484,8 @@ import {
                 min_stock: Number(r.min_stock) || 3,
                 cost_price: Number(r.cost_price) || 0,
                 sell_price: Number(r.sell_price) || 0,
+                online_sell_price: Number(r.online_sell_price) || 0,
+                marketplace_fee_percent: Number(r.marketplace_fee_percent) || 0.395,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               });

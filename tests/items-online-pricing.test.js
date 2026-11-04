@@ -18,14 +18,14 @@ describe('Master Barang — harga offline dan online', () => {
   });
 
   it('menghitung markup online dari harga beli dan harga online tersimpan', () => {
-    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice\) \{[\s\S]*?\n  \}/);
+    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice, marketplaceFee = 0\.395\) \{[\s\S]*?\n  \}/);
     expect(pricingFunction).not.toBeNull();
 
     const getOnlinePricing = new Function(`${pricingFunction[0]}; return getOnlinePricing;`)();
-    expect(getOnlinePricing(10000)).toEqual({ price: 12500, markup: 25 });
-    expect(getOnlinePricing(10000, null)).toEqual({ price: 12500, markup: 25 });
-    expect(getOnlinePricing(10000, 13150)).toEqual({ price: 13150, markup: 31.5 });
-    expect(getOnlinePricing(0)).toEqual({ price: 0, markup: 0 });
+    expect(getOnlinePricing(10000)).toMatchObject({ price: 12500, markup: -24.37, netProfit: -2437 });
+    expect(getOnlinePricing(10000, null)).toMatchObject({ price: 12500, markup: -24.37, netProfit: -2437 });
+    expect(getOnlinePricing(10000, 13150)).toMatchObject({ price: 13150, markup: -20.44, netProfit: -2044 });
+    expect(getOnlinePricing(0)).toMatchObject({ price: 0, markup: 0, netProfit: 0 });
   });
 
   it('menyediakan target massal offline/online dan pengaturan markup', () => {
@@ -37,9 +37,13 @@ describe('Master Barang — harga offline dan online', () => {
   });
 
   it('mengubah markup yang dipilih menjadi harga pada channel yang sesuai', () => {
-    const functionMatch = itemsJs.match(/function getBulkPriceProjection\(item, nominalValue, percentValue, hasValue\) \{[\s\S]*?\n  \}/);
+    const bulkFunctionStart = itemsJs.indexOf('function getBulkPriceProjection(item, nominalValue, percentValue, hasValue)');
+    const bulkFunctionEnd = itemsJs.indexOf('\n  function updateBulkPricePreview()', bulkFunctionStart);
+    const functionMatch = bulkFunctionStart >= 0 && bulkFunctionEnd >= 0
+      ? [itemsJs.slice(bulkFunctionStart, bulkFunctionEnd).trim()]
+      : null;
     expect(functionMatch).not.toBeNull();
-    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice\) \{[\s\S]*?\n  \}/);
+    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice, marketplaceFee = 0\.395\) \{[\s\S]*?\n  \}/);
     const createProjection = new Function(
       'getOnlinePricing',
       'bulkPriceTarget',
@@ -64,9 +68,9 @@ describe('Master Barang — harga offline dan online', () => {
       'percent'
     )({ cost_price: 10000, online_sell_price: 12500 }, 0, 32.5, true);
     expect(onlineProjection).toMatchObject({
-      newPrice: 13250,
+      newPrice: 21901,
       newMarkup: 32.5,
-      update: { online_sell_price: 13250 }
+      update: { online_sell_price: 21901 }
     });
 
     const nominalProjection = createProjection(
@@ -76,6 +80,7 @@ describe('Master Barang — harga offline dan online', () => {
     )({ cost_price: 10000, online_sell_price: 12500 }, 13579, 0, true);
     expect(nominalProjection).toMatchObject({
       newPrice: 13579,
+      newMarkup: -17.85,
       update: { online_sell_price: 13579 }
     });
   });

@@ -35,7 +35,7 @@ describe('product barcode API mapping', () => {
     const result = await items.create(row);
 
     expect(result.ok).toBe(true);
-    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, min_stock: 0, cost_price: 0, sell_price: 0, online_sell_price: 0, image_url: null }]);
+    expect(insert).toHaveBeenCalledWith([{ ...row, category_id: null, supplier_id: null, brand: null, channel: 'Offline', channel_link: null, min_stock: 0, cost_price: 0, sell_price: 0, online_sell_price: 0, marketplace_fee_percent: 0.395, image_url: null }]);
   });
 
   it('leaves initial stock at the database default instead of accepting an insert stock value', async () => {
