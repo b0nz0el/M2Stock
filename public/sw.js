@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.5.9-pwa';
+const CACHE_NAME = 'aquastock-v3.5.10-pwa';
 
 const STATIC_PRECACHE = [
   '/',
