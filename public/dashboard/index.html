@@ -3945,10 +3945,15 @@
               </div>
             </div>
 
-            <!-- Catatan / No. Resi -->
+            <!-- No. Resi Marketplace -->
             <div>
-              <label for="out-note" class="block text-xs font-medium text-[#A0A0A5] mb-1">No. Resi / Catatan (Opsional)</label>
-              <input type="text" id="out-note" placeholder="Catatan transaksi atau nomor resi..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-[#0088CC]">
+              <label for="out-note" class="block text-xs font-medium text-[#A0A0A5] mb-1">No. Resi Marketplace (Opsional)</label>
+              <div class="flex items-center gap-2">
+                <input type="text" id="out-note" inputmode="text" autocomplete="off" placeholder="Scan atau ketik nomor resi..." class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-[#0088CC]">
+                <button type="button" id="btn-scan-pos-resi" onclick="startWebBarcodeScan('resi')" aria-label="Scan nomor resi marketplace dengan kamera" title="Scan nomor resi dengan kamera" class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl border border-[#0088CC]/40 bg-[#0088CC]/15 text-[#32ADE6] transition hover:bg-[#0088CC]/25">
+                  <i data-lucide="scan-line" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
+              </div>
             </div>
 
             <!-- Diskon & Pajak (PPN 11%) -->
@@ -4189,7 +4194,7 @@
           <div class="flex justify-between"><span class="text-gray-600">Kasir:</span><span id="receipt-meta-cashier">Admin</span></div>
           <div class="flex justify-between"><span class="text-gray-600">Pelanggan:</span><span id="receipt-meta-customer">Umum</span></div>
           <div class="flex justify-between"><span class="text-gray-600">Metode Bayar:</span><span id="receipt-meta-method" class="font-semibold text-black">Cash</span></div>
-          <div class="flex justify-between" data-receipt-tracking><span class="text-gray-600">No. Resi / Catatan:</span><span id="receipt-meta-tracking" class="font-bold text-right break-all max-w-[180px]">-</span></div>
+          <div class="flex justify-between" data-receipt-tracking><span class="text-gray-600">No. Resi Marketplace:</span><span id="receipt-meta-tracking" class="font-bold text-right break-all max-w-[180px]">-</span></div>
         </div>
 
         <!-- Daftar Item Pembelian -->

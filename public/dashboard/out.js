@@ -1767,6 +1767,7 @@ let _scanDebounce = false;
 let _html5Scanner = null;
 let _isStartingScan = false;
 let _scannerEscHandler = null;
+let _scanTarget = 'product';
 
 let _photoStream = null;
 let _isStartingPhoto = false;
@@ -1806,11 +1807,12 @@ function triggerScanFeedback() {
   } catch (_) {}
 }
 
-async function startWebBarcodeScan() {
+async function startWebBarcodeScan(target = 'product') {
   if (typeof window.openItemBarcodeScanner !== 'function') {
     showToast('Modul pemindai barcode belum siap. Muat ulang halaman dan coba kembali.', 'error');
     return;
   }
+  _scanTarget = target === 'resi' ? 'resi' : 'product';
   await window.openItemBarcodeScanner(handleScanSuccess);
 }
 
@@ -1979,6 +1981,18 @@ function bindScannerControls(modal) {
 function handleScanSuccess(decodedText) {
   triggerScanFeedback();
   const trimmed = decodedText ? decodedText.trim() : '';
+
+  if (_scanTarget === 'resi') {
+    const input = document.getElementById('out-note');
+    if (!input) {
+      showToast('Kolom nomor resi tidak tersedia. Buka Kasir POS lalu coba kembali.', 'error');
+      return;
+    }
+    input.value = trimmed;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    showToast(`No. resi terbaca: ${trimmed.slice(0, 50)}`, 'success');
+    return;
+  }
 
   // Check if modal-out (POS) is open
   const modalOut = document.getElementById('modal-out');
@@ -2191,6 +2205,7 @@ window.handlePosPaymentMethodChange = handlePosPaymentMethodChange;
 window.handlePosChannelChange = handlePosChannelChange;
 window.addPosCatalogProduct = addPosCatalogProduct;
 window.openAddOutModal = openAddOutModal;
+window.startWebBarcodeScan = startWebBarcodeScan;
 window.closeOutModal = closeOutModal;
 window.handleOutSubmit = handleOutSubmit;
 window.openDeleteOutModal = openDeleteOutModal;

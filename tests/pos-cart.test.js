@@ -114,6 +114,16 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain('const qty = getTransactionOutQty(tx)');
       expect(outJsCode).toContain('qty: getTransactionOutQty(t)');
     });
+
+    it('renames the POS tracking field and supports camera resi scanning', () => {
+      expect(outHtml).toContain('No. Resi Marketplace (Opsional)');
+      expect(outHtml).toContain('id="btn-scan-pos-resi"');
+      expect(outHtml).toContain("onclick=\"startWebBarcodeScan('resi')\"");
+      expect(outHtml).toContain('No. Resi Marketplace:');
+      expect(outJsCode).toContain("async function startWebBarcodeScan(target = 'product')");
+      expect(outJsCode).toContain("_scanTarget = target === 'resi' ? 'resi' : 'product'");
+      expect(outJsCode).toContain("if (_scanTarget === 'resi')");
+    });
   });
 
   describe('createBatchOut API Implementation', () => {
