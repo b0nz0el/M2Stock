@@ -413,22 +413,43 @@ body.modal-open {
   }
 }
 
-/* ═══ PO SEARCHABLE COMBOBOX FLOATING DROPDOWN ═══ */
+/* ═══ PO SEARCHABLE COMBOBOX FLOATING DROPDOWN (TIER-1 SAAS STANDARD) ═══ */
 #po-floating-search-dropdown {
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.12);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  animation: poPopoverSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes poPopoverSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 #po-floating-search-dropdown::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+}
+#po-floating-search-dropdown::-webkit-scrollbar-track {
+  background: transparent;
 }
 #po-floating-search-dropdown::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
 }
+#po-floating-search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
 .po-dropdown-item.is-highlighted {
-  background: rgba(0, 136, 204, 0.25);
-  border-left: 2px solid #0088CC;
+  background: linear-gradient(90deg, rgba(0, 136, 204, 0.22) 0%, rgba(0, 136, 204, 0.08) 100%) !important;
+  border-color: rgba(0, 136, 204, 0.45) !important;
+  box-shadow: 0 0 16px rgba(0, 136, 204, 0.15);
+}
+.po-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* ═══ ANIMATIONS ═══ */

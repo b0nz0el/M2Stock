@@ -9,9 +9,12 @@ describe('Purchase Order Search Engine Combobox & Typo Search Contract', () => {
   const indexHtml = fs.readFileSync(path.join(rootDir, 'public/dashboard/index.html'), 'utf8');
   const componentsCss = fs.readFileSync(path.join(rootDir, 'public/assets/css/components.css'), 'utf8');
 
-  it('memastikan createItemRow di po.js menggunakan input search engine combobox', () => {
+  it('memastikan createItemRow di po.js menggunakan input search engine combobox dual-state', () => {
     expect(poJs).toContain('item-search-input');
-    expect(poJs).toContain('btn-clear-search');
+    expect(poJs).toContain('po-search-state');
+    expect(poJs).toContain('po-selected-state');
+    expect(poJs).toContain('btn-change-item');
+    expect(poJs).toContain('btn-clear-selection');
     expect(poJs).toContain('po-floating-search-dropdown');
     expect(poJs).toContain('openPoDropdown');
     expect(poJs).toContain('closePoDropdown');

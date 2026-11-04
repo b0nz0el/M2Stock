@@ -2149,6 +2149,8 @@ import {
     const globalSearch = document.getElementById('global-search');
     if (pageSearch && pageSearch.value !== val) pageSearch.value = val;
     if (globalSearch && globalSearch.value !== val) globalSearch.value = val;
+    const clearBtn = document.getElementById('btn-clear-search-items');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !searchQuery);
     renderItemsTable();
   }
 

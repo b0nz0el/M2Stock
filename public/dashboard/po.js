@@ -816,7 +816,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       }).join('');
   }
 
-  // Global floating dropdown element for PO item combobox
+  // Global floating dropdown element for PO item combobox (Standar UI Internasional)
   let activeComboboxRow = null;
   let poDropdownEl = null;
 
@@ -824,7 +824,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (!poDropdownEl) {
       poDropdownEl = document.createElement('div');
       poDropdownEl.id = 'po-floating-search-dropdown';
-      poDropdownEl.className = 'fixed z-[9999] hidden bg-[#1C1C1E] border border-white/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto divide-y divide-white/5 text-xs backdrop-blur-md';
+      poDropdownEl.className = 'fixed z-[9999] hidden bg-[#18181B]/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl text-xs overflow-hidden';
       document.body.appendChild(poDropdownEl);
 
       // Tutup jika klik di luar
@@ -852,16 +852,32 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   function repositionPoDropdown() {
     if (!activeComboboxRow || !poDropdownEl) return;
-    const searchInput = activeComboboxRow.querySelector('.item-search-input');
-    if (!searchInput) return;
-    const rect = searchInput.getBoundingClientRect();
+    const anchorEl = activeComboboxRow.querySelector('.po-search-state') || activeComboboxRow.querySelector('.item-search-input');
+    if (!anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > window.innerHeight) {
       closePoDropdown();
       return;
     }
-    poDropdownEl.style.top = `${rect.bottom + 4}px`;
-    poDropdownEl.style.left = `${rect.left}px`;
-    poDropdownEl.style.width = `${Math.max(rect.width, 300)}px`;
+
+    const popoverWidth = Math.min(480, window.innerWidth - 32);
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const popoverHeight = 360;
+
+    if (spaceBelow < 280 && rect.top > 300) {
+      poDropdownEl.style.top = `${Math.max(16, rect.top - popoverHeight - 6)}px`;
+    } else {
+      poDropdownEl.style.top = `${rect.bottom + 6}px`;
+    }
+
+    let leftPos = rect.left;
+    if (leftPos + popoverWidth > window.innerWidth - 16) {
+      leftPos = window.innerWidth - popoverWidth - 16;
+    }
+    if (leftPos < 16) leftPos = 16;
+
+    poDropdownEl.style.left = `${leftPos}px`;
+    poDropdownEl.style.width = `${popoverWidth}px`;
   }
 
   function closePoDropdown() {
@@ -873,28 +889,40 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function selectProductInRow(row, prod) {
+    const searchWrap = row.querySelector('.po-search-state');
+    const selectedWrap = row.querySelector('.po-selected-state');
     const searchInput = row.querySelector('.item-search-input');
     const selectEl = row.querySelector('.item-select');
     const hargaInput = row.querySelector('.item-harga');
     const qtyInput = row.querySelector('.item-qty');
-    const clearBtn = row.querySelector('.btn-clear-search');
 
     if (!prod) {
+      if (searchWrap) searchWrap.classList.remove('hidden');
+      if (selectedWrap) selectedWrap.classList.add('hidden');
       if (searchInput) searchInput.value = '';
       if (selectEl) {
         selectEl.value = '';
         selectEl.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      if (clearBtn) clearBtn.classList.add('hidden');
       if (row._updateRowSubtotal) row._updateRowSubtotal();
       return;
     }
 
-    if (searchInput) {
-      searchInput.value = prod.name;
-    }
-    if (clearBtn) {
-      clearBtn.classList.remove('hidden');
+    if (searchWrap) searchWrap.classList.add('hidden');
+    if (selectedWrap) {
+      selectedWrap.classList.remove('hidden');
+      const nameEl = selectedWrap.querySelector('.selected-item-name');
+      if (nameEl) nameEl.textContent = prod.name;
+      const skuEl = selectedWrap.querySelector('.selected-item-sku');
+      if (skuEl) {
+        skuEl.textContent = prod.sku || '-';
+        skuEl.classList.toggle('hidden', !prod.sku);
+      }
+      const stockEl = selectedWrap.querySelector('.selected-item-stock');
+      if (stockEl) {
+        const s = Number(prod.stock) || 0;
+        stockEl.textContent = `Sisa Stok: ${s}`;
+      }
     }
 
     if (selectEl) {
@@ -925,6 +953,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       qtyInput.focus();
       qtyInput.select();
     }
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons({ root: row });
+    }
   }
 
   function openPoDropdown(row, query = '') {
@@ -952,45 +984,91 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       filtered = scored.slice(0, 35).map(s => s.product);
     }
 
+    const headerHtml = `
+      <div class="px-3.5 py-2.5 bg-black/40 border-b border-white/5 flex items-center justify-between">
+        <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#A0A0A5] uppercase tracking-wider">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#0088CC]"></i>
+          <span>Katalog Master Barang</span>
+        </div>
+        <span class="text-[10px] font-semibold text-[#0088CC] bg-[#0088CC]/10 px-2.5 py-0.5 rounded-full border border-[#0088CC]/20">
+          ${filtered.length} barang ${query ? 'cocok' : 'tersedia'}
+        </span>
+      </div>
+    `;
+
+    const footerHtml = `
+      <div class="px-3.5 py-2 bg-black/50 border-t border-white/5 flex items-center justify-between text-[10px] text-[#A0A0A5] rounded-b-2xl">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">↑↓</kbd> Navigasi</span>
+          <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">↵</kbd> Pilih</span>
+          <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">Esc</kbd> Tutup</span>
+        </div>
+        <span class="text-[#A0A0A5]/60 font-medium">Aquastock Engine</span>
+      </div>
+    `;
+
     if (filtered.length === 0) {
       dropdown.innerHTML = `
-        <div class="p-3 text-center text-[#A0A0A5]">
-          <p class="font-medium">Tidak ada barang yang cocok</p>
-          <p class="text-[10px] text-[#A0A0A5]/60 mt-0.5">Coba ketik kata kunci nama, SKU, atau merk lain</p>
+        ${headerHtml}
+        <div class="p-6 text-center text-[#A0A0A5]">
+          <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center mx-auto mb-2 text-[#A0A0A5]">
+            <i data-lucide="search-x" class="w-5 h-5"></i>
+          </div>
+          <p class="font-semibold text-white text-xs">Tidak ada barang yang cocok</p>
+          <p class="text-[11px] text-[#A0A0A5]/70 mt-1">Coba gunakan kata kunci nama, SKU, atau merk yang berbeda</p>
         </div>
+        ${footerHtml}
       `;
       dropdown.classList.remove('hidden');
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons({ root: dropdown });
+      }
       return;
     }
 
-    dropdown.innerHTML = filtered.map((p, idx) => {
+    const itemsHtml = filtered.map((p, idx) => {
       const cost = p.costPrice || p.cost_price || 0;
       const stock = Number(p.stock) || 0;
       const isSelected = String(p.id) === String(selectEl?.value);
       const stockBadge = stock <= 0
-        ? '<span class="text-[#FF3B30] font-semibold text-[10px] bg-[#FF3B30]/10 px-1.5 py-0.5 rounded">Habis</span>'
+        ? '<span class="inline-flex items-center gap-1 text-[#FF3B30] font-semibold text-[10px] bg-[#FF3B30]/15 border border-[#FF3B30]/20 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-[#FF3B30]"></span> Habis</span>'
         : (stock <= 5
-          ? `<span class="text-[#FF9500] font-semibold text-[10px] bg-[#FF9500]/10 px-1.5 py-0.5 rounded">Stok: ${stock}</span>`
-          : `<span class="text-[#34C759] font-medium text-[10px] bg-[#34C759]/10 px-1.5 py-0.5 rounded">Stok: ${stock}</span>`);
+          ? `<span class="inline-flex items-center gap-1 text-[#FF9500] font-semibold text-[10px] bg-[#FF9500]/15 border border-[#FF9500]/20 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-[#FF9500]"></span> ${stock} unit</span>`
+          : `<span class="inline-flex items-center gap-1 text-[#34C759] font-medium text-[10px] bg-[#34C759]/15 border border-[#34C759]/20 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-[#34C759]"></span> ${stock} unit</span>`);
 
       return `
-        <div class="po-dropdown-item px-3 py-2 cursor-pointer transition flex items-center justify-between gap-2 hover:bg-white/10 ${idx === 0 ? 'is-highlighted' : ''} ${isSelected ? 'bg-[#0088CC]/20 border-l-2 border-[#0088CC]' : ''}"
+        <div class="po-dropdown-item group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all duration-150 hover:bg-white/[0.08] active:scale-[0.99] ${idx === 0 ? 'is-highlighted' : ''} ${isSelected ? 'bg-[#0088CC]/15 border border-[#0088CC]/40' : 'border border-transparent'}"
              data-id="${escapeHtml(String(p.id))}"
              data-index="${idx}">
-          <div class="min-w-0 flex-1">
-            <div class="font-medium text-white truncate text-xs">${escapeHtml(p.name)}</div>
-            <div class="text-[10px] text-[#A0A0A5] flex items-center gap-2 mt-0.5">
-              ${p.sku ? `<span class="font-mono text-[10px] bg-white/5 px-1 rounded">${escapeHtml(p.sku)}</span>` : ''}
-              ${p.brand ? `<span>${escapeHtml(p.brand)}</span>` : ''}
-              <span>Modal: <b class="text-white">${formatRupiah(cost)}</b></span>
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center shrink-0 text-[#0088CC] group-hover:bg-[#0088CC]/20 group-hover:border-[#0088CC]/40 transition">
+              <i data-lucide="package" class="w-4 h-4"></i>
+            </div>
+            <div class="min-w-0 flex-1 pr-2">
+              <div class="text-xs font-semibold text-white truncate group-hover:text-[#32ADE6] transition">
+                ${escapeHtml(p.name)}
+              </div>
+              <div class="flex items-center gap-2 mt-1 text-[11px] text-[#A0A0A5] flex-wrap">
+                ${p.sku ? `<span class="font-mono bg-white/5 px-1.5 py-0.5 rounded text-[10px] text-gray-300 border border-white/5">${escapeHtml(p.sku)}</span>` : ''}
+                ${p.brand ? `<span>${escapeHtml(p.brand)}</span> • ` : ''}
+                <span>Modal: <b class="text-white font-medium">${formatRupiah(cost)}</b></span>
+              </div>
             </div>
           </div>
-          <div class="flex-shrink-0 text-right">
+          <div class="shrink-0 text-right">
             ${stockBadge}
           </div>
         </div>
       `;
     }).join('');
+
+    dropdown.innerHTML = `
+      ${headerHtml}
+      <div class="max-h-72 overflow-y-auto p-1.5 space-y-1">
+        ${itemsHtml}
+      </div>
+      ${footerHtml}
+    `;
 
     dropdown.querySelectorAll('.po-dropdown-item').forEach(itemEl => {
       itemEl.addEventListener('pointerdown', (e) => {
@@ -1005,9 +1083,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     });
 
     dropdown.classList.remove('hidden');
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons({ root: dropdown });
+    }
   }
 
-  // Dynamic Item Rows in Modal dengan Search Engine Combobox
+  // Dynamic Item Rows in Modal dengan Search Engine Dual-State (International Standard)
   function createItemRow(selectedProductId = '', qty = 1, harga = 0) {
     const row = document.createElement('div');
     row.className = 'po-item-row items-center bg-black/30 p-2.5 rounded-xl border border-white/5';
@@ -1020,16 +1101,41 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     row.innerHTML = `
       <div class="po-item-name relative">
-        <div class="po-combobox-wrap relative flex items-center">
-          <i data-lucide="search" class="w-3.5 h-3.5 text-[#A0A0A5] absolute left-2.5 pointer-events-none"></i>
+        <!-- State 1: Search Input (saat belum memilih barang) -->
+        <div class="po-search-state relative flex items-center">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-[#A0A0A5] absolute left-3 pointer-events-none"></i>
           <input type="text"
-                 class="item-search-input w-full bg-black/50 border border-white/10 rounded-lg pl-7 pr-7 py-1.5 text-xs text-white placeholder:text-[#A0A0A5]/60 focus:outline-none focus:border-[#0088CC]"
-                 placeholder="Ketik nama / SKU / barcode..."
+                 class="item-search-input w-full bg-black/60 border border-white/15 hover:border-white/25 focus:border-[#0088CC] rounded-xl pl-8 pr-8 py-2 text-xs text-white placeholder:text-[#A0A0A5]/60 focus:outline-none focus:ring-2 focus:ring-[#0088CC]/20 transition-all shadow-inner"
+                 placeholder="Cari nama, SKU, atau barcode..."
                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-          <button type="button" class="btn-clear-search absolute right-2 text-[#A0A0A5] hover:text-white p-0.5 rounded hidden" title="Kosongkan pilihan">
-            <i data-lucide="x" class="w-3 h-3"></i>
-          </button>
+          <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#A0A0A5]/50 absolute right-2.5 pointer-events-none"></i>
         </div>
+
+        <!-- State 2: Selected Product Card (saat produk sudah dipilih) -->
+        <div class="po-selected-state hidden flex items-center justify-between gap-2 p-1.5 bg-white/[0.04] border border-white/10 rounded-xl hover:border-white/20 transition-all">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <div class="w-7 h-7 rounded-lg bg-[#0088CC]/15 border border-[#0088CC]/30 flex items-center justify-center shrink-0 text-[#0088CC]">
+              <i data-lucide="package" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="selected-item-name text-xs font-semibold text-white truncate leading-tight"></div>
+              <div class="flex items-center gap-1.5 text-[10px] text-[#A0A0A5] mt-0.5">
+                <span class="selected-item-sku font-mono bg-white/5 px-1 rounded text-[9px] text-gray-300"></span>
+                <span class="selected-item-stock text-[#34C759]"></span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" class="btn-change-item text-[#A0A0A5] hover:text-[#0088CC] p-1 rounded-lg hover:bg-white/5 transition" title="Ganti barang">
+              <i data-lucide="pencil" class="w-3 h-3"></i>
+            </button>
+            <button type="button" class="btn-clear-selection text-[#A0A0A5] hover:text-[#FF3B30] p-1 rounded-lg hover:bg-white/5 transition" title="Kosongkan barang">
+              <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hidden native select untuk integritas form submit -->
         <select required class="item-select hidden" tabindex="-1" aria-hidden="true">
           <option value="">-- Pilih Barang --</option>
           ${productOptions}
@@ -1058,7 +1164,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const qtyInput = row.querySelector('.item-qty');
     const hargaInput = row.querySelector('.item-harga');
     const removeBtn = row.querySelector('.btn-remove-item');
-    const clearBtn = row.querySelector('.btn-clear-search');
+    const changeBtn = row.querySelector('.btn-change-item');
+    const clearSelectionBtn = row.querySelector('.btn-clear-selection');
 
     function updateRowSubtotal() {
       const q = Math.max(1, Number(qtyInput.value) || 1);
@@ -1089,9 +1196,6 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       const val = e.target.value.trim();
       if (!val) {
         selectEl.value = '';
-        clearBtn.classList.add('hidden');
-      } else {
-        clearBtn.classList.remove('hidden');
       }
       openPoDropdown(row, val);
     });
@@ -1144,12 +1248,29 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       }
     });
 
-    clearBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectProductInRow(row, null);
-      searchInput.focus();
-      openPoDropdown(row, '');
-    });
+    if (changeBtn) {
+      changeBtn.addEventListener('click', () => {
+        const searchWrap = row.querySelector('.po-search-state');
+        const selectedWrap = row.querySelector('.po-selected-state');
+        if (selectedWrap) selectedWrap.classList.add('hidden');
+        if (searchWrap) searchWrap.classList.remove('hidden');
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+          openPoDropdown(row, '');
+        }
+      });
+    }
+
+    if (clearSelectionBtn) {
+      clearSelectionBtn.addEventListener('click', () => {
+        selectProductInRow(row, null);
+        if (searchInput) {
+          searchInput.focus();
+          openPoDropdown(row, '');
+        }
+      });
+    }
 
     removeBtn.addEventListener('click', () => {
       const allRows = document.querySelectorAll('.po-item-row');
@@ -1168,9 +1289,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (selectedProductId) {
       const prod = availableProducts.find(p => String(p.id) === String(selectedProductId));
       if (prod) {
-        searchInput.value = prod.name;
-        clearBtn.classList.remove('hidden');
-        selectEl.value = prod.id;
+        selectProductInRow(row, prod);
       }
     }
 
