@@ -1132,7 +1132,7 @@
           <td class="px-4 py-3.5">${channelBadge}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5]">${custName}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
-          <td class="px-4 py-3.5 text-right text-[#FF3B30] font-semibold">-${qty}</td>
+          <td class="px-4 py-3.5 text-right text-[#FF3B30] font-semibold">${qty}</td>
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
           <td class="px-4 py-3.5 text-right">

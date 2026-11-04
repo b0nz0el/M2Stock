@@ -113,6 +113,7 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain('Math.abs(Number(typeof txOrQty === \'object\'');
       expect(outJsCode).toContain('const qty = getTransactionOutQty(tx)');
       expect(outJsCode).toContain('qty: getTransactionOutQty(t)');
+      expect(outJsCode).toContain('font-semibold">${qty}</td>');
     });
 
     it('cache-busts the POS module for each application release', () => {
