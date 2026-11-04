@@ -52,6 +52,21 @@ describe('product barcode API mapping', () => {
     expect(insert.mock.calls[0][0][0]).not.toHaveProperty('stock');
   });
 
+  it('defaults a blank online sell price to cost price plus 25 percent on create', async () => {
+    const select = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
+    const insert = vi.fn(() => ({ select }));
+    window.supabase = { from: vi.fn(() => ({ insert })) };
+
+    await items.create({
+      name: 'Produk Baru',
+      sku: 'NEW-ONLINE-001',
+      cost_price: 3000,
+      online_sell_price: null
+    });
+
+    expect(insert.mock.calls[0][0][0].online_sell_price).toBe(3750);
+  });
+
   it('stores the product supplier and preserves zero prices on create', async () => {
     const select = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
     const insert = vi.fn(() => ({ select }));

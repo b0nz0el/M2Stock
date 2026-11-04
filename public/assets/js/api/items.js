@@ -358,6 +358,12 @@ export const items = {
           const minStock = data.min_stock !== undefined ? data.min_stock : data.minStock;
           const costPrice = data.cost_price !== undefined ? data.cost_price : data.costPrice;
           const sellPrice = data.sell_price !== undefined ? data.sell_price : (data.sellPrice !== undefined ? data.sellPrice : data.unitPrice);
+          const requestedOnlineSellPrice = data.online_sell_price !== undefined
+            ? data.online_sell_price
+            : data.onlineSellPrice;
+          const hasRequestedOnlineSellPrice = requestedOnlineSellPrice !== null &&
+            requestedOnlineSellPrice !== undefined &&
+            String(requestedOnlineSellPrice).trim() !== '';
 
           const row = {
             name: data.name,
@@ -372,11 +378,9 @@ export const items = {
             min_stock: minStock !== undefined ? Number(minStock) : 0,
             cost_price: costPrice !== undefined ? Number(costPrice) : 0,
             sell_price: sellPrice !== undefined ? Number(sellPrice) : 0,
-            online_sell_price: data.online_sell_price !== undefined
-              ? Number(data.online_sell_price)
-              : (data.onlineSellPrice !== undefined
-                  ? Number(data.onlineSellPrice)
-                  : Math.round((Number(costPrice) || 0) * 1.25)),
+            online_sell_price: hasRequestedOnlineSellPrice
+              ? Number(requestedOnlineSellPrice)
+              : Math.round((Number(costPrice) || 0) * 1.25),
             marketplace_fee_percent: data.marketplace_fee_percent !== undefined
               ? Number(data.marketplace_fee_percent)
               : (data.marketplaceFeePercent !== undefined ? Number(data.marketplaceFeePercent) : 0.395),
