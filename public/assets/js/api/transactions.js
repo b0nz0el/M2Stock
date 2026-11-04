@@ -228,6 +228,8 @@ export const transactions = {
       // PRIORITAS 2 (Fallback): Client-side Loop dengan ATOMIC COMPENSATION ROLLBACK
       const createdTxs = [];
       let subtotalAmount = 0;
+      const receiptSubtotalAmount = cartItems.reduce((sum, item) =>
+        sum + (Number(item.qty ?? item.quantity) || 0) * (Number(item.price ?? item.unit_price) || 0), 0);
 
       for (let i = 0; i < cartItems.length; i++) {
         const item = cartItems[i];
@@ -236,7 +238,12 @@ export const transactions = {
         subtotalAmount += qty * price;
 
         const customNote = item.note || commonData.note || '';
-        const itemNote = `[${invoiceNo}] ${customNote}`.trim();
+        const receiptMeta = [
+          `AQ_DISCOUNT=${discountAmount}`,
+          `AQ_TAX=${taxAmount}`,
+          `AQ_TOTAL=${Math.max(0, receiptSubtotalAmount - discountAmount + taxAmount)}`
+        ].join('|');
+        const itemNote = `[${invoiceNo}] ${customNote} |${receiptMeta}`.trim();
 
         const res = await transactions.createOut({
           product_id: item.product_id,

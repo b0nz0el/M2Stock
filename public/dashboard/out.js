@@ -10,6 +10,19 @@
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
   }
 
+  function parsePosReceiptMeta(note) {
+    const text = String(note || '');
+    const read = (key) => {
+      const match = text.match(new RegExp(`(?:^|\\|)${key}=(-?[0-9]+(?:\\.[0-9]+)?)(?:\\||$)`));
+      return match ? Number(match[1]) : null;
+    };
+    return {
+      discount: Math.max(0, read('AQ_DISCOUNT') || 0),
+      tax: Math.max(0, read('AQ_TAX') || 0),
+      total: read('AQ_TOTAL')
+    };
+  }
+
   function formatShortRupiah(val) {
     if (!val || val === 0) return 'Rp 0';
     if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1).replace('.0', '') + 'jt';
@@ -1258,6 +1271,9 @@
     let total = 0;
     let initialPaid = 0;
     let initialChange = 0;
+    let checkoutSubtotal = 0;
+    let checkoutDiscount = 0;
+    let checkoutTax = 0;
 
     if (txIdOrBatch && typeof txIdOrBatch === 'object') {
       // Direct batch payload from POS checkout
@@ -1277,6 +1293,9 @@
       total = txIdOrBatch.total !== undefined ? txIdOrBatch.total : items.reduce((s, it) => s + it.total, 0);
       initialPaid = txIdOrBatch.paid !== undefined ? txIdOrBatch.paid : total;
       initialChange = txIdOrBatch.change !== undefined ? txIdOrBatch.change : Math.max(0, initialPaid - total);
+      checkoutSubtotal = txIdOrBatch.subtotal !== undefined ? Number(txIdOrBatch.subtotal) : items.reduce((s, it) => s + it.total, 0);
+      checkoutDiscount = Number(txIdOrBatch.discount || 0);
+      checkoutTax = Number(txIdOrBatch.tax || 0);
 
       activeReceiptTx = {
         total: total,
@@ -1297,6 +1316,7 @@
       const invCode = invMatch ? invMatch[1] : null;
       trackingNote = String(tx.note || tx.notes || '')
         .replace(/\[(?:INV-[^\]]+)\]\s*/, '')
+        .replace(/\|AQ_(?:DISCOUNT|TAX|TOTAL)=[^|]*/g, '')
         .trim();
 
       if (invCode) {
@@ -1314,6 +1334,11 @@
           total: (t.qty || 0) * (t.price || 0)
         }));
         total = items.reduce((s, it) => s + it.total, 0);
+        const receiptMeta = parsePosReceiptMeta(siblingTxs[0]?.note);
+        checkoutSubtotal = total;
+        checkoutDiscount = receiptMeta.discount;
+        checkoutTax = receiptMeta.tax;
+        if (receiptMeta.total !== null) total = receiptMeta.total;
       } else {
         invoiceNo = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
           ? tx.note.split(' ')[0]
@@ -1332,6 +1357,11 @@
           total: qty * price
         }];
         total = qty * price;
+        const receiptMeta = parsePosReceiptMeta(tx.note);
+        checkoutSubtotal = total;
+        checkoutDiscount = receiptMeta.discount;
+        checkoutTax = receiptMeta.tax;
+        if (receiptMeta.total !== null) total = receiptMeta.total;
       }
 
       initialPaid = total;
@@ -1356,6 +1386,9 @@
     const elPaid = document.getElementById('receipt-calc-paid');
     const elChange = document.getElementById('receipt-calc-change');
     const elStatus = document.getElementById('receipt-calc-status');
+    const elSubtotal = document.getElementById('receipt-calc-subtotal');
+    const elDiscount = document.getElementById('receipt-calc-discount');
+    const elTax = document.getElementById('receipt-calc-tax');
     const inputBayar = document.getElementById('receipt-input-bayar');
 
     if (elCode) elCode.textContent = invoiceNo;
@@ -1405,6 +1438,9 @@
     }
 
     if (elTotal) elTotal.textContent = formatRupiahVal(total);
+    if (elSubtotal) elSubtotal.textContent = formatRupiahVal(checkoutSubtotal || total + checkoutDiscount - checkoutTax);
+    if (elDiscount) elDiscount.textContent = formatRupiahVal(checkoutDiscount);
+    if (elTax) elTax.textContent = formatRupiahVal(checkoutTax);
     if (inputBayar) inputBayar.value = initialPaid;
     if (elPaid) elPaid.textContent = formatRupiahVal(initialPaid);
     if (elChange) elChange.textContent = formatRupiahVal(initialChange);

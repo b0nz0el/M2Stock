@@ -98,6 +98,15 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain('note: note,');
       expect(outHtml).toContain('id="receipt-meta-tracking"');
     });
+
+    it('prints subtotal, discount, tax, and final total after checkout adjustment', () => {
+      expect(outJsCode).toContain('function parsePosReceiptMeta(note)');
+      expect(transactionsCode).toContain('AQ_DISCOUNT=${discountAmount}');
+      expect(outJsCode).toContain('receipt-calc-subtotal');
+      expect(outJsCode).toContain('receipt-calc-discount');
+      expect(outJsCode).toContain('receipt-calc-tax');
+      expect(outHtml).toContain('id="receipt-calc-discount"');
+    });
   });
 
   describe('createBatchOut API Implementation', () => {
