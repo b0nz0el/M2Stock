@@ -438,6 +438,7 @@ export const items = {
             }
           } catch (_) {}
 
+          if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('products');
           return formatResponse({
             ok: true,
             data: newProd,
@@ -566,6 +567,7 @@ export const items = {
             }
           } catch (_) {}
 
+          if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('products');
           return formatResponse({
             ok: true,
             data: updatedProd,

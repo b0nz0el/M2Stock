@@ -284,6 +284,7 @@ export const po = {
         }
       } catch (_) {}
 
+      window.emitDataChanged?.('po');
       return formatResponse({
         ok: true,
         data: { ...insertedPO, items: formattedItems, supplier_nama }
@@ -314,6 +315,7 @@ export const po = {
           error: { code: 'NOT_FOUND', message: 'PO tidak ditemukan' }
         });
       }
+      window.emitDataChanged?.('po');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -332,6 +334,9 @@ export const po = {
           p_payment_method: paymentMethod || 'Cash'
         });
         if (!rpcErr && rpcData && rpcData.ok) {
+          window.emitDataChanged?.('po');
+          window.emitDataChanged?.('products');
+          window.emitDataChanged?.('transactions');
           return formatResponse({ ok: true, data: rpcData });
         }
       } catch (_) {}
@@ -359,6 +364,7 @@ export const po = {
         }
         return formatResponse({ ok: false, error });
       }
+      window.emitDataChanged?.('po');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -499,6 +505,7 @@ export const po = {
         }
       } catch (_) {}
 
+      window.emitDataChanged?.('po');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);

@@ -109,6 +109,7 @@ export const customers = {
               error: { code: error.code || 'SUPABASE_ERROR', message: error.message }
             });
           }
+          window.emitDataChanged?.('customers');
           return formatResponse({ ok: true, data: inserted, meta: { message: 'Customer berhasil ditambahkan' } });
         } catch (err) {
           return handleError(err);
@@ -132,6 +133,7 @@ export const customers = {
               error: { code: error.code || 'SUPABASE_ERROR', message: error.message }
             });
           }
+          window.emitDataChanged?.('customers');
           return formatResponse({ ok: true, data: updated, meta: { message: 'Customer berhasil diperbarui' } });
         } catch (err) {
           return handleError(err);
@@ -163,6 +165,7 @@ export const customers = {
               error: { code: error.code || 'SUPABASE_ERROR', message: error.message }
             });
           }
+          window.emitDataChanged?.('customers');
           return formatResponse({ ok: true, data: { id }, meta: { message: 'Customer berhasil dihapus' } });
         } catch (err) {
           return handleError(err);

@@ -48,7 +48,6 @@ export const cash = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
-
       return formatResponse({
         ok: true,
         data: data || [],
@@ -159,6 +158,7 @@ export const cash = {
           logAudit('CREATE', `Catat Kas (${tipeKas}): ${(keterangan || '').slice(0, 40)} (Rp ${nominal.toLocaleString('id-ID')})`);
         }
       } catch (_) {}
+      if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('cash');
 
       return formatResponse({ ok: true, data });
     } catch (err) {
@@ -181,6 +181,7 @@ export const cash = {
           error: { code: 'NOT_FOUND', message: 'Transaksi kas tidak ditemukan' }
         });
       }
+      if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('cash');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -196,6 +197,7 @@ export const cash = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
+      if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('cash');
 
       try {
         if (typeof logAudit === 'function') {

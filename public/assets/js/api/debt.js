@@ -40,7 +40,6 @@ export const debt = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
-
       return formatResponse({
         ok: true,
         data: data || [],
@@ -138,6 +137,7 @@ export const debt = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
+      if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('debt');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -166,6 +166,7 @@ export const debt = {
           error: { code: 'NOT_FOUND', message: 'Data hutang/piutang tidak ditemukan' }
         });
       }
+      if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('debt');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -181,6 +182,7 @@ export const debt = {
       if (error) {
         return formatResponse({ ok: false, error });
       }
+      if (typeof window.emitDataChanged === 'function') window.emitDataChanged?.('debt');
       return formatResponse({ ok: true, data: { id } });
     } catch (err) {
       return handleError(err);

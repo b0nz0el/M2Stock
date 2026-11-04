@@ -10,6 +10,65 @@ export const config = {
   defaultTimeout: 15000 // 15 detik timeout default
 };
 
+const SYNC_CHANNEL_NAME = 'aquastock-data-sync';
+const SYNC_STORAGE_KEY = 'aquastock:data-changed';
+const seenSyncSources = new Set();
+
+export function emitDataChanged(domain, detail = {}) {
+  if (typeof window === 'undefined') return;
+  const payload = {
+    domain,
+    detail,
+    source: `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  };
+
+  try {
+    if (typeof window.CustomEvent === 'function') {
+      window.dispatchEvent(new window.CustomEvent(`aquastock:${domain}-updated`, { detail: payload.detail }));
+    }
+  } catch (_) {}
+
+  try {
+    if (window.BroadcastChannel) {
+      const channel = window.__aquastockSyncChannel || new window.BroadcastChannel(SYNC_CHANNEL_NAME);
+      window.__aquastockSyncChannel = channel;
+      channel.postMessage(payload);
+    }
+  } catch (_) {}
+
+  try {
+    localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(payload));
+  } catch (_) {}
+}
+
+if (typeof window !== 'undefined') {
+  window.emitDataChanged = emitDataChanged;
+
+  const handleRemoteSync = (payload) => {
+    if (!payload?.domain || payload.source === window.__aquastockSyncSource) return;
+    if (seenSyncSources.has(payload.source)) return;
+    seenSyncSources.add(payload.source);
+    if (typeof window.CustomEvent === 'function') {
+      window.dispatchEvent(new window.CustomEvent(`aquastock:${payload.domain}-updated`, { detail: payload.detail || {} }));
+    }
+  };
+
+  try {
+    if (!window.__aquastockSyncChannel && window.BroadcastChannel) {
+      const channel = new window.BroadcastChannel(SYNC_CHANNEL_NAME);
+      window.__aquastockSyncChannel = channel;
+      channel.addEventListener('message', (event) => handleRemoteSync(event.data));
+    }
+  } catch (_) {}
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== SYNC_STORAGE_KEY || !event.newValue) return;
+    try {
+      handleRemoteSync(JSON.parse(event.newValue));
+    } catch (_) {}
+  });
+}
+
 /**
  * Helper pemeriksaan ketersediaan klien Supabase global
  */

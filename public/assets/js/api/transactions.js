@@ -6,6 +6,10 @@
 import { isSupabaseAvailable, formatResponse, handleError, apiRequest, logAudit, notifyOwner } from './_client.js';
 
 function notifyProductsUpdated(detail = {}) {
+  if (typeof window.emitDataChanged === 'function') {
+    window.emitDataChanged?.('products', detail);
+    window.emitDataChanged?.('transactions', detail);
+  }
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('aquastock:products-updated', { detail }));
   }

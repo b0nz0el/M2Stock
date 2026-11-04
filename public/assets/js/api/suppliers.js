@@ -71,6 +71,7 @@ export const suppliers = {
               error: { code: error.code || 'SUPABASE_ERROR', message: error.message }
             });
           }
+          window.emitDataChanged?.('suppliers');
           return formatResponse({ ok: true, data: inserted, meta: { message: 'Supplier berhasil ditambahkan' } });
         } catch (err) {
           return handleError(err);
@@ -100,6 +101,7 @@ export const suppliers = {
               }
             });
           }
+          window.emitDataChanged?.('suppliers');
           return formatResponse({ ok: true, data: updated, meta: { message: 'Supplier berhasil diperbarui' } });
         } catch (err) {
           return handleError(err);
@@ -131,6 +133,7 @@ export const suppliers = {
               error: { code: error.code || 'SUPABASE_ERROR', message: error.message }
             });
           }
+          window.emitDataChanged?.('suppliers');
           return formatResponse({ ok: true, data: { id }, meta: { message: 'Supplier berhasil dihapus' } });
         } catch (err) {
           return handleError(err);

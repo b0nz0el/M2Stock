@@ -204,6 +204,7 @@ export const returnApi = {
         }
       } catch (_) {}
 
+      window.emitDataChanged?.('returns');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -222,6 +223,8 @@ export const returnApi = {
             p_return_id: id
           });
           if (!rpcErr && rpcData && rpcData.ok) {
+            window.emitDataChanged?.('returns');
+            window.emitDataChanged?.('products');
             return formatResponse({ ok: true, data: rpcData });
           }
           if (rpcErr) {
@@ -240,6 +243,7 @@ export const returnApi = {
           error: { code: 'NOT_FOUND', message: 'Data retur tidak ditemukan' }
         });
       }
+      window.emitDataChanged?.('returns');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);
@@ -266,6 +270,7 @@ export const returnApi = {
           error: { code: 'NOT_FOUND', message: 'Catatan retur tidak ditemukan atau tidak dapat dihapus' }
         });
       }
+      window.emitDataChanged?.('returns');
       return formatResponse({ ok: true, data });
     } catch (err) {
       return handleError(err);

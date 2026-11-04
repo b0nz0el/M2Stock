@@ -24,6 +24,9 @@ import { debt } from './debt.js';
 import { notif } from './notif.js';
 import { backup } from './backup.js';
 import { settings } from './settings.js';
+import { initSyncEvents } from './sync-events.js';
+
+initSyncEvents();
 
 export const Api = {
   // Helpers
