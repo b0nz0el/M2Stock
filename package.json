@@ -1,6 +1,6 @@
 {
   "name": "aquastock-pro",
-  "version": "3.5.13",
+  "version": "3.5.14",
   "description": "Aquastock Pro - Sistem Manajemen Inventori dan Kasir POS Modern (static frontend, siap dihubungkan ke backend)",
   "private": true,
   "scripts": {
