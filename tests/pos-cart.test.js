@@ -56,6 +56,16 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outHtml).toContain("quickSetPosCash(100000)");
     });
 
+    it('syncs POS catalog and cart prices when the channel changes', () => {
+      expect(outHtml).toContain('id="out-channel"');
+      expect(outHtml).toContain('onchange="handlePosChannelChange()"');
+      expect(outJsCode).toContain('function resolvePosProductPrice');
+      expect(outJsCode).toContain('function handlePosChannelChange');
+      expect(outJsCode).toContain('function addPosCatalogProduct');
+      expect(outJsCode).toContain('data-pos-product-id=');
+      expect(outJsCode).toContain('resolvePosProductPrice(p, channel)');
+    });
+
     it('uses numeric keyboard inputmode and custom UI for discount and cash inputs', () => {
       // Diskon input
       expect(outHtml).toMatch(/<input[^>]*id="pos-discount-input"[^>]*inputmode="numeric"/);

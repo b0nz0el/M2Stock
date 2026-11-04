@@ -140,6 +140,37 @@
   // ═══════════════════════════════════════════════
   let posCart = [];
 
+  function resolvePosProductPrice(prod, channel) {
+    if (!prod) return 0;
+    const selectedChannel = String(channel || document.getElementById('out-channel')?.value || 'Offline');
+    const isOnlineChannel = selectedChannel.toLowerCase() !== 'offline';
+    const offlinePrice = Number(prod.sell_price ?? prod.sellPrice ?? prod.unitPrice ?? 0);
+
+    if (!isOnlineChannel) return Number.isFinite(offlinePrice) ? Math.max(0, offlinePrice) : 0;
+
+    const onlineValue = prod.online_sell_price ?? prod.onlineSellPrice;
+    const onlinePrice = onlineValue === null || onlineValue === undefined || onlineValue === ''
+      ? NaN
+      : Number(onlineValue);
+    return Number.isFinite(onlinePrice) && onlinePrice >= 0
+      ? onlinePrice
+      : (Number.isFinite(offlinePrice) ? Math.max(0, offlinePrice) : 0);
+  }
+
+  function syncPosCartToChannel() {
+    const channel = document.getElementById('out-channel')?.value || 'Offline';
+    posCart.forEach(item => {
+      const product = (availableProducts || []).find(p => String(p.id) === String(item.product_id));
+      if (product) item.price = resolvePosProductPrice(product, channel);
+    });
+    renderPosCart();
+    renderPosCatalogGrid();
+  }
+
+  function handlePosChannelChange() {
+    syncPosCartToChannel();
+  }
+
   function renderPosCart() {
     const tbody = document.getElementById('pos-cart-tbody');
     const submitBtn = document.getElementById('btn-submit-out');
@@ -212,10 +243,13 @@
   function addToPosCart(prod, qty = 1) {
     if (!prod) return;
     const stock = Number(prod.stock ?? 0);
+    const channel = document.getElementById('out-channel')?.value || 'Offline';
+    const resolvedPrice = resolvePosProductPrice(prod, channel);
     const existingIdx = posCart.findIndex(it => String(it.product_id) === String(prod.id));
 
     if (existingIdx >= 0) {
       const current = posCart[existingIdx];
+      current.price = resolvedPrice;
       const targetQty = current.qty + qty;
       if (stock > 0 && targetQty > stock) {
         current.qty = stock;
@@ -240,7 +274,7 @@
         name: prod.name,
         sku: prod.sku || '',
         unit: prod.unit || 'pcs',
-        price: Number(prod.sell_price || 0),
+        price: resolvedPrice,
         cost_price: Number(prod.cost_price || 0),
         stock: stock,
         qty: Math.max(1, initialQty)
@@ -338,18 +372,20 @@
       return;
     }
 
+    const channel = document.getElementById('out-channel')?.value || 'Offline';
     gridEl.innerHTML = prods.slice(0, 36).map(p => {
       const stock = Number(p.stock ?? 0);
       const isOutOfStock = stock <= 0;
+      const displayPrice = resolvePosProductPrice(p, channel);
       return `
-        <button type="button" onclick="addToPosCart(availableProducts.find(x => String(x.id) === '${p.id}'))"
+        <button type="button" data-pos-product-id="${escapeHtml(String(p.id))}" onclick="addPosCatalogProduct(this.dataset.posProductId)"
                 class="group text-left p-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-[#0088CC]/50 transition flex flex-col justify-between h-20 relative overflow-hidden focus:outline-none focus:ring-1 focus:ring-[#0088CC]">
           <div>
             <div class="font-semibold text-xs text-white group-hover:text-[#32ADE6] line-clamp-1 leading-tight transition">${escapeHtml(p.name)}</div>
             <div class="text-[10px] text-[#A0A0A5] mt-0.5 truncate">${escapeHtml(p.sku || '')}</div>
           </div>
           <div class="flex items-center justify-between mt-1">
-            <span class="text-xs font-bold text-[#34C759]">${formatRupiahVal(p.sell_price)}</span>
+            <span class="text-xs font-bold text-[#34C759]">${formatRupiahVal(displayPrice)}</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${!isOutOfStock ? 'bg-[#34C759]/15 text-[#34C759]' : 'bg-[#FF3B30]/15 text-[#FF3B30]'}">
               ${stock} ${escapeHtml(p.unit || 'pcs')}
             </span>
@@ -357,6 +393,11 @@
         </button>
       `;
     }).join('');
+  }
+
+  function addPosCatalogProduct(productId) {
+    const product = (availableProducts || []).find(p => String(p.id) === String(productId));
+    addToPosCart(product);
   }
 
   function parseNumericValue(val) {
@@ -2068,6 +2109,8 @@ window.clearPosDiscount = clearPosDiscount;
 window.clearPosCash = clearPosCash;
 window.quickSetPosCash = quickSetPosCash;
 window.handlePosPaymentMethodChange = handlePosPaymentMethodChange;
+window.handlePosChannelChange = handlePosChannelChange;
+window.addPosCatalogProduct = addPosCatalogProduct;
 window.openAddOutModal = openAddOutModal;
 window.closeOutModal = closeOutModal;
 window.handleOutSubmit = handleOutSubmit;
