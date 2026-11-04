@@ -110,7 +110,7 @@
         const custSelect = document.getElementById('out-customer-id');
         if (custSelect) {
           const currentCustVal = custSelect.value;
-          custSelect.innerHTML = '<option value="">Umum / Non-Pelanggan</option>';
+          custSelect.innerHTML = '<option value="">Umum</option>';
           (custRes.data || []).forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
