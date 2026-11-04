@@ -418,6 +418,21 @@
     return new Intl.NumberFormat('id-ID').format(num);
   }
 
+  function calculatePosCheckoutAmount(cartItems = posCart) {
+    const subtotal = cartItems.reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.price) || 0), 0);
+    const discountInput = document.getElementById('pos-discount-input');
+    const discount = Math.min(subtotal, Math.max(0, parseNumericValue(discountInput?.value)));
+    const taxEnabled = document.getElementById('pos-tax-toggle')?.checked === true;
+    const discountedSubtotal = Math.max(0, subtotal - discount);
+    const tax = taxEnabled ? Math.round(discountedSubtotal * 0.11) : 0;
+    return {
+      subtotal,
+      discount,
+      tax,
+      total: discountedSubtotal + tax
+    };
+  }
+
   function clearPosDiscount() {
     const input = document.getElementById('pos-discount-input');
     if (input) {
@@ -715,7 +730,8 @@
     const paymentMethod = document.getElementById('out-payment-method')?.value || 'Cash';
     const paymentStatus = paymentMethod === 'Tempo' ? 'Belum Lunas' : 'Lunas';
     const note = document.getElementById('out-note')?.value.trim() || '';
-    const totalAmount = posCart.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const checkoutAmount = calculatePosCheckoutAmount(posCart);
+    const totalAmount = checkoutAmount.total;
     const cashInput = document.getElementById('pos-cash-input');
     const paidAmount = paymentMethod === 'Cash'
       ? (parseNumericValue(cashInput?.value) || totalAmount)
@@ -741,6 +757,8 @@
         payment_method: paymentMethod,
         payment_status: paymentStatus,
         note: note,
+        discount_amount: checkoutAmount.discount,
+        tax_amount: checkoutAmount.tax,
         created_by: currentUserId
       });
 
@@ -774,6 +792,9 @@
         status: paymentStatus,
         items: cartSnapshot,
         total: totalAmount,
+        discount: checkoutAmount.discount,
+        tax: checkoutAmount.tax,
+        subtotal: checkoutAmount.subtotal,
         paid: paidAmount,
         change: Math.max(0, paidAmount - totalAmount)
       });

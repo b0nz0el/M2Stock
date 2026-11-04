@@ -150,6 +150,11 @@ export const transactions = {
       const randomPart = Math.floor(1000 + Math.random() * 9000);
       const invoiceNo = commonData.invoice_no || `INV-${datePart}-${randomPart}`;
       const payloadCommon = { ...commonData, invoice_no: invoiceNo };
+      const discountAmount = Math.max(0, Math.min(
+        cartItems.reduce((sum, item) => sum + (Number(item.qty ?? item.quantity) || 0) * (Number(item.price ?? item.unit_price) || 0), 0),
+        Number(payloadCommon.discount_amount || 0)
+      ));
+      const taxAmount = Math.max(0, Number(payloadCommon.tax_amount || 0));
 
       // PRIORITAS 1: Eksekusi Atomik via Database RPC PostgreSQL (process_pos_checkout)
       if (isSupabaseAvailable() && typeof window !== 'undefined' && window.supabase && typeof window.supabase.rpc === 'function') {
@@ -191,7 +196,7 @@ export const transactions = {
               ok: true,
               data: {
                 invoice_no: invoiceNo,
-                total_amount: rpcData.total_amount,
+                total_amount: Math.max(0, cartItems.reduce((sum, item) => sum + Number(item.qty ?? item.quantity) * Number(item.price ?? item.unit_price), 0) - discountAmount + taxAmount),
                 items_count: cartItems.length,
                 transactions: rpcData.transactions || [],
                 items: rpcData.transactions || []
@@ -218,13 +223,13 @@ export const transactions = {
 
       // PRIORITAS 2 (Fallback): Client-side Loop dengan ATOMIC COMPENSATION ROLLBACK
       const createdTxs = [];
-      let totalAmount = 0;
+      let subtotalAmount = 0;
 
       for (let i = 0; i < cartItems.length; i++) {
         const item = cartItems[i];
         const qty = Number(item.qty ?? item.quantity);
         const price = Number(item.price ?? item.unit_price);
-        totalAmount += qty * price;
+        subtotalAmount += qty * price;
 
         const customNote = item.note || commonData.note || '';
         const itemNote = `[${invoiceNo}] ${customNote}`.trim();
@@ -251,6 +256,7 @@ export const transactions = {
               if (savedTx?.id) {
                 await transactions.delete(savedTx.id);
               }
+
             } catch (rbErr) {
               console.warn('Gagal membatalkan transaksi parsial:', rbErr);
             }
@@ -267,6 +273,8 @@ export const transactions = {
         }
         createdTxs.push(res.data);
       }
+
+      const totalAmount = Math.max(0, subtotalAmount - discountAmount + taxAmount);
 
       // 1. Catat Audit Log
       try {

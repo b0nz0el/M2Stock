@@ -85,6 +85,12 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain('window.clearPosDiscount');
       expect(outJsCode).toContain('window.clearPosCash');
     });
+
+    it('menggunakan diskon rupiah pada total checkout tanpa mengubah jumlah digit input', () => {
+      expect(outJsCode).toContain('function calculatePosCheckoutAmount(cartItems = posCart)');
+      expect(outJsCode).toContain('discount_amount: checkoutAmount.discount');
+      expect(outJsCode).toContain('const totalAmount = checkoutAmount.total');
+    });
   });
 
   describe('createBatchOut API Implementation', () => {
