@@ -28,6 +28,61 @@
     };
   }
 
+  function cleanPosTrackingNote(note) {
+    return String(note || '')
+      .replace(/\[(?:INV-[^\]]+)\]\s*/i, '')
+      .replace(/\|AQ_(?:DISCOUNT|TAX|TOTAL)=[^|]*/g, '')
+      .trim();
+  }
+
+  function getTransactionCode(tx) {
+    if (!tx) return '-';
+    const note = String(tx.note || tx.notes || '');
+    const invMatch = note.match(/\[(INV-[^\]]+)\]/i);
+    if (invMatch) return invMatch[1];
+    const spxMatch = note.match(/\[(SPX-[^\]]+)\]/i);
+    if (spxMatch) return spxMatch[1];
+    const tkpMatch = note.match(/\[(TKP-[^\]]+)\]/i);
+    if (tkpMatch) return tkpMatch[1];
+    if (note && (note.includes('SPX-') || note.includes('INV-') || note.includes('TKP-'))) {
+      const firstWord = note.split(' ')[0].replace(/^[\[\(]+|[\]\)]+$/g, '');
+      if (firstWord) return firstWord;
+    }
+    return `OUT-${String(tx.id || '').padStart(6, '0')}`;
+  }
+
+  function getTransactionNetTotal(tx, list = allOutTransactions) {
+    const qty = getTransactionOutQty(tx);
+    const gross = qty * (Number(tx.price) || 0);
+    const meta = parsePosReceiptMeta(tx.note);
+    if (meta.total === null || meta.total === undefined) {
+      return gross;
+    }
+    const invCode = getTransactionCode(tx);
+    const siblings = (Array.isArray(list) && list.length > 0)
+      ? list.filter(t => getTransactionCode(t) === invCode)
+      : [tx];
+    const totalGross = siblings.reduce((sum, t) => sum + (getTransactionOutQty(t) * (Number(t.price) || 0)), 0);
+    if (totalGross <= 0) return meta.total;
+    const ratio = gross / totalGross;
+    return Math.round(meta.total * ratio);
+  }
+
+  function getTransactionItemDiscount(tx, list = allOutTransactions) {
+    const qty = getTransactionOutQty(tx);
+    const gross = qty * (Number(tx.price) || 0);
+    const meta = parsePosReceiptMeta(tx.note);
+    if (!meta.discount) return 0;
+    const invCode = getTransactionCode(tx);
+    const siblings = (Array.isArray(list) && list.length > 0)
+      ? list.filter(t => getTransactionCode(t) === invCode)
+      : [tx];
+    const totalGross = siblings.reduce((sum, t) => sum + (getTransactionOutQty(t) * (Number(t.price) || 0)), 0);
+    if (totalGross <= 0) return meta.discount;
+    const ratio = gross / totalGross;
+    return Math.round(meta.discount * ratio);
+  }
+
   function formatShortRupiah(val) {
     if (!val || val === 0) return 'Rp 0';
     if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1).replace('.0', '') + 'jt';
@@ -753,7 +808,7 @@
     const cashInput = document.getElementById('pos-cash-input');
     const paidAmount = paymentMethod === 'Cash'
       ? (parseNumericValue(cashInput?.value) || totalAmount)
-      : totalAmount;
+      : (paymentMethod === 'Tempo' ? 0 : totalAmount);
 
     const submitBtn = document.getElementById('btn-submit-out');
     const originalHtml = submitBtn.innerHTML;
@@ -878,10 +933,9 @@
     list.forEach(tx => {
       const tTime = new Date(tx.created_at).getTime();
       const qty = getTransactionOutQty(tx);
-      const sellPrice = tx.price || 0;
       // Prioritaskan snapshot modal saat transaksi terjadi (IAS 2: Historical Costing)
       const costPrice = Number(tx.cost_price ?? tx.products?.cost_price ?? 0);
-      const amount = qty * sellPrice;
+      const amount = getTransactionNetTotal(tx, list);
 
       if (tTime >= startToday) {
         todayCount += qty;
@@ -911,11 +965,11 @@
     const elProfit = document.getElementById('stat-out-profit-amount');
     const elMargin = document.getElementById('stat-out-margin-text');
 
-    if (elTodayCount) elTodayCount.textContent = `-${todayCount}`;
+    if (elTodayCount) elTodayCount.textContent = `${todayCount}`;
     if (elTodayAmount) elTodayAmount.textContent = formatShortRupiah(todayAmount);
-    if (el7dCount) el7dCount.textContent = `-${sevenCount}`;
+    if (el7dCount) el7dCount.textContent = `${sevenCount}`;
     if (el7dAmount) el7dAmount.textContent = formatShortRupiah(sevenAmount);
-    if (el30dCount) el30dCount.textContent = `-${thirtyCount}`;
+    if (el30dCount) el30dCount.textContent = `${thirtyCount}`;
     if (el30dAmount) el30dAmount.textContent = formatShortRupiah(thirtyAmount);
     if (elProfit) elProfit.textContent = formatShortRupiah(thirtyProfit);
     if (elMargin) elMargin.textContent = `Margin ${marginPct}%`;
@@ -1058,9 +1112,7 @@
       if (currentFilterPeriod === '30d' && tTime < thirtyDaysAgo) return false;
 
       if (searchQuery) {
-        const code = (tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-          ? tx.note.split(' ')[0]
-          : `OUT-${String(tx.id).padStart(6, '0')}`).toLowerCase();
+        const code = getTransactionCode(tx).toLowerCase();
         const prodName = resolveProductName(tx).toLowerCase();
         const custName = (tx.customers?.name || 'umum').toLowerCase();
         const channel = (tx.channel || 'offline').toLowerCase();
@@ -1112,9 +1164,7 @@
     const paged = filtered.slice(startIdx, startIdx + pageSize);
 
     tbody.innerHTML = paged.map(tx => {
-      const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-        ? tx.note.split(' ')[0]
-        : `OUT-${String(tx.id).padStart(6, '0')}`;
+      const code = getTransactionCode(tx);
       const dateStr = formatTxDate(tx.created_at);
       const prodName = resolveProductName(tx);
       const channelBadge = getChannelBadge(tx.channel);
@@ -1122,7 +1172,8 @@
       const kasir = formatCashierName(tx.created_by);
       const qty = getTransactionOutQty(tx);
       const price = tx.price || 0;
-      const total = qty * price;
+      const netTotal = getTransactionNetTotal(tx, allOutTransactions);
+      const discountVal = getTransactionItemDiscount(tx, allOutTransactions);
 
       return `
         <tr class="table-row border-b border-white/5">
@@ -1134,7 +1185,10 @@
           <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
           <td class="px-4 py-3.5 text-right text-[#FF3B30] font-semibold">${qty}</td>
           <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
-          <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
+          <td class="px-4 py-3.5 text-right font-semibold text-white">
+            ${formatRupiahVal(netTotal)}
+            ${discountVal > 0 ? `<div class="text-[10px] text-[#34C759] font-normal leading-tight">Diskon ${formatRupiahVal(discountVal)}</div>` : ''}
+          </td>
           <td class="px-4 py-3.5 text-right">
             <div class="flex items-center justify-end gap-1">
               <button type="button" data-action="print-receipt" data-transaction-id="${tx.id}" title="Cetak Struk Kasir" aria-label="Cetak Struk Kasir"
@@ -1180,9 +1234,7 @@
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-[#A0A0A5]">Belum ada pesanan keluar hari ini</td></tr>`;
       } else {
         tbody.innerHTML = todaysOut.map(tx => {
-          const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-            ? tx.note.split(' ')[0]
-            : `OUT-${String(tx.id).padStart(6, '0')}`;
+          const code = getTransactionCode(tx);
           const prodName = tx.products?.name || ('Produk #' + tx.product_id);
           const channel = tx.channel || 'Offline';
           const cust = tx.customers?.name || 'Umum';
@@ -1209,9 +1261,7 @@
         mobileList.innerHTML = `<div class="text-center py-6 text-sm text-[#A0A0A5]">Belum ada pesanan keluar hari ini</div>`;
       } else {
         mobileList.innerHTML = todaysOut.map(tx => {
-          const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-            ? tx.note.split(' ')[0]
-            : `OUT-${String(tx.id).padStart(6, '0')}`;
+          const code = getTransactionCode(tx);
           const prodName = tx.products?.name || ('Produk #' + tx.product_id);
           const channel = tx.channel || 'Offline';
           const cust = tx.customers?.name || 'Umum';
@@ -1296,8 +1346,9 @@
         total: getTransactionOutQty(it) * (it.price || 0)
       }));
       total = txIdOrBatch.total !== undefined ? txIdOrBatch.total : items.reduce((s, it) => s + it.total, 0);
-      initialPaid = txIdOrBatch.paid !== undefined ? txIdOrBatch.paid : total;
-      initialChange = txIdOrBatch.change !== undefined ? txIdOrBatch.change : Math.max(0, initialPaid - total);
+      const isBatchUnpaid = method === 'Tempo' || status === 'BELUM LUNAS';
+      initialPaid = isBatchUnpaid ? 0 : (txIdOrBatch.paid !== undefined ? txIdOrBatch.paid : total);
+      initialChange = isBatchUnpaid ? 0 : (txIdOrBatch.change !== undefined ? txIdOrBatch.change : Math.max(0, initialPaid - total));
       checkoutSubtotal = txIdOrBatch.subtotal !== undefined ? Number(txIdOrBatch.subtotal) : items.reduce((s, it) => s + it.total, 0);
       checkoutDiscount = Number(txIdOrBatch.discount || 0);
       checkoutTax = Number(txIdOrBatch.tax || 0);
@@ -1345,9 +1396,7 @@
         checkoutTax = receiptMeta.tax;
         if (receiptMeta.total !== null) total = receiptMeta.total;
       } else {
-        invoiceNo = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-          ? tx.note.split(' ')[0]
-          : `OUT-${String(tx.id).padStart(6, '0')}`;
+        invoiceNo = getTransactionCode(tx);
         dateStr = formatTxDate(tx.created_at);
         customerName = tx.customers?.name || 'Umum';
         cashierName = formatCashierName(tx.created_by);
@@ -1369,7 +1418,8 @@
         if (receiptMeta.total !== null) total = receiptMeta.total;
       }
 
-      initialPaid = total;
+      const isSingleUnpaid = method === 'Tempo' || status === 'BELUM LUNAS';
+      initialPaid = isSingleUnpaid ? 0 : total;
       initialChange = 0;
 
       activeReceiptTx = {
@@ -1585,9 +1635,7 @@
 
     const headers = ['No. Transaksi / Resi', 'Tanggal', 'Nama Barang', 'Channel', 'Customer', 'Kasir', 'Jumlah', 'Harga Jual (Rp)', 'Total (Rp)', 'Catatan'];
     const rows = allOutTransactions.map(tx => {
-      const code = tx.note && (tx.note.includes('SPX-') || tx.note.includes('INV-') || tx.note.includes('TKP-'))
-        ? tx.note.split(' ')[0]
-        : `OUT-${String(tx.id).padStart(6, '0')}`;
+      const code = getTransactionCode(tx);
       const dateStr = formatTxDate(tx.created_at);
       const prodName = tx.products?.name || ('Produk #' + tx.product_id);
       const channel = tx.channel || 'Offline';
@@ -1595,8 +1643,8 @@
       const kasir = formatCashierName(tx.created_by);
       const qty = getTransactionOutQty(tx);
       const price = tx.price || 0;
-      const total = qty * price;
-      const note = tx.note || '';
+      const total = getTransactionNetTotal(tx, allOutTransactions);
+      const note = cleanPosTrackingNote(tx.note);
 
       return [code, dateStr, prodName, channel, custName, kasir, qty, price, total, note];
     });

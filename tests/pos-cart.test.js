@@ -352,5 +352,19 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain("const isPosOpen = modalOut && !modalOut.classList.contains('hidden')");
       expect(outJsCode).toContain('addToPosCart(matchedProduct);');
     });
+
+    it('formats clean invoice codes and calculates net totals with POS discounts', () => {
+      expect(outJsCode).toContain('function getTransactionCode(tx)');
+      expect(outJsCode).toContain('function getTransactionNetTotal(tx, list = allOutTransactions)');
+      expect(outJsCode).toContain('cleanPosTrackingNote(tx.note)');
+    });
+
+    it('sets initial paid to 0 for Tempo and Belum Lunas receipts', () => {
+      expect(outJsCode).toContain("paymentMethod === 'Tempo' ? 0 : totalAmount");
+      expect(outJsCode).toContain("const isBatchUnpaid = method === 'Tempo' || status === 'BELUM LUNAS'");
+      expect(outJsCode).toContain("const isSingleUnpaid = method === 'Tempo' || status === 'BELUM LUNAS'");
+      expect(outJsCode).toContain("initialPaid = isBatchUnpaid ? 0 : ");
+      expect(outJsCode).toContain("initialPaid = isSingleUnpaid ? 0 : total;");
+    });
   });
 });
