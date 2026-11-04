@@ -92,6 +92,10 @@ if (fs.existsSync(htmlPath)) {
     /(<span class="font-semibold text-white" data-app-version-local>Aquastock Pro )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
     `$1v${newVersion} (PWA Local-First)$2`
   );
+  htmlContent = htmlContent.replace(
+    /(src="\.\/out\.js\?v=)[0-9.]+(")/,
+    `$1${newVersion}$2`
+  );
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
   console.log(`  ✓ Updated public/dashboard/index.html → v${newVersion}`);
 }
