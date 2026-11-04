@@ -24,6 +24,13 @@ function isMissingMarketplaceFeeColumn(error) {
     || (error?.code === 'PGRST204' && /marketplace_fee_percent/i.test(message));
 }
 
+function normalizeMarketplaceFee(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0) return null;
+  const proportion = numeric > 1 ? numeric / 100 : numeric;
+  return proportion <= 1 ? proportion : null;
+}
+
 function missingChannelColumnResponse() {
   return formatResponse({
     ok: false,
@@ -358,7 +365,7 @@ export const items = {
           const minStock = data.min_stock !== undefined ? data.min_stock : data.minStock;
           const costPrice = data.cost_price !== undefined ? data.cost_price : data.costPrice;
           const sellPrice = data.sell_price !== undefined ? data.sell_price : (data.sellPrice !== undefined ? data.sellPrice : data.unitPrice);
-          const marketplaceFee = Number(data.marketplace_fee_percent ?? data.marketplaceFeePercent ?? 0.395) || 0.395;
+          const marketplaceFee = normalizeMarketplaceFee(data.marketplace_fee_percent ?? data.marketplaceFeePercent ?? 0.395) ?? 0.395;
           const requestedOnlineSellPrice = data.online_sell_price !== undefined
             ? data.online_sell_price
             : data.onlineSellPrice;
@@ -383,8 +390,8 @@ export const items = {
               ? Number(requestedOnlineSellPrice)
               : Math.round((Number(costPrice) || 0) / (1 - Math.min(0.999, Math.max(0, marketplaceFee)))),
             marketplace_fee_percent: data.marketplace_fee_percent !== undefined
-              ? Number(data.marketplace_fee_percent)
-              : (data.marketplaceFeePercent !== undefined ? Number(data.marketplaceFeePercent) : 0.395),
+              ? normalizeMarketplaceFee(data.marketplace_fee_percent)
+              : (data.marketplaceFeePercent !== undefined ? normalizeMarketplaceFee(data.marketplaceFeePercent) : 0.395),
             image_url: resolvedImageUrl
           };
 
@@ -484,7 +491,13 @@ export const items = {
           if (row.cost_price !== undefined) row.cost_price = Number(row.cost_price);
           if (row.sell_price !== undefined) row.sell_price = Number(row.sell_price);
           if (row.online_sell_price !== undefined) row.online_sell_price = Number(row.online_sell_price);
-          if (row.marketplace_fee_percent !== undefined) row.marketplace_fee_percent = Number(row.marketplace_fee_percent);
+          if (row.marketplace_fee_percent !== undefined) {
+            row.marketplace_fee_percent = normalizeMarketplaceFee(row.marketplace_fee_percent);
+            if (row.marketplace_fee_percent === null) return formatResponse({
+              ok: false,
+              error: { code: 'INVALID_MARKETPLACE_FEE', message: 'Fee Marketplace harus antara 0 sampai 100 persen.' }
+            });
+          }
           if (row.category_id !== undefined) row.category_id = row.category_id ? Number(row.category_id) : null;
           if (row.unit_id !== undefined) row.unit_id = Number(row.unit_id);
           if (row.supplier_id !== undefined) row.supplier_id = row.supplier_id == null || row.supplier_id === '' ? null : Number(row.supplier_id);

@@ -68,6 +68,20 @@ describe('product barcode API mapping', () => {
     expect(insert.mock.calls[0][0][0].online_sell_price).toBe(4959);
   });
 
+  it('normalizes marketplace fee percentages before saving', async () => {
+    const select = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
+    const insert = vi.fn(() => ({ select }));
+    window.supabase = { from: vi.fn(() => ({ insert })) };
+
+    await items.create({
+      name: 'Produk Fee',
+      sku: 'FEE-001',
+      marketplace_fee_percent: 10
+    });
+
+    expect(insert.mock.calls[0][0][0].marketplace_fee_percent).toBe(0.10);
+  });
+
   it('stores the product supplier and preserves zero prices on create', async () => {
     const select = vi.fn().mockResolvedValue({ data: [{ id: 'product-id' }], error: null });
     const insert = vi.fn(() => ({ select }));
