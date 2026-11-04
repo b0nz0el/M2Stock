@@ -329,9 +329,217 @@ function generateSKU(kategori, brand, idTerakhir) {
   return `${catCode}-${brandCode}-${numStr}`;
 }
 
+/* ═══════════════════════════════════════════════
+   FUZZY & TYPO-TOLERANT SEARCH ENGINE
+   Mendukung pencarian cerdas tahan typo:
+   - Multi-token (semua kata query dicocokkan)
+   - Exact substring match (skor tertinggi)
+   - Subsequence matching
+   - Damerau-Levenshtein distance (typo 1-2 karakter & huruf tertukar)
+   - Normalisasi fonetik ringan (k/c, batre/baterai, double letters)
+   ═══════════════════════════════════════════════ */
+
+function calculateLevenshteinDistance(a, b) {
+  if (a === b) return 0;
+  const lenA = a.length;
+  const lenB = b.length;
+  if (lenA === 0) return lenB;
+  if (lenB === 0) return lenA;
+
+  let prevPrevRow = new Array(lenB + 1);
+  let prevRow = new Array(lenB + 1);
+  let currRow = new Array(lenB + 1);
+
+  for (let j = 0; j <= lenB; j++) {
+    prevRow[j] = j;
+    prevPrevRow[j] = j;
+  }
+
+  for (let i = 1; i <= lenA; i++) {
+    currRow[0] = i;
+    const charA = a[i - 1];
+    for (let j = 1; j <= lenB; j++) {
+      const charB = b[j - 1];
+      const cost = charA === charB ? 0 : 1;
+      let min = Math.min(
+        currRow[j - 1] + 1,     // insertion
+        prevRow[j] + 1,         // deletion
+        prevRow[j - 1] + cost   // substitution
+      );
+      // Damerau transposition: jika 2 karakter bersebelahan tertukar (misal 'fliter' <-> 'filter')
+      if (i > 1 && j > 1 && charA === b[j - 2] && a[i - 2] === charB) {
+        min = Math.min(min, prevPrevRow[j - 2] + 1);
+      }
+      currRow[j] = min;
+    }
+    const temp = prevPrevRow;
+    prevPrevRow = prevRow;
+    prevRow = currRow;
+    currRow = temp;
+  }
+  return prevRow[lenB];
+}
+
+function normalizeSearchText(str) {
+  if (!str) return '';
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function isSubsequence(sub, str) {
+  let i = 0;
+  let j = 0;
+  while (i < sub.length && j < str.length) {
+    if (sub[i] === str[j]) i++;
+    j++;
+  }
+  return i === sub.length;
+}
+
+const INDO_SLANG_MAP = {
+  'batre': 'baterai',
+  'bateray': 'baterai',
+  'skreper': 'scraper',
+  'kanister': 'canister',
+  'aquariun': 'aquarium',
+  'erator': 'aerator'
+};
+
+/**
+ * Menghitung skor kecocokan fuzzy antara kata kunci (query) dan teks target.
+ * Mengembalikan angka skor:
+ * - 0 jika tidak cocok sama sekali.
+ * - > 0 jika cocok, dengan nilai semakin tinggi jika semakin akurat.
+ */
+function fuzzyScore(query, targetText) {
+  if (!query || !targetText) return 0;
+
+  const cleanQuery = normalizeSearchText(query);
+  const cleanTarget = normalizeSearchText(targetText);
+
+  if (!cleanQuery || !cleanTarget) return 0;
+
+  // Jika persis sama
+  if (cleanTarget === cleanQuery) return 10000;
+
+  // Jika target diawali query (prefix match)
+  if (cleanTarget.startsWith(cleanQuery)) return 5000 + (cleanQuery.length * 10);
+
+  // Jika target mengandung substring query secara utuh
+  const substringIdx = cleanTarget.indexOf(cleanQuery);
+  if (substringIdx !== -1) {
+    return 3000 - Math.min(substringIdx, 1000) + (cleanQuery.length * 10);
+  }
+
+  // Multi-token matching: pisahkan query menjadi kata-kata
+  const queryTokens = cleanQuery.split(/[\s,+/_-]+/).filter(Boolean);
+  if (queryTokens.length === 0) return 0;
+
+  const targetWords = cleanTarget.split(/[\s,+/_-]+/).filter(Boolean);
+
+  let totalScore = 0;
+
+  for (const token of queryTokens) {
+    const tLen = token.length;
+    let bestTokenScore = 0;
+
+    // Cek jika seluruh teks target mengandung token secara langsung
+    const tokenSubIdx = cleanTarget.indexOf(token);
+    if (tokenSubIdx !== -1) {
+      bestTokenScore = 1000 - Math.min(tokenSubIdx, 200) + (tLen * 10);
+    } else {
+      // Cek alias slang lokal
+      const mappedToken = INDO_SLANG_MAP[token] || token;
+
+      // Cek terhadap setiap kata di target
+      for (const word of targetWords) {
+        const wLen = word.length;
+
+        // 1. Prefix match pada kata: misal "skr" pada "scraper"
+        if (word.startsWith(token) || word.startsWith(mappedToken)) {
+          const score = 800 + (tLen * 5);
+          if (score > bestTokenScore) bestTokenScore = score;
+          continue;
+        }
+
+        // 2. Substring match pada kata
+        if (word.includes(token) || word.includes(mappedToken)) {
+          const score = 600 + (tLen * 5);
+          if (score > bestTokenScore) bestTokenScore = score;
+          continue;
+        }
+
+        // 3. Subsequence match (misal 'crbon' di 'carbon', 'coton' di 'cotton')
+        if (tLen >= 3 && isSubsequence(token, word) && (wLen - tLen) <= 2) {
+          const score = 450 + (tLen * 5);
+          if (score > bestTokenScore) bestTokenScore = score;
+          continue;
+        }
+
+        // 4. Typo Tolerance (Levenshtein / Damerau Distance)
+        if (tLen >= 3 && wLen >= 3) {
+          let maxDist = 1;
+          if (tLen >= 6 || wLen >= 6) maxDist = 2;
+
+          const dist = Math.min(
+            calculateLevenshteinDistance(token, word),
+            calculateLevenshteinDistance(mappedToken, word)
+          );
+
+          if (dist <= maxDist) {
+            const score = 400 - (dist * 100) + Math.max(0, 50 - Math.abs(tLen - wLen) * 10);
+            if (score > bestTokenScore) bestTokenScore = score;
+            continue;
+          }
+
+          // 5. Normalisasi fonetik ringan / double-letter compression
+          const phonetize = (s) => s
+            .replace(/(.)\1+/g, '$1') // kompres huruf ganda (tt -> t, oo -> o)
+            .replace(/c/g, 'k')       // samakan c dan k
+            .replace(/(ai|ay|e)$/g, 'i'); // batre/bateray/baterai -> batri
+
+          const pToken = phonetize(token);
+          const pWord = phonetize(word);
+
+          if (pWord === pToken || pWord.includes(pToken) || isSubsequence(pToken, pWord)) {
+            const score = 350 + (tLen * 5);
+            if (score > bestTokenScore) bestTokenScore = score;
+            continue;
+          }
+
+          const pDist = calculateLevenshteinDistance(pToken, pWord);
+          if (pDist <= maxDist) {
+            const score = 300 - (pDist * 80);
+            if (score > bestTokenScore) bestTokenScore = score;
+          }
+        }
+      }
+    }
+
+    if (bestTokenScore <= 0) {
+      return 0;
+    }
+
+    totalScore += bestTokenScore;
+  }
+
+  return totalScore;
+}
+
+function fuzzyMatch(query, targetText) {
+  return fuzzyScore(query, targetText) > 0;
+}
+
 if (typeof window !== 'undefined') {
   window.exportToCSV = exportToCSV;
   window.generateSKU = generateSKU;
+  window.calculateLevenshteinDistance = calculateLevenshteinDistance;
+  window.normalizeSearchText = normalizeSearchText;
+  window.fuzzyScore = fuzzyScore;
+  window.fuzzyMatch = fuzzyMatch;
 }
 
 /* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */
@@ -345,6 +553,10 @@ if (typeof module !== 'undefined' && module.exports) {
     animateNumber,
     focusProgrammatically,
     exportToCSV,
-    generateSKU
+    generateSKU,
+    calculateLevenshteinDistance,
+    normalizeSearchText,
+    fuzzyScore,
+    fuzzyMatch
   };
 }

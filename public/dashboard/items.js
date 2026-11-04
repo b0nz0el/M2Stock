@@ -1798,15 +1798,21 @@ import {
 
   function filterItems() {
     const list = currentItems.filter(function (item) {
-      // 1. Search text (name, SKU, barcode, brand, category)
+      // 1. Search text (name, SKU, barcode, brand, category) dengan mode cerdas & typo-tolerant
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const matchName = (item.name || '').toLowerCase().includes(q);
-        const matchSku = (item.sku || '').toLowerCase().includes(q);
-        const matchBarcode = (item.barcode || '').toLowerCase().includes(q);
-        const matchBrand = (item.brand || '').toLowerCase().includes(q);
-        const matchCat = (item.category || '').toLowerCase().includes(q);
-        if (!matchName && !matchSku && !matchBarcode && !matchBrand && !matchCat) return false;
+        const targetText = [item.name, item.sku, item.barcode, item.brand, item.category].filter(Boolean).join(' ');
+        let score = 0;
+        if (typeof window !== 'undefined' && typeof window.fuzzyScore === 'function') {
+          score = window.fuzzyScore(searchQuery, targetText);
+        } else {
+          const q = searchQuery.toLowerCase();
+          score = targetText.toLowerCase().includes(q) ? 1000 : 0;
+        }
+
+        if (score <= 0) return false;
+        item._searchScore = score;
+      } else {
+        item._searchScore = 0;
       }
       // 2. Kategori filter
       if (selectedCategory && selectedCategory !== 'all') {
@@ -1824,8 +1830,13 @@ import {
       return true;
     });
 
-    // Otomatis urutkan data (default Nama A-Z)
+    // Otomatis urutkan data (default Nama A-Z, atau relevansi pencarian)
     list.sort(function (a, b) {
+      if (searchQuery && selectedSort === 'name-asc') {
+        const scoreDiff = (b._searchScore || 0) - (a._searchScore || 0);
+        if (Math.abs(scoreDiff) >= 100) return scoreDiff;
+      }
+
       const nameA = (a.name || '').trim();
       const nameB = (b.name || '').trim();
       if (selectedSort === 'name-desc') {

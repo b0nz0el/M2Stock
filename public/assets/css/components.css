@@ -413,6 +413,24 @@ body.modal-open {
   }
 }
 
+/* ═══ PO SEARCHABLE COMBOBOX FLOATING DROPDOWN ═══ */
+#po-floating-search-dropdown {
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+#po-floating-search-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+#po-floating-search-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+.po-dropdown-item.is-highlighted {
+  background: rgba(0, 136, 204, 0.25);
+  border-left: 2px solid #0088CC;
+}
+
 /* ═══ ANIMATIONS ═══ */
 .stat-number {
   display: inline-block;
