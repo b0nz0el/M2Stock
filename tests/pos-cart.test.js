@@ -91,6 +91,13 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain('discount_amount: checkoutAmount.discount');
       expect(outJsCode).toContain('const totalAmount = checkoutAmount.total');
     });
+
+    it('prints and reloads the POS receipt tracking note', () => {
+      expect(outJsCode).toContain('txIdOrBatch.note || txIdOrBatch.tracking_number');
+      expect(outJsCode).toContain('receipt-meta-tracking');
+      expect(outJsCode).toContain('note: note,');
+      expect(outHtml).toContain('id="receipt-meta-tracking"');
+    });
   });
 
   describe('createBatchOut API Implementation', () => {

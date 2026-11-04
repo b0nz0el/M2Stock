@@ -785,6 +785,7 @@
       // Langsung buka Struk Kasir Thermal dengan semua item keranjang
       openThermalReceiptModal({
         invoice_no: res.data?.invoice_no,
+        note: note,
         date: new Date().toISOString(),
         customer: customerName,
         cashier: (typeof window !== 'undefined' && window.Auth?.getUserEmail) ? window.Auth.getUserEmail() : 'Admin',
@@ -1247,6 +1248,7 @@
 
   async function openThermalReceiptModal(txIdOrBatch) {
     let invoiceNo = '';
+    let trackingNote = '';
     let dateStr = '';
     let customerName = 'Umum';
     let cashierName = 'Admin';
@@ -1260,6 +1262,7 @@
     if (txIdOrBatch && typeof txIdOrBatch === 'object') {
       // Direct batch payload from POS checkout
       invoiceNo = txIdOrBatch.invoice_no || `INV-${Date.now()}`;
+      trackingNote = String(txIdOrBatch.note || txIdOrBatch.tracking_number || '').trim();
       dateStr = formatTxDate(txIdOrBatch.date || new Date().toISOString());
       customerName = txIdOrBatch.customer || 'Umum';
       cashierName = txIdOrBatch.cashier || 'Admin';
@@ -1292,6 +1295,9 @@
       // Check if this transaction belongs to an invoice batch [INV-...]
       const invMatch = tx.note ? tx.note.match(/\[(INV-[^\]]+)\]/) : null;
       const invCode = invMatch ? invMatch[1] : null;
+      trackingNote = String(tx.note || tx.notes || '')
+        .replace(/\[(?:INV-[^\]]+)\]\s*/, '')
+        .trim();
 
       if (invCode) {
         const siblingTxs = allOutTransactions.filter(t => t.note && t.note.includes(`[${invCode}]`));
@@ -1344,6 +1350,7 @@
     const elCashier = document.getElementById('receipt-meta-cashier');
     const elCustomer = document.getElementById('receipt-meta-customer');
     const elMethod = document.getElementById('receipt-meta-method');
+    const elTracking = document.getElementById('receipt-meta-tracking');
     const elItems = document.getElementById('receipt-items-list');
     const elTotal = document.getElementById('receipt-calc-total');
     const elPaid = document.getElementById('receipt-calc-paid');
@@ -1356,6 +1363,10 @@
     if (elCashier) elCashier.textContent = cashierName;
     if (elCustomer) elCustomer.textContent = customerName;
     if (elMethod) elMethod.textContent = method;
+    if (elTracking) {
+      elTracking.textContent = trackingNote || '-';
+      elTracking.closest('[data-receipt-tracking]')?.classList.toggle('hidden', !trackingNote);
+    }
     if (elStatus) elStatus.textContent = status;
 
     // Sinkronkan profil toko dinamis ke struk kasir
