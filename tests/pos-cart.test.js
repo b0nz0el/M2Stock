@@ -116,8 +116,8 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
     });
 
     it('cache-busts the POS module for each application release', () => {
-      expect(outHtml).toContain('src="./out.js?v=3.5.23"');
-      expect(outHtml).toContain('<meta name="app-version" content="3.5.23">');
+      expect(outHtml).toContain('src="./out.js?v=3.5.24"');
+      expect(outHtml).toContain('<meta name="app-version" content="3.5.24">');
     });
 
     it('renames the POS tracking field and supports camera resi scanning', () => {
