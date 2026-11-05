@@ -765,9 +765,14 @@ import { Api } from '../assets/js/api/index.js';
             if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
               window.lucide.createIcons();
             }
-            if (typeof window.loadItemsFromBackend === 'function') {
-              window.loadItemsFromBackend();
+            if (typeof window.emitDataChanged === 'function') {
+              window.emitDataChanged('products');
             }
+            if (typeof window.loadItemsFromBackend === 'function') {
+              await window.loadItemsFromBackend();
+            }
+            // Muat ulang data simulasi agar counter dan state ter-refresh otomatis
+            await loadItems();
             setTimeout(() => {
               btnSingle.disabled = false;
               btnSingle.classList.remove('bg-[#34C759]/20', 'text-[#34C759]', 'border-[#34C759]/40');

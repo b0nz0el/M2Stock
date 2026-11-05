@@ -1127,6 +1127,10 @@ export const items = {
             });
           }
 
+          if (results.length > 0 && typeof window !== 'undefined' && typeof window.emitDataChanged === 'function') {
+            window.emitDataChanged('products');
+          }
+
           return formatResponse({
             ok: true,
             data: { updatedIds: results, updatedCount: results.length },

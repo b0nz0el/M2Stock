@@ -3748,6 +3748,8 @@ import {
     await loadItemsFromBackend();
   }
 
+  window.initItems = initItems;
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initItems);
   } else {
