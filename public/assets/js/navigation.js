@@ -3,7 +3,7 @@
    Routing antar halaman, sidebar drawer & sinkronisasi tab aktif
    ═══════════════════════════════════════════════════ */
 const pageTitles = {
-  dashboard: 'Dashboard', items: 'Master Barang', in: 'Barang Masuk',
+  dashboard: 'Dashboard', items: 'Master Barang', pricing: 'Simulasi Harga', in: 'Barang Masuk',
   out: 'Barang Keluar', po: 'Purchase Order', return: 'Retur',
   suppliers: 'Supplier', customers: 'Customer', cash: 'Kas & Keuangan',
   debt: 'Hutang & Piutang', report: 'Laporan', users: 'Kelola User',
@@ -14,7 +14,7 @@ let activeBottomTab = 'dashboard';
 
 /* Peta id halaman → slug folder (clean URL, tanpa .html) */
 const PAGE_SLUGS = {
-  dashboard: '', items: 'items', in: 'in', out: 'out',
+  dashboard: '', items: 'items', pricing: 'pricing', in: 'in', out: 'out',
   po: 'po', return: 'return', suppliers: 'suppliers',
   customers: 'customers', cash: 'cash', debt: 'debt',
   report: 'report', users: 'users', audit: 'audit',
@@ -131,6 +131,9 @@ function triggerPageInit(pageId) {
     case 'items':
       if (typeof window.initItems === 'function') window.initItems();
       else if (typeof window.loadItemsFromBackend === 'function') window.loadItemsFromBackend();
+      break;
+    case 'pricing':
+      if (typeof window.initPricingSimulation === 'function') window.initPricingSimulation();
       break;
     case 'in':
       if (typeof window.loadInTransactions === 'function') window.loadInTransactions();

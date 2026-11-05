@@ -8,6 +8,7 @@ import { supabase } from '../supabase-client.js';
 export const MENU_ACCESS = {
   dashboard:  ['OWNER', 'STAFF', 'VIEWER'],
   items:      ['OWNER', 'STAFF'],
+  pricing:    ['OWNER', 'STAFF'],
   in:         ['OWNER', 'STAFF'],
   out:        ['OWNER', 'STAFF'],
   po:         ['OWNER', 'STAFF', 'VIEWER'],

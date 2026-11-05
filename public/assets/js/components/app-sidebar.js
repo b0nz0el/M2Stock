@@ -83,8 +83,9 @@ class AppSidebar extends HTMLElement {
       ? window.RBAC.MENU_ACCESS
       : {
           dashboard:  ['OWNER', 'STAFF', 'VIEWER'],
-        items:      ['OWNER', 'STAFF'],
-        in:         ['OWNER', 'STAFF'],
+          items:      ['OWNER', 'STAFF'],
+          pricing:    ['OWNER', 'STAFF'],
+          in:         ['OWNER', 'STAFF'],
         out:        ['OWNER', 'STAFF'],
           po:         ['OWNER', 'STAFF', 'VIEWER'],
           return:     ['OWNER', 'STAFF', 'VIEWER'],
@@ -514,7 +515,7 @@ class AppSidebar extends HTMLElement {
             <span class="text-base font-bold block truncate">Aquastock</span>
             <span class="text-[10px] text-[#A0A0A5] flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-[#34C759] rounded-full"></span>
-              <span id="sidebar-store-name" class="truncate max-w-[130px]">JTMaquarium</span>
+              <span id="sidebar-store-name" class="truncate max-w-[130px]">Habitic</span>
             </span>
           </div>
         </div>
@@ -536,6 +537,9 @@ class AppSidebar extends HTMLElement {
           <a href="${getUrl('items')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="items">
             <i data-lucide="package" class="w-4 h-4" aria-hidden="true"></i> Master Barang
             <span id="sidebar-items-badge" class="ml-auto text-xs bg-white/5 px-2 py-0.5 rounded font-mono">0</span>
+          </a>
+          <a href="${getUrl('pricing')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="pricing">
+            <i data-lucide="sliders" class="w-4 h-4" aria-hidden="true"></i> Simulasi Harga
           </a>
           <a href="${getUrl('suppliers')}" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-page="suppliers">
             <i data-lucide="factory" class="w-4 h-4" aria-hidden="true"></i> Supplier

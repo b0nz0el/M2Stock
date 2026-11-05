@@ -46,20 +46,47 @@ import {
   function getOnlinePricing(costPrice, onlinePrice, marketplaceFee = 0.395) {
     const cost = Number(costPrice) || 0;
     const fee = Math.min(0.999, Math.max(0, Number(marketplaceFee) || 0));
+    const fixedFee = Number(arguments[3]) || 0;
+    const packingCost = Number(arguments[4]) || 0;
     const storedPrice = onlinePrice === null || onlinePrice === undefined || onlinePrice === ''
       ? Number.NaN
       : Number(onlinePrice);
     const price = Number.isFinite(storedPrice) && storedPrice >= 0
       ? storedPrice
-      : Math.round(cost / (1 - fee));
-    const netProfit = Math.round(price * (1 - fee) - cost);
-    if (cost <= 0) return { price, markup: 0, netProfit, fee };
+      : Math.round((cost + fixedFee + packingCost) / (1 - fee));
+    const netProfit = Math.round(price * (1 - fee) - fixedFee - packingCost - cost);
+    if (cost <= 0) {
+      return {
+        price,
+        markup: 0,
+        margin: 0,
+        netProfit,
+        fee,
+        status: 'AMAN',
+        statusBadgeClass: 'bg-[#34C759]/15 text-[#34C759] border border-[#34C759]/30'
+      };
+    }
+
+    const markup = Math.round((netProfit / cost) * 10000) / 100;
+    const margin = price > 0 ? Math.round((netProfit / price) * 10000) / 100 : 0;
+    let status = 'AMAN';
+    let statusBadgeClass = 'bg-[#34C759]/15 text-[#34C759] border border-[#34C759]/30';
+    if (netProfit <= 0 || margin < 5) {
+      status = 'RUGI';
+      statusBadgeClass = 'bg-[#FF3B30]/15 text-[#FF3B30] border border-[#FF3B30]/30';
+    } else if (margin < 20) {
+      status = 'TIPIS';
+      statusBadgeClass = 'bg-[#FFCC00]/15 text-[#FFCC00] border border-[#FFCC00]/30';
+    }
 
     return {
       price,
-      markup: Math.round((netProfit / cost) * 10000) / 100,
+      markup,
+      margin,
       netProfit,
-      fee
+      fee,
+      status,
+      statusBadgeClass
     };
   }
 
@@ -2095,7 +2122,12 @@ import {
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
         <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
-        <td class="px-4 py-3.5 text-right ${onlinePricing.netProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.netProfit)}</td>
+        <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">
+          <div class="inline-flex items-center justify-end gap-1.5">
+            <span class="${onlinePricing.netProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}">${formatRupiah(onlinePricing.netProfit)}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${onlinePricing.statusBadgeClass}">${onlinePricing.status}</span>
+          </div>
+        </td>
         <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${Number(onlinePricing.markup).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
         <td class="px-4 py-3.5">
           <div class="flex gap-1 justify-end">

@@ -1,4 +1,5 @@
 /items        /dashboard/?page=items      302
+/pricing      /dashboard/?page=pricing    302
 /in           /dashboard/?page=in         302
 /out          /dashboard/?page=out        302
 /po           /dashboard/?page=po         302
@@ -14,9 +15,10 @@
 /backup       /dashboard/?page=backup     302
 /settings     /dashboard/?page=settings   302
 
-/dashboard/items/      /dashboard/?page=items      302
-/dashboard/in/         /dashboard/?page=in         302
-/dashboard/out/        /dashboard/?page=out        302
+/dashboard/items/        /dashboard/?page=items      302
+/dashboard/pricing/      /dashboard/?page=pricing    302
+/dashboard/in/           /dashboard/?page=in         302
+/dashboard/out/          /dashboard/?page=out        302
 /dashboard/po/         /dashboard/?page=po         302
 /dashboard/return/     /dashboard/?page=return     302
 /dashboard/suppliers/  /dashboard/?page=suppliers  302

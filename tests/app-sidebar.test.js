@@ -33,9 +33,9 @@ describe('<app-sidebar> Component', () => {
     expect(aside.getAttribute('aria-hidden')).toBeNull();
   });
 
-  it('merender 16 item menu navigasi dengan atribut data-page', () => {
+  it('merender 17 item menu navigasi dengan atribut data-page', () => {
     const menuItems = sidebar.querySelectorAll('.menu-item[data-page]');
-    expect(menuItems.length).toBe(16);
+    expect(menuItems.length).toBe(17);
     expect(menuItems[0].getAttribute('data-page')).toBe('dashboard');
     expect(menuItems[1].getAttribute('data-page')).toBe('items');
   });
