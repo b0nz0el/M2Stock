@@ -127,8 +127,20 @@ import { Api } from '../assets/js/api/index.js';
 
     state.loading = true;
     try {
-      const res = await Api.items.list();
-      const list = res?.data || [];
+      let list = [];
+      const fetchFn = (typeof Api !== 'undefined' && Api.items && typeof Api.items.getAll === 'function')
+        ? Api.items.getAll
+        : (typeof Api !== 'undefined' && Api.items && typeof Api.items.list === 'function' ? Api.items.list : null);
+
+      if (typeof fetchFn === 'function') {
+        const res = await fetchFn();
+        list = res?.data || [];
+      } else if (typeof window !== 'undefined' && window.supabase) {
+        const { data, error } = await window.supabase.from('products').select('*, categories(name)').order('name');
+        if (!error && Array.isArray(data)) {
+          list = data;
+        }
+      }
       state.items = list;
 
       // Inisialisasi simulasi untuk setiap item jika belum ada
@@ -727,9 +739,31 @@ import { Api } from '../assets/js/api/index.js';
   }
 
   // Global entrypoint called by navigation.js
-  window.initPricingSimulation = function () {
+  window.initPricingSimulation = async function () {
     attachEventListeners();
-    loadItems();
+
+    let retries = 0;
+    while ((typeof Api === 'undefined' || !Api.items) && retries < 25) {
+      await new Promise(r => setTimeout(r, 40));
+      retries++;
+    }
+
+    await loadItems();
   };
+
+  // Auto-init jika halaman dibuka langsung di URL /dashboard/pricing/
+  if (typeof window !== 'undefined') {
+    const isPricingPage = window.location.pathname.includes('/pricing') ||
+      window.location.search.includes('page=pricing') ||
+      Boolean(document.getElementById('page-pricing')?.classList.contains('active'));
+
+    if (isPricingPage) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initPricingSimulation);
+      } else {
+        window.initPricingSimulation();
+      }
+    }
+  }
 
 })();

@@ -159,7 +159,8 @@ export const items = {
   getLocalChannelMeta,
   saveLocalChannelMeta,
   parseItemChannels,
-    getAll: async (params, opts) => {
+  list: (params, opts) => items.getAll(params, opts),
+  getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
         try {
           const orderCol = (params && params.order) || 'name';
