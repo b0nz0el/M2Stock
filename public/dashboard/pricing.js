@@ -154,6 +154,7 @@ import { Api } from '../assets/js/api/index.js';
           list = data;
         }
       }
+      list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       state.items = list;
 
       // Inisialisasi simulasi untuk setiap item jika belum ada
