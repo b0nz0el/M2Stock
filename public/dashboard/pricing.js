@@ -40,6 +40,19 @@ import { Api } from '../assets/js/api/index.js';
     return 'Rp ' + Math.round(val).toLocaleString('id-ID');
   }
 
+  function formatNumber(num) {
+    const val = Number(num);
+    if (!Number.isFinite(val) || val <= 0) return '0';
+    return new Intl.NumberFormat('id-ID').format(Math.round(val));
+  }
+
+  function parseFormattedNumber(val) {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    const clean = String(val).replace(/\D/g, '');
+    return Number(clean) || 0;
+  }
+
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -54,9 +67,9 @@ import { Api } from '../assets/js/api/index.js';
     const cost = Number(item.cost_price) || 0;
     const offlinePrice = Number(item.sell_price) || 0;
     const qty = Math.max(1, parseInt(rowSim.qty, 10) || 1);
-    const packing = Math.max(0, Number(rowSim.packing) || 0);
-    const diskonPrice = Math.max(0, Number(rowSim.diskonPrice) || 0);
-    const coretPrice = Math.max(diskonPrice, Number(rowSim.coretPrice) || diskonPrice);
+    const packing = Math.max(0, parseFormattedNumber(rowSim.packing));
+    const diskonPrice = Math.max(0, parseFormattedNumber(rowSim.diskonPrice));
+    const coretPrice = Math.max(diskonPrice, parseFormattedNumber(rowSim.coretPrice) || diskonPrice);
 
     const feePercent = (Number(state.adminFeePercent) || 0) / 100;
     const fixedFee = Number(state.fixedFee) || 0;
@@ -276,46 +289,60 @@ import { Api } from '../assets/js/api/index.js';
       const m = calculateRowMetrics(item, rowSim);
 
       return `
-        <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition ${isChecked ? 'bg-[#0088CC]/5' : ''}" data-item-id="${id}">
-          <td class="px-3.5 py-3 w-10 text-center">
-            <input type="checkbox"
-                   data-select-pricing="${id}"
-                   ${isChecked ? 'checked' : ''}
-                   class="accent-[#0088CC] w-4 h-4 cursor-pointer">
-          </td>
-          <td class="px-3.5 py-3 text-xs text-[#A0A0A5] font-mono whitespace-nowrap">${escapeHtml(item.sku || '-')}</td>
-          <td class="px-3.5 py-3 max-w-[220px]">
-            <div class="font-medium text-white text-sm truncate" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
-            <div class="text-[11px] text-[#A0A0A5] flex items-center gap-1.5 mt-0.5">
-              <span>${escapeHtml(item.brand || 'Lokal')}</span>
-              <span>•</span>
-              <span class="text-[#32ADE6]">${escapeHtml(item.category || 'Umum')}</span>
+        <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition ${isChecked ? 'bg-[#0088CC]/5 is-selected' : ''}" data-item-id="${id}">
+          <td class="px-3.5 py-3 w-10 text-center" data-label="PILIH">
+            <div class="flex items-center justify-between w-full">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox"
+                       data-select-pricing="${id}"
+                       ${isChecked ? 'checked' : ''}
+                       class="accent-[#0088CC] w-4 h-4 cursor-pointer">
+                <span class="text-xs text-[#A0A0A5] sm:hidden font-medium">Pilih produk ini</span>
+              </label>
+              <span class="sm:hidden font-mono text-[11px] text-[#A0A0A5] bg-black/40 px-2 py-0.5 rounded border border-white/5">
+                ${escapeHtml(item.sku || '-')}
+              </span>
             </div>
           </td>
-          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap text-[#A0A0A5]">${formatRupiah(m.cost)}</td>
-          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap font-medium">${formatRupiah(m.offlinePrice)}</td>
+          <td class="px-3.5 py-3 text-xs text-[#A0A0A5] font-mono whitespace-nowrap hidden sm:table-cell" data-label="SKU">${escapeHtml(item.sku || '-')}</td>
+          <td class="px-3.5 py-3 sm:max-w-[240px]" data-label="NAMA BARANG">
+            <div class="product-info-wrap text-left">
+              <div class="product-title font-semibold text-white text-sm" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+              <div class="text-[11px] text-[#A0A0A5] flex items-center gap-1.5 mt-1 flex-wrap">
+                <span class="font-medium text-[#E0E0E0]">${escapeHtml(item.brand || 'Lokal')}</span>
+                <span>•</span>
+                <span class="text-[#32ADE6] bg-[#0088CC]/10 px-1.5 py-0.2 rounded border border-[#0088CC]/20">${escapeHtml(item.category || 'Umum')}</span>
+              </div>
+            </div>
+          </td>
+          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap text-[#A0A0A5]" data-label="MODAL">${formatRupiah(m.cost)}</td>
+          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap font-medium text-white" data-label="OFFLINE">${formatRupiah(m.offlinePrice)}</td>
           
           <!-- Harga Coret Input -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap">
-            <input type="number" step="500" min="0"
+          <td class="px-3.5 py-3 text-right whitespace-nowrap" data-label="HARGA CORET">
+            <input type="text"
+                   inputmode="numeric"
+                   pattern="[0-9.]*"
                    data-input-field="coretPrice"
                    data-item-id="${id}"
-                   value="${m.coretPrice}"
-                   class="w-24 bg-[#1C1C1E] border border-white/10 rounded-lg px-2 py-1 text-right text-xs text-white focus:border-[#0088CC] focus:outline-none font-mono">
+                   value="${formatNumber(m.coretPrice)}"
+                   class="w-24 sm:w-28 bg-[#1C1C1E] border border-white/10 rounded-lg px-2.5 py-1 text-right text-xs text-white focus:border-[#0088CC] focus:outline-none font-mono">
           </td>
 
           <!-- Harga Setelah Diskon Input (Highlight Kuning) -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap">
-            <input type="number" step="500" min="0"
+          <td class="px-3.5 py-3 text-right whitespace-nowrap" data-label="HRG DISKON (RP)">
+            <input type="text"
+                   inputmode="numeric"
+                   pattern="[0-9.]*"
                    data-input-field="diskonPrice"
                    data-item-id="${id}"
-                   value="${m.diskonPrice}"
-                   class="w-24 bg-[#FFCC00]/10 border border-[#FFCC00]/30 rounded-lg px-2 py-1 text-right text-xs font-semibold text-[#FFCC00] focus:border-[#FFCC00] focus:outline-none font-mono">
+                   value="${formatNumber(m.diskonPrice)}"
+                   class="w-24 sm:w-28 bg-[#FFCC00]/10 border border-[#FFCC00]/30 rounded-lg px-2.5 py-1 text-right text-xs font-semibold text-[#FFCC00] focus:border-[#FFCC00] focus:outline-none font-mono">
           </td>
 
           <!-- Qty per Resi Input -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap">
-            <input type="number" step="1" min="1" max="99"
+          <td class="px-3.5 py-3 text-right sm:text-center whitespace-nowrap" data-label="QTY RESI">
+            <input type="number" step="1" min="1" max="99" inputmode="numeric"
                    data-input-field="qty"
                    data-item-id="${id}"
                    value="${m.qty}"
@@ -323,40 +350,42 @@ import { Api } from '../assets/js/api/index.js';
           </td>
 
           <!-- Biaya Packing Input -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap">
-            <input type="number" step="100" min="0"
+          <td class="px-3.5 py-3 text-right whitespace-nowrap" data-label="PACKING">
+            <input type="text"
+                   inputmode="numeric"
+                   pattern="[0-9.]*"
                    data-input-field="packing"
                    data-item-id="${id}"
-                   value="${m.packing}"
-                   class="w-20 bg-[#32ADE6]/10 border border-[#32ADE6]/30 rounded-lg px-2 py-1 text-right text-xs font-semibold text-[#32ADE6] focus:border-[#32ADE6] focus:outline-none font-mono">
+                   value="${formatNumber(m.packing)}"
+                   class="w-20 bg-[#32ADE6]/10 border border-[#32ADE6]/30 rounded-lg px-2.5 py-1 text-right text-xs font-semibold text-[#32ADE6] focus:border-[#32ADE6] focus:outline-none font-mono">
           </td>
 
           <!-- Diskon Toko (%) -->
-          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap text-[#A0A0A5] font-mono">${m.diskonTokoPercent}%</td>
+          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap text-[#A0A0A5] font-mono" data-label="DISKON %" data-metric="diskonToko">${m.diskonTokoPercent}%</td>
 
           <!-- Potongan Admin MP -->
-          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap text-[#FF3B30] font-mono font-medium">-${formatRupiah(m.potonganAdmin)}</td>
+          <td class="px-3.5 py-3 text-right text-xs whitespace-nowrap text-[#FF3B30] font-mono font-medium" data-label="POTONGAN MP" data-metric="potonganAdmin">-${formatRupiah(m.potonganAdmin)}</td>
 
           <!-- Total Laba Bersih -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap font-bold text-xs ${m.totalLaba >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-mono">
+          <td class="px-3.5 py-3 text-right whitespace-nowrap font-bold text-xs ${m.totalLaba >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-mono" data-label="TOTAL LABA" data-metric="totalLaba">
             ${formatRupiah(m.totalLaba)}
             ${m.qty > 1 ? `<span class="block text-[10px] text-[#A0A0A5] font-normal">(@ ${formatRupiah(m.labaPerUnit)})</span>` : ''}
           </td>
 
           <!-- Margin Bersih (%) -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap font-bold text-xs ${m.marginPercent >= 20 ? 'text-[#34C759]' : (m.marginPercent >= 5 ? 'text-[#FFCC00]' : 'text-[#FF3B30]')} font-mono">
+          <td class="px-3.5 py-3 text-right whitespace-nowrap font-bold text-xs ${m.marginPercent >= 20 ? 'text-[#34C759]' : (m.marginPercent >= 5 ? 'text-[#FFCC00]' : 'text-[#FF3B30]')} font-mono" data-label="MARGIN %" data-metric="marginPercent">
             ${m.marginPercent}%
           </td>
 
           <!-- Status Badge -->
-          <td class="px-3.5 py-3 text-center whitespace-nowrap">
+          <td class="px-3.5 py-3 text-right sm:text-center whitespace-nowrap" data-label="STATUS" data-metric="status">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${m.statusClass}">
               ${m.status}
             </span>
           </td>
 
           <!-- Rekomendasi Min -->
-          <td class="px-3.5 py-3 text-right whitespace-nowrap text-xs font-semibold text-[#32ADE6] font-mono" title="Harga minimum per pcs agar target margin ${state.targetMargin}% tercapai">
+          <td class="px-3.5 py-3 text-right whitespace-nowrap text-xs font-semibold text-[#32ADE6] font-mono" data-label="REKOM. MIN" data-metric="rekomendasiMin" title="Harga minimum per pcs agar target margin ${state.targetMargin}% tercapai">
             ${formatRupiah(m.rekomendasiMinUnit)}
           </td>
         </tr>
@@ -364,6 +393,11 @@ import { Api } from '../assets/js/api/index.js';
     }).join('');
 
     tbody.innerHTML = rowsHtml;
+
+    if (typeof window.syncTableLabels === 'function') {
+      window.syncTableLabels(document.querySelector('#page-pricing table'));
+    }
+
     updateBatchApplyButton();
   }
 
@@ -431,8 +465,21 @@ import { Api } from '../assets/js/api/index.js';
 
     const fixedInput = document.getElementById('pricing-fixed-fee');
     if (fixedInput) {
+      fixedInput.value = formatNumber(state.fixedFee);
       fixedInput.addEventListener('input', e => {
-        state.fixedFee = Number(e.target.value) || 0;
+        const val = parseFormattedNumber(e.target.value);
+        state.fixedFee = val;
+        if (e.target.value !== '') {
+          e.target.value = val > 0 ? formatNumber(val) : '0';
+        }
+        renderSummaryCounters();
+        renderTable();
+      });
+      fixedInput.addEventListener('blur', e => {
+        if (!e.target.value || state.fixedFee <= 0) {
+          state.fixedFee = 1250;
+        }
+        e.target.value = formatNumber(state.fixedFee);
         renderSummaryCounters();
         renderTable();
       });
@@ -451,12 +498,26 @@ import { Api } from '../assets/js/api/index.js';
     // Default Packing Input (Batch Update to rows that use default)
     const defaultPackingInput = document.getElementById('pricing-default-packing');
     if (defaultPackingInput) {
-      defaultPackingInput.addEventListener('change', e => {
-        const val = Math.max(0, Number(e.target.value) || 0);
+      defaultPackingInput.value = formatNumber(state.defaultPacking);
+      defaultPackingInput.addEventListener('input', e => {
+        const val = parseFormattedNumber(e.target.value);
         state.defaultPacking = val;
-        // Update all items packing
+        if (e.target.value !== '') {
+          e.target.value = val > 0 ? formatNumber(val) : '0';
+        }
         state.simulationData.forEach(sim => {
           sim.packing = val;
+        });
+        renderSummaryCounters();
+        renderTable();
+      });
+      defaultPackingInput.addEventListener('blur', e => {
+        if (!e.target.value) {
+          state.defaultPacking = 500;
+        }
+        e.target.value = formatNumber(state.defaultPacking);
+        state.simulationData.forEach(sim => {
+          sim.packing = state.defaultPacking;
         });
         renderSummaryCounters();
         renderTable();
@@ -509,6 +570,62 @@ import { Api } from '../assets/js/api/index.js';
     // Delegasi Event Tabel (Checkbox & Input Field)
     const tbody = document.getElementById('pricing-tbody');
     if (tbody) {
+      // Live input handling: update row in-place without table re-render (maintains keyboard focus)
+      tbody.addEventListener('input', e => {
+        const input = e.target.closest('[data-input-field]');
+        if (!input) return;
+
+        const id = input.getAttribute('data-item-id');
+        const field = input.getAttribute('data-input-field');
+        const item = state.items.find(i => String(i.id) === id);
+        if (!item || !state.simulationData.has(id)) return;
+
+        const rowSim = state.simulationData.get(id);
+
+        if (field === 'qty') {
+          const qtyVal = Math.max(1, Math.min(99, parseInt(input.value, 10) || 1));
+          rowSim.qty = qtyVal;
+        } else {
+          const rawNum = parseFormattedNumber(input.value);
+          rowSim[field] = rawNum;
+          if (input.value !== '') {
+            input.value = rawNum > 0 ? formatNumber(rawNum) : '0';
+          }
+        }
+
+        const tr = input.closest('tr');
+        updateRowMetricsDom(tr, item, rowSim);
+        renderSummaryCounters();
+      });
+
+      // Blur event: memastikan input kosong kembali diformat rapi
+      tbody.addEventListener('blur', e => {
+        const input = e.target.closest('[data-input-field]');
+        if (!input) return;
+
+        const id = input.getAttribute('data-item-id');
+        const field = input.getAttribute('data-input-field');
+        const item = state.items.find(i => String(i.id) === id);
+        if (!item || !state.simulationData.has(id)) return;
+
+        const rowSim = state.simulationData.get(id);
+        if (field === 'qty') {
+          if (!input.value || Number(input.value) <= 0) {
+            input.value = 1;
+            rowSim.qty = 1;
+          }
+        } else {
+          const rawNum = parseFormattedNumber(input.value);
+          rowSim[field] = rawNum;
+          input.value = formatNumber(rawNum);
+        }
+
+        const tr = input.closest('tr');
+        updateRowMetricsDom(tr, item, rowSim);
+        renderSummaryCounters();
+      }, true);
+
+      // Checkbox selection
       tbody.addEventListener('change', e => {
         const cb = e.target.closest('[data-select-pricing]');
         if (cb) {
@@ -518,20 +635,7 @@ import { Api } from '../assets/js/api/index.js';
           updateBatchApplyButton();
           const tr = cb.closest('tr');
           if (tr) tr.classList.toggle('bg-[#0088CC]/5', cb.checked);
-          return;
-        }
-
-        const input = e.target.closest('[data-input-field]');
-        if (input) {
-          const id = input.getAttribute('data-item-id');
-          const field = input.getAttribute('data-input-field');
-          const val = Number(input.value) || 0;
-          if (state.simulationData.has(id)) {
-            const rowSim = state.simulationData.get(id);
-            rowSim[field] = val;
-            renderSummaryCounters();
-            renderTable();
-          }
+          if (tr) tr.classList.toggle('is-selected', cb.checked);
         }
       });
     }
