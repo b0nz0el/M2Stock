@@ -516,7 +516,7 @@
             <div>
               <label for="pricing-fee-percent" class="block text-[11px] font-medium text-[#A0A0A5] mb-1">Fee Komisi (%)</label>
               <div class="relative">
-                <input type="number" id="pricing-fee-percent" step="0.1" min="0" max="99" value="14.5"
+                <input type="number" id="pricing-fee-percent" step="0.1" min="0" max="99" value="14.5" enterkeyhint="done"
                        class="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white font-mono focus:border-[#0088CC] focus:outline-none pr-6">
                 <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#A0A0A5]">%</span>
               </div>
@@ -525,14 +525,14 @@
             <!-- Fixed Fee Rp -->
             <div>
               <label for="pricing-fixed-fee" class="block text-[11px] font-medium text-[#A0A0A5] mb-1">Biaya Tetap (Rp)</label>
-              <input type="text" inputmode="numeric" pattern="[0-9.]*" id="pricing-fixed-fee" value="1.250"
+              <input type="text" inputmode="numeric" pattern="[0-9.]*" id="pricing-fixed-fee" value="1.250" enterkeyhint="done"
                      class="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white font-mono focus:border-[#0088CC] focus:outline-none">
             </div>
 
             <!-- Default Packing Rp -->
             <div>
               <label for="pricing-default-packing" class="block text-[11px] font-medium text-[#A0A0A5] mb-1">Est. Packing (Rp)</label>
-              <input type="text" inputmode="numeric" pattern="[0-9.]*" id="pricing-default-packing" value="500"
+              <input type="text" inputmode="numeric" pattern="[0-9.]*" id="pricing-default-packing" value="500" enterkeyhint="done"
                      class="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white font-mono focus:border-[#0088CC] focus:outline-none">
             </div>
           </div>
@@ -546,7 +546,7 @@
             </span>
             <div class="flex items-center gap-1">
               <span class="text-[11px] text-[#A0A0A5]">Target Margin:</span>
-              <input type="number" id="pricing-target-margin" step="1" min="5" max="90" value="20"
+              <input type="number" id="pricing-target-margin" step="1" min="5" max="90" value="20" enterkeyhint="done"
                      class="w-12 bg-black/40 border border-white/10 rounded px-1.5 py-0.5 text-xs text-center font-bold text-[#34C759] focus:outline-none">
               <span class="text-xs font-bold text-[#34C759]">%</span>
             </div>
@@ -597,7 +597,7 @@
           </select>
           <div class="relative w-full sm:w-48">
             <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#A0A0A5]"></i>
-            <input type="text" id="pricing-search-input" placeholder="Cari nama / SKU..." class="w-full bg-black/40 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-white focus:border-[#0088CC] focus:outline-none">
+            <input type="text" id="pricing-search-input" placeholder="Cari nama / SKU..." enterkeyhint="search" class="w-full bg-black/40 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-white focus:border-[#0088CC] focus:outline-none">
           </div>
         </div>
       </div>
@@ -625,6 +625,7 @@
                 <th class="px-3.5 py-3 font-semibold uppercase tracking-wider text-right font-bold" title="Margin laba bersih terhadap omset">Margin %</th>
                 <th class="px-3.5 py-3 font-semibold uppercase tracking-wider text-center">Status</th>
                 <th class="px-3.5 py-3 font-semibold uppercase tracking-wider text-right text-[#32ADE6]" title="Rekomendasi harga jual minimal per pcs agar margin aman tercapai">Rekom. Min</th>
+                <th class="px-3.5 py-3 font-semibold uppercase tracking-wider text-center">Aksi</th>
               </tr>
             </thead>
             <tbody id="pricing-tbody" class="divide-y divide-white/5">

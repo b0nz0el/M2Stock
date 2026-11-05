@@ -1966,6 +1966,7 @@ app-sidebar aside .sidebar-drawer-logout {
 
   /* Header Card: Checkbox + Label & SKU */
   #page-pricing .card table tbody td[data-label="PILIH"] {
+    width: 100% !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -1976,6 +1977,15 @@ app-sidebar aside .sidebar-drawer-logout {
   #page-pricing .card table tbody td[data-label="PILIH"]::before {
     display: none !important;
     content: none !important;
+  }
+  #page-pricing .card table tbody td[data-label="PILIH"] label {
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  #page-pricing .card table tbody td[data-label="PILIH"] .sku-tag {
+    white-space: nowrap !important;
   }
 
   #page-pricing .card table tbody td[data-label="SKU"] {
@@ -2032,6 +2042,33 @@ app-sidebar aside .sidebar-drawer-logout {
     margin-top: 6px !important;
     padding-top: 10px !important;
     font-size: 0.9375rem !important;
+  }
+
+  /* Tombol Aksi di Mobile Card */
+  #page-pricing .card table tbody td[data-label="AKSI"] {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+    padding-bottom: 0 !important;
+  }
+  #page-pricing .card table tbody td[data-label="AKSI"]::before {
+    display: none !important;
+    content: none !important;
+  }
+  #page-pricing .card table tbody td[data-label="AKSI"] button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 16px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 700 !important;
+    background: #0088CC !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.25) !important;
   }
 
   /* ═══ Universal Long Text Wrapping for Mobile Cards ═══ */

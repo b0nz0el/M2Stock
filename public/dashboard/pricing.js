@@ -297,9 +297,9 @@ import { Api } from '../assets/js/api/index.js';
                        data-select-pricing="${id}"
                        ${isChecked ? 'checked' : ''}
                        class="accent-[#0088CC] w-4 h-4 cursor-pointer">
-                <span class="text-xs text-[#A0A0A5] sm:hidden font-medium">Pilih produk ini</span>
+                <span class="text-xs text-[#A0A0A5] sm:hidden font-medium whitespace-nowrap">Pilih produk</span>
               </label>
-              <span class="sm:hidden font-mono text-[11px] text-[#A0A0A5] bg-black/40 px-2 py-0.5 rounded border border-white/5">
+              <span class="sku-tag sm:hidden font-mono text-[11px] text-[#A0A0A5] bg-black/50 px-2 py-0.5 rounded border border-white/10 whitespace-nowrap">
                 ${escapeHtml(item.sku || '-')}
               </span>
             </div>
@@ -323,6 +323,7 @@ import { Api } from '../assets/js/api/index.js';
             <input type="text"
                    inputmode="numeric"
                    pattern="[0-9.]*"
+                   enterkeyhint="done"
                    data-input-field="coretPrice"
                    data-item-id="${id}"
                    value="${formatNumber(m.coretPrice)}"
@@ -334,6 +335,7 @@ import { Api } from '../assets/js/api/index.js';
             <input type="text"
                    inputmode="numeric"
                    pattern="[0-9.]*"
+                   enterkeyhint="done"
                    data-input-field="diskonPrice"
                    data-item-id="${id}"
                    value="${formatNumber(m.diskonPrice)}"
@@ -343,6 +345,7 @@ import { Api } from '../assets/js/api/index.js';
           <!-- Qty per Resi Input -->
           <td class="px-3.5 py-3 text-right sm:text-center whitespace-nowrap" data-label="QTY RESI">
             <input type="number" step="1" min="1" max="99" inputmode="numeric"
+                   enterkeyhint="done"
                    data-input-field="qty"
                    data-item-id="${id}"
                    value="${m.qty}"
@@ -354,6 +357,7 @@ import { Api } from '../assets/js/api/index.js';
             <input type="text"
                    inputmode="numeric"
                    pattern="[0-9.]*"
+                   enterkeyhint="done"
                    data-input-field="packing"
                    data-item-id="${id}"
                    value="${formatNumber(m.packing)}"
@@ -387,6 +391,16 @@ import { Api } from '../assets/js/api/index.js';
           <!-- Rekomendasi Min -->
           <td class="px-3.5 py-3 text-right whitespace-nowrap text-xs font-semibold text-[#32ADE6] font-mono" data-label="REKOM. MIN" data-metric="rekomendasiMin" title="Harga minimum per pcs agar target margin ${state.targetMargin}% tercapai">
             ${formatRupiah(m.rekomendasiMinUnit)}
+          </td>
+
+          <!-- Tombol Aksi Single Item -->
+          <td class="px-3.5 py-3 text-center whitespace-nowrap" data-label="AKSI">
+            <button type="button"
+                    data-action-apply-single="${id}"
+                    class="bg-[#0088CC]/15 hover:bg-[#0088CC] text-[#32ADE6] hover:text-white border border-[#0088CC]/30 px-3 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Terapkan Harga</span>
+            </button>
           </td>
         </tr>
       `;
@@ -567,9 +581,31 @@ import { Api } from '../assets/js/api/index.js';
       });
     }
 
-    // Delegasi Event Tabel (Checkbox & Input Field)
+    // Blur on Enter key for top inputs
+    const handleTopInputEnter = e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.target.blur();
+      }
+    };
+    [feeInput, fixedInput, targetMarginInput, defaultPackingInput, searchInput].forEach(inp => {
+      if (inp) inp.addEventListener('keydown', handleTopInputEnter);
+    });
+
+    // Delegasi Event Tabel (Checkbox, Input Field, Enter Key, & Aksi Terapkan)
     const tbody = document.getElementById('pricing-tbody');
     if (tbody) {
+      // Enter key handler on input: blur input to confirm / close mobile keyboard
+      tbody.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const input = e.target.closest('[data-input-field]');
+          if (input) {
+            e.preventDefault();
+            input.blur();
+          }
+        }
+      });
+
       // Live input handling: update row in-place without table re-render (maintains keyboard focus)
       tbody.addEventListener('input', e => {
         const input = e.target.closest('[data-input-field]');
@@ -636,6 +672,72 @@ import { Api } from '../assets/js/api/index.js';
           const tr = cb.closest('tr');
           if (tr) tr.classList.toggle('bg-[#0088CC]/5', cb.checked);
           if (tr) tr.classList.toggle('is-selected', cb.checked);
+        }
+      });
+
+      // Single Item Apply Button: Simpan harga per produk langsung ke Master Data
+      tbody.addEventListener('click', async e => {
+        const btnSingle = e.target.closest('[data-action-apply-single]');
+        if (!btnSingle) return;
+
+        const id = btnSingle.getAttribute('data-action-apply-single');
+        const item = state.items.find(i => String(i.id) === id);
+        const rowSim = state.simulationData.get(id);
+        if (!item || !rowSim) return;
+
+        btnSingle.disabled = true;
+        const origHtml = btnSingle.innerHTML;
+        btnSingle.innerHTML = `
+          <svg class="animate-spin h-3.5 w-3.5 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Menyimpan...</span>
+        `;
+
+        const newPrice = Math.round(Number(rowSim.diskonPrice) || 0);
+        try {
+          const res = await Api.items.bulkUpdatePrice([{
+            id: String(item.id),
+            online_sell_price: newPrice
+          }]);
+          if (res && res.ok) {
+            item.online_sell_price = newPrice;
+            showToastSuccess(`Harga online ${item.name} berhasil disimpan ke Master Barang (Rp ${formatNumber(newPrice)})!`);
+            btnSingle.classList.remove('bg-[#0088CC]/15', 'text-[#32ADE6]', 'border-[#0088CC]/30');
+            btnSingle.classList.add('bg-[#34C759]/20', 'text-[#34C759]', 'border-[#34C759]/40');
+            btnSingle.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> <span>Tersimpan</span>`;
+            if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+              window.lucide.createIcons();
+            }
+            if (typeof window.loadItemsFromBackend === 'function') {
+              window.loadItemsFromBackend();
+            }
+            setTimeout(() => {
+              btnSingle.disabled = false;
+              btnSingle.classList.remove('bg-[#34C759]/20', 'text-[#34C759]', 'border-[#34C759]/40');
+              btnSingle.classList.add('bg-[#0088CC]/15', 'text-[#32ADE6]', 'border-[#0088CC]/30');
+              btnSingle.innerHTML = origHtml;
+              if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+              }
+            }, 2500);
+          } else {
+            alert('Gagal memperbarui harga: ' + (res?.error?.message || 'Terjadi kesalahan'));
+            btnSingle.disabled = false;
+            btnSingle.innerHTML = origHtml;
+            if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+              window.lucide.createIcons();
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Terjadi error: ' + err.message);
+          btnSingle.disabled = false;
+          btnSingle.innerHTML = origHtml;
+          if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+          }
         }
       });
     }
