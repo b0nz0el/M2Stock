@@ -56,7 +56,9 @@ const STATIC_PRECACHE = [
   '/assets/js/utils/offline-sync.js',
   '/assets/js/utils/user-resolver.js',
   '/dashboard/items.js',
-  '/dashboard/settings.js'
+  '/dashboard/settings.js',
+  '/dashboard/pricing/',
+  '/dashboard/pricing.js'
 ];
 
 self.addEventListener('message', (event) => {

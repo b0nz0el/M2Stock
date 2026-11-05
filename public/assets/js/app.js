@@ -512,6 +512,16 @@ if (typeof window !== 'undefined') {
       throw new Error('Metadata versi GitHub tidak valid');
     }
     renderVersionStatus(release);
+    if (release.version !== installedVersion && supportsServiceWorker) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg) {
+          try { reg.update(); } catch (_) {}
+          if (reg.waiting) {
+            promptAndActivate(reg.waiting);
+          }
+        }
+      }).catch(() => {});
+    }
     return release;
   }
 
@@ -520,12 +530,12 @@ if (typeof window !== 'undefined') {
   }
 
   const syncStatus = document.getElementById('github-version-status');
-  if (syncStatus) {
-    fetchReleaseVersion().catch((error) => {
-      console.warn('[PWA] Release version check failed:', error);
+  fetchReleaseVersion().catch((error) => {
+    console.warn('[PWA] Release version check failed:', error);
+    if (syncStatus) {
       syncStatus.textContent = `GitHub main belum dapat diperiksa · aplikasi v${installedVersion}`;
-    });
-  }
+    }
+  });
 
   window.addEventListener('load', () => {
     if (!supportsServiceWorker) return;
@@ -537,10 +547,12 @@ if (typeof window !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           try { reg.update(); } catch (_) {}
+          fetchReleaseVersion().catch(() => {});
         }
       });
       window.addEventListener('focus', () => {
         try { reg.update(); } catch (_) {}
+        fetchReleaseVersion().catch(() => {});
       });
 
       // 4. Periksa pembaruan berkala setiap 2 menit saat online dan aktif
@@ -627,12 +639,9 @@ if (typeof window !== 'undefined') {
       }
 
       if (versionDiffers) {
-        if (!supportsServiceWorker) {
-          showUpdateToast(`Versi v${release.version} tersedia. Halaman akan dimuat ulang.`, 'info');
-          setTimeout(() => window.location.reload(), 700);
-          return;
-        }
-        throw new Error(`GitHub main sudah v${release.version}, tetapi worker pembaruan belum tersedia`);
+        showUpdateToast(`Versi v${release.version} tersedia. Memuat ulang aplikasi...`, 'info');
+        setTimeout(() => window.location.reload(), 1000);
+        return;
       }
 
       showUpdateToast(`Aquastock Pro v${installedVersion} sudah sinkron dengan GitHub main.`, 'success');

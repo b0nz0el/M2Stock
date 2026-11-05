@@ -169,7 +169,8 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
         '/assets/js/icons.js',
         '/assets/js/utils/channel-icons.js',
         '/dashboard/items.js',
-        '/dashboard/settings.js'
+        '/dashboard/settings.js',
+        '/dashboard/pricing.js'
       ].forEach((asset) => expect(sw).toContain(`'${asset}'`));
     });
 
