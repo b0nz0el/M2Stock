@@ -13,7 +13,8 @@
 module.exports = {
   content: [
     './public/**/*.html',
-    './public/assets/js/**/*.js'
+    './public/assets/js/**/*.js',
+    './public/dashboard/**/*.js'
   ],
   theme: {
     extend: {

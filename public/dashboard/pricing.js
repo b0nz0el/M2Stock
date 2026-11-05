@@ -561,51 +561,75 @@ import { Api } from '../assets/js/api/index.js';
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'pricing-apply-modal';
-      modal.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+      modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-3 sm:p-6 overflow-y-auto';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-labelledby', 'pricing-apply-modal-title');
       document.body.appendChild(modal);
     }
+
+    let changedCount = 0;
+    let unchangedCount = 0;
+    selected.forEach(item => {
+      const rowSim = state.simulationData.get(String(item.id));
+      const oldPrice = Number(item.online_sell_price) || 0;
+      const newPrice = Math.round(Number(rowSim?.diskonPrice) || 0);
+      if (oldPrice !== newPrice) changedCount++;
+      else unchangedCount++;
+    });
 
     const itemsSummary = selected.map(item => {
       const rowSim = state.simulationData.get(String(item.id));
       const oldPrice = Number(item.online_sell_price) || 0;
-      const newPrice = Number(rowSim.diskonPrice) || 0;
+      const newPrice = Math.round(Number(rowSim?.diskonPrice) || 0);
+      const isPriceChanged = oldPrice !== newPrice;
+
       return `
-        <div class="flex items-center justify-between py-2 border-b border-white/5 text-xs">
-          <div class="min-w-0 pr-2">
-            <span class="font-medium text-white truncate block">${escapeHtml(item.name)}</span>
-            <span class="text-[#A0A0A5] font-mono text-[10px]">${escapeHtml(item.sku || '')}</span>
+        <div class="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-white/[0.02] transition text-xs">
+          <div class="min-w-0 pr-3 flex-1">
+            <span class="font-medium text-white truncate block text-xs" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+            <span class="text-[#A0A0A5] font-mono text-[10px]">${escapeHtml(item.sku || '-')}</span>
           </div>
           <div class="text-right shrink-0">
-            <span class="text-[#A0A0A5] line-through">${formatRupiah(oldPrice)}</span>
-            <span class="text-[#34C759] font-bold ml-1.5 font-mono">-> ${formatRupiah(newPrice)}</span>
+            ${isPriceChanged
+              ? `<span class="text-[#A0A0A5] line-through text-[11px] mr-1">${formatRupiah(oldPrice)}</span>
+                 <span class="text-[#34C759] font-bold font-mono text-xs">-> ${formatRupiah(newPrice)}</span>`
+              : `<span class="text-[#A0A0A5] font-mono text-xs">${formatRupiah(oldPrice)}</span>
+                 <span class="text-[10px] text-[#77777D] ml-1">(Tetap)</span>`
+            }
           </div>
         </div>
       `;
     }).join('');
 
     modal.innerHTML = `
-      <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
-        <div class="p-5 border-b border-white/5 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6]">
+      <div id="pricing-apply-card" class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col my-auto overflow-hidden animate-in zoom-in-95 duration-150" style="max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); box-sizing: border-box;">
+        <div class="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between shrink-0 bg-[#1C1C1E]">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-[#0088CC]/15 grid place-items-center text-[#32ADE6] shrink-0">
               <i data-lucide="check-check" class="w-5 h-5"></i>
             </div>
-            <div>
-              <h3 class="font-bold text-base text-white">Terapkan Harga ke Master Barang</h3>
-              <p class="text-xs text-[#A0A0A5]">Sinkronkan ${selected.length} harga online hasil simulasi ke database</p>
+            <div class="min-w-0">
+              <h3 id="pricing-apply-modal-title" class="font-bold text-base text-white truncate">Terapkan Harga ke Master Barang</h3>
+              <p class="text-xs text-[#A0A0A5] truncate">Sinkronkan harga online hasil simulasi ke database</p>
             </div>
           </div>
-          <button type="button" onclick="document.getElementById('pricing-apply-modal').remove()" class="text-[#A0A0A5] hover:text-white p-1 rounded-lg">
+          <button type="button" id="btn-close-pricing-apply-x" class="text-[#A0A0A5] hover:text-white p-1.5 hover:bg-white/5 rounded-lg transition shrink-0 ml-2" aria-label="Tutup modal">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
 
-        <div class="p-5 max-h-[50vh] overflow-y-auto space-y-1">
+        <div class="px-4 sm:px-5 py-2.5 bg-black/30 border-b border-white/5 flex items-center justify-between text-xs text-[#A0A0A5] shrink-0">
+          <span>Total dipilih: <strong class="text-white">${selected.length} produk</strong></span>
+          <span>Perubahan: <strong class="text-[#34C759]">${changedCount} berubah</strong> / <strong class="text-[#A0A0A5]">${unchangedCount} tetap</strong></span>
+        </div>
+
+        <div class="p-3 sm:p-4 overflow-y-auto space-y-1 flex-1 divide-y divide-white/5 bg-[#1C1C1E]" style="max-height: 48vh; min-height: 120px;">
           ${itemsSummary}
         </div>
 
-        <div class="p-4 bg-black/40 border-t border-white/5 flex items-center justify-between">
-          <button type="button" onclick="document.getElementById('pricing-apply-modal').remove()" class="px-4 py-2 rounded-xl text-xs font-semibold text-[#A0A0A5] hover:text-white transition">
+        <div class="p-4 bg-black/40 border-t border-white/5 flex items-center justify-between shrink-0">
+          <button type="button" id="btn-cancel-pricing-apply" class="px-4 py-2 rounded-xl text-xs font-semibold text-[#A0A0A5] hover:text-white hover:bg-white/5 transition">
             Batal
           </button>
           <button type="button" id="btn-confirm-apply-pricing" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0088CC] hover:bg-[#0077BB] text-white flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/25 transition">
@@ -618,6 +642,26 @@ import { Api } from '../assets/js/api/index.js';
     if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
+
+    const closeModal = () => {
+      if (modal) modal.remove();
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    modal.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
+
+    const closeBtnX = document.getElementById('btn-close-pricing-apply-x');
+    if (closeBtnX) closeBtnX.addEventListener('click', closeModal);
+
+    const cancelBtn = document.getElementById('btn-cancel-pricing-apply');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
     const confirmBtn = document.getElementById('btn-confirm-apply-pricing');
     if (confirmBtn) {
@@ -633,14 +677,14 @@ import { Api } from '../assets/js/api/index.js';
           const rowSim = state.simulationData.get(String(item.id));
           return {
             id: String(item.id),
-            online_sell_price: Math.round(Number(rowSim.diskonPrice) || 0)
+            online_sell_price: Math.round(Number(rowSim?.diskonPrice) || 0)
           };
         });
 
         try {
           const res = await Api.items.bulkUpdatePrice(updates);
           if (res && res.ok) {
-            modal.remove();
+            closeModal();
             showToastSuccess(`Berhasil menerapkan ${updates.length} harga online ke Master Barang!`);
             state.selectedIds.clear();
             // Reload data
