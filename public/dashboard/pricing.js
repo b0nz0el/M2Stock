@@ -339,7 +339,7 @@ import { Api } from '../assets/js/api/index.js';
           <!-- Status Badge -->
           <td class="px-3.5 py-3 text-center whitespace-nowrap">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${m.statusClass}">
-              ${m.status === 'AMAN' ? 'AMAN ✅' : (m.status === 'TIPIS' ? 'TIPIS ⚠️' : 'RUGI ❌')}
+              ${m.status}
             </span>
           </td>
 
@@ -565,7 +565,7 @@ import { Api } from '../assets/js/api/index.js';
           </div>
           <div class="text-right shrink-0">
             <span class="text-[#A0A0A5] line-through">${formatRupiah(oldPrice)}</span>
-            <span class="text-[#34C759] font-bold ml-1.5 font-mono">➔ ${formatRupiah(newPrice)}</span>
+            <span class="text-[#34C759] font-bold ml-1.5 font-mono">-> ${formatRupiah(newPrice)}</span>
           </div>
         </div>
       `;
