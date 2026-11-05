@@ -43,25 +43,59 @@ import {
     return num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '0';
   }
 
-  function getOnlinePricing(costPrice, onlinePrice, marketplaceFee = 0.395) {
+  function getOnlinePricing(costPrice, onlinePrice, marketplaceFee = null, customFixedFee = null, customPackingCost = null) {
+    const DEFAULT_SHOPEE_COMMISSION = 0.145; // Komisi Shopee Star+ 14.5%
+    const DEFAULT_FIXED_FEE = 1250;          // Biaya tetap per pesanan Rp 1.250
+    const DEFAULT_PACKING_COST = 500;         // Biaya bahan packing per pesanan Rp 500
+
     const cost = Number(costPrice) || 0;
-    const fee = Math.min(0.999, Math.max(0, Number(marketplaceFee) || 0));
-    const fixedFee = Number(arguments[3]) || 0;
-    const packingCost = Number(arguments[4]) || 0;
+
+    // Normalisasi komisi: jika tidak diset atau bernilai 0.395 (nilai lama yang salah), pakai standar 14.5%
+    let commissionRate = DEFAULT_SHOPEE_COMMISSION;
+    if (marketplaceFee !== null && marketplaceFee !== undefined) {
+      const rawFee = Number(marketplaceFee);
+      if (Number.isFinite(rawFee) && rawFee > 0) {
+        const normalized = rawFee > 1 ? rawFee / 100 : rawFee;
+        if (Math.abs(normalized - 0.395) > 0.001) {
+          commissionRate = Math.min(0.999, Math.max(0, normalized));
+        }
+      }
+    }
+
+    const fixedFee = customFixedFee !== null && customFixedFee !== undefined ? Number(customFixedFee) : DEFAULT_FIXED_FEE;
+    const packingCost = customPackingCost !== null && customPackingCost !== undefined ? Number(customPackingCost) : DEFAULT_PACKING_COST;
+
     const storedPrice = onlinePrice === null || onlinePrice === undefined || onlinePrice === ''
       ? Number.NaN
       : Number(onlinePrice);
-    const price = Number.isFinite(storedPrice) && storedPrice >= 0
-      ? storedPrice
-      : Math.round((cost + fixedFee + packingCost) / (1 - fee));
-    const netProfit = Math.round(price * (1 - fee) - fixedFee - packingCost - cost);
+
+    let price = 0;
+    if (Number.isFinite(storedPrice) && storedPrice >= 0) {
+      price = storedPrice;
+    } else if (cost > 0) {
+      // Formula rekomendasi harga Shopee Star+ target margin 20%
+      const targetMargin = 0.20;
+      const divisor = 1 - commissionRate - targetMargin;
+      price = divisor > 0.05
+        ? Math.ceil(((cost + fixedFee + packingCost) / divisor) / 100) * 100
+        : Math.round((cost + fixedFee + packingCost) / (1 - commissionRate));
+    }
+
+    // Potongan Marketplace Riil: (Harga Jual x % Komisi) + Biaya Tetap Rp 1.250
+    const potonganMp = price > 0 ? Math.round((price * commissionRate) + fixedFee) : 0;
+    const netProfit = price > 0 ? Math.round(price - potonganMp - packingCost - cost) : 0;
+    
+    // Persentase potongan riil efektif terhadap harga jual
+    const effectiveFee = price > 0 ? (potonganMp / price) : commissionRate;
+
     if (cost <= 0) {
       return {
         price,
         markup: 0,
         margin: 0,
         netProfit,
-        fee,
+        fee: effectiveFee,
+        feeNominal: potonganMp,
         status: 'AMAN',
         statusBadgeClass: 'bg-[#34C759]/15 text-[#34C759] border border-[#34C759]/30'
       };
@@ -84,7 +118,8 @@ import {
       markup,
       margin,
       netProfit,
-      fee,
+      fee: effectiveFee,
+      feeNominal: potonganMp,
       status,
       statusBadgeClass
     };
@@ -851,7 +886,13 @@ import {
     const onlinePriceInput = document.getElementById('item-online-sell-price');
     if (onlinePriceInput) onlinePriceInput.value = item.online_sell_price ?? item.onlineSellPrice ?? '';
     const feeInput = document.getElementById('item-marketplace-fee-percent');
-    if (feeInput) feeInput.value = Number((item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.395) * 100).toLocaleString('id-ID', { maximumFractionDigits: 3 });
+    if (feeInput) {
+      const rawFee = item.marketplace_fee_percent ?? item.marketplaceFeePercent;
+      const displayFee = (rawFee !== undefined && rawFee !== null && Math.abs(Number(rawFee) - 0.395) > 0.001)
+        ? Number(rawFee) * 100
+        : 14.5;
+      feeInput.value = displayFee.toLocaleString('id-ID', { maximumFractionDigits: 3 });
+    }
     sanitizeNumericInputElement(document.getElementById('item-cost-price'));
     sanitizeNumericInputElement(document.getElementById('item-sell-price'));
     sanitizeNumericInputElement(document.getElementById('item-online-sell-price'));
@@ -975,7 +1016,7 @@ import {
       const sell_price = parseNumericValue(document.getElementById('item-sell-price')?.value);
       const onlinePriceInput = document.getElementById('item-online-sell-price')?.value ?? '';
       const online_sell_price = onlinePriceInput.trim() === '' ? null : parseNumericValue(onlinePriceInput);
-      const feePercentInput = document.getElementById('item-marketplace-fee-percent')?.value ?? '39.5';
+      const feePercentInput = document.getElementById('item-marketplace-fee-percent')?.value ?? '14.5';
       const marketplace_fee_percent = Number(String(feePercentInput).replace(',', '.')) / 100;
       const min_stock = parseNumericValue(document.getElementById('item-min-stock')?.value);
 
@@ -2046,7 +2087,7 @@ import {
       const costPrice = Number(item.cost_price || item.costPrice) || 0;
       const sellPrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const markup = costPrice > 0 ? Math.round(((sellPrice - costPrice) / costPrice) * 100) : (sellPrice > 0 ? 100 : 0);
-      const fee = item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.395;
+      const fee = item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? null;
       const onlinePricing = getOnlinePricing(costPrice, item.online_sell_price, fee);
       const offlineProfit = sellPrice - costPrice;
       const markupColor = markup >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]';
@@ -2121,7 +2162,7 @@ import {
         <td class="px-4 py-3.5 text-right ${offlineProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-semibold">${formatRupiah(offlineProfit)}</td>
         <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
-        <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
+        <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap" title="Potongan Shopee Star+: ${formatRupiah(onlinePricing.feeNominal)} (${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%)">${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">
           <div class="inline-flex items-center justify-end gap-1.5">
             <span class="${onlinePricing.netProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}">${formatRupiah(onlinePricing.netProfit)}</span>
@@ -2530,7 +2571,7 @@ import {
   function getBulkPriceProjection(item, nominalValue, percentValue, hasValue) {
     const cost = Number(item.cost_price || item.costPrice) || 0;
     const offlinePrice = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
-    const marketplaceFee = item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.395;
+    const marketplaceFee = item.marketplace_fee_percent ?? item.marketplaceFeePercent ?? 0.145;
     const online = getOnlinePricing(cost, item.online_sell_price, marketplaceFee);
     const oldPrice = bulkPriceTarget === 'online' ? online.price : offlinePrice;
     const oldMarkup = cost > 0

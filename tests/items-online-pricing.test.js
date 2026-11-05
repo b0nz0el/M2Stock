@@ -18,13 +18,13 @@ describe('Master Barang — harga offline dan online', () => {
   });
 
   it('menghitung markup online dari harga beli dan harga online tersimpan', () => {
-    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice, marketplaceFee = 0\.395\) \{[\s\S]*?\n  \}/);
+    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice, marketplaceFee = null[\s\S]*?\n  \}/);
     expect(pricingFunction).not.toBeNull();
 
     const getOnlinePricing = new Function(`${pricingFunction[0]}; return getOnlinePricing;`)();
-    expect(getOnlinePricing(10000)).toMatchObject({ price: 16529, markup: 0, netProfit: 0 });
-    expect(getOnlinePricing(10000, null)).toMatchObject({ price: 16529, markup: 0, netProfit: 0 });
-    expect(getOnlinePricing(10000, 13150)).toMatchObject({ price: 13150, markup: -20.44, netProfit: -2044 });
+    expect(getOnlinePricing(10000)).toMatchObject({ price: 18000, markup: 36.4, netProfit: 3640 });
+    expect(getOnlinePricing(10000, null)).toMatchObject({ price: 18000, markup: 36.4, netProfit: 3640 });
+    expect(getOnlinePricing(10000, 13150)).toMatchObject({ price: 13150, markup: -5.07, netProfit: -507 });
     expect(getOnlinePricing(0)).toMatchObject({ price: 0, markup: 0, netProfit: 0 });
   });
 
@@ -43,7 +43,7 @@ describe('Master Barang — harga offline dan online', () => {
       ? [itemsJs.slice(bulkFunctionStart, bulkFunctionEnd).trim()]
       : null;
     expect(functionMatch).not.toBeNull();
-    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice, marketplaceFee = 0\.395\) \{[\s\S]*?\n  \}/);
+    const pricingFunction = itemsJs.match(/function getOnlinePricing\(costPrice, onlinePrice, marketplaceFee = null[\s\S]*?\n  \}/);
     const createProjection = new Function(
       'getOnlinePricing',
       'bulkPriceTarget',
@@ -68,9 +68,9 @@ describe('Master Barang — harga offline dan online', () => {
       'percent'
     )({ cost_price: 10000, online_sell_price: 12500 }, 0, 32.5, true);
     expect(onlineProjection).toMatchObject({
-      newPrice: 21901,
+      newPrice: 15497,
       newMarkup: 32.5,
-      update: { online_sell_price: 21901 }
+      update: { online_sell_price: 15497 }
     });
 
     const nominalProjection = createProjection(
@@ -80,7 +80,7 @@ describe('Master Barang — harga offline dan online', () => {
     )({ cost_price: 10000, online_sell_price: 12500 }, 13579, 0, true);
     expect(nominalProjection).toMatchObject({
       newPrice: 13579,
-      newMarkup: -17.85,
+      newMarkup: 16.1,
       update: { online_sell_price: 13579 }
     });
   });
