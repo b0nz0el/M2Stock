@@ -40,6 +40,72 @@
     return `<span class="badge bg-[#0088CC]/15 text-[#32ADE6]">Offline</span>`;
   }
 
+  function parsePosReceiptMeta(note) {
+    const text = String(note || '');
+    const read = (key) => {
+      const match = text.match(new RegExp(`(?:^|\\|)${key}=(-?[0-9]+(?:\\.[0-9]+)?)(?:\\||$)`));
+      return match ? Number(match[1]) : null;
+    };
+    return {
+      discount: Math.max(0, read('AQ_DISCOUNT') || 0),
+      tax: Math.max(0, read('AQ_TAX') || 0),
+      total: read('AQ_TOTAL')
+    };
+  }
+
+  function getTransactionOutQty(txOrQty) {
+    const qty = Math.abs(Number(typeof txOrQty === 'object' ? (txOrQty?.qty ?? txOrQty?.quantity) : txOrQty) || 0);
+    return qty;
+  }
+
+  function getTransactionCode(tx) {
+    if (!tx) return '-';
+    const note = String(tx.note || tx.notes || '');
+    const invMatch = note.match(/\[(INV-[^\]]+)\]/i);
+    if (invMatch) return invMatch[1];
+    const spxMatch = note.match(/\[(SPX-[^\]]+)\]/i);
+    if (spxMatch) return spxMatch[1];
+    const tkpMatch = note.match(/\[(TKP-[^\]]+)\]/i);
+    if (tkpMatch) return tkpMatch[1];
+    if (note && (note.includes('SPX-') || note.includes('INV-') || note.includes('TKP-'))) {
+      const firstWord = note.split(' ')[0].replace(/^[\[\(]+|[\]\)]+$/g, '');
+      if (firstWord) return firstWord;
+    }
+    return `OUT-${String(tx.id || '').padStart(6, '0')}`;
+  }
+
+  function getTransactionNetTotal(tx, list = []) {
+    const qty = getTransactionOutQty(tx);
+    const gross = qty * (Number(tx?.price ?? tx?.unit_price) || 0);
+    const meta = parsePosReceiptMeta(tx?.note || tx?.notes);
+    if (meta.total === null || meta.total === undefined) {
+      return gross;
+    }
+    const invCode = getTransactionCode(tx);
+    const siblings = (Array.isArray(list) && list.length > 0)
+      ? list.filter(t => getTransactionCode(t) === invCode)
+      : [tx];
+    const totalGross = siblings.reduce((sum, t) => sum + (getTransactionOutQty(t) * (Number(t?.price ?? t?.unit_price) || 0)), 0);
+    if (totalGross <= 0) return meta.total;
+    const ratio = gross / totalGross;
+    return Math.round(meta.total * ratio);
+  }
+
+  function getTransactionItemDiscount(tx, list = []) {
+    const qty = getTransactionOutQty(tx);
+    const gross = qty * (Number(tx?.price ?? tx?.unit_price) || 0);
+    const meta = parsePosReceiptMeta(tx?.note || tx?.notes);
+    if (!meta.discount) return 0;
+    const invCode = getTransactionCode(tx);
+    const siblings = (Array.isArray(list) && list.length > 0)
+      ? list.filter(t => getTransactionCode(t) === invCode)
+      : [tx];
+    const totalGross = siblings.reduce((sum, t) => sum + (getTransactionOutQty(t) * (Number(t?.price ?? t?.unit_price) || 0)), 0);
+    if (totalGross <= 0) return meta.discount;
+    const ratio = gross / totalGross;
+    return Math.round(meta.discount * ratio);
+  }
+
   let currentDashboardPeriod = '30d';
 
   function handleDashboardPeriodChange(period) {
@@ -145,9 +211,11 @@
             const kasir = (typeof window.resolveUserName === 'function')
               ? window.resolveUserName(tx.created_by)
               : (typeof tx.created_by === 'string' && !tx.created_by.includes('-') ? tx.created_by : 'David');
-            const qtyStr = `-${tx.qty}`;
+            const qty = getTransactionOutQty(tx);
+            const qtyStr = `-${qty}`;
             const qtyClass = 'text-[#FF3B30]';
-            const total = (tx.qty || 0) * (tx.price || 0);
+            const netTotal = getTransactionNetTotal(tx, outTransactions);
+            const discountVal = getTransactionItemDiscount(tx, outTransactions);
 
             return `
               <tr class="table-row border-b border-white/5">
@@ -156,7 +224,10 @@
                 <td data-label="CHANNEL" class="px-5 py-3.5">${channelBadge}</td>
                 <td data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}" class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(kasir)}</td>
                 <td data-label="JUMLAH" class="px-5 py-3.5 text-right font-semibold ${qtyClass}">${qtyStr}</td>
-                <td data-label="TOTAL" class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
+                <td data-label="TOTAL" class="px-5 py-3.5 text-right font-semibold text-white">
+                  ${formatRupiahVal(netTotal)}
+                  ${discountVal > 0 ? `<div class="text-[10px] text-[#34C759] font-normal leading-tight">Diskon ${formatRupiahVal(discountVal)}</div>` : ''}
+                </td>
               </tr>
             `;
           }).join('');
@@ -287,9 +358,9 @@
 
       filteredOutTransactions.forEach(t => {
         const prod = t.products || prodMap[String(t.product_id)] || {};
-        const rev = (Number(t.qty) || 0) * (Number(t.price) || Number(prod.sell_price) || 0);
+        const rev = getTransactionNetTotal(t, filteredOutTransactions);
         const unitCost = Number(t.cost_price) > 0 ? Number(t.cost_price) : Number(prod.cost_price || 0);
-        const cost = (Number(t.qty) || 0) * unitCost;
+        const cost = getTransactionOutQty(t) * unitCost;
         const pft = Math.max(0, rev - cost);
 
         totalPeriodSales += rev;
@@ -367,6 +438,13 @@
   if (typeof window !== 'undefined') {
     window.loadDashboardData = loadDashboardData;
     window.handleDashboardPeriodChange = handleDashboardPeriodChange;
+
+    window.addEventListener('aquastock:transactions-updated', () => {
+      loadDashboardData(null, false);
+    });
+    window.addEventListener('aquastock:products-updated', () => {
+      loadDashboardData(null, false);
+    });
   }
 
   if (document.readyState === 'loading') {

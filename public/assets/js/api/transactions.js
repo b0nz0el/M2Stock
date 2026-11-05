@@ -555,6 +555,7 @@ export const transactions = {
             });
           }
 
+          notifyProductsUpdated({ type: 'delete', id: targetId });
           try {
             if (typeof logAudit === 'function') {
               logAudit('DELETE', `Hapus Transaksi ID: ${targetId}`);

@@ -1,5 +1,5 @@
 const DOMAIN_LOADERS = {
-  products: ['loadItemsFromBackend', 'loadDropdowns'],
+  products: ['loadItemsFromBackend', 'loadDropdowns', 'loadDashboardData'],
   transactions: ['loadDashboardData', 'loadReport', 'loadInTransactions', 'loadOutTransactions'],
   cash: ['loadCashData', 'loadDashboardData', 'loadReport'],
   debt: ['loadData', 'loadDashboardData', 'loadReport'],

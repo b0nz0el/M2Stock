@@ -217,4 +217,69 @@ describe('Dashboard Transaksi Barang Masuk & Keluar', () => {
     const inList = document.getElementById('recent-in-transactions-list');
     expect(inList.innerHTML).toContain('Belum ada transaksi barang masuk');
   });
+
+  it('menyinkronkan nilai total bersih dan diskon transaksi barang keluar persis seperti dashboard/out/', async () => {
+    document.body.innerHTML = `
+      <div id="dash-total-items"></div>
+      <div id="dash-total-stock"></div>
+      <div id="dash-stock-value"></div>
+      <div id="dash-critical-stock"></div>
+      <div id="restock-list"></div>
+      <div id="recent-in-transactions-list"></div>
+      <table>
+        <tbody id="recent-transactions-tbody"></tbody>
+      </table>
+      <div id="top-products-list"></div>
+      <div id="dash-sales-summary"></div>
+    `;
+
+    window.Api.transactions.getAll.mockResolvedValue({
+      ok: true,
+      data: [
+        {
+          id: 3725,
+          type: 'out',
+          product_id: 10,
+          products: { name: 'Berlian Magot 60g', cost_price: 5000 },
+          channel: 'Shopee',
+          qty: 1,
+          price: 20000,
+          note: '[INV-261104-3725] Pesanan Shopee |AQ_DISCOUNT=10135|AQ_TOTAL=9865',
+          created_by: 'Habitic',
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 4223,
+          type: 'out',
+          product_id: 11,
+          products: { name: 'Acriflavine 100ml', cost_price: 2000 },
+          channel: 'Shopee',
+          qty: 1,
+          price: 7500,
+          note: '[INV-261104-4223] Pesanan Shopee |AQ_DISCOUNT=4475|AQ_TOTAL=3025',
+          created_by: 'Habitic',
+          created_at: new Date().toISOString()
+        }
+      ]
+    });
+
+    const runDashboard = new Function('window', 'document', 'Api', dashboardScript);
+    runDashboard(window, document, window.Api);
+    await window.loadDashboardData();
+
+    const outTbody = document.getElementById('recent-transactions-tbody');
+    expect(outTbody.innerHTML).toContain('9.865');
+    expect(outTbody.innerHTML).toContain('10.135');
+    expect(outTbody.innerHTML).toContain('3.025');
+    expect(outTbody.innerHTML).toContain('4.475');
+  });
+
+  it('mendengarkan event aquastock:transactions-updated dan otomatis memuat ulang dashboard', () => {
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    const runDashboard = new Function('window', 'document', 'Api', dashboardScript);
+    runDashboard(window, document, window.Api);
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith('aquastock:transactions-updated', expect.any(Function));
+    expect(addEventListenerSpy).toHaveBeenCalledWith('aquastock:products-updated', expect.any(Function));
+  });
 });

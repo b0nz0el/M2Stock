@@ -2364,6 +2364,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   window.addEventListener('aquastock:channels-updated', loadChannelDropdown);
+  window.addEventListener('aquastock:transactions-updated', () => {
+    if (typeof loadOutTransactions === 'function') {
+      loadOutTransactions();
+    }
+  });
   window.refreshIcons?.();
 });
 
