@@ -2164,7 +2164,7 @@ import {
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
         <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap" title="Potongan Shopee Star+: ${formatRupiah(onlinePricing.feeNominal)} (${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%)">${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">
-          <div class="inline-flex items-center justify-end gap-1.5">
+          <div class="inline-flex items-center justify-end gap-1.5" title="Dihitung per 1 pcs eceran Shopee. Untuk simulasi paket / multi-item, gunakan menu Simulasi Harga">
             <span class="${onlinePricing.netProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}">${formatRupiah(onlinePricing.netProfit)}</span>
             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${onlinePricing.statusBadgeClass}">${onlinePricing.status}</span>
           </div>

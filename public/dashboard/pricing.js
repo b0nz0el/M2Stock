@@ -121,6 +121,48 @@ import { Api } from '../assets/js/api/index.js';
     };
   }
 
+  const STORAGE_KEY_SIMULATION = 'aquastock_pricing_simulation_v1';
+
+  function saveSimulationData() {
+    try {
+      const obj = {};
+      state.simulationData.forEach((val, key) => {
+        obj[key] = {
+          diskonPrice: val.diskonPrice,
+          coretPrice: val.coretPrice,
+          qty: val.qty,
+          packing: val.packing
+        };
+      });
+      localStorage.setItem(STORAGE_KEY_SIMULATION, JSON.stringify(obj));
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  function loadSavedSimulation() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_SIMULATION);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          Object.entries(parsed).forEach(([key, val]) => {
+            if (val && typeof val === 'object') {
+              state.simulationData.set(key, {
+                diskonPrice: Number(val.diskonPrice) || 0,
+                coretPrice: Number(val.coretPrice) || 0,
+                qty: Math.max(1, Math.min(99, parseInt(val.qty, 10) || 1)),
+                packing: Number(val.packing) >= 0 ? Number(val.packing) : state.defaultPacking
+              });
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
   async function loadItems() {
     const tbody = document.getElementById('pricing-tbody');
     if (tbody) {
@@ -157,20 +199,30 @@ import { Api } from '../assets/js/api/index.js';
       list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       state.items = list;
 
+      // Muat data simulasi yang tersimpan di localStorage jika ada
+      loadSavedSimulation();
+
       // Inisialisasi simulasi untuk setiap item jika belum ada
       list.forEach(item => {
-        if (!state.simulationData.has(String(item.id))) {
-          const cost = Number(item.cost_price) || 0;
-          const offlinePrice = Number(item.sell_price) || 0;
-          let diskonPrice = Number(item.online_sell_price);
-          if (!Number.isFinite(diskonPrice) || diskonPrice <= 0) {
-            diskonPrice = offlinePrice > 0 ? offlinePrice : Math.round(cost * 1.5);
+        const idStr = String(item.id);
+        const existing = state.simulationData.get(idStr);
+        const cost = Number(item.cost_price) || 0;
+        const offlinePrice = Number(item.sell_price) || 0;
+        let diskonPrice = Number(item.online_sell_price);
+        if (!Number.isFinite(diskonPrice) || diskonPrice <= 0) {
+          diskonPrice = offlinePrice > 0 ? offlinePrice : Math.round(cost * 1.5);
+        }
+
+        if (existing) {
+          if (!existing.diskonPrice || existing.diskonPrice <= 0) {
+            existing.diskonPrice = diskonPrice;
           }
+        } else {
           // Harga coret default: 2.5x atau min 1.4x diskon price
           let coretPrice = Math.round(diskonPrice * 2.5);
           if (coretPrice < 15000 && diskonPrice <= 5000) coretPrice = 15000;
 
-          state.simulationData.set(String(item.id), {
+          state.simulationData.set(idStr, {
             diskonPrice,
             coretPrice,
             qty: 1,
@@ -633,6 +685,7 @@ import { Api } from '../assets/js/api/index.js';
         const tr = input.closest('tr');
         updateRowMetricsDom(tr, item, rowSim);
         renderSummaryCounters();
+        saveSimulationData();
       });
 
       // Blur event: memastikan input kosong kembali diformat rapi
@@ -660,6 +713,7 @@ import { Api } from '../assets/js/api/index.js';
         const tr = input.closest('tr');
         updateRowMetricsDom(tr, item, rowSim);
         renderSummaryCounters();
+        saveSimulationData();
       }, true);
 
       // Checkbox selection
