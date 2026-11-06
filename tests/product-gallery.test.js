@@ -17,7 +17,7 @@ vi.mock('../public/assets/js/api/_client.js', () => ({
   logAudit: vi.fn()
 }));
 
-import { items, parseItemImages } from '../public/assets/js/api/items.js';
+import { items, parseItemImages, resolveEffectiveItemImages, isStudioImagePath } from '../public/assets/js/api/items.js';
 
 describe('Product Images Gallery & Multi-Photo Feature', () => {
   describe('parseItemImages helper', () => {
@@ -129,6 +129,89 @@ describe('Product Images Gallery & Multi-Photo Feature', () => {
       const item = res.data[0];
       expect(item.image_url).toBe(legacyUrl);
       expect(item.images).toEqual([legacyUrl]);
+    });
+
+    it('does NOT add or inject studio catalog image when user has uploaded/entered a custom image (keeps exactly 1 photo)', async () => {
+      const userPhoto = 'https://supabase.co/storage/v1/object/public/products/PAK-BER-004-user.webp';
+      const productRow = {
+        id: '263',
+        sku: 'PAK-BER-004', // Matches Berlian kasar in official catalog
+        name: 'Berlian kasar 55g',
+        image_url: userPhoto,
+        categories: { name: 'Pakan' },
+        units: { name: 'pcs' }
+      };
+
+      window.supabase = {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            order: vi.fn(() => Promise.resolve({ data: [productRow], error: null }))
+          }))
+        }))
+      };
+
+      const res = await items.getAll();
+      expect(res.ok).toBe(true);
+      const item = res.data[0];
+      // Hanya foto milik user yang tampil, tidak boleh ada penambahan foto studio tanpa izin (total foto = 1, bukan 2)
+      expect(item.image_url).toBe(userPhoto);
+      expect(item.images).toEqual([userPhoto]);
+      expect(item.images).toHaveLength(1);
+    });
+
+    it('cleans up legacy injected studio image when user has a custom photo', async () => {
+      const userPhoto = 'https://supabase.co/storage/v1/object/public/products/PAK-BER-011-user.webp';
+      const studioPhoto = '/assets/images/products/habitic-berlian-magot-60g-perlengkapan-akuarium-original.webp';
+      const productRow = {
+        id: '265',
+        sku: 'PAK-BER-011',
+        name: 'Berlian Magot 60g',
+        image_url: JSON.stringify([studioPhoto, userPhoto]),
+        categories: { name: 'Pakan' },
+        units: { name: 'pcs' }
+      };
+
+      window.supabase = {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            order: vi.fn(() => Promise.resolve({ data: [productRow], error: null }))
+          }))
+        }))
+      };
+
+      const res = await items.getAll();
+      expect(res.ok).toBe(true);
+      const item = res.data[0];
+      // Foto studio bawaan sistem disingkirkan, hanya menyisakan 1 foto asli milik user
+      expect(item.image_url).toBe(userPhoto);
+      expect(item.images).toEqual([userPhoto]);
+      expect(item.images).toHaveLength(1);
+    });
+
+    it('falls back to single catalog studio image only when product has zero photos', async () => {
+      const productRow = {
+        id: '263',
+        sku: 'PAK-BER-004',
+        name: 'Berlian kasar 55g',
+        image_url: null,
+        categories: { name: 'Pakan' },
+        units: { name: 'pcs' }
+      };
+
+      window.supabase = {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            order: vi.fn(() => Promise.resolve({ data: [productRow], error: null }))
+          }))
+        }))
+      };
+
+      const res = await items.getAll();
+      expect(res.ok).toBe(true);
+      const item = res.data[0];
+      expect(item.image_url).toBe('/assets/images/products/habitic-berlian-kasar-55g-perlengkapan-akuarium-original.webp');
+      expect(item.images).toEqual(['/assets/images/products/habitic-berlian-kasar-55g-perlengkapan-akuarium-original.webp']);
+      expect(item.images).toHaveLength(1);
     });
   });
 

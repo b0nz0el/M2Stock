@@ -64,6 +64,51 @@ export function parseItemImages(rawImageUrl, rawImages) {
   return [];
 }
 
+export function isStudioImagePath(url) {
+  if (typeof url !== 'string') return false;
+  return url.startsWith('/assets/images/products/') ||
+         url.startsWith('assets/images/products/') ||
+         url.includes('habitic.pages.dev/assets/images/products/');
+}
+
+export function resolveEffectiveItemImages(item, customStudioResolver = null) {
+  const itemImages = parseItemImages(item?.image_url, item?.images);
+  const customImages = itemImages.filter(img => typeof img === 'string' && !isStudioImagePath(img));
+  const studioImages = itemImages.filter(img => typeof img === 'string' && isStudioImagePath(img));
+
+  // 1. Jika produk sudah memiliki foto dari pengguna (diinput/diunggah), foto pengguna adalah mutlak.
+  //    Jangan pernah menambahkan foto katalog studio sistem tanpa izin pengguna!
+  if (customImages.length > 0) {
+    return {
+      primaryImageUrl: customImages[0],
+      images: customImages
+    };
+  }
+
+  // 2. Jika tersimpan foto katalog studio (dan belum ada foto custom dari pengguna)
+  if (studioImages.length > 0) {
+    return {
+      primaryImageUrl: studioImages[0],
+      images: [studioImages[0]]
+    };
+  }
+
+  // 3. Fallback: Jika produk belum memiliki foto sama sekali (0 foto), gunakan 1 foto katalog studio resmi jika cocok
+  const resolver = typeof customStudioResolver === 'function' ? customStudioResolver : resolveProductStudioImage;
+  const fallbackStudio = typeof resolver === 'function' ? resolver(item) : null;
+  if (fallbackStudio) {
+    return {
+      primaryImageUrl: fallbackStudio,
+      images: [fallbackStudio]
+    };
+  }
+
+  return {
+    primaryImageUrl: null,
+    images: []
+  };
+}
+
 export function parseItemChannels(rawChannel, rawChannelLink, localMeta) {
   // Persisted channel data is authoritative; local metadata is only a migration fallback.
   if (typeof rawChannelLink === 'string') {
@@ -153,12 +198,16 @@ if (typeof window !== 'undefined') {
   window.parseItemChannels = parseItemChannels;
   window.getLocalChannelMeta = getLocalChannelMeta;
   window.saveLocalChannelMeta = saveLocalChannelMeta;
+  window.isStudioImagePath = isStudioImagePath;
+  window.resolveEffectiveItemImages = resolveEffectiveItemImages;
 }
 
 export const items = {
   getLocalChannelMeta,
   saveLocalChannelMeta,
   parseItemChannels,
+  isStudioImagePath,
+  resolveEffectiveItemImages,
   list: (params, opts) => items.getAll(params, opts),
   getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
@@ -193,17 +242,7 @@ export const items = {
           }
 
           const mapped = (data || []).map(function (item) {
-            const studioImage = resolveProductStudioImage(item);
-            const itemImages = parseItemImages(item.image_url, item.images);
-            let effectiveImages = itemImages;
-            let primaryImageUrl = null;
-            if (studioImage) {
-              primaryImageUrl = studioImage;
-              const cleanExisting = itemImages.filter(img => typeof img === 'string' && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'));
-              effectiveImages = [studioImage, ...cleanExisting.filter(img => img !== studioImage)];
-            } else {
-              primaryImageUrl = itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
-            }
+            const { primaryImageUrl, images: effectiveImages } = resolveEffectiveItemImages(item, resolveProductStudioImage);
             const localMeta = getLocalChannelMeta(item.id, item.sku);
             const persistedChannels = parseItemChannels(item.channel, item.channel_link, null);
             const channels = persistedChannels.length > 0
@@ -291,17 +330,7 @@ export const items = {
             });
           }
 
-          const studioImage = resolveProductStudioImage(data);
-          const itemImages = parseItemImages(data.image_url, data.images);
-          let effectiveImages = itemImages;
-          let primaryImageUrl = null;
-          if (studioImage) {
-            primaryImageUrl = studioImage;
-            const cleanExisting = itemImages.filter(img => typeof img === 'string' && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'));
-            effectiveImages = [studioImage, ...cleanExisting.filter(img => img !== studioImage)];
-          } else {
-            primaryImageUrl = itemImages[0] || (typeof data.image_url === 'string' && !data.image_url.startsWith('[') ? data.image_url : null);
-          }
+          const { primaryImageUrl, images: effectiveImages } = resolveEffectiveItemImages(data, resolveProductStudioImage);
           const localMeta = getLocalChannelMeta(data.id, data.sku);
           const channels = parseItemChannels(data.channel, data.channel_link, localMeta);
           const effectiveChannel = (channels[0]?.channel) || ((data.channel && data.channel !== 'Offline') ? data.channel : ((localMeta && localMeta.channel) || data.channel || 'Offline'));

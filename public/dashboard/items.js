@@ -3,6 +3,15 @@ import {
   MARKETPLACE_LINK_CSV_HEADERS,
   prepareMarketplaceLinkImport
 } from '../assets/js/utils/marketplace-link-import.js';
+  const isStudioImagePath = function (url) {
+    if (typeof window !== 'undefined' && typeof window.isStudioImagePath === 'function') {
+      return window.isStudioImagePath(url);
+    }
+    if (typeof url !== 'string') return false;
+    return url.startsWith('/assets/images/products/') ||
+           url.startsWith('assets/images/products/') ||
+           url.includes('habitic.pages.dev/assets/images/products/');
+  };
 
   const resolveStudioImage = function (item) {
     if (typeof window !== 'undefined' && window.ProductCatalogImages && typeof window.ProductCatalogImages.resolveProductStudioImage === 'function') {
@@ -16,6 +25,24 @@ import {
       return window.ProductCatalogImages.getProductStudioImageMeta(item);
     }
     return null;
+  };
+
+  const resolveEffectiveItemImages = function (item, customStudioResolver) {
+    if (typeof window !== 'undefined' && typeof window.resolveEffectiveItemImages === 'function') {
+      return window.resolveEffectiveItemImages(item, customStudioResolver || resolveStudioImage);
+    }
+    const itemImages = parseProductImages(item?.images || item?.image_url);
+    const customImages = itemImages.filter(img => typeof img === 'string' && !isStudioImagePath(img));
+    const studioImages = itemImages.filter(img => typeof img === 'string' && isStudioImagePath(img));
+    if (customImages.length > 0) {
+      return { primaryImageUrl: customImages[0], images: customImages };
+    }
+    if (studioImages.length > 0) {
+      return { primaryImageUrl: studioImages[0], images: [studioImages[0]] };
+    }
+    const resolver = typeof customStudioResolver === 'function' ? customStudioResolver : resolveStudioImage;
+    const fallback = typeof resolver === 'function' ? resolver(item) : null;
+    return { primaryImageUrl: fallback, images: fallback ? [fallback] : [] };
   };
 
   let currentItems = [];
@@ -915,11 +942,10 @@ import {
     itemChannelsState = existingChannels.map(c => ({ channel: c.channel || 'Offline', link: c.link || '' }));
     renderItemChannelsList();
 
-    const studioImg = resolveStudioImage(item);
-    const rawParsedImages = parseProductImages(item.images || item.image_url);
-    const existingImages = studioImg
-      ? [studioImg, ...rawParsedImages.filter(img => typeof img === 'string' && img !== studioImg && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'))]
-      : rawParsedImages;
+    const resolved = (typeof resolveEffectiveItemImages === 'function')
+      ? resolveEffectiveItemImages(item, resolveStudioImage)
+      : { primaryImageUrl: item.image_url, images: parseProductImages(item.images || item.image_url) };
+    const existingImages = resolved.images;
     if (existingImages.length > 0) {
       existingImages.forEach((url, i) => {
         productPhotos.push({
@@ -2102,14 +2128,15 @@ import {
         return 'Rp ' + Number(num).toLocaleString('id-ID');
       };
 
-      const studioImg = resolveStudioImage(item);
-      const studioMeta = getStudioMeta(item);
+      const resolved = (typeof resolveEffectiveItemImages === 'function')
+        ? resolveEffectiveItemImages(item, resolveStudioImage)
+        : { primaryImageUrl: item.image_url, images: parseProductImages(item.images || item.image_url) };
+      const itemImages = resolved.images;
+      const coverImage = resolved.primaryImageUrl;
+      const studioMeta = (coverImage && typeof isStudioImagePath === 'function' && isStudioImagePath(coverImage))
+        ? getStudioMeta(item)
+        : null;
       const cdnUrl = studioMeta ? studioMeta.cdn : '';
-      const rawParsedImages = parseProductImages(item.images || item.image_url);
-      const itemImages = studioImg
-        ? [studioImg, ...rawParsedImages.filter(img => typeof img === 'string' && img !== studioImg && !img.includes('.supabase.co/storage') && !img.includes('/product-images/'))]
-        : rawParsedImages;
-      const coverImage = studioImg || itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : null);
       const hasMultipleImages = itemImages.length > 1;
       const imagesAttr = escapeHtml(JSON.stringify(itemImages.length > 0 ? itemImages : (coverImage ? [coverImage] : [])));
 
@@ -2943,9 +2970,10 @@ import {
       const p = Number(item.sell_price || item.sellPrice || item.unitPrice) || 0;
       const m = c > 0 ? Math.round(((p - c) / c) * 100) : (p > 0 ? 100 : 0);
       const onlinePricing = getOnlinePricing(c, item.online_sell_price);
-      const studioImg = resolveStudioImage(item);
-      const itemImages = parseProductImages(item.images || item.image_url);
-      const photo = studioImg || itemImages[0] || (typeof item.image_url === 'string' && !item.image_url.startsWith('[') ? item.image_url : '-');
+      const resolved = (typeof resolveEffectiveItemImages === 'function')
+        ? resolveEffectiveItemImages(item, resolveStudioImage)
+        : { primaryImageUrl: item.image_url, images: parseProductImages(item.images || item.image_url) };
+      const photo = resolved.primaryImageUrl || '-';
       return [item.id, photo, item.sku || '-', item.barcode || '-', item.name, item.brand || '-', item.category || 'Umum', s, min, c, p, m, onlinePricing.price, onlinePricing.markup];
     });
 
