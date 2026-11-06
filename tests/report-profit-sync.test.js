@@ -225,4 +225,69 @@ describe('Sinkronisasi Laba Dashboard & Report (/dashboard/ vs /dashboard/report
     expect(res.data.kpi.grossProfit).toBe(7000); // 20.000 - 13.000
     expect(res.data.kpi.profitMargin).toBe(35);
   });
+
+  it('menghitung pendapatan bersih dan mengurutkan barang terlaris berdasarkan omzet riil setelah diskon', async () => {
+    const discountedTx = [
+      {
+        id: 3725,
+        type: 'out',
+        product_id: 102,
+        qty: 1,
+        price: 20000,
+        cost_price: 8000,
+        channel: 'Shopee',
+        note: '[INV-261104-3725] Pesanan Shopee |AQ_DISCOUNT=10135|AQ_TOTAL=9865',
+        created_at: '2026-11-05T04:24:00Z'
+      },
+      {
+        id: 9996,
+        type: 'out',
+        product_id: 101,
+        qty: 1,
+        price: 17000,
+        cost_price: 11200,
+        channel: 'Offline',
+        created_at: '2026-10-25T11:30:00Z'
+      }
+    ];
+
+    const client = {
+      from: vi.fn((table) => {
+        if (table === 'transactions') {
+          const query = {
+            select: vi.fn(() => query),
+            order: vi.fn(() => query),
+            gte: vi.fn(() => query),
+            lte: vi.fn(() => query),
+            then: (resolve) => resolve({ data: discountedTx, error: null })
+          };
+          return query;
+        }
+        if (table === 'products') {
+          const query = {
+            select: vi.fn(() => query),
+            then: (resolve) => resolve({ data: mockProducts, error: null })
+          };
+          return query;
+        }
+      })
+    };
+
+    window.supabase = client;
+
+    const res = await reportApi.getSummary();
+    expect(res.ok).toBe(true);
+
+    const { kpi, topProducts } = res.data;
+    // Total Sales: 17000 (Super vit) + 9865 (Berlian Udang net) = 26865
+    expect(kpi.totalSales).toBe(26865);
+
+    // Ranking #1 harus Super vit (17.000), bukan Berlian Udang (9.865)
+    expect(topProducts[0].name).toBe('Super vit 270g');
+    expect(topProducts[0].revenue).toBe(17000);
+
+    expect(topProducts[1].name).toBe('Berlian Udang 50g');
+    expect(topProducts[1].revenue).toBe(9865);
+    expect(topProducts[1].profit).toBe(9865 - 8000);
+  });
 });

@@ -1424,6 +1424,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     window.generateReportPrintHTML = generateReportPrintHTML;
     window.printReportPDF = printReportPDF;
     window.setReportTab = setReportTab;
+
+    window.addEventListener('aquastock:transactions-updated', () => {
+      loadReport(false);
+    });
+    window.addEventListener('aquastock:products-updated', () => {
+      loadReport(false);
+    });
   }
 
   if (document.readyState === 'loading') {

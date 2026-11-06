@@ -6,6 +6,57 @@
 import { supabase } from '../supabase-client.js';
 import { formatResponse, handleError } from './_client.js';
 
+function parsePosReceiptMeta(note) {
+  const text = String(note || '');
+  const read = (key) => {
+    const match = text.match(new RegExp(`(?:^|\\|)${key}=(-?[0-9]+(?:\\.[0-9]+)?)(?:\\||$)`));
+    return match ? Number(match[1]) : null;
+  };
+  return {
+    discount: Math.max(0, read('AQ_DISCOUNT') || 0),
+    tax: Math.max(0, read('AQ_TAX') || 0),
+    total: read('AQ_TOTAL')
+  };
+}
+
+function getTransactionOutQty(txOrQty) {
+  const qty = Math.abs(Number(typeof txOrQty === 'object' ? (txOrQty?.qty ?? txOrQty?.quantity) : txOrQty) || 0);
+  return qty;
+}
+
+function getTransactionCode(tx) {
+  if (!tx) return '-';
+  const note = String(tx.note || tx.notes || '');
+  const invMatch = note.match(/\[(INV-[^\]]+)\]/i);
+  if (invMatch) return invMatch[1];
+  const spxMatch = note.match(/\[(SPX-[^\]]+)\]/i);
+  if (spxMatch) return spxMatch[1];
+  const tkpMatch = note.match(/\[(TKP-[^\]]+)\]/i);
+  if (tkpMatch) return tkpMatch[1];
+  if (note && (note.includes('SPX-') || note.includes('INV-') || note.includes('TKP-'))) {
+    const firstWord = note.split(' ')[0].replace(/^[\[\(]+|[\]\)]+$/g, '');
+    if (firstWord) return firstWord;
+  }
+  return `OUT-${String(tx.id || '').padStart(6, '0')}`;
+}
+
+function getTransactionNetTotal(tx, list = []) {
+  const qty = getTransactionOutQty(tx);
+  const gross = qty * (Number(tx?.price ?? tx?.unit_price) || 0);
+  const meta = parsePosReceiptMeta(tx?.note || tx?.notes);
+  if (meta.total === null || meta.total === undefined) {
+    return gross;
+  }
+  const invCode = getTransactionCode(tx);
+  const siblings = (Array.isArray(list) && list.length > 0)
+    ? list.filter(t => getTransactionCode(t) === invCode)
+    : [tx];
+  const totalGross = siblings.reduce((sum, t) => sum + (getTransactionOutQty(t) * (Number(t?.price ?? t?.unit_price) || 0)), 0);
+  if (totalGross <= 0) return meta.total;
+  const ratio = gross / totalGross;
+  return Math.round(meta.total * ratio);
+}
+
 export const report = {
   /**
    * Mengambil data dasar laporan (transaksi out + in + products + categories)
@@ -120,18 +171,19 @@ export const report = {
     const getTxPricing = (t) => {
       const pid = String(t.product_id || t.products?.id || '');
       const prod = t.products || productMap[pid] || {};
-      const qty = Number(t.qty) || 0;
+      const qty = getTransactionOutQty(t);
       const sellPrice = Number(t.price) || Number(prod.sell_price) || 0;
       // Prioritaskan snapshot HPP historis jika > 0, fallback ke cost_price master produk (IAS 2)
       const costPrice = (Number(t.cost_price) > 0)
         ? Number(t.cost_price)
         : (Number(prod.cost_price) || 0);
 
-      const revenue = qty * sellPrice;
+      const grossRevenue = qty * sellPrice;
+      const revenue = getTransactionNetTotal(t, outTransactions);
       const cogs = qty * costPrice;
       const profit = Math.max(0, revenue - cogs);
 
-      return { prod, pid, qty, sellPrice, costPrice, revenue, cogs, profit };
+      return { prod, pid, qty, sellPrice, costPrice, grossRevenue, revenue, cogs, profit };
     };
 
     let totalSales = 0;
