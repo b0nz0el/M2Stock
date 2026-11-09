@@ -240,6 +240,31 @@ describe('utils.js', () => {
       const successToast = document.querySelector('.toast--success');
       expect(successToast).not.toBeNull();
     });
+
+    it('mendukung action button opsional dan memicu callback saat diklik', () => {
+      const onAction = vi.fn();
+      showToast('Transaksi berhasil', 'success', {
+        action: { label: 'Lihat Struk', onClick: onAction }
+      });
+      const actionBtn = document.querySelector('.toast__action');
+      expect(actionBtn).not.toBeNull();
+      expect(actionBtn.textContent).toBe('Lihat Struk');
+
+      actionBtn.click();
+      expect(onAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('membatasi jumlah toast aktif maksimal 3 tumpukan di layar', () => {
+      showToast('Notif 1', 'info');
+      showToast('Notif 2', 'info');
+      showToast('Notif 3', 'info');
+      showToast('Notif 4', 'info');
+
+      const allToasts = document.querySelectorAll('.toast');
+      expect(allToasts.length).toBe(4);
+      // Toast tertua (pertama) otomatis diberi kelas toast--leaving
+      expect(allToasts[0].classList.contains('toast--leaving')).toBe(true);
+    });
   });
 
   describe('focusProgrammatically', () => {

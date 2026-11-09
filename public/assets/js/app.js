@@ -213,7 +213,7 @@ function initNotificationDropdown() {
       const rect = notifBtn.getBoundingClientRect();
       const panel = document.createElement('div');
       panel.id = 'notif-dropdown-panel';
-      panel.className = 'fixed z-50 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl p-4 w-88 max-w-[calc(100vw-32px)] backdrop-blur-xl';
+      panel.className = 'fixed z-50 bg-[#1C1C1E]/95 border border-white/10 rounded-2xl shadow-2xl p-4 w-88 max-w-[calc(100vw-32px)] backdrop-blur-xl dropdown-popover-enter';
       
       const rightOffset = Math.max(16, window.innerWidth - rect.right);
       panel.style.top = `${rect.bottom + 8}px`;
@@ -222,15 +222,29 @@ function initNotificationDropdown() {
       panel.innerHTML = `
         <div class="flex items-center justify-between pb-3 border-b border-white/5">
           <div class="flex items-center gap-2">
-            <h4 class="text-sm font-bold text-white">Notifikasi</h4>
+            <h4 class="text-sm font-bold text-white tracking-tight">Notifikasi</h4>
             <span id="notif-panel-badge" class="text-[10px] font-semibold bg-[#0088CC]/20 text-[#32ADE6] px-2 py-0.5 rounded-full">Memuat...</span>
           </div>
           <button type="button" id="btn-close-notif-panel" aria-label="Tutup notifikasi" class="p-1 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
-        <div id="notif-panel-content" class="py-6 text-center text-[#A0A0A5] text-xs">
-          <span class="inline-block animate-spin mr-1">⌛</span> Memuat notifikasi...
+        <div id="notif-panel-content" class="py-4 space-y-2.5">
+          <!-- Shimmer skeleton loader kelas dunia -->
+          <div class="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] animate-pulse">
+            <div class="w-7 h-7 rounded-lg bg-white/10 shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3 bg-white/10 rounded w-3/4"></div>
+              <div class="h-2.5 bg-white/5 rounded w-1/2"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] animate-pulse">
+            <div class="w-7 h-7 rounded-lg bg-white/10 shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3 bg-white/10 rounded w-2/3"></div>
+              <div class="h-2.5 bg-white/5 rounded w-1/3"></div>
+            </div>
+          </div>
         </div>
       `;
 

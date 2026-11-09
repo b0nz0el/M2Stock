@@ -114,49 +114,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if (!container) {
-      console.error('Toast container is missing');
-      return;
+    if (typeof window.showToast === 'function') {
+      window.showToast(message, type);
     }
-
-    const icons = {
-      success: 'check',
-      error: 'alert-circle',
-      info: 'info',
-      warning: 'alert-triangle'
-    };
-    const toast = document.createElement('div');
-    toast.className = `toast toast--${type}`;
-    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
-
-    const iconWrap = document.createElement('span');
-    iconWrap.className = 'toast__icon';
-    const icon = document.createElement('i');
-    icon.setAttribute('data-lucide', icons[type] || icons.info);
-    icon.setAttribute('aria-hidden', 'true');
-    iconWrap.appendChild(icon);
-
-    const text = document.createElement('span');
-    text.className = 'toast__message';
-    text.textContent = message;
-
-    const closeButton = document.createElement('button');
-    closeButton.type = 'button';
-    closeButton.className = 'toast__close';
-    closeButton.setAttribute('aria-label', 'Tutup notifikasi');
-    closeButton.textContent = '×';
-    closeButton.addEventListener('click', () => toast.remove());
-
-    toast.append(iconWrap, text, closeButton);
-
-    container.appendChild(toast);
-    if (window.refreshIcons) window.refreshIcons();
-
-    setTimeout(() => {
-      toast.classList.add('toast--leaving');
-      setTimeout(() => toast.remove(), 250);
-    }, 5000);
   }
 
   async function loadData() {

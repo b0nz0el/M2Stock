@@ -60,36 +60,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-
-    const colors = {
-      success: 'bg-[#34C759] text-black',
-      error: 'bg-[#FF3B30] text-white',
-      info: 'bg-[#0088CC] text-white',
-      warning: 'bg-[#FF9F0A] text-black'
-    };
-
-    const toast = document.createElement('div');
-    toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 text-sm font-semibold pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
-    toast.innerHTML = `
-      <span>${message}</span>
-      <button class="opacity-70 hover:opacity-100">&times;</button>
-    `;
-
-    toast.querySelector('button').onclick = () => {
-      toast.remove();
-    };
-
-    container.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.classList.remove('translate-y-2', 'opacity-0');
-    });
-
-    setTimeout(() => {
-      toast.classList.add('opacity-0', 'translate-y-2');
-      setTimeout(() => toast.remove(), 300);
-    }, 4000);
+    if (typeof window.showToast === 'function') {
+      window.showToast(message, type);
+    }
   }
 
   async function loadData() {

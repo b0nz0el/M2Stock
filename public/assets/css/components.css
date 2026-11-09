@@ -208,6 +208,30 @@ button:disabled:active {
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+.toast__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.toast__action:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+.toast__action:active {
+  transform: scale(0.96);
+}
 .toast__close {
   display: grid;
   flex: 0 0 28px;
@@ -290,6 +314,19 @@ button:disabled:active {
   to {
     transform: rotate(360deg);
   }
+}
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.dropdown-popover-enter {
+  animation: popoverIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ═══ PO & RETURN DIALOGS ═══ */

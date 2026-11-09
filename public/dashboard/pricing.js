@@ -974,17 +974,6 @@ import { Api } from '../assets/js/api/index.js';
   function showToastSuccess(msg) {
     if (typeof window.showToast === 'function') {
       window.showToast(msg, 'success');
-      return;
-    }
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = 'bg-[#34C759] text-black font-semibold text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-bounce-in';
-    toast.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> ${escapeHtml(msg)}`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-    if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
     }
   }
 

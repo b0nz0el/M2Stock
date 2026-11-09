@@ -3,9 +3,54 @@
    Helper global (toast, format/parse angka, animasi angka)
    ═══════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════
-   TOAST
+   TOAST NOTIFICATION (STANDAR INTERNASIONAL)
+   Hover-to-pause, swipe-to-dismiss, action button,
+   stacking limit, & spring physics.
    ═══════════════════════════════════════════════════ */
-function showToast(msg, type = 'success', duration = (type === 'loading' ? 8000 : 3000)) {
+function playNotificationChime(type) {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!window._notifAudioCtx) {
+      window._notifAudioCtx = new AudioCtx();
+    }
+    const ctx = window._notifAudioCtx;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'success') {
+      // Nada lembut naik ala fintech kelas dunia (C6 -> G6)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1046.5, now);
+      osc.frequency.exponentialRampToValueAtTime(1567.98, now + 0.08);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.035, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    } else if (type === 'error') {
+      // Nada lembut turun
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(311.13, now + 0.1);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.04, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    }
+  } catch (_) {
+    // Silent fail jika browser melarang autoplay audio sebelum gesture
+  }
+}
+
+function showToast(msg, type = 'success', durationOrOptions = (type === 'loading' ? 8000 : 3000)) {
   const variants = {
     success: { icon: 'check', role: 'status' },
     error: { icon: 'alert-circle', role: 'alert' },
@@ -16,6 +61,19 @@ function showToast(msg, type = 'success', duration = (type === 'loading' ? 8000 
   const variant = variants[type] || variants.info;
   const container = document.getElementById('toast-container') || document.body;
 
+  // Parsing parameter fleksibel (angka durasi atau options object)
+  let duration = type === 'loading' ? 8000 : 3000;
+  let actionConfig = null;
+  let enableSound = false;
+
+  if (typeof durationOrOptions === 'number') {
+    duration = durationOrOptions;
+  } else if (durationOrOptions && typeof durationOrOptions === 'object') {
+    if (typeof durationOrOptions.duration === 'number') duration = durationOrOptions.duration;
+    if (durationOrOptions.action && typeof durationOrOptions.action === 'object') actionConfig = durationOrOptions.action;
+    if (durationOrOptions.sound === true) enableSound = true;
+  }
+
   // Jika memanggil status final (success/error/warning) saat ada loading toast, transisikan dengan mulus
   if (type !== 'loading') {
     const existingLoading = container.querySelectorAll('.toast--loading');
@@ -24,6 +82,15 @@ function showToast(msg, type = 'success', duration = (type === 'loading' ? 8000 
       el.classList.add('toast--leaving');
       setTimeout(() => el.remove(), 200);
     });
+  }
+
+  // Stacking limit: jaga agar maksimal hanya ada 3 toast aktif di layar secara bersamaan
+  const activeToasts = container.querySelectorAll('.toast:not(.toast--leaving)');
+  if (activeToasts.length >= 3) {
+    const oldest = activeToasts[0];
+    if (oldest._dismissTimer) clearTimeout(oldest._dismissTimer);
+    oldest.classList.add('toast--leaving');
+    setTimeout(() => oldest.remove(), 200);
   }
 
   const toast = document.createElement('div');
@@ -43,18 +110,47 @@ function showToast(msg, type = 'success', duration = (type === 'loading' ? 8000 
   textSpan.className = 'toast__message';
   textSpan.textContent = msg;
 
+  toast.append(iconWrap, textSpan);
+
+  // Optional Action Button (misal: "Undo", "Lihat", "Buka")
+  if (actionConfig && actionConfig.label) {
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'toast__action';
+    actionBtn.textContent = actionConfig.label;
+    actionBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof actionConfig.onClick === 'function') {
+        actionConfig.onClick(toast);
+      }
+      dismissToast();
+    });
+    toast.appendChild(actionBtn);
+  }
+
   const closeButton = document.createElement('button');
   closeButton.type = 'button';
   closeButton.className = 'toast__close';
   closeButton.setAttribute('aria-label', 'Tutup notifikasi');
   closeButton.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>';
+
+  function dismissToast() {
+    if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
+    toast.classList.add('toast--leaving');
+    setTimeout(() => toast.remove(), 250);
+  }
+
   closeButton.addEventListener('click', () => {
     if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
     toast.remove();
   });
-
-  toast.append(iconWrap, textSpan, closeButton);
+  toast.appendChild(closeButton);
   container.appendChild(toast);
+
+  // Sound feedback halus opsional
+  if (enableSound || type === 'error') {
+    playNotificationChime(type);
+  }
 
   if (typeof window !== 'undefined' && typeof window.refreshIcons === 'function') {
     window.refreshIcons(toast);
@@ -62,11 +158,56 @@ function showToast(msg, type = 'success', duration = (type === 'loading' ? 8000 
     lucide.createIcons();
   }
 
+  // Hover-to-pause & Swipe-to-dismiss engine
   if (duration > 0) {
-    toast._dismissTimer = setTimeout(() => {
-      toast.classList.add('toast--leaving');
-      setTimeout(() => toast.remove(), 250);
-    }, duration);
+    let remainingTime = duration;
+    let timerStart = Date.now();
+
+    function startTimer() {
+      timerStart = Date.now();
+      toast._dismissTimer = setTimeout(dismissToast, remainingTime);
+    }
+
+    function pauseTimer() {
+      clearTimeout(toast._dismissTimer);
+      remainingTime -= (Date.now() - timerStart);
+      if (remainingTime < 800) remainingTime = 800; // Beri minimal 800ms jika user melepas hover
+    }
+
+    startTimer();
+
+    // Mouse hover to pause
+    toast.addEventListener('mouseenter', pauseTimer);
+    toast.addEventListener('mouseleave', startTimer);
+
+    // Touch swipe-to-dismiss di mobile
+    let touchStartY = 0;
+    let touchDiffY = 0;
+
+    toast.addEventListener('touchstart', (e) => {
+      pauseTimer();
+      touchStartY = e.touches[0].clientY;
+      touchDiffY = 0;
+    }, { passive: true });
+
+    toast.addEventListener('touchmove', (e) => {
+      const currentY = e.touches[0].clientY;
+      touchDiffY = currentY - touchStartY;
+      if (touchDiffY < 0) {
+        toast.style.transform = `translateY(${touchDiffY}px)`;
+        toast.style.opacity = `${Math.max(0.2, 1 + touchDiffY / 100)}`;
+      }
+    }, { passive: true });
+
+    toast.addEventListener('touchend', () => {
+      if (touchDiffY < -35) {
+        dismissToast();
+      } else {
+        toast.style.transform = '';
+        toast.style.opacity = '';
+        startTimer();
+      }
+    });
   }
 
   return toast;

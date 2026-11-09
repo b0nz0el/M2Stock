@@ -1,10 +1,10 @@
-# Aquastock Pro — Agent Guide
+# Aquastock — Agent Guide
 
 Panduan ini adalah konteks bersama untuk AI coding agent. Gunakan sebagai peta project; jangan membaca seluruh repository atau seluruh dokumentasi untuk setiap tugas. Baca hanya file yang berkaitan dengan permintaan.
 
 ## Ringkasan project
 
-- Aquastock Pro adalah aplikasi web inventaris dan Point of Sale untuk toko perlengkapan akuarium.
+- Aquastock adalah aplikasi web inventaris dan Point of Sale untuk toko perlengkapan akuarium.
 - Arsitektur: static Multi-Page Application (MPA), vanilla JavaScript ES modules, HTML, Tailwind CSS, Supabase PostgreSQL/Auth/Storage, dan IndexedDB untuk dukungan offline POS yang terbatas.
 - Aset dan halaman yang dipublikasikan berada di `public/`; source migrasi database berada di `supabase/`.
 - Baca `README.md` hanya untuk ringkasan, struktur, setup, atau daftar perintah. Indeks dokumentasi teknis ada di `docs/README.md`.
