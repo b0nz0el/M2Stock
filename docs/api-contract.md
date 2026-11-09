@@ -111,7 +111,7 @@ Diakses via `Api.transactions.*`:
 - `GET /rest/v1/transactions?type=eq.in&select=*,products(name,sku),suppliers(name)`: Riwayat barang masuk.
 - `GET /rest/v1/transactions?type=eq.out&select=*,products(name,sku),customers(name)`: Riwayat barang keluar / penjualan.
 - `POST /rest/v1/transactions`: Mencatat transaksi baru.  
-  *(Secara otomatis memicu database trigger untuk menambah/mengurangi kolom `stock` di tabel `products`)*.
+  *(Secara otomatis memicu database trigger untuk menambah/mengurangi kolom `stock` di tabel `products`. Khusus transaksi masuk/pembelian, sistem secara otomatis menghitung ulang HPP rata-rata tertimbang (Moving Weighted Average Cost - IAS 2/PSAK 14) ke kolom `products.cost_price`)*.
 - `DELETE /rest/v1/transactions?id=eq.{id}`: Menghapus data transaksi.
 
 ### 2.4 Master Relasi (`suppliers` & `customers`)

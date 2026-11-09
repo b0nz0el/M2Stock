@@ -244,7 +244,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     let hasData = false;
 
     if (currentTab === 'sales') {
-      if (tableTitle) tableTitle.textContent = 'Barang Terlaris (Berdasarkan Omzet)';
+      if (tableTitle) tableTitle.textContent = 'Barang Terlaris';
       columns = ['No', 'Barang', 'Channel', 'Kategori', 'Terjual', 'Pendapatan', 'Laba', 'Margin'];
       const items = reportData?.topProducts || [];
       hasData = items.length > 0;

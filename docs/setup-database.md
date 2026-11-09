@@ -29,6 +29,8 @@ Saldo akibat barang masuk/keluar berubah melalui trigger database; frontend tida
 
 Pastikan migrasi inventori dan sinkronisasi skema transaksi telah diterapkan berurutan, termasuk `20261028_inventory_single_stock_trigger.sql`, lalu verifikasi trigger `trg_transaction_stock_update` ada dan enabled sebelum mencatat transaksi. Migrasi trigger tersebut aman dijalankan ulang, membersihkan trigger stok lama `trg_transactions_auto_stock`/fungsi stok legacy, dan tidak mengubah saldo yang telah tercatat.
 
+Kalkulasi HPP rata-rata tertimbang (Moving Weighted Average Costing - IAS 2/PSAK 14) diberlakukan oleh `20261110_moving_average_costing.sql` melalui pembaruan trigger `handle_transaction_stock_update()`. Setiap transaksi masuk pembelian atau penerimaan PO secara otomatis mengkalkulasi ulang `products.cost_price` berdasarkan rata-rata tertimbang stok lama dan barang masuk baru, sedangkan koreksi Stock Opname dan Retur Pelanggan tidak memodifikasi HPP.
+
 Fitur edit harga online massal membutuhkan migrasi `20261103_product_online_price.sql`. Migrasi ini menambahkan `products.online_sell_price` dan mengisi harga online produk yang sudah ada menjadi harga beli +25%; persentase markup online selanjutnya diturunkan dari harga jual online dan harga beli.
 
 Sinkronisasi ikon dan tautan marketplace lintas perangkat membutuhkan migrasi `20261028_product_channel_link.sql`, yang menambahkan `products.channel` dan `products.channel_link`. Jika data channel lama hanya tersimpan di browser, buka Master Barang sekali pada perangkat tempat data tersebut dibuat setelah kolom tersedia agar aplikasi dapat memindahkannya ke Supabase.
