@@ -496,18 +496,10 @@ class AppSidebar extends HTMLElement {
       <aside class="w-64 bg-[#1C1C1E] flex flex-col border-r border-white/5" aria-label="Sidebar navigasi">
         <!-- Brand Header -->
         <div class="p-5 flex items-center gap-3 border-b border-white/5 shrink-0">
-          <div class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center shadow-lg shadow-[#0088CC]/20">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-hidden="true">
-              <defs>
-                <linearGradient id="aq-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#32ADE6"/>
-                  <stop offset="100%" stop-color="#0088CC"/>
-                </linearGradient>
-              </defs>
-              <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#aq-gradient)"/>
-              <path d="M50 26 L32 66 L38 66 L42 58 L58 58 L62 66 L68 66 L50 26 Z M45 53 L50 42 L55 53 Z"
-                    fill="#FFFFFF"/>
-              <circle cx="50" cy="72" r="3.5" fill="#FFFFFF"/>
+          <div class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center shadow-lg shadow-[#0055AA]/20">
+            <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-hidden="true">
+              <rect width="512" height="512" rx="100" fill="#0055AA"/>
+              <path d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z" fill="#FFFFFF" fill-rule="evenodd"/>
             </svg>
           </div>
           
@@ -594,7 +586,7 @@ class AppSidebar extends HTMLElement {
           </a>
           <button type="button" onclick="window.checkForPwaUpdate()" class="menu-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#32ADE6] hover:bg-[#32ADE6]/10 transition cursor-pointer" data-action="check-update" title="Periksa dan update pembaruan PWA">
             <i data-lucide="refresh-cw" class="w-4 h-4 text-[#32ADE6]" aria-hidden="true"></i> Cek Pembaruan
-            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold" data-app-version-sidebar>v3.5.52</span>
+            <span class="ml-auto text-[10px] bg-[#32ADE6]/15 text-[#32ADE6] px-1.5 py-0.5 rounded font-mono font-semibold" data-app-version-sidebar>v3.5.53</span>
           </button>
 
           <!-- Tombol Keluar Langsung di Drawer Mobile -->
