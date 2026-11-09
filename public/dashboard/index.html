@@ -314,21 +314,56 @@
           <h2 class="text-3xl font-bold tracking-tight">Master Barang</h2>
           <p id="items-subtitle" class="text-sm text-[#A0A0A5] mt-1">0 barang · 0 total stok · Nilai Modal: Rp 0 · Potensi Jual: Rp 0</p>
         </div>
-        <div class="items-toolbar-actions flex items-center gap-2 flex-wrap">
-          <button type="button" data-action="sync-habitic" id="btn-sync-habitic-links" onclick="syncMarketplaceLinksToHabitic()" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0" title="Kirim link marketplace berdasarkan SKU ke katalog Habitic">
-            <i data-lucide="refresh-cw" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Sinkron Katalog</span><span class="sm:hidden">Sync Link</span>
+        <div class="items-toolbar-actions flex items-center gap-2.5 flex-wrap">
+          <!-- 1. Tombol Sinkron Compact -->
+          <button type="button" data-action="sync-habitic" id="btn-sync-habitic-links" onclick="syncMarketplaceLinksToHabitic()" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0 text-[#A0A0A5] hover:text-white" title="Kirim link marketplace berdasarkan SKU ke katalog Habitic">
+            <i data-lucide="refresh-cw" class="w-4 h-4 shrink-0 text-[#32ADE6]" aria-hidden="true"></i>
+            <span class="whitespace-nowrap">Sinkron</span>
           </button>
-          <button type="button" data-action="import-channel-links" id="btn-import-channel-links" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0" title="Impor link channel berdasarkan SKU dari file CSV">
-            <i data-lucide="upload" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Impor Link CSV</span><span class="sm:hidden">Link CSV</span>
-          </button>
-          <button type="button" data-action="import" id="btn-import-items" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0">
-            <i data-lucide="upload" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Impor CSV</span><span class="sm:hidden">Impor</span>
-          </button>
-          <button onclick="handleExportItems()" data-action="export" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0">
-            <i data-lucide="download" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Ekspor CSV</span><span class="sm:hidden">Ekspor</span>
-          </button>
+
+          <!-- 2. Dropdown Menu Impor / Ekspor (Standar Shopify & Stripe) -->
+          <div class="relative inline-block text-left" id="items-import-export-dropdown">
+            <button type="button" id="btn-import-export-menu" onclick="toggleImportExportMenu(event)" aria-haspopup="true" aria-expanded="false" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0 text-[#A0A0A5] hover:text-white" title="Pilihan impor dan ekspor data barang">
+              <i data-lucide="arrow-down-up" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+              <span class="whitespace-nowrap">Impor / Ekspor</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 shrink-0 opacity-70" aria-hidden="true"></i>
+            </button>
+
+            <div id="items-import-export-menu" class="hidden absolute right-0 mt-2 w-64 rounded-2xl bg-[#1C1C1E]/95 border border-white/10 shadow-2xl shadow-black/80 py-1.5 z-50 dropdown-popover-enter backdrop-blur-xl">
+              <button type="button" data-action="import" id="btn-import-items" onclick="closeImportExportMenu()" class="w-full text-left px-3.5 py-2.5 text-xs sm:text-sm text-white hover:bg-white/5 flex items-center gap-2.5 transition">
+                <div class="w-7 h-7 rounded-lg bg-[#32ADE6]/15 text-[#32ADE6] grid place-items-center shrink-0">
+                  <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                </div>
+                <div class="min-w-0">
+                  <span class="font-semibold block truncate">Impor Produk (CSV)</span>
+                  <span class="text-[10px] text-[#A0A0A5] block truncate">Unggah data barang masal</span>
+                </div>
+              </button>
+              <button type="button" data-action="export" id="btn-export-items" onclick="handleExportItems(); closeImportExportMenu();" class="w-full text-left px-3.5 py-2.5 text-xs sm:text-sm text-white hover:bg-white/5 flex items-center gap-2.5 transition border-t border-white/5">
+                <div class="w-7 h-7 rounded-lg bg-[#34C759]/15 text-[#34C759] grid place-items-center shrink-0">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                </div>
+                <div class="min-w-0">
+                  <span class="font-semibold block truncate">Ekspor Semua Produk</span>
+                  <span class="text-[10px] text-[#A0A0A5] block truncate">Unduh katalog ke CSV</span>
+                </div>
+              </button>
+              <button type="button" data-action="import-channel-links" id="btn-import-channel-links" onclick="closeImportExportMenu()" class="w-full text-left px-3.5 py-2.5 text-xs sm:text-sm text-white hover:bg-white/5 flex items-center gap-2.5 transition border-t border-white/5">
+                <div class="w-7 h-7 rounded-lg bg-[#FF9F0A]/15 text-[#FF9F0A] grid place-items-center shrink-0">
+                  <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                </div>
+                <div class="min-w-0">
+                  <span class="font-semibold block truncate">Impor Link Marketplace</span>
+                  <span class="text-[10px] text-[#A0A0A5] block truncate">Tautkan link Shopee/Tokopedia</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Tombol Utama (Primary Action) -->
           <button data-action="add" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] active:scale-95 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-[#0088CC]/20 border border-white/10 transition cursor-pointer btn whitespace-nowrap shrink-0">
-            <i data-lucide="plus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Tambah Barang</span><span class="sm:hidden">Tambah</span>
+            <i data-lucide="plus" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+            <span class="whitespace-nowrap">Tambah Barang</span>
           </button>
         </div>
       </div>

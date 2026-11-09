@@ -3268,6 +3268,49 @@ import {
   window.handleRefreshItems = handleRefreshItems;
   window.handleExportItems = handleExportItems;
 
+  function toggleImportExportMenu(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    const menu = document.getElementById('items-import-export-menu');
+    const btn = document.getElementById('btn-import-export-menu');
+    if (!menu) return;
+    const isHidden = menu.classList.contains('hidden');
+    if (isHidden) {
+      menu.classList.remove('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+      if (typeof window.refreshIcons === 'function') window.refreshIcons(menu);
+    } else {
+      menu.classList.add('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function closeImportExportMenu() {
+    const menu = document.getElementById('items-import-export-menu');
+    const btn = document.getElementById('btn-import-export-menu');
+    if (menu && !menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  window.toggleImportExportMenu = toggleImportExportMenu;
+  window.closeImportExportMenu = closeImportExportMenu;
+
+  document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('items-import-export-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+      closeImportExportMenu();
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeImportExportMenu();
+    }
+  });
+
   window.openStockAdjustmentModal = openStockAdjustmentModal;
   window.closeStockAdjustmentModal = closeStockAdjustmentModal;
   window.openStockAdjustmentHistory = openStockAdjustmentHistory;

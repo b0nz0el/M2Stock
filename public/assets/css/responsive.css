@@ -7,7 +7,9 @@
   --aq-text-subtle: #8e8e93;
 }
 
-.items-toolbar-actions > button {
+.items-toolbar-actions > button,
+.items-toolbar-actions > #items-import-export-dropdown,
+.items-toolbar-actions > #items-import-export-dropdown > button {
   box-sizing: border-box;
   min-height: 44px;
   align-items: center;
@@ -1371,7 +1373,9 @@ app-sidebar aside .sidebar-drawer-logout {
     margin-top: 0 !important;
   }
 
-  #page-items .items-page-header .items-toolbar-actions > button {
+  #page-items .items-page-header .items-toolbar-actions > button,
+  #page-items .items-page-header .items-toolbar-actions > #items-import-export-dropdown,
+  #page-items .items-page-header .items-toolbar-actions > #items-import-export-dropdown > button {
     width: 100%;
     min-width: 0;
     min-height: 48px;
@@ -1380,6 +1384,10 @@ app-sidebar aside .sidebar-drawer-logout {
     padding: 8px !important;
     font-size: 0.75rem !important;
     white-space: nowrap;
+  }
+
+  #page-items .items-page-header .items-toolbar-actions > button[data-action="add"] {
+    grid-column: span 2;
   }
 
   /* Bottom nav muncul */
@@ -2391,13 +2399,19 @@ app-sidebar aside .sidebar-drawer-logout {
     width: 100%;
   }
 
-  #page-items .items-page-header .items-toolbar-actions > button {
+  #page-items .items-page-header .items-toolbar-actions > button,
+  #page-items .items-page-header .items-toolbar-actions > #items-import-export-dropdown,
+  #page-items .items-page-header .items-toolbar-actions > #items-import-export-dropdown > button {
     width: 100%;
     min-width: 0;
     min-height: 48px;
     justify-content: center;
     padding: 8px 12px !important;
     white-space: nowrap;
+  }
+
+  #page-items .items-page-header .items-toolbar-actions > button[data-action="add"] {
+    grid-column: span 2;
   }
 
   #page-report #report-filter-tabs {
