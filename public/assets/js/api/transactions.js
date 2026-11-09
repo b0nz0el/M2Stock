@@ -20,6 +20,13 @@ function mapTransaction(row) {
   const price = Number(row.price ?? row.unit_price) || 0;
   const note = row.note ?? row.notes ?? null;
   const created_by = row.created_by ?? row.user_id ?? null;
+  const noteStr = String(note || '');
+
+  const invoice_no = row.invoice_no || ((noteStr.match(/\[((?:INV|SPX|TKP)-[^\]]+)\]/i) || [])[1]) || null;
+  const discount_amount = Number(row.discount_amount ?? (noteStr.match(/\|AQ_DISCOUNT=([0-9.]+)/) || [])[1]) || 0;
+  const tax_amount = Number(row.tax_amount ?? (noteStr.match(/\|AQ_TAX=([0-9.]+)/) || [])[1]) || 0;
+  const final_total = Number(row.final_total ?? (noteStr.match(/\|AQ_TOTAL=([0-9.]+)/) || [])[1]) || Number(row.total_price) || (qty * price);
+  const subtotal_amount = Number(row.subtotal_amount) || Number(row.total_price) || (qty * price);
 
   return {
     ...row,
@@ -33,6 +40,11 @@ function mapTransaction(row) {
     created_by,
     user_id: created_by,
     channel: row.channel || 'Offline',
+    invoice_no,
+    discount_amount,
+    tax_amount,
+    subtotal_amount,
+    final_total,
     payment_method: row.payment_method || 'Cash',
     payment_status: row.payment_status || 'Lunas'
   };
@@ -256,7 +268,12 @@ export const transactions = {
           payment_status: commonData.payment_status || (commonData.payment_method === 'Tempo' ? 'Belum Lunas' : 'Lunas'),
           note: itemNote,
           created_by: commonData.created_by || null,
-          idempotency_key: commonData.idempotency_key ? `${commonData.idempotency_key}-${item.product_id}` : null
+          idempotency_key: commonData.idempotency_key ? `${commonData.idempotency_key}-${item.product_id}` : null,
+          invoice_no: invoiceNo,
+          discount_amount: discountAmount,
+          tax_amount: taxAmount,
+          subtotal_amount: receiptSubtotalAmount,
+          final_total: Math.max(0, receiptSubtotalAmount - discountAmount + taxAmount)
         }, opts);
 
         if (!res.ok) {
@@ -389,6 +406,21 @@ export const transactions = {
           if (data.return_id) {
             baseRow.return_id = data.return_id;
           }
+          if (data.invoice_no) {
+            baseRow.invoice_no = data.invoice_no;
+          }
+          if (data.discount_amount !== undefined) {
+            baseRow.discount_amount = Number(data.discount_amount);
+          }
+          if (data.tax_amount !== undefined) {
+            baseRow.tax_amount = Number(data.tax_amount);
+          }
+          if (data.subtotal_amount !== undefined) {
+            baseRow.subtotal_amount = Number(data.subtotal_amount);
+          }
+          if (data.final_total !== undefined) {
+            baseRow.final_total = Number(data.final_total);
+          }
 
           // Ambil stok dan harga modal produk sebelum transaksi untuk verifikasi mutasi dan snapshot HPP
           let productBefore = null;
@@ -446,6 +478,11 @@ export const transactions = {
             if (data.return_id) modernRow.return_id = data.return_id;
             if (data.idempotency_key) modernRow.idempotency_key = data.idempotency_key;
             if (data.reversal_of_id) modernRow.reversal_of_id = data.reversal_of_id;
+            if (data.invoice_no) modernRow.invoice_no = data.invoice_no;
+            if (data.discount_amount !== undefined) modernRow.discount_amount = Number(data.discount_amount);
+            if (data.tax_amount !== undefined) modernRow.tax_amount = Number(data.tax_amount);
+            if (data.subtotal_amount !== undefined) modernRow.subtotal_amount = Number(data.subtotal_amount);
+            if (data.final_total !== undefined) modernRow.final_total = Number(data.final_total);
 
             let retryQuery = window.supabase
               .from('transactions')

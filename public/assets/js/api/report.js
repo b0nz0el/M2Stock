@@ -26,6 +26,7 @@ function getTransactionOutQty(txOrQty) {
 
 function getTransactionCode(tx) {
   if (!tx) return '-';
+  if (tx.invoice_no) return tx.invoice_no;
   const note = String(tx.note || tx.notes || '');
   const invMatch = note.match(/\[(INV-[^\]]+)\]/i);
   if (invMatch) return invMatch[1];
