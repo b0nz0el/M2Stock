@@ -219,12 +219,12 @@
 
             return `
               <tr class="table-row border-b border-white/5">
-                <td data-label="TANGGAL" class="px-5 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+                <td data-label="TANGGAL" class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${dateStr}</td>
                 <td data-label="BARANG" class="px-5 py-3.5 font-medium">${escapeHtml(prodName)}</td>
-                <td data-label="CHANNEL" class="px-5 py-3.5">${channelBadge}</td>
-                <td data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}" class="px-5 py-3.5 text-[#A0A0A5]">${escapeHtml(kasir)}</td>
-                <td data-label="JUMLAH" class="px-5 py-3.5 text-right font-semibold ${qtyClass}">${qtyStr}</td>
-                <td data-label="TOTAL" class="px-5 py-3.5 text-right font-semibold text-white">
+                <td data-label="CHANNEL" class="px-5 py-3.5 whitespace-nowrap">${channelBadge}</td>
+                <td data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}" class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${escapeHtml(kasir)}</td>
+                <td data-label="JUMLAH" class="px-5 py-3.5 text-right font-semibold whitespace-nowrap ${qtyClass}">${qtyStr}</td>
+                <td data-label="TOTAL" class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">
                   ${formatRupiahVal(netTotal)}
                   ${discountVal > 0 ? `<div class="text-[10px] text-[#34C759] font-normal leading-tight">Diskon ${formatRupiahVal(discountVal)}</div>` : ''}
                 </td>

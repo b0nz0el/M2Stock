@@ -251,14 +251,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
       rowsHtml = items.map((p, idx) => `
         <tr class="table-row border-b border-white/5">
-          <td class="px-5 py-3.5"><span class="w-6 h-6 rounded-md bg-white/5 text-[#A0A0A5] grid place-items-center text-xs font-bold">${idx + 1}</span></td>
+          <td class="px-5 py-3.5 whitespace-nowrap"><span class="w-6 h-6 rounded-md bg-white/5 text-[#A0A0A5] grid place-items-center text-xs font-bold">${idx + 1}</span></td>
           <td class="px-5 py-3.5 font-medium text-white">${p.name}</td>
-          <td class="px-5 py-3.5"><span class="badge bg-white/5 text-[#A0A0A5] px-2 py-0.5 rounded text-xs font-medium">${p.channel || 'Offline'}</span></td>
-          <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${p.category}</span></td>
-          <td class="px-5 py-3.5 text-right font-semibold">${p.qty} unit</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(p.revenue)}</td>
-          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${formatRupiah(p.profit)}</td>
-          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${p.margin}%</td>
+          <td class="px-5 py-3.5 whitespace-nowrap"><span class="badge bg-white/5 text-[#A0A0A5] px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap">${p.channel || 'Offline'}</span></td>
+          <td class="px-5 py-3.5 whitespace-nowrap"><span class="badge bg-[#0088CC]/15 text-[#32ADE6] whitespace-nowrap">${p.category}</span></td>
+          <td class="px-5 py-3.5 text-right font-semibold whitespace-nowrap">${p.qty} unit</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(p.revenue)}</td>
+          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${formatRupiah(p.profit)}</td>
+          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${p.margin}%</td>
         </tr>
       `).join('');
     } else if (currentTab === 'profit') {
@@ -271,11 +271,11 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         const margin = d.revenue > 0 ? Math.round((d.profit / d.revenue) * 100) : 0;
         return `
           <tr class="table-row border-b border-white/5">
-            <td class="px-5 py-3.5 font-medium text-white">${d.date}</td>
-            <td class="px-5 py-3.5 text-[#A0A0A5]">${d.txCount} transaksi</td>
-            <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(d.revenue)}</td>
-            <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${formatRupiah(d.profit)}</td>
-            <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${margin}%</td>
+            <td class="px-5 py-3.5 font-medium text-white whitespace-nowrap">${d.date}</td>
+            <td class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${d.txCount} transaksi</td>
+            <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(d.revenue)}</td>
+            <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${formatRupiah(d.profit)}</td>
+            <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${margin}%</td>
           </tr>
         `;
       }).join('');
@@ -287,14 +287,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
       rowsHtml = items.map(p => `
         <tr class="table-row border-b border-white/5">
-          <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5]">${p.sku}</td>
+          <td class="px-5 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">${p.sku}</td>
           <td class="px-5 py-3.5 font-medium text-white">${p.name}</td>
-          <td class="px-5 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${p.category}</span></td>
-          <td class="px-5 py-3.5 text-right ${p.isLow ? 'text-[#FF3B30] font-bold' : 'font-medium'}">${p.stock} unit</td>
-          <td class="px-5 py-3.5 text-right text-[#A0A0A5]">${formatRupiah(p.cost)}</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(p.sell)}</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(p.totalCost)}</td>
-          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${formatRupiah(p.potentialProfit)}</td>
+          <td class="px-5 py-3.5 whitespace-nowrap"><span class="badge bg-[#0088CC]/15 text-[#32ADE6] whitespace-nowrap">${p.category}</span></td>
+          <td class="px-5 py-3.5 text-right whitespace-nowrap ${p.isLow ? 'text-[#FF3B30] font-bold' : 'font-medium'}">${p.stock} unit</td>
+          <td class="px-5 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${formatRupiah(p.cost)}</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(p.sell)}</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(p.totalCost)}</td>
+          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${formatRupiah(p.potentialProfit)}</td>
         </tr>
       `).join('');
     } else if (currentTab === 'category') {
@@ -305,12 +305,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
       rowsHtml = items.map(c => `
         <tr class="table-row border-b border-white/5">
-          <td class="px-5 py-3.5 font-medium text-white">${c.category}</td>
-          <td class="px-5 py-3.5 text-[#A0A0A5]">${c.txCount} tx</td>
-          <td class="px-5 py-3.5 text-right font-semibold">${c.qty} unit</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(c.revenue)}</td>
-          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${formatRupiah(c.profit)}</td>
-          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${c.margin}%</td>
+          <td class="px-5 py-3.5 font-medium text-white whitespace-nowrap">${c.category}</td>
+          <td class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${c.txCount} tx</td>
+          <td class="px-5 py-3.5 text-right font-semibold whitespace-nowrap">${c.qty} unit</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(c.revenue)}</td>
+          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${formatRupiah(c.profit)}</td>
+          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${c.margin}%</td>
         </tr>
       `).join('');
     } else if (currentTab === 'channel') {
@@ -321,13 +321,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
       rowsHtml = items.map(ch => `
         <tr class="table-row border-b border-white/5">
-          <td class="px-5 py-3.5 font-medium text-white">
-            <span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${ch.channel}</span>
+          <td class="px-5 py-3.5 font-medium text-white whitespace-nowrap">
+            <span class="badge bg-[#0088CC]/15 text-[#32ADE6] whitespace-nowrap">${ch.channel}</span>
           </td>
-          <td class="px-5 py-3.5 text-[#A0A0A5]">${ch.txCount} tx</td>
-          <td class="px-5 py-3.5 text-right font-semibold">${ch.qty} unit</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(ch.revenue)}</td>
-          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold">${formatRupiah(ch.profit)}</td>
+          <td class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${ch.txCount} tx</td>
+          <td class="px-5 py-3.5 text-right font-semibold whitespace-nowrap">${ch.qty} unit</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(ch.revenue)}</td>
+          <td class="px-5 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">${formatRupiah(ch.profit)}</td>
         </tr>
       `).join('');
     } else if (currentTab === 'supplier') {
@@ -338,10 +338,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
       rowsHtml = items.map(s => `
         <tr class="table-row border-b border-white/5">
-          <td class="px-5 py-3.5 font-medium text-white">${s.supplier}</td>
-          <td class="px-5 py-3.5 text-[#A0A0A5]">${s.txCount} kali</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-[#34C759]">+${s.qty} unit</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(s.totalBuy)}</td>
+          <td class="px-5 py-3.5 font-medium text-white whitespace-nowrap">${s.supplier}</td>
+          <td class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${s.txCount} kali</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-[#34C759] whitespace-nowrap">+${s.qty} unit</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(s.totalBuy)}</td>
         </tr>
       `).join('');
     } else if (currentTab === 'cashier') {
@@ -352,10 +352,10 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
       rowsHtml = items.map(k => `
         <tr class="table-row border-b border-white/5">
-          <td class="px-5 py-3.5 font-medium text-white">${k.cashier}</td>
-          <td class="px-5 py-3.5 text-[#A0A0A5]">${k.txCount} tx</td>
-          <td class="px-5 py-3.5 text-right font-semibold">${k.qty} unit</td>
-          <td class="px-5 py-3.5 text-right font-semibold text-white">${formatRupiah(k.revenue)}</td>
+          <td class="px-5 py-3.5 font-medium text-white whitespace-nowrap">${k.cashier}</td>
+          <td class="px-5 py-3.5 text-[#A0A0A5] whitespace-nowrap">${k.txCount} tx</td>
+          <td class="px-5 py-3.5 text-right font-semibold whitespace-nowrap">${k.qty} unit</td>
+          <td class="px-5 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiah(k.revenue)}</td>
         </tr>
       `).join('');
     }
@@ -368,7 +368,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         col.includes('Margin') || col.includes('Omzet') || col.includes('Unit') ||
         col.includes('Modal') || col.includes('Jual') || col.includes('Pembelian') ||
         col.includes('Stok');
-      return `<th class="px-5 py-3 font-medium text-xs uppercase tracking-wider ${isRight ? 'text-right' : ''}">${col}</th>`;
+      return `<th class="px-5 py-3 font-semibold text-xs tracking-wider whitespace-nowrap ${isRight ? 'text-right' : ''}">${col}</th>`;
     }).join('')}
       </tr>
     `;

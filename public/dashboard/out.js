@@ -1177,19 +1177,19 @@
 
       return `
         <tr class="table-row border-b border-white/5">
-          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">${code}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">${code}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${dateStr}</td>
           <td class="px-4 py-3.5 font-medium">${prodName}</td>
-          <td class="px-4 py-3.5">${channelBadge}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${custName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
-          <td class="px-4 py-3.5 text-right text-[#FF3B30] font-semibold">${qty}</td>
-          <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
-          <td class="px-4 py-3.5 text-right font-semibold text-white">
+          <td class="px-4 py-3.5 whitespace-nowrap">${channelBadge}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${custName}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
+          <td class="px-4 py-3.5 text-right text-[#FF3B30] whitespace-nowrap font-semibold">${qty}</td>
+          <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${formatRupiahVal(price)}</td>
+          <td class="px-4 py-3.5 text-right font-semibold text-white whitespace-nowrap">
             ${formatRupiahVal(netTotal)}
             ${discountVal > 0 ? `<div class="text-[10px] text-[#34C759] font-normal leading-tight">Diskon ${formatRupiahVal(discountVal)}</div>` : ''}
           </td>
-          <td class="px-4 py-3.5 text-right">
+          <td class="px-4 py-3.5 text-right whitespace-nowrap">
             <div class="flex items-center justify-end gap-1">
               <button type="button" data-action="print-receipt" data-transaction-id="${tx.id}" title="Cetak Struk Kasir" aria-label="Cetak Struk Kasir"
                       class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] hover:text-white transition">

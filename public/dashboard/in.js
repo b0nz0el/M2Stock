@@ -1389,15 +1389,15 @@
 
       return `
         <tr class="table-row border-b border-white/5">
-          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">${code}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${dateStr}</td>
+          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">${code}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${dateStr}</td>
           <td class="px-4 py-3.5 font-medium">${prodName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${supName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
-          <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+${qty}</td>
-          <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
-          <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
-          <td class="px-4 py-3.5 text-right">
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${supName}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
+          <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">+${qty}</td>
+          <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${formatRupiahVal(price)}</td>
+          <td class="px-4 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiahVal(total)}</td>
+          <td class="px-4 py-3.5 text-right whitespace-nowrap">
             <button type="button" data-action="delete" data-transaction-id="${tx.id}" title="Hapus transaksi" aria-label="Hapus transaksi"
                     class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
               <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>

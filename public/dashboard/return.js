@@ -258,7 +258,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       const namaBarang = getProductName(item);
       return `
         <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
-          <td class="px-4 py-3.5 font-mono text-xs font-semibold text-[#32ADE6]">
+          <td class="px-4 py-3.5 font-mono text-xs font-semibold text-[#32ADE6] whitespace-nowrap">
             ${item.no_retur || '-'}
           </td>
           <td class="px-4 py-3.5 text-xs text-[#A0A0A5] whitespace-nowrap">
