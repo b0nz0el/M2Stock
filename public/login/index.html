@@ -1,155 +1,168 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Aquastock - Login</title>
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0088CC">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Aquastock Pro">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
-<link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Aquastock - Login</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0088CC">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aquastock">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png">
 
 
-<!-- Inter font (self-host) -->
-<link rel="preconnect" href="/" crossorigin>
-<link rel="preload" href="../assets/fonts/InterVariable.woff2"
-      as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/fonts/inter.css">
+  <!-- Inter font (self-host) -->
+  <link rel="preconnect" href="/" crossorigin>
+  <link rel="preload" href="../assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/fonts/inter.css">
 
-<!-- Styles -->
-<link rel="stylesheet" href="../assets/css/tailwind.static.css">
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/login.css">
+  <!-- Styles -->
+  <link rel="stylesheet" href="../assets/css/tailwind.static.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/login.css">
 </head>
+
 <body class="min-h-screen flex items-center justify-center p-6 text-white">
 
-<!-- ═══════════ SPLASH SCREEN ═══════════ -->
-<div class="splash" id="splash">
-  <div class="splash-logo overflow-hidden">
-    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-label="Aquastock Pro">
-      <rect width="512" height="512" rx="100" fill="#0055AA"/>
-      <path d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z" fill="#FFFFFF" fill-rule="evenodd"/>
-    </svg>
-  </div>
-  <h1 class="splash-title">Habitic</h1>
-  <p class="splash-subtitle">Aquarium Lifestyle Solution</p>
-  <div class="splash-loader">
-    <span></span><span></span><span></span>
-  </div>
-</div>
-
-<!-- ═══════════ SPLASH LOADING (setelah login) ═══════════ -->
-<div class="splash-loading" id="splash-loading">
-  <div class="splash-logo overflow-hidden">
-    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-label="Aquastock Pro">
-      <rect width="512" height="512" rx="100" fill="#0055AA"/>
-      <path d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z" fill="#FFFFFF" fill-rule="evenodd"/>
-    </svg>
-  </div>
-  <h1 class="splash-title">Mengalihkan...</h1>
-  <p class="splash-subtitle">Menyiapkan dashboard Anda</p>
-  <div class="splash-loader">
-    <span></span><span></span><span></span>
-  </div>
-</div>
-
-<!-- Background glow -->
-<div class="bg-glow"></div>
-
-<!-- Login Card -->
-<div class="login-card relative z-10 w-full max-w-sm">
-
-  <!-- Logo -->
-  <div class="text-center mb-8">
-    <div class="w-20 h-20 mx-auto rounded-3xl overflow-hidden grid place-items-center mb-5 logo-pulse shadow-lg shadow-[#0055AA]/30">
-      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-label="Aquastock Pro">
-        <rect width="512" height="512" rx="100" fill="#0055AA"/>
-        <path d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z" fill="#FFFFFF" fill-rule="evenodd"/>
+  <!-- ═══════════ SPLASH SCREEN ═══════════ -->
+  <div class="splash" id="splash">
+    <div class="splash-logo overflow-hidden">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-label="Aquastock">
+        <rect width="512" height="512" rx="100" fill="#0055AA" />
+        <path
+          d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z"
+          fill="#FFFFFF" fill-rule="evenodd" />
       </svg>
     </div>
-    <h1 class="text-3xl font-bold tracking-tight">Habitic</h1>
-    <p class="text-sm text-[#8E8E93] mt-2">Aquarium Lifestyle Solution</p>
+    <h1 class="splash-title">Habitic</h1>
+    <p class="splash-subtitle">Aquarium Lifestyle Solution</p>
+    <div class="splash-loader">
+      <span></span><span></span><span></span>
+    </div>
   </div>
 
-  <!-- Form Card -->
-  <div class="bg-[#1C1C1E] rounded-2xl p-6 border border-white/5">
-    <div class="flex items-center justify-between mb-5">
-      <h2 id="form-title" class="text-lg font-semibold">Masuk</h2>
+  <!-- ═══════════ SPLASH LOADING (setelah login) ═══════════ -->
+  <div class="splash-loading" id="splash-loading">
+    <div class="splash-logo overflow-hidden">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-label="Aquastock">
+        <rect width="512" height="512" rx="100" fill="#0055AA" />
+        <path
+          d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z"
+          fill="#FFFFFF" fill-rule="evenodd" />
+      </svg>
+    </div>
+    <h1 class="splash-title">Mengalihkan...</h1>
+    <p class="splash-subtitle">Menyiapkan dashboard Anda</p>
+    <div class="splash-loader">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- Background glow -->
+  <div class="bg-glow"></div>
+
+  <!-- Login Card -->
+  <div class="login-card relative z-10 w-full max-w-sm">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div
+        class="w-20 h-20 mx-auto rounded-3xl overflow-hidden grid place-items-center mb-5 logo-pulse shadow-lg shadow-[#0055AA]/30">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" aria-label="Aquastock">
+          <rect width="512" height="512" rx="100" fill="#0055AA" />
+          <path
+            d="M 265,117 L 394,117 L 400,120 L 404,125 L 406,131 L 406,381 L 405,385 L 398,393 L 393,395 L 346,395 L 340,392 L 337,389 L 334,383 L 334,329 L 333,328 L 194,328 L 192,332 L 180,380 L 174,389 L 163,395 L 114,395 L 112,394 L 106,387 L 106,379 L 111,363 L 114,348 L 116,344 L 118,333 L 120,329 L 123,314 L 125,310 L 128,295 L 130,291 L 133,276 L 135,272 L 138,257 L 140,253 L 143,238 L 145,234 L 148,219 L 150,215 L 152,204 L 154,200 L 155,193 L 160,178 L 166,166 L 173,156 L 185,144 L 198,135 L 224,124 L 246,119 L 263,118 L 264,117 Z M 268,172 L 333,172 L 333,273 L 209,273 L 225,213 L 231,198 L 238,188 L 244,183 L 251,178 L 263,173 Z"
+            fill="#FFFFFF" fill-rule="evenodd" />
+        </svg>
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight">Habitic</h1>
+      <p class="text-sm text-[#8E8E93] mt-2">Aquarium Lifestyle Solution</p>
     </div>
 
-    <form onsubmit="handleAuthSubmit(event)">
+    <!-- Form Card -->
+    <div class="bg-[#1C1C1E] rounded-2xl p-6 border border-white/5">
+      <div class="flex items-center justify-between mb-5">
+        <h2 id="form-title" class="text-lg font-semibold">Masuk</h2>
+      </div>
 
-      <!-- Email -->
-      <div class="mb-4">
-        <label for="email" class="block text-xs text-[#8E8E93] font-medium mb-2">Email</label>
-        <div class="relative">
-          <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
-          <input type="email" id="email" placeholder="nama@jtm.com" required autocomplete="email"
-                 class="input-field w-full rounded-xl pl-10 pr-4 py-3 text-sm">
+      <form onsubmit="handleAuthSubmit(event)">
+
+        <!-- Email -->
+        <div class="mb-4">
+          <label for="email" class="block text-xs text-[#8E8E93] font-medium mb-2">Email</label>
+          <div class="relative">
+            <i data-lucide="mail"
+              class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
+            <input type="email" id="email" placeholder="nama@jtm.com" required autocomplete="email"
+              class="input-field w-full rounded-xl pl-10 pr-4 py-3 text-sm">
+          </div>
         </div>
-      </div>
 
-      <!-- Password -->
-      <div class="mb-4">
-        <label for="password" class="block text-xs text-[#8E8E93] font-medium mb-2">Kata Sandi</label>
-        <div class="relative">
-          <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
-          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password"
-                 class="input-field w-full rounded-xl pl-10 pr-10 py-3 text-sm">
-          <button type="button" onclick="togglePassword()" aria-label="Tampilkan sandi"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-white transition p-1">
-            <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
-          </button>
+        <!-- Password -->
+        <div class="mb-4">
+          <label for="password" class="block text-xs text-[#8E8E93] font-medium mb-2">Kata Sandi</label>
+          <div class="relative">
+            <i data-lucide="lock"
+              class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93] pointer-events-none"></i>
+            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password"
+              class="input-field w-full rounded-xl pl-10 pr-10 py-3 text-sm">
+            <button type="button" onclick="togglePassword()" aria-label="Tampilkan sandi"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-white transition p-1">
+              <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- Remember -->
-      <div id="login-options" class="flex items-center justify-between mb-6">
-        <label class="flex items-center gap-2 text-xs text-[#8E8E93] cursor-pointer select-none">
-          <input type="checkbox" class="accent-[#0088CC] w-3.5 h-3.5 rounded">
-          Ingat saya
-        </label>
-      </div>
+        <!-- Remember -->
+        <div id="login-options" class="flex items-center justify-between mb-6">
+          <label class="flex items-center gap-2 text-xs text-[#8E8E93] cursor-pointer select-none">
+            <input type="checkbox" class="accent-[#0088CC] w-3.5 h-3.5 rounded">
+            Ingat saya
+          </label>
+        </div>
 
-      <!-- Submit Button -->
-      <button type="submit" id="login-btn"
-              class="btn-login w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-        <span id="btn-text">Masuk</span>
-        <i data-lucide="arrow-right" class="w-4 h-4" id="btn-icon"></i>
-      </button>
+        <!-- Submit Button -->
+        <button type="submit" id="login-btn"
+          class="btn-login w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <span id="btn-text">Masuk</span>
+          <i data-lucide="arrow-right" class="w-4 h-4" id="btn-icon"></i>
+        </button>
 
-    </form>
+      </form>
 
-    <!-- Notice -->
-    <p class="text-center text-xs text-[#8E8E93] mt-5">
-      Habitic - Aquarium Lifestyle Solution
+      <!-- Notice -->
+      <p class="text-center text-xs text-[#8E8E93] mt-5">
+        Habitic - Aquarium Lifestyle Solution
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-xs text-[#8E8E93] mt-6">
+      © 2026 Habitic
     </p>
+
   </div>
 
-  <!-- Footer -->
-  <p class="text-center text-xs text-[#8E8E93] mt-6">
-    © 2026 Habitic
-  </p>
+  <!-- Toast (Pill Capsule Standar Internasional) -->
+  <div id="toast"
+    class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-[#1C1C1E]/95 backdrop-blur-xl px-5 py-3 rounded-full border border-white/15 items-center gap-2.5 z-50 shadow-2xl shadow-black/60 transition-all duration-300"
+    role="status" aria-live="polite">
+    <span class="w-2 h-2 rounded-full bg-[#34C759] shrink-0"></span>
+    <span class="text-xs sm:text-sm font-medium text-white tracking-tight" id="toast-msg">Login berhasil</span>
+  </div>
 
-</div>
-
-<!-- Toast (Pill Capsule Standar Internasional) -->
-<div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-[#1C1C1E]/95 backdrop-blur-xl px-5 py-3 rounded-full border border-white/15 items-center gap-2.5 z-50 shadow-2xl shadow-black/60 transition-all duration-300" role="status" aria-live="polite">
-  <span class="w-2 h-2 rounded-full bg-[#34C759] shrink-0"></span>
-  <span class="text-xs sm:text-sm font-medium text-white tracking-tight" id="toast-msg">Login berhasil</span>
-</div>
-
-<script type="module" src="../assets/js/supabase-client.js"></script>
-<script type="module" src="../assets/js/api/_client.js"></script>
-<script src="../assets/js/auth.js" defer></script>
-<script src="../assets/js/icons.js" defer></script>
-<script src="../assets/js/login.js" defer></script>
-<script src="../assets/js/pwa-register.js" defer></script>
+  <script type="module" src="../assets/js/supabase-client.js"></script>
+  <script type="module" src="../assets/js/api/_client.js"></script>
+  <script src="../assets/js/auth.js" defer></script>
+  <script src="../assets/js/icons.js" defer></script>
+  <script src="../assets/js/login.js" defer></script>
+  <script src="../assets/js/pwa-register.js" defer></script>
 </body>
+
 </html>

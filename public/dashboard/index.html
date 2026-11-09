@@ -309,26 +309,26 @@
   
     <!-- =========================== ITEMS =========================== -->
     <div id="page-items" class="page p-6 pb-16 space-y-5">
-      <div class="items-page-header flex items-center justify-between">
+      <div class="items-page-header flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold tracking-tight">Master Barang</h2>
           <p id="items-subtitle" class="text-sm text-[#A0A0A5] mt-1">0 barang · 0 total stok · Nilai Modal: Rp 0 · Potensi Jual: Rp 0</p>
         </div>
-        <div class="items-toolbar-actions flex gap-2">
-          <button type="button" data-action="sync-habitic" id="btn-sync-habitic-links" onclick="syncMarketplaceLinksToHabitic()" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition" title="Kirim link marketplace berdasarkan SKU ke katalog Habitic">
-            <i data-lucide="refresh-cw" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline">Sinkron Link Habitic</span><span class="sm:hidden">Sync Link</span>
+        <div class="items-toolbar-actions flex items-center gap-2 flex-wrap">
+          <button type="button" data-action="sync-habitic" id="btn-sync-habitic-links" onclick="syncMarketplaceLinksToHabitic()" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0" title="Kirim link marketplace berdasarkan SKU ke katalog Habitic">
+            <i data-lucide="refresh-cw" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Sinkron Katalog</span><span class="sm:hidden">Sync Link</span>
           </button>
-          <button type="button" data-action="import-channel-links" id="btn-import-channel-links" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition" title="Impor link channel berdasarkan SKU dari file CSV">
-            <i data-lucide="upload" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline">Impor Link Channel</span><span class="sm:hidden">Link CSV</span>
+          <button type="button" data-action="import-channel-links" id="btn-import-channel-links" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0" title="Impor link channel berdasarkan SKU dari file CSV">
+            <i data-lucide="upload" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Impor Link CSV</span><span class="sm:hidden">Link CSV</span>
           </button>
-          <button type="button" data-action="import" id="btn-import-items" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="upload" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline">Import CSV</span><span class="sm:hidden">Import</span>
+          <button type="button" data-action="import" id="btn-import-items" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0">
+            <i data-lucide="upload" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Impor CSV</span><span class="sm:hidden">Impor</span>
           </button>
-          <button onclick="handleExportItems()" data-action="export" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="download" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline">Export CSV</span><span class="sm:hidden">Export</span>
+          <button onclick="handleExportItems()" data-action="export" class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0">
+            <i data-lucide="download" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Ekspor CSV</span><span class="sm:hidden">Ekspor</span>
           </button>
-          <button data-action="add" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] active:scale-95 text-white px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-[#0088CC]/20 border border-white/10 transition cursor-pointer btn">
-            <i data-lucide="plus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline">Tambah Barang</span><span class="sm:hidden">Tambah</span>
+          <button data-action="add" onclick="openAddItemModal()" class="bg-[#0088CC] hover:bg-[#0077BB] active:scale-95 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-[#0088CC]/20 border border-white/10 transition cursor-pointer btn whitespace-nowrap shrink-0">
+            <i data-lucide="plus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> <span class="hidden sm:inline whitespace-nowrap">Tambah Barang</span><span class="sm:hidden">Tambah</span>
           </button>
         </div>
       </div>
@@ -396,27 +396,27 @@
           <thead class="bg-white/[0.02] border-b border-white/5">
             <tr class="text-left text-[#A0A0A5]">
               <th class="px-4 py-3 w-10"><input type="checkbox" id="select-all-header" data-select-all="" onchange="toggleSelectAllPage(this.checked)" aria-label="Pilih semua barang di halaman ini" class="accent-[#0088CC] w-4 h-4 cursor-pointer"></th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Foto</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">SKU</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Barcode</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider cursor-pointer hover:text-white select-none transition" onclick="toggleSortByName()" title="Urutkan berdasarkan Nama">
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider whitespace-nowrap">Foto</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider whitespace-nowrap">SKU</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider whitespace-nowrap">Barcode</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider cursor-pointer hover:text-white select-none transition whitespace-nowrap" onclick="toggleSortByName()" title="Urutkan berdasarkan Nama">
                 <span class="inline-flex items-center gap-1.5 text-white">
                   <span>Nama Barang</span>
                   <i id="sort-name-icon" data-lucide="arrow-down-a-z" class="w-3.5 h-3.5 text-[#0088CC]" aria-hidden="true"></i>
                 </span>
               </th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Brand</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Kategori</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Stok</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Min Stok</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right">Hrg Beli</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap">Hrg Jual Offline</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap">Laba Offline</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Persentase kenaikan harga jual offline dibanding harga beli">Markup Offline</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Harga jual untuk marketplace online">Hrg Jual Online</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Persentase potongan riil Shopee Star+ (komisi 14,5% + fixed fee Rp 1.250)">Fee MP</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Estimasi laba bersih jika terjual 1 pcs eceran per resi di marketplace (Shopee Star+)">Laba Bersih Online</th>
-              <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider text-right whitespace-nowrap" title="Persentase kenaikan harga jual online dibanding harga beli">Markup Online</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider whitespace-nowrap">Brand</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider whitespace-nowrap">Kategori</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap">Stok</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap">Min Stok</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap">Hrg Beli</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap">Hrg Jual Offline</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap">Laba Offline</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap" title="Persentase kenaikan harga jual offline dibanding harga beli">Markup Offline</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap" title="Harga jual untuk marketplace online">Hrg Jual Online</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap" title="Persentase potongan riil Shopee Star+ (komisi 14,5% + fixed fee Rp 1.250)">Fee MP</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap" title="Estimasi laba bersih jika terjual 1 pcs eceran per resi di marketplace (Shopee Star+)">Laba Bersih Online</th>
+              <th class="px-4 py-3 font-semibold text-xs tracking-wider text-right whitespace-nowrap" title="Persentase kenaikan harga jual online dibanding harga beli">Markup Online</th>
               <th class="px-4 py-3 w-24"></th>
             </tr>
           </thead>

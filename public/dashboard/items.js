@@ -2175,19 +2175,19 @@ import {
             </div>
           `}
         </td>
-        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.sku || '-')}</td>
-        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs">${escapeHtml(item.barcode || '-')}</td>
-        <td class="px-4 py-3.5 font-medium">
+        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs whitespace-nowrap">${escapeHtml(item.sku || '-')}</td>
+        <td class="px-4 py-3.5 text-[#A0A0A5] font-mono text-xs whitespace-nowrap">${escapeHtml(item.barcode || '-')}</td>
+        <td class="px-4 py-3.5 font-medium min-w-[170px]">
           <span class="text-white text-sm font-semibold">${escapeHtml(item.name)}</span>
         </td>
-        <td class="px-4 py-3.5 text-[#A0A0A5]">${escapeHtml(item.brand || '-')}</td>
-        <td class="px-4 py-3.5"><span class="badge bg-[#0088CC]/15 text-[#32ADE6]">${escapeHtml(item.category || 'Umum')}</span></td>
-        <td class="px-4 py-3.5 text-right">${stockDisplay}</td>
-        <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${minStock.toLocaleString('id-ID')}</td>
-        <td class="px-4 py-3.5 text-right">${formatRupiah(costPrice)}</td>
-        <td class="px-4 py-3.5 text-right font-semibold">${formatRupiah(sellPrice)}</td>
-        <td class="px-4 py-3.5 text-right ${offlineProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-semibold">${formatRupiah(offlineProfit)}</td>
-        <td class="px-4 py-3.5 text-right ${markupColor} font-semibold">${markup}%</td>
+        <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${escapeHtml(item.brand || '-')}</td>
+        <td class="px-4 py-3.5 whitespace-nowrap"><span class="badge bg-[#0088CC]/15 text-[#32ADE6] whitespace-nowrap">${escapeHtml(item.category || 'Umum')}</span></td>
+        <td class="px-4 py-3.5 text-right whitespace-nowrap">${stockDisplay}</td>
+        <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${minStock.toLocaleString('id-ID')}</td>
+        <td class="px-4 py-3.5 text-right whitespace-nowrap">${formatRupiah(costPrice)}</td>
+        <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(sellPrice)}</td>
+        <td class="px-4 py-3.5 text-right ${offlineProfit >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'} font-semibold whitespace-nowrap">${formatRupiah(offlineProfit)}</td>
+        <td class="px-4 py-3.5 text-right ${markupColor} font-semibold whitespace-nowrap">${markup}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">${formatRupiah(onlinePricing.price)}</td>
         <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap" title="Potongan Shopee Star+: ${formatRupiah(onlinePricing.feeNominal)} (${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%)">${Number(onlinePricing.fee * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</td>
         <td class="px-4 py-3.5 text-right font-semibold whitespace-nowrap">

@@ -1,51 +1,55 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>404 - Aquastock Pro</title>
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0088CC">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Aquastock Pro">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
-<link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png">
-<!-- Inter font (self-host) -->
-<link rel="preconnect" href="/" crossorigin>
-<link rel="preload" href="/assets/fonts/InterVariable.woff2"
-      as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/fonts/inter.css">
 
-<link rel="stylesheet" href="/assets/css/tailwind.static.css">
-<link rel="stylesheet" href="/assets/css/main.css">
-<script>
-(function() {
-  var p = window.location.pathname;
-  if (p.indexOf('/dashboard/') !== -1) {
-    var slug = p.replace(/^.*\/dashboard\/?/, '').replace(/\/+$/, '');
-    if (slug) {
-      try { sessionStorage.setItem('spa_redirect', slug); } catch(e) {}
-      window.location.replace('/dashboard/?page=' + encodeURIComponent(slug));
-    }
-  }
-})();
-</script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>404 - Aquastock</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0088CC">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aquastock">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png">
+  <!-- Inter font (self-host) -->
+  <link rel="preconnect" href="/" crossorigin>
+  <link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/fonts/inter.css">
+
+  <link rel="stylesheet" href="/assets/css/tailwind.static.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script>
+    (function () {
+      var p = window.location.pathname;
+      if (p.indexOf('/dashboard/') !== -1) {
+        var slug = p.replace(/^.*\/dashboard\/?/, '').replace(/\/+$/, '');
+        if (slug) {
+          try { sessionStorage.setItem('spa_redirect', slug); } catch (e) { }
+          window.location.replace('/dashboard/?page=' + encodeURIComponent(slug));
+        }
+      }
+    })();
+  </script>
 </head>
+
 <body class="bg-black text-white antialiased min-h-screen flex items-center justify-center p-6">
   <div class="text-center max-w-md">
-    <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center mb-6 shadow-lg shadow-[#0088CC]/20">
+    <div
+      class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#0088CC] to-[#32ADE6] grid place-items-center mb-6 shadow-lg shadow-[#0088CC]/20">
       <span class="text-3xl font-bold">404</span>
     </div>
     <h1 class="text-2xl font-bold mb-2">Halaman tidak ditemukan</h1>
     <p class="text-[#A0A0A5] text-sm mb-6">Halaman yang Anda cari tidak tersedia atau sudah dipindahkan.</p>
-    <a href="/dashboard/" class="btn inline-flex items-center gap-2 bg-[#0088CC] hover:bg-[#0077BB] px-5 py-3 rounded-xl text-sm font-semibold">
+    <a href="/dashboard/"
+      class="btn inline-flex items-center gap-2 bg-[#0088CC] hover:bg-[#0077BB] px-5 py-3 rounded-xl text-sm font-semibold">
       Kembali ke Dashboard
     </a>
   </div>
-<script src="/assets/js/icons.js" defer></script>
+  <script src="/assets/js/icons.js" defer></script>
 </body>
+
 </html>

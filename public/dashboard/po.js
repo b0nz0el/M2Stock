@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — po.js
+   Aquastock — po.js
    Controller Modul Purchase Order & PO Items
    ═══════════════════════════════════════════════════ */
 
@@ -479,7 +479,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       if (!storeInfo && typeof localStorage !== 'undefined') {
         const cached = localStorage.getItem('aquastock_store_info');
         if (cached) {
-          try { storeInfo = JSON.parse(cached); } catch (_) {}
+          try { storeInfo = JSON.parse(cached); } catch (_) { }
         }
       }
       if (storeInfo) {
@@ -504,7 +504,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           docStoreLogo.src = storeInfo.logo_url;
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     const items = item.items || item.purchase_order_items || [];
     if (tbody) {
@@ -570,7 +570,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           if (parsed.name) storeName = parsed.name;
           if (parsed.slogan) storeSlogan = parsed.slogan;
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     let text = `*SURAT PESANAN PEMBELIAN BARANG (PURCHASE ORDER)*\n`;
@@ -618,7 +618,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         if (settingsApi && typeof settingsApi.getStoreInfo === 'function') {
           activeStoreInfo = await settingsApi.getStoreInfo();
         }
-      } catch (_) {}
+      } catch (_) { }
     }
     const msg = generatePOWhatsAppText(item, activeStoreInfo);
     const encoded = encodeURIComponent(msg);
@@ -1449,7 +1449,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         </style>
       </head>
       <body>
-        <h2>Aquastock Pro — ${title}</h2>
+        <h2>Aquastock — ${title}</h2>
         <p>Dicetak pada: ${today} | Total: ${poEntries.length} Dokumen PO</p>
         <table>
           <thead>
@@ -1779,13 +1779,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           restockCount.classList.toggle('hidden', lowStockCount === 0);
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   async function initPo() {
     try {
       userRole = await getUserRole();
-    } catch (_) {}
+    } catch (_) { }
 
     setupEvents();
     await Promise.all([

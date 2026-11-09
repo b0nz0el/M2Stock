@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════
-# Aquastock Pro — deploy.sh (placeholder)
+# Aquastock — deploy.sh (placeholder)
 # Deploy folder `public/` ke hosting statis.
 #
 #   scripts/deploy.sh netlify

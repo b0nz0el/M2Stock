@@ -9,9 +9,9 @@
 
 .items-toolbar-actions > button {
   box-sizing: border-box;
-  min-height: 48px;
-  height: 48px;
+  min-height: 44px;
   align-items: center;
+  white-space: nowrap !important;
 }
 
 /* ═══ RESPONSIVE TEXT UTILITIES: Eliminasi Teks Ganda (sm:hidden vs sm:inline) ═══ */

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — cash.js
+   Aquastock — cash.js
    Controller Modul Kas & Keuangan (cash_flow)
    ═══════════════════════════════════════════════════ */
 
@@ -187,11 +187,11 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         const id = btn.getAttribute('data-id');
         const confirmed = typeof window.showConfirmDialog === 'function'
           ? await window.showConfirmDialog({
-              title: 'Hapus Catatan Kas',
-              message: 'Yakin ingin menghapus catatan kas ini? Tindakan ini tidak dapat dibatalkan.',
-              confirmText: 'Hapus Catatan',
-              type: 'danger'
-            })
+            title: 'Hapus Catatan Kas',
+            message: 'Yakin ingin menghapus catatan kas ini? Tindakan ini tidak dapat dibatalkan.',
+            confirmText: 'Hapus Catatan',
+            type: 'danger'
+          })
           : confirm('Yakin ingin menghapus catatan kas ini?');
         if (confirmed) {
           await deleteCash(id);
@@ -250,7 +250,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           elLaba.className = 'text-2xl font-bold text-[#34C759] mt-1';
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   async function deleteCash(id) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════
-# Aquastock Pro — backup.sh
+# Aquastock — backup.sh
 # Membuat arsip tar.gz dari file aplikasi + database, simpan 14 terbaru.
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail

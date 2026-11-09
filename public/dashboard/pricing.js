@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — dashboard/pricing.js
+   Aquastock — dashboard/pricing.js
    Modul Simulasi & Strategi Harga Marketplace
    ═══════════════════════════════════════════════════ */
 
@@ -27,11 +27,11 @@ import { Api } from '../assets/js/api/index.js';
 
   const PRESETS = {
     shopee_star_plus: { name: 'Shopee Star+ (14,5% + Rp 1.250)', fee: 14.5, fixed: 1250 },
-    shopee_star:      { name: 'Shopee Star (12,0% + Rp 1.250)', fee: 12.0, fixed: 1250 },
-    shopee_non_star:  { name: 'Shopee Non-Star (10,0% + Rp 1.250)', fee: 10.0, fixed: 1250 },
-    tiktok_shop:      { name: 'TikTok Shop (12,0% + Rp 1.000)', fee: 12.0, fixed: 1000 },
-    tokopedia:        { name: 'Tokopedia (10,0% + Rp 1.000)', fee: 10.0, fixed: 1000 },
-    custom:           { name: 'Custom / Kustom Sendiri', fee: 14.5, fixed: 1250 }
+    shopee_star: { name: 'Shopee Star (12,0% + Rp 1.250)', fee: 12.0, fixed: 1250 },
+    shopee_non_star: { name: 'Shopee Non-Star (10,0% + Rp 1.250)', fee: 10.0, fixed: 1250 },
+    tiktok_shop: { name: 'TikTok Shop (12,0% + Rp 1.000)', fee: 12.0, fixed: 1000 },
+    tokopedia: { name: 'Tokopedia (10,0% + Rp 1.000)', fee: 10.0, fixed: 1000 },
+    custom: { name: 'Custom / Kustom Sendiri', fee: 14.5, fixed: 1250 }
   };
 
   function formatRupiah(num) {
@@ -858,11 +858,11 @@ import { Api } from '../assets/js/api/index.js';
           </div>
           <div class="text-right shrink-0">
             ${isPriceChanged
-              ? `<span class="text-[#A0A0A5] line-through text-[11px] mr-1">${formatRupiah(oldPrice)}</span>
+          ? `<span class="text-[#A0A0A5] line-through text-[11px] mr-1">${formatRupiah(oldPrice)}</span>
                  <span class="text-[#34C759] font-bold font-mono text-xs">-> ${formatRupiah(newPrice)}</span>`
-              : `<span class="text-[#A0A0A5] font-mono text-xs">${formatRupiah(oldPrice)}</span>
+          : `<span class="text-[#A0A0A5] font-mono text-xs">${formatRupiah(oldPrice)}</span>
                  <span class="text-[10px] text-[#77777D] ml-1">(Tetap)</span>`
-            }
+        }
           </div>
         </div>
       `;

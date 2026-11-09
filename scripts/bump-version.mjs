@@ -89,7 +89,7 @@ if (fs.existsSync(htmlPath)) {
     `$1v${newVersion} (Terkini)$2`
   );
   htmlContent = htmlContent.replace(
-    /(<span class="font-semibold text-white" data-app-version-local>Aquastock Pro )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
+    /(<span class="font-semibold text-white" data-app-version-local>Aquastock )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
     `$1v${newVersion} (PWA Local-First)$2`
   );
   htmlContent = htmlContent.replace(

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — report.js
+   Aquastock — report.js
    Controller Modul Laporan & Visualisasi Agregasi
    ═══════════════════════════════════════════════════ */
 
@@ -22,12 +22,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       if (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo) {
         activeStoreInfo = await window.Api.settings.getStoreInfo();
       }
-    } catch (_) {}
+    } catch (_) { }
     if (!activeStoreInfo && typeof localStorage !== 'undefined') {
       try {
         const cached = localStorage.getItem('aquastock_store_info');
         if (cached) activeStoreInfo = JSON.parse(cached);
-      } catch (_) {}
+      } catch (_) { }
     }
     return activeStoreInfo;
   }
@@ -148,12 +148,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       if (existingChart) {
         existingChart.destroy();
       }
-    } catch (_) {}
+    } catch (_) { }
 
     if (chartInstance) {
       try {
         chartInstance.destroy();
-      } catch (_) {}
+      } catch (_) { }
       chartInstance = null;
     }
 
@@ -364,12 +364,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     thead.innerHTML = `
       <tr class="text-left text-[#A0A0A5]">
         ${columns.map((col, idx) => {
-          const isRight = col.includes('Terjual') || col.includes('Pendapatan') || col.includes('Laba') ||
-                          col.includes('Margin') || col.includes('Omzet') || col.includes('Unit') ||
-                          col.includes('Modal') || col.includes('Jual') || col.includes('Pembelian') ||
-                          col.includes('Stok');
-          return `<th class="px-5 py-3 font-medium text-xs uppercase tracking-wider ${isRight ? 'text-right' : ''}">${col}</th>`;
-        }).join('')}
+      const isRight = col.includes('Terjual') || col.includes('Pendapatan') || col.includes('Laba') ||
+        col.includes('Margin') || col.includes('Omzet') || col.includes('Unit') ||
+        col.includes('Modal') || col.includes('Jual') || col.includes('Pembelian') ||
+        col.includes('Stok');
+      return `<th class="px-5 py-3 font-medium text-xs uppercase tracking-wider ${isRight ? 'text-right' : ''}">${col}</th>`;
+    }).join('')}
       </tr>
     `;
 
@@ -462,7 +462,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     try {
       const cached = typeof localStorage !== 'undefined' ? localStorage.getItem('aquastock_store_info') : null;
       if (cached) info = JSON.parse(cached);
-    } catch (_) {}
+    } catch (_) { }
     if (!info) info = activeStoreInfo;
 
     if (info) {
@@ -499,7 +499,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       const userEmail = document.getElementById('sidebar-user-email')?.textContent?.trim() || '';
       const userRole = document.getElementById('sidebar-user-role')?.textContent?.trim() || '';
       if (userEmail) currentUserName = `${userEmail} (${userRole || 'Staff'})`;
-    } catch (_) {}
+    } catch (_) { }
 
     const periodLabels = {
       today: 'Hari Ini',
@@ -1255,7 +1255,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       let printWindow = null;
       try {
         printWindow = window.open('', '_blank');
-      } catch (_) {}
+      } catch (_) { }
 
       if (printWindow) {
         try {
@@ -1278,7 +1278,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
                   });
                 }));
               }
-            } catch (_) {}
+            } catch (_) { }
             printWindow.focus();
             printWindow.print();
           };
@@ -1319,9 +1319,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
               if (typeof iframe.contentWindow.focus === 'function') iframe.contentWindow.focus();
               if (typeof iframe.contentWindow.print === 'function') iframe.contentWindow.print();
             }
-          } catch (_) {}
+          } catch (_) { }
           setTimeout(() => {
-            try { iframe.remove(); } catch (_) {}
+            try { iframe.remove(); } catch (_) { }
           }, 2000);
         };
 

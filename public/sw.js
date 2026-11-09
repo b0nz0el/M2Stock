@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — sw.js
+   Aquastock — sw.js
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
@@ -150,7 +150,7 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME).then((cache) => cache.put(req, networkRes));
           }
           return networkRes;
-        }).catch(() => {});
+        }).catch(() => { });
         return cached || fetchPromise;
       })
     );

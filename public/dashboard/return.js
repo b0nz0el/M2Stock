@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — return.js
+   Aquastock — return.js
    Controller Modul Retur Barang (returns)
    ═══════════════════════════════════════════════════ */
 
@@ -203,15 +203,15 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           .map((product) => product.id)
         : [];
       const resList = await returnApi.getAll({
-          page: currentPage,
-          limit: pageSize,
-          tipe: currentTipe,
-          status: currentStatus,
-          search: currentSearch,
-          productIds: matchingProductIds,
-          startDate,
-          endDate
-        });
+        page: currentPage,
+        limit: pageSize,
+        tipe: currentTipe,
+        status: currentStatus,
+        search: currentSearch,
+        productIds: matchingProductIds,
+        startDate,
+        endDate
+      });
 
       returnEntries = resList.data || [];
       totalRecords = resList.meta?.total || returnEntries.length;
@@ -369,11 +369,11 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   async function handleCompleteReturn(id) {
     const confirmed = typeof window.showConfirmDialog === 'function'
       ? await window.showConfirmDialog({
-          title: 'Selesaikan Retur',
-          message: 'Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.',
-          confirmText: 'Selesaikan Retur',
-          type: 'primary'
-        })
+        title: 'Selesaikan Retur',
+        message: 'Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.',
+        confirmText: 'Selesaikan Retur',
+        type: 'primary'
+      })
       : confirm('Tandai retur ini sebagai selesai? Mutasi stok fisik barang akan otomatis diproses ke inventori.');
     if (!confirmed) {
       return;
@@ -516,7 +516,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (docDate) docDate.textContent = tanggalRetur;
     if (docStatus) {
       docStatus.textContent = statusText;
-      docStatus.className = 'font-bold uppercase text-[10px] ' + 
+      docStatus.className = 'font-bold uppercase text-[10px] ' +
         (statusText === 'SELESAI' ? 'text-green-700' : (statusText === 'DITOLAK' ? 'text-red-700' : 'text-amber-700'));
     }
     if (docItemName) docItemName.textContent = prodName;
@@ -536,7 +536,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       if (!storeInfo && typeof localStorage !== 'undefined') {
         const cached = localStorage.getItem('aquastock_store_info');
         if (cached) {
-          try { storeInfo = JSON.parse(cached); } catch (_) {}
+          try { storeInfo = JSON.parse(cached); } catch (_) { }
         }
       }
       if (storeInfo) {
@@ -557,7 +557,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         const docStoreSign = document.getElementById('doc-return-sign-name');
         if (docStoreSign && storeInfo.name) docStoreSign.textContent = storeInfo.name;
       }
-    } catch (_) {}
+    } catch (_) { }
 
     const modal = document.getElementById('modal-print-return');
     if (modal) {
@@ -594,7 +594,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           if (parsed.name) storeName = parsed.name;
           if (parsed.slogan) storeSlogan = parsed.slogan;
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     const noRetur = item.no_retur || '-';
@@ -637,7 +637,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         if (settingsApi && typeof settingsApi.getStoreInfo === 'function') {
           activeStoreInfo = await settingsApi.getStoreInfo();
         }
-      } catch (_) {}
+      } catch (_) { }
     }
     const msg = generateReturnWhatsAppText(item, activeStoreInfo);
     const encoded = encodeURIComponent(msg);
@@ -1014,7 +1014,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   async function initReturn() {
     try {
       userRole = await getUserRole();
-    } catch (_) {}
+    } catch (_) { }
 
     setupEvents();
     await loadProducts();

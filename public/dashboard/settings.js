@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — settings.js
+   Aquastock — settings.js
    Controller Modul Pengaturan (/dashboard/settings/)
    Pengaturan dari Supabase app_settings & profiles
    ═══════════════════════════════════════════════════ */
@@ -267,11 +267,11 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 
       const confirmed = typeof window.showConfirmDialog === 'function'
         ? await window.showConfirmDialog({
-            title: 'Hapus Saluran Penjualan',
-            message: `Hapus saluran penjualan "${entry.name}"?`,
-            confirmText: 'Hapus Saluran',
-            type: 'danger'
-          })
+          title: 'Hapus Saluran Penjualan',
+          message: `Hapus saluran penjualan "${entry.name}"?`,
+          confirmText: 'Hapus Saluran',
+          type: 'danger'
+        })
         : window.confirm(`Hapus saluran penjualan "${entry.name}"?`);
       if (!confirmed) return;
       button.disabled = true;
@@ -304,11 +304,11 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       : `Hapus satuan "${entry.name}"? Satuan yang masih dipakai produk tidak dapat dihapus.`;
     const confirmed = typeof window.showConfirmDialog === 'function'
       ? await window.showConfirmDialog({
-          title: deleteTitle,
-          message: deleteMessage,
-          confirmText: isCat ? 'Hapus Kategori' : 'Hapus Satuan',
-          type: 'danger'
-        })
+        title: deleteTitle,
+        message: deleteMessage,
+        confirmText: isCat ? 'Hapus Kategori' : 'Hapus Satuan',
+        type: 'danger'
+      })
       : window.confirm(deleteMessage);
     if (!confirmed) return;
 
