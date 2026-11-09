@@ -1,4 +1,5 @@
 import { supabase } from '../assets/js/supabase-client.js';
+import { settings as settingsApi } from '../assets/js/api/settings.js';
 
 let allProducts = [];
 let missingProducts = [];
@@ -7,7 +8,8 @@ let barcodeRendererPromise;
 let loading = false;
 let processing = false;
 let activeFilterMode = 'missing'; // 'missing' | 'existing' | 'all'
-let currentLayout = (typeof localStorage !== 'undefined' && localStorage.getItem('aquastock_barcode_layout')) || '50x30_single';
+export const DEFAULT_BARCODE_LAYOUT = '40x30_double';
+let currentLayout = (typeof localStorage !== 'undefined' && localStorage.getItem('aquastock_barcode_layout')) || DEFAULT_BARCODE_LAYOUT;
 
 export const BARCODE_LAYOUTS = {
   '50x30_single': {
@@ -65,6 +67,45 @@ export const BARCODE_LAYOUTS = {
     `
   }
 };
+
+export function getCurrentBarcodeLayout() {
+  return currentLayout;
+}
+
+export function setBarcodeLayout(layoutKey, persistToCloud = true) {
+  if (!BARCODE_LAYOUTS[layoutKey]) return currentLayout;
+  currentLayout = layoutKey;
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem('aquastock_barcode_layout', currentLayout);
+    } catch (_) {}
+  }
+  const layoutSelect = typeof document !== 'undefined' ? document.getElementById('select-barcode-layout') : null;
+  if (layoutSelect && layoutSelect.value !== currentLayout) {
+    layoutSelect.value = currentLayout;
+  }
+  if (persistToCloud && settingsApi && typeof settingsApi.save === 'function') {
+    settingsApi.save('barcode_layout', currentLayout).catch(err => {
+      console.warn('Gagal menyimpan barcode_layout ke cloud:', err);
+    });
+  }
+  return currentLayout;
+}
+
+export async function loadBarcodeLayoutSetting() {
+  try {
+    if (settingsApi && typeof settingsApi.get === 'function') {
+      const res = await settingsApi.get('barcode_layout');
+      if (res?.ok && res.data && BARCODE_LAYOUTS[res.data]) {
+        setBarcodeLayout(res.data, false);
+        return res.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal memuat barcode_layout dari settings:', err);
+  }
+  return currentLayout;
+}
 
 export function filterProductsWithoutBarcode(products, searchTerm) {
   const query = String(searchTerm || '').trim().toLocaleLowerCase();
@@ -849,6 +890,9 @@ export function initBarcodeSettings() {
   if (typeof window !== 'undefined') {
     window.printSingleProductBarcode = printSingleProductBarcode;
     window.shareSingleProductBarcodePdf = shareSingleProductBarcodePdf;
+    window.getCurrentBarcodeLayout = getCurrentBarcodeLayout;
+    window.setBarcodeLayout = setBarcodeLayout;
+    window.loadBarcodeLayoutSetting = loadBarcodeLayoutSetting;
   }
 
   // Restore saved layout dropdown value
@@ -856,12 +900,22 @@ export function initBarcodeSettings() {
   if (layoutSelect) {
     layoutSelect.value = currentLayout;
     layoutSelect.addEventListener('change', event => {
-      currentLayout = event.target.value;
-      try {
-        localStorage.setItem('aquastock_barcode_layout', currentLayout);
-      } catch (_) {}
+      setBarcodeLayout(event.target.value, true);
     });
   }
+
+  // Dengarkan event sinkronisasi layout antar modul/perangkat
+  if (typeof window !== 'undefined' && !window.__barcodeLayoutListenerBound) {
+    window.__barcodeLayoutListenerBound = true;
+    window.addEventListener('aquastock:barcode-layout-updated', event => {
+      if (event.detail && BARCODE_LAYOUTS[event.detail]) {
+        setBarcodeLayout(event.detail, false);
+      }
+    });
+  }
+
+  // Pastikan layout terbaru dari database toko dimuat
+  loadBarcodeLayoutSetting().catch(() => {});
 
   // Filter Buttons
   document.getElementById('btn-filter-barcode-missing')?.addEventListener('click', () => setFilterMode('missing'));

@@ -3276,17 +3276,22 @@ import {
   window.calculateAdjustmentDifference = calculateAdjustmentDifference;
   window.handleStockAdjustmentSubmit = handleStockAdjustmentSubmit;
 
-  async function exportProductBarcode(itemOrId) {
+  async function exportProductBarcode(itemOrId, customLayout) {
     try {
-      if (typeof window.shareSingleProductBarcodePdf === 'function') {
-        await window.shareSingleProductBarcodePdf(itemOrId);
-        return;
-      }
       const module = await import('./settings-barcode.js');
+      if (typeof module.loadBarcodeLayoutSetting === 'function') {
+        await module.loadBarcodeLayoutSetting().catch(() => {});
+      }
+      const activeLayout = customLayout || (typeof module.getCurrentBarcodeLayout === 'function'
+        ? module.getCurrentBarcodeLayout()
+        : (typeof localStorage !== 'undefined' && localStorage.getItem('aquastock_barcode_layout')) || '40x30_double');
+
       if (typeof module.shareSingleProductBarcodePdf === 'function') {
-        await module.shareSingleProductBarcodePdf(itemOrId);
+        await module.shareSingleProductBarcodePdf(itemOrId, activeLayout);
+      } else if (typeof window.shareSingleProductBarcodePdf === 'function') {
+        await window.shareSingleProductBarcodePdf(itemOrId, activeLayout);
       } else if (typeof module.printSingleProductBarcode === 'function') {
-        await module.printSingleProductBarcode(itemOrId, undefined, 'pdf');
+        await module.printSingleProductBarcode(itemOrId, activeLayout, 'pdf');
       }
     } catch (err) {
       console.error('Gagal export barcode:', err);

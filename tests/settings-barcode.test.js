@@ -337,4 +337,52 @@ describe('Internal product barcode creation', () => {
     expect(downloadResult.method).toBe('download');
     expect(downloadResult.success).toBe(true);
   });
+
+  it('synchronizes barcode layout settings with cloud database (app_settings)', async () => {
+    const { settings: settingsApi } = await import('../public/assets/js/api/settings.js');
+    const { loadBarcodeLayoutSetting, setBarcodeLayout, getCurrentBarcodeLayout } = await import('../public/dashboard/settings-barcode.js');
+
+    vi.spyOn(settingsApi, 'get').mockResolvedValue({
+      ok: true,
+      data: '40x30_double'
+    });
+
+    const loaded = await loadBarcodeLayoutSetting();
+    expect(loaded).toBe('40x30_double');
+    expect(getCurrentBarcodeLayout()).toBe('40x30_double');
+    expect(localStorage.getItem('aquastock_barcode_layout')).toBe('40x30_double');
+
+    const saveSpy = vi.spyOn(settingsApi, 'save').mockResolvedValue({
+      ok: true,
+      data: '50x30_single'
+    });
+
+    setBarcodeLayout('50x30_single', true);
+    expect(getCurrentBarcodeLayout()).toBe('50x30_single');
+    expect(localStorage.getItem('aquastock_barcode_layout')).toBe('50x30_single');
+    expect(saveSpy).toHaveBeenCalledWith('barcode_layout', '50x30_single');
+  });
+
+  it('updates layout when aquastock:barcode-layout-updated event is dispatched', async () => {
+    const { getCurrentBarcodeLayout, setBarcodeLayout, initBarcodeSettings } = await import('../public/dashboard/settings-barcode.js');
+    
+    // Inisialisasi event listener
+    const selectElem = document.createElement('select');
+    selectElem.id = 'select-barcode-layout';
+    selectElem.innerHTML = `
+      <option value="50x30_single">50x30</option>
+      <option value="40x30_double">40x30 double</option>
+    `;
+    document.body.appendChild(selectElem);
+
+    initBarcodeSettings();
+
+    setBarcodeLayout('50x30_single', false);
+    expect(getCurrentBarcodeLayout()).toBe('50x30_single');
+
+    // Trigger event sinkronisasi antar perangkat
+    window.dispatchEvent(new CustomEvent('aquastock:barcode-layout-updated', { detail: '40x30_double' }));
+    expect(getCurrentBarcodeLayout()).toBe('40x30_double');
+    expect(selectElem.value).toBe('40x30_double');
+  });
 });

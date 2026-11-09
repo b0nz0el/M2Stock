@@ -38,8 +38,11 @@ export const settings = {
    */
   async get(key) {
     try {
-      const { data, error } = await supabase
-        .from('app_settings')
+      const query = supabase?.from?.('app_settings');
+      if (!query || typeof query.select !== 'function') {
+        return { ok: false, error: new Error('Supabase client not initialized') };
+      }
+      const { data, error } = await query
         .select('value, updated_at, updated_by')
         .eq('key', key)
         .maybeSingle();
@@ -60,8 +63,18 @@ export const settings = {
    */
   async save(key, value) {
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const currentUserId = authData?.user?.id || null;
+      const query = supabase?.from?.('app_settings');
+      if (!query || typeof query.upsert !== 'function') {
+        return { ok: false, error: new Error('Supabase client not initialized') };
+      }
+
+      let currentUserId = null;
+      try {
+        if (typeof supabase?.auth?.getUser === 'function') {
+          const { data: authData } = await supabase.auth.getUser();
+          currentUserId = authData?.user?.id || null;
+        }
+      } catch (_) {}
 
       const payload = {
         key,
@@ -70,8 +83,7 @@ export const settings = {
         updated_by: currentUserId
       };
 
-      const { data, error } = await supabase
-        .from('app_settings')
+      const { data, error } = await query
         .upsert(payload, { onConflict: 'key' })
         .select()
         .single();
@@ -113,6 +125,20 @@ export const settings = {
         if (typeof window !== 'undefined') {
           try {
             window.dispatchEvent(new CustomEvent('aquastock:channels-updated', { detail: value }));
+          } catch (_) {}
+        }
+      }
+
+      if (key === 'barcode_layout') {
+        const layoutVal = typeof value === 'string' ? value : String(value || '');
+        if (typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem('aquastock_barcode_layout', layoutVal);
+          } catch (_) {}
+        }
+        if (typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(new CustomEvent('aquastock:barcode-layout-updated', { detail: layoutVal }));
           } catch (_) {}
         }
       }
