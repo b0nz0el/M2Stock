@@ -50,7 +50,7 @@ console.log(`  ✓ Updated package.json → ${newVersion}`);
 const versionPath = path.join(rootDir, 'public/version.json');
 fs.writeFileSync(versionPath, JSON.stringify({
   version: newVersion,
-  repository: 'b0nz0el/aquastock-pro',
+  repository: 'b0nz0el/M2Stock',
   branch: 'main'
 }, null, 2) + '\n', 'utf8');
 console.log(`  ✓ Updated public/version.json → ${newVersion}`);
@@ -59,9 +59,9 @@ console.log(`  ✓ Updated public/version.json → ${newVersion}`);
 const swPath = path.join(rootDir, 'public/sw.js');
 if (fs.existsSync(swPath)) {
   let swContent = fs.readFileSync(swPath, 'utf8');
-  swContent = swContent.replace(/const CACHE_NAME = 'aquastock-v[0-9.]+-pwa';/, `const CACHE_NAME = 'aquastock-v${newVersion}-pwa';`);
+  swContent = swContent.replace(/const CACHE_NAME = '(?:M2Stock|aquastock)-v[0-9.]+-pwa';/i, `const CACHE_NAME = 'M2Stock-v${newVersion}-pwa';`);
   fs.writeFileSync(swPath, swContent, 'utf8');
-  console.log(`  ✓ Updated public/sw.js → CACHE_NAME: aquastock-v${newVersion}-pwa`);
+  console.log(`  ✓ Updated public/sw.js → CACHE_NAME: M2Stock-v${newVersion}-pwa`);
 }
 
 // 6. Update public/assets/js/components/app-sidebar.js
@@ -89,7 +89,7 @@ if (fs.existsSync(htmlPath)) {
     `$1v${newVersion} (Terkini)$2`
   );
   htmlContent = htmlContent.replace(
-    /(<span class="font-semibold text-white" data-app-version-local>Aquastock )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
+    /(<span class="font-semibold text-white" data-app-version-local>(?:M2Stock|Aquastock) )v[0-9.]+ \(PWA Local-First\)(<\/span>)/,
     `$1v${newVersion} (PWA Local-First)$2`
   );
   htmlContent = htmlContent.replace(
