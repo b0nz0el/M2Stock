@@ -365,5 +365,19 @@ describe('Fase C: Kasir Cepat (Point of Sale / POS Multi-Item)', () => {
       expect(outJsCode).toContain("initialPaid = isBatchUnpaid ? 0 : ");
       expect(outJsCode).toContain("initialPaid = isSingleUnpaid ? 0 : total;");
     });
+
+    it('exports selectOutProduct and searchPosProducts for user-friendly search engine', () => {
+      expect(outJsCode).toContain('window.selectOutProduct = selectOutProduct;');
+      expect(outJsCode).toContain('window.searchPosProducts = searchPosProducts;');
+      expect(outJsCode).toContain('data-pos-search-product-id=');
+      expect(outJsCode).toContain('highlightSearchMatch(');
+    });
+
+    it('contains Tambah User button in Kelola User section for OWNER', () => {
+      expect(outHtml).toContain('id="btn-open-create-user"');
+      expect(outHtml).toContain('data-rbac-owner-only');
+      expect(outHtml).toContain('openCreateUserModal()');
+      expect(outHtml).toContain('id="modal-create-user"');
+    });
   });
 });

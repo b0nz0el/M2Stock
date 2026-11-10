@@ -2122,6 +2122,13 @@
             <h2 class="text-3xl font-bold tracking-tight">Kelola User</h2>
             <p class="text-sm text-[#A0A0A5] mt-1">Daftar pengguna terdaftar &amp; pengaturan hak akses (Role)</p>
           </div>
+          <div>
+            <button type="button" id="btn-open-create-user" data-rbac-owner-only onclick="openCreateUserModal()"
+              class="w-full sm:w-auto bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/20 transition active:scale-95">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Tambah User</span>
+            </button>
+          </div>
         </div>
 
         <!-- METRICS HEADER -->
@@ -6183,7 +6190,8 @@
   <!-- =========================== MODAL (USERS: modal-create-user) =========================== -->
   <div id="modal-create-user"
     class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"
-    role="dialog" aria-modal="true" aria-labelledby="modal-create-user-title">
+    role="dialog" aria-modal="true" aria-labelledby="modal-create-user-title"
+    onclick="if (event.target === this) closeCreateUserModal()">
     <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
       <div class="flex items-center justify-between pb-3 border-b border-white/5">
         <div class="flex items-center gap-3">

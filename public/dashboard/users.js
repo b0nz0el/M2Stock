@@ -227,13 +227,31 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-function openCreateUserModal() {
-  if (currentUserRole !== 'OWNER') return;
+async function openCreateUserModal() {
+  let role = String(currentUserRole || '').toUpperCase();
+  if (role !== 'OWNER' && window.RBAC?.getUserRole) {
+    try {
+      const fetched = await window.RBAC.getUserRole();
+      if (fetched) {
+        currentUserRole = fetched;
+        role = String(fetched).toUpperCase();
+      }
+    } catch (_) {}
+  }
+
+  if (role !== 'OWNER') {
+    if (typeof showToast === 'function') {
+      showToast('Hanya OWNER yang dapat menambah pengguna baru', 'warning');
+    }
+    return;
+  }
 
   const modal = document.getElementById('modal-create-user');
   if (!modal) return;
   modal.classList.remove('hidden');
   modal.classList.add('flex');
+  const emailInput = document.getElementById('new-user-email');
+  if (emailInput) setTimeout(() => emailInput.focus(), 50);
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
   }
@@ -252,8 +270,19 @@ function loadUsersFromBackend() {
 
 async function handleCreateUserSubmit(e) {
   e.preventDefault();
-  if (currentUserRole !== 'OWNER') {
-    showToast('Hanya OWNER yang dapat membuat pengguna', 'error');
+  let roleCheck = String(currentUserRole || '').toUpperCase();
+  if (roleCheck !== 'OWNER' && window.RBAC?.getUserRole) {
+    try {
+      const r = await window.RBAC.getUserRole();
+      if (r) {
+        currentUserRole = r;
+        roleCheck = String(r).toUpperCase();
+      }
+    } catch (_) {}
+  }
+
+  if (roleCheck !== 'OWNER') {
+    showToast('Hanya OWNER yang dapat membuat pengguna baru', 'error');
     return;
   }
 
@@ -346,6 +375,13 @@ window.handleSaveRole = handleSaveRole;
 window.handleSearch = handleSearch;
 window.handleSearchUsers = handleSearch;
 window.initUsers = loadUsers;
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeCreateUserModal();
+    closeRoleModal();
+  }
+});
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', loadUsers);

@@ -807,46 +807,140 @@
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
   }
 
+  let activeSuggestionIndex = -1;
+  let currentSearchMatches = [];
+
+  function highlightSearchMatch(text, query) {
+    if (!text) return '';
+    if (!query || !query.trim()) return escapeHtml(text);
+    const tokens = query.trim().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return escapeHtml(text);
+    const escaped = tokens.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return String(text).split(regex).map(part => {
+      if (tokens.some(t => t.toLowerCase() === part.toLowerCase())) {
+        return `<span class="text-[#32ADE6] font-bold bg-[#0088CC]/20 px-1 py-0.5 rounded">${escapeHtml(part)}</span>`;
+      }
+      return escapeHtml(part);
+    }).join('');
+  }
+
+  function searchPosProducts(query) {
+    if (!query || !query.trim()) return [];
+    const q = query.trim().toLowerCase();
+    const tokens = q.split(/\s+/).filter(Boolean);
+
+    const scored = (availableProducts || []).map(p => {
+      const name = (p.name || '').toLowerCase();
+      const sku = (p.sku || '').toLowerCase();
+      const barcode = (p.barcode || '').toLowerCase();
+      const brand = (p.brand || '').toLowerCase();
+      const category = (p.category || '').toLowerCase();
+      const stock = Number(p.stock ?? 0);
+
+      let score = 0;
+
+      // Exact barcode or SKU hit (barcodes / SKUs typed or scanned)
+      if (barcode === q || sku === q) {
+        score += 2000;
+      } else if (barcode.startsWith(q) || sku.startsWith(q)) {
+        score += 800;
+      } else if (name === q) {
+        score += 600;
+      } else if (name.startsWith(q)) {
+        score += 400;
+      }
+
+      // Check if all tokens match across searchable fields
+      let allTokensMatch = true;
+      for (const token of tokens) {
+        const inName = name.includes(token);
+        const inSku = sku.includes(token);
+        const inBarcode = barcode.includes(token);
+        const inBrand = brand.includes(token);
+        const inCategory = category.includes(token);
+
+        if (inName || inSku || inBarcode || inBrand || inCategory) {
+          score += 50;
+          if (inName && name.split(/\s+/).some(w => w.startsWith(token))) score += 40;
+          if (inSku && sku.startsWith(token)) score += 60;
+          if (inBarcode && barcode.startsWith(token)) score += 70;
+        } else {
+          allTokensMatch = false;
+        }
+      }
+
+      if (!allTokensMatch) return null;
+
+      // In-stock products get priority so cashier picks ready-to-sell stock first
+      if (stock > 0) {
+        score += 25;
+      }
+
+      return { product: p, score };
+    }).filter(Boolean);
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 10).map(item => item.product);
+  }
+
   function handleOutProductSearchInput(e) {
     const query = (e.target.value || '').trim();
     const suggestionsEl = document.getElementById('out-product-suggestions');
     if (!suggestionsEl) return;
 
+    activeSuggestionIndex = -1;
+
     if (!query) {
+      currentSearchMatches = [];
       suggestionsEl.classList.add('hidden');
       suggestionsEl.innerHTML = '';
       return;
     }
 
-    const q = query.toLowerCase();
-    const matches = availableProducts.filter(p =>
-      (p.name && p.name.toLowerCase().includes(q)) ||
-      (p.sku && p.sku.toLowerCase().includes(q)) ||
-      (p.barcode && p.barcode.toLowerCase().includes(q))
-    ).slice(0, 8);
+    currentSearchMatches = searchPosProducts(query);
 
-    if (matches.length === 0) {
+    if (currentSearchMatches.length === 0) {
       suggestionsEl.innerHTML = `
-        <div class="px-3.5 py-3 text-xs text-[#A0A0A5] text-center">
-          Produk tidak ditemukan di katalog
+        <div class="px-3.5 py-3 text-xs text-[#A0A0A5] text-center flex items-center justify-center gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-[#A0A0A5]"></i>
+          <span>Produk "${escapeHtml(query)}" tidak ditemukan di katalog</span>
         </div>
       `;
       suggestionsEl.classList.remove('hidden');
+      if (window.lucide?.createIcons) window.lucide.createIcons();
       return;
     }
 
+    const channel = document.getElementById('out-channel')?.value || 'Offline';
     let html = '';
-    matches.forEach(p => {
-      const stock = p.stock ?? 0;
+    currentSearchMatches.forEach((p, idx) => {
+      const stock = Number(p.stock ?? 0);
+      const price = resolvePosProductPrice(p, channel);
+      const highlightedName = highlightSearchMatch(p.name, query);
+      const highlightedSku = highlightSearchMatch(p.sku, query);
+      const highlightedBrand = p.brand ? highlightSearchMatch(p.brand, query) : '';
+      const catText = escapeHtml(p.category || 'Umum');
+
       html += `
-        <button type="button" class="w-full text-left px-3.5 py-2.5 hover:bg-white/10 flex items-center justify-between text-sm transition" onclick="selectOutProduct(${p.id})">
-          <div>
-            <div class="font-medium text-white">${escapeHtml(p.name)}</div>
-            <div class="text-xs text-[#A0A0A5]">${p.sku ? escapeHtml(p.sku) + ' • ' : ''}${escapeHtml(p.category || 'Umum')}</div>
+        <button type="button"
+          data-pos-search-product-id="${escapeHtml(p.id)}"
+          data-pos-search-index="${idx}"
+          class="pos-suggestion-item w-full text-left px-3.5 py-2.5 hover:bg-[#0088CC]/15 focus:bg-[#0088CC]/20 border-b border-white/5 last:border-b-0 flex items-center justify-between text-sm transition cursor-pointer select-none group"
+          onclick="selectOutProduct('${escapeHtml(p.id)}')">
+          <div class="min-w-0 pr-3">
+            <div class="font-medium text-white truncate group-hover:text-[#32ADE6] transition">${highlightedName}</div>
+            <div class="text-xs text-[#A0A0A5] flex items-center gap-1.5 mt-0.5 truncate">
+              ${p.sku ? `<span>${highlightedSku}</span><span class="text-white/20">•</span>` : ''}
+              ${highlightedBrand ? `<span>${highlightedBrand}</span><span class="text-white/20">•</span>` : ''}
+              <span>${catText}</span>
+            </div>
           </div>
-          <div class="text-right">
-            <div class="text-xs font-semibold ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}">Stok: ${stock} ${escapeHtml(p.unit || 'pcs')}</div>
-            <div class="text-[11px] text-[#A0A0A5]">${formatRupiahVal(p.sell_price || 0)}</div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-xs font-semibold ${stock > 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}">
+              ${stock > 0 ? `Stok: ${stock} ${escapeHtml(p.unit || 'pcs')}` : 'Habis (0)'}
+            </div>
+            <div class="text-[12px] font-medium text-white mt-0.5">${formatRupiahVal(price)}</div>
           </div>
         </button>
       `;
@@ -854,13 +948,28 @@
 
     suggestionsEl.innerHTML = html;
     suggestionsEl.classList.remove('hidden');
-    if (typeof window.refreshIcons === 'function') window.refreshIcons();
+    if (window.lucide?.createIcons) window.lucide.createIcons();
   }
 
   function selectOutProduct(productId) {
-    const prod = availableProducts.find(p => String(p.id) === String(productId));
+    if (!productId) return;
+    const prod = (availableProducts || []).find(p => String(p.id) === String(productId));
     if (!prod) return;
+
     addToPosCart(prod, 1);
+
+    const searchInput = document.getElementById('out-product-search');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    const suggestionsEl = document.getElementById('out-product-suggestions');
+    if (suggestionsEl) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+    }
+    activeSuggestionIndex = -1;
+    currentSearchMatches = [];
   }
 
   function clearOutProductSelection() {
@@ -2944,6 +3053,8 @@ window.filterPackingChannel = filterPackingChannel;
 window.printInvoicePDF = printInvoicePDF;
 window.printCurrentReceiptAsInvoicePDF = printCurrentReceiptAsInvoicePDF;
 window.shareReceiptViaWhatsApp = shareReceiptViaWhatsApp;
+window.selectOutProduct = selectOutProduct;
+window.searchPosProducts = searchPosProducts;
 
 document.addEventListener('DOMContentLoaded', () => {
   const discountInput = document.getElementById('pos-discount-input');
@@ -2964,40 +3075,69 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function updatePosSuggestionHighlight(containerEl) {
+    if (!containerEl) return;
+    const items = containerEl.querySelectorAll('.pos-suggestion-item');
+    items.forEach((item, idx) => {
+      if (idx === activeSuggestionIndex) {
+        item.classList.add('bg-[#0088CC]/25', 'ring-1', 'ring-[#0088CC]');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('bg-[#0088CC]/25', 'ring-1', 'ring-[#0088CC]');
+      }
+    });
+  }
+
   const outSearchInput = document.getElementById('out-product-search');
   outSearchInput?.addEventListener('input', handleOutProductSearchInput);
 
-  // Fast Barcode Scanner or Enter Key directly adds matched product to cart
+  // Fast Barcode Scanner, Arrow Navigation, or Enter Key directly adds matched product to cart
   outSearchInput?.addEventListener('keydown', (e) => {
+    const sEl = document.getElementById('out-product-suggestions');
+    const isDropdownVisible = sEl && !sEl.classList.contains('hidden') && currentSearchMatches.length > 0;
+
+    if (e.key === 'ArrowDown') {
+      if (isDropdownVisible) {
+        e.preventDefault();
+        activeSuggestionIndex = (activeSuggestionIndex + 1) % currentSearchMatches.length;
+        updatePosSuggestionHighlight(sEl);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      if (isDropdownVisible) {
+        e.preventDefault();
+        activeSuggestionIndex = activeSuggestionIndex <= 0 ? currentSearchMatches.length - 1 : activeSuggestionIndex - 1;
+        updatePosSuggestionHighlight(sEl);
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      if (sEl) {
+        sEl.classList.add('hidden');
+        sEl.innerHTML = '';
+      }
+      activeSuggestionIndex = -1;
+      return;
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault();
-      const query = (e.target.value || '').trim().toLowerCase();
-      if (!query) return;
-
-      // 1. Try exact barcode or SKU match
-      let match = availableProducts.find(p =>
-        (p.barcode && p.barcode.toLowerCase() === query) ||
-        (p.sku && p.sku.toLowerCase() === query)
-      );
-
-      // 2. Fallback to first partial name/sku/barcode match
-      if (!match) {
-        const matches = availableProducts.filter(p =>
-          (p.name && p.name.toLowerCase().includes(query)) ||
-          (p.sku && p.sku.toLowerCase().includes(query)) ||
-          (p.barcode && p.barcode.toLowerCase().includes(query))
-        );
-        if (matches.length > 0) match = matches[0];
+      // 1. If user highlighted a suggestion with Arrow keys
+      if (isDropdownVisible && activeSuggestionIndex >= 0 && currentSearchMatches[activeSuggestionIndex]) {
+        selectOutProduct(currentSearchMatches[activeSuggestionIndex].id);
+        return;
       }
 
-      if (match) {
-        addToPosCart(match, 1);
-        e.target.value = '';
-        const suggestionsEl = document.getElementById('out-product-suggestions');
-        if (suggestionsEl) {
-          suggestionsEl.classList.add('hidden');
-          suggestionsEl.innerHTML = '';
-        }
+      const query = (e.target.value || '').trim();
+      if (!query) return;
+
+      // 2. Perform intelligent multi-field rank search
+      const results = searchPosProducts(query);
+      if (results.length > 0) {
+        selectOutProduct(results[0].id);
       } else {
         if (typeof showToast === 'function') {
           showToast(`Produk "${query}" tidak ditemukan`, 'warning');
@@ -3006,11 +3146,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const suggestionsEl = document.getElementById('out-product-suggestions');
+  if (suggestionsEl) {
+    // Prevent search input blur before click registers on suggestion item
+    suggestionsEl.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+    });
+
+    // Event delegation for clicking or tapping product suggestion
+    suggestionsEl.addEventListener('click', (e) => {
+      const itemBtn = e.target.closest('[data-pos-search-product-id]');
+      if (itemBtn) {
+        const pId = itemBtn.getAttribute('data-pos-search-product-id');
+        if (pId) {
+          selectOutProduct(pId);
+        }
+      }
+    });
+  }
+
   document.addEventListener('click', (e) => {
-    const suggestionsEl = document.getElementById('out-product-suggestions');
+    const sEl = document.getElementById('out-product-suggestions');
     const input = document.getElementById('out-product-search');
-    if (suggestionsEl && !suggestionsEl.contains(e.target) && e.target !== input) {
-      suggestionsEl.classList.add('hidden');
+    if (sEl && !sEl.contains(e.target) && e.target !== input) {
+      sEl.classList.add('hidden');
+      activeSuggestionIndex = -1;
     }
   });
 
