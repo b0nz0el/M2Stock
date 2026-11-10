@@ -1,6 +1,6 @@
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8000';
 const parsedBaseUrl = new URL(baseUrl);
-const isProduction = parsedBaseUrl.hostname === 'aquastock-pro.pages.dev';
+const isProduction = ['m2stock.pages.dev', 'aquastock-pro.pages.dev'].includes(parsedBaseUrl.hostname);
 const isLocal = ['localhost', '127.0.0.1', '::1'].includes(parsedBaseUrl.hostname);
 
 if (!isLocal && process.env.QA_ALLOW_REMOTE !== '1') {

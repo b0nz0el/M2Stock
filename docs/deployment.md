@@ -35,12 +35,12 @@ Aquastock Pro tidak memerlukan server backend khusus (seperti Node.js server, Py
 
 ## 2. Platform Deployment Aktif (Cloudflare Pages)
 
-Aplikasi **Aquastock Pro** saat ini telah aktif di-deploy ke lingkungan produksi menggunakan **Cloudflare Pages** pada domain:
-**`https://aquastock-pro.pages.dev`**
+Aplikasi **M2Stock** saat ini aktif di-deploy ke lingkungan produksi menggunakan **Cloudflare Pages** pada domain:
+**`https://m2stock.pages.dev`**
 
 ### 2.1 Konfigurasi Cloudflare Pages
 Pengaturan proyek di Cloudflare Pages Dashboard:
-- **Project Name**: `aquastock-pro`
+- **Project Name**: `m2stock` (atau `m2stock.pages.dev`)
 - **Framework Preset**: `None` / `Other`
 - **Build Command**: `npm run build` (mengompilasi ke `public/assets/css/tailwind.static.css` dan menyalin vendor barcode lokal)
 - **Build Output Directory**: `public`

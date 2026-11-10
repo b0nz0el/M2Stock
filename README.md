@@ -1,15 +1,15 @@
-# Aquastock Pro — Production Inventory & POS System
+# M2Stock — Production Inventory & POS System
 > **Versi aplikasi:** ikuti `package.json` dan `public/version.json`
 > **Sistem:** Multi-Page Application (MPA) Inventory & Point of Sale  
-> **Toko:** Habitic, Pondok Gede, Bekasi)
-> **Live URL:** [https://aquastock-pro.pages.dev](https://aquastock-pro.pages.dev)  
-> **Hosting:** Cloudflare Pages (`main`; auto-deploy bergantung pada integrasi Cloudflare di luar repository)
+> **Toko:** Habitic, Pondok Gede, Bekasi
+> **Live URL:** [https://m2stock.pages.dev](https://m2stock.pages.dev)  
+> **Hosting:** Cloudflare Pages (`main`; auto-deploy terhubung ke repository GitHub)
 
 ---
 
 ## 🌟 Ikhtisar Proyek
 
-**Aquastock Pro** adalah sistem manajemen inventaris barang, kasir multi-item (Point of Sale / POS), manajemen pesanan pembelian (PO), pencatatan arus kas, dan pelacakan hutang/piutang yang dirancang khusus untuk toko perlengkapan dan aksesoris akuarium skala ritel dan grosir.
+**M2Stock** adalah sistem manajemen inventaris barang, kasir multi-item (Point of Sale / POS), manajemen pesanan pembelian (PO), pencatatan arus kas, dan pelacakan hutang/piutang yang dirancang khusus untuk toko perlengkapan dan aksesoris akuarium skala ritel dan grosir.
 
 Dibangun sebagai **Progressive Web App (PWA)** dengan *Vanilla JavaScript (ES Modules)*, *Tailwind CSS* dan backend Supabase. POS mempunyai antrean offline terbatas; fungsi lain yang memerlukan data cloud membutuhkan koneksi internet.
 
@@ -256,7 +256,7 @@ Untuk merilis perubahan:
 3. Tunggu workflow **Bump app version** selesai.
 4. Verifikasi deployment dengan memastikan service worker di `/sw.js` menyajikan nama cache
    versi terbaru sebelum menganggap rilis sudah live:
-   👉 **[https://aquastock-pro.pages.dev](https://aquastock-pro.pages.dev)**
+   👉 **[https://m2stock.pages.dev](https://m2stock.pages.dev)**
 
 ---
 

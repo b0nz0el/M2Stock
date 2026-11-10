@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 function makeRequest() {
-  return new Request('https://aquastock-pro.pages.dev/api/integrations/habitic', {
+  return new Request('https://m2stock.pages.dev/api/integrations/habitic', {
     method: 'POST',
     headers: {
       Authorization: 'Bearer valid-supabase-session',
@@ -18,7 +18,7 @@ function makeRequest() {
   });
 }
 
-describe('Aquastock to Habitic marketplace sync', () => {
+describe('M2Stock to Habitic marketplace sync', () => {
   it('authenticates with Supabase and forwards only SKU/channel URLs server-side', async () => {
     const fetchMock = vi.fn(async (input, options = {}) => {
       const url = new URL(input);
@@ -68,7 +68,7 @@ describe('Aquastock to Habitic marketplace sync', () => {
   it('rejects unauthenticated requests before making upstream calls', async () => {
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock;
-    const request = new Request('https://aquastock-pro.pages.dev/api/integrations/habitic', { method: 'POST' });
+    const request = new Request('https://m2stock.pages.dev/api/integrations/habitic', { method: 'POST' });
 
     const response = await onRequestPost({
       request,
