@@ -3,7 +3,7 @@
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'M2Stock-v3.5.67-pwa';
+const CACHE_NAME = 'M2Stock-v3.5.68-pwa';
 
 const STATIC_PRECACHE = [
   '/',
