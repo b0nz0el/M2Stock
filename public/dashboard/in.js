@@ -117,6 +117,20 @@
     return 'Produk #' + (tx.product_id || '-');
   }
 
+  function resolveProductPrice(tx) {
+    if (!tx) return 0;
+    const directPrice = Number(tx.price ?? tx.unit_price ?? 0);
+    if (directPrice > 0) return directPrice;
+    if (tx.products && Number(tx.products.cost_price) > 0) {
+      return Number(tx.products.cost_price);
+    }
+    if (Array.isArray(availableProducts) && availableProducts.length > 0) {
+      const found = availableProducts.find(p => String(p.id) === String(tx.product_id));
+      if (found && Number(found.cost_price) > 0) return Number(found.cost_price);
+    }
+    return 0;
+  }
+
   let categoriesData = [];
   let unitsData = [];
   let selectedExistingProduct = null;
@@ -329,6 +343,10 @@
         }
         availableProducts = prodRes.data || [];
         productsLoaded = true;
+        if (allInTransactions && allInTransactions.length > 0) {
+          updateMetrics(allInTransactions);
+          renderInTable();
+        }
         const prodSelect = document.getElementById('in-product-id');
         if (prodSelect && prodSelect.tagName === 'SELECT') {
           prodSelect.innerHTML = '<option value="">Pilih Produk</option>';
@@ -964,8 +982,15 @@
       const productName = document.getElementById('in-product-search')?.value.trim() || '';
       const supplierId = document.getElementById('in-supplier-id')?.value || '';
       const qty = parseNumericValue(document.getElementById('in-qty')?.value);
-      const price = parseNumericValue(document.getElementById('in-price')?.value);
+      let price = parseNumericValue(document.getElementById('in-price')?.value);
       const note = document.getElementById('in-note')?.value?.trim() || '';
+
+      if (price <= 0 && productId) {
+        const prod = selectedExistingProduct || (availableProducts || []).find(p => String(p.id) === String(productId));
+        if (prod && Number(prod.cost_price) > 0) {
+          price = Number(prod.cost_price);
+        }
+      }
 
       if (!productName) {
         if (typeof showToast === 'function') showToast('Masukkan nama produk terlebih dahulu', 'error');
@@ -1180,8 +1205,9 @@
 
     list.forEach(tx => {
       const tTime = new Date(tx.created_at).getTime();
-      const qty = tx.qty || 0;
-      const amount = (tx.qty || 0) * (tx.price || 0);
+      const qty = Number(tx.qty || 0);
+      const price = resolveProductPrice(tx);
+      const amount = qty * price;
 
       totalCount += qty;
       totalAmount += amount;
@@ -1396,8 +1422,8 @@
       const kasir = (typeof window.resolveUserName === 'function')
         ? window.resolveUserName(tx.created_by)
         : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'David');
-      const qty = tx.qty || 0;
-      const price = tx.price || 0;
+      const qty = Number(tx.qty || 0);
+      const price = resolveProductPrice(tx);
       const total = qty * price;
 
       return `
@@ -1463,8 +1489,8 @@
       const kasir = (typeof window.resolveUserName === 'function')
         ? window.resolveUserName(tx.created_by)
         : (tx.created_by && !tx.created_by.includes('-') ? tx.created_by : 'David');
-      const qty = tx.qty || 0;
-      const price = tx.price || 0;
+      const qty = Number(tx.qty || 0);
+      const price = resolveProductPrice(tx);
       const total = qty * price;
       const note = tx.note || '';
 
@@ -1479,6 +1505,41 @@
     }
   }
 
+  async function syncZeroPriceTransactions(transactions) {
+    if (!Array.isArray(transactions) || transactions.length === 0) return;
+    if (typeof window === 'undefined' || !window.supabase) return;
+
+    const zeroPriceTxs = transactions.filter(tx => {
+      const raw = Number(tx.price || 0);
+      const eff = resolveProductPrice(tx);
+      return raw <= 0 && eff > 0 && tx.id;
+    });
+
+    if (zeroPriceTxs.length === 0) return;
+
+    for (const tx of zeroPriceTxs) {
+      const effPrice = resolveProductPrice(tx);
+      try {
+        await window.supabase
+          .from('transactions')
+          .update({ price: effPrice, cost_price: effPrice })
+          .eq('id', tx.id);
+        tx.price = effPrice;
+        tx.cost_price = effPrice;
+        tx.total_price = (Number(tx.qty) || 0) * effPrice;
+      } catch (err) {
+        try {
+          await window.supabase
+            .from('transactions')
+            .update({ price: effPrice })
+            .eq('id', tx.id);
+          tx.price = effPrice;
+          tx.total_price = (Number(tx.qty) || 0) * effPrice;
+        } catch (_) {}
+      }
+    }
+  }
+
   async function loadInTransactions() {
     try {
       const res = await Api.transactions.getByType('in');
@@ -1486,6 +1547,7 @@
         allInTransactions = res.data || [];
         updateMetrics(allInTransactions);
         renderInTable();
+        syncZeroPriceTransactions(allInTransactions);
       }
     } catch (err) {
       console.error('Error loading in transactions:', err);
@@ -1545,10 +1607,17 @@
   window._getSelectedPriceManuallyChanged = () => selectedPriceManuallyChanged;
   window._setSelectedSupplierManuallyChanged = (val) => { selectedSupplierManuallyChanged = val; };
   window._setSelectedPriceManuallyChanged = (val) => { selectedPriceManuallyChanged = val; };
+  window.resolveProductPrice = resolveProductPrice;
+  window.syncZeroPriceTransactions = syncZeroPriceTransactions;
 
   if (typeof window !== 'undefined') {
-    window.addEventListener('aquastock:products-updated', () => {
-      loadDropdowns().catch(console.error);
+    window.addEventListener('aquastock:products-updated', async () => {
+      try {
+        await loadDropdowns();
+        await loadInTransactions();
+      } catch (err) {
+        console.error('Auto-sync on aquastock:products-updated failed:', err);
+      }
     });
   }
 

@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- Aquastock Pro — Migration: Moving Weighted Average Costing (IAS 2 / PSAK 14)
+-- M2Stock — Migration: Moving Weighted Average Costing (IAS 2 / PSAK 14)
 -- File: supabase/migrations/20261110_moving_average_costing.sql
 -- Standar: Kalkulasi HPP Rata-Rata Tertimbang Otomatis Saat Barang Masuk / PO
 -- ═══════════════════════════════════════════════════════════════════════════

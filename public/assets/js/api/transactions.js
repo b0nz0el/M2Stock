@@ -17,7 +17,11 @@ function notifyProductsUpdated(detail = {}) {
 
 function mapTransaction(row) {
   const qty = Number(row.qty ?? row.quantity) || 0;
-  const price = Number(row.price ?? row.unit_price) || 0;
+  let price = Number(row.price ?? row.unit_price) || 0;
+  // Sinkronisasi otomatis: Jika transaksi barang masuk tercatat Rp 0 / null, ambil harga modal produk
+  if (price <= 0 && (row.type === 'in' || !row.type) && row.products && Number(row.products.cost_price) > 0) {
+    price = Number(row.products.cost_price);
+  }
   const note = row.note ?? row.notes ?? null;
   const created_by = row.created_by ?? row.user_id ?? null;
   const noteStr = String(note || '');
@@ -25,8 +29,8 @@ function mapTransaction(row) {
   const invoice_no = row.invoice_no || ((noteStr.match(/\[((?:INV|SPX|TKP)-[^\]]+)\]/i) || [])[1]) || null;
   const discount_amount = Number(row.discount_amount ?? (noteStr.match(/\|AQ_DISCOUNT=([0-9.]+)/) || [])[1]) || 0;
   const tax_amount = Number(row.tax_amount ?? (noteStr.match(/\|AQ_TAX=([0-9.]+)/) || [])[1]) || 0;
-  const final_total = Number(row.final_total ?? (noteStr.match(/\|AQ_TOTAL=([0-9.]+)/) || [])[1]) || Number(row.total_price) || (qty * price);
-  const subtotal_amount = Number(row.subtotal_amount) || Number(row.total_price) || (qty * price);
+  const final_total = Number(row.final_total ?? (noteStr.match(/\|AQ_TOTAL=([0-9.]+)/) || [])[1]) || (Number(row.total_price) > 0 ? Number(row.total_price) : (qty * price));
+  const subtotal_amount = (Number(row.subtotal_amount) > 0 ? Number(row.subtotal_amount) : (Number(row.total_price) > 0 ? Number(row.total_price) : (qty * price)));
 
   return {
     ...row,
@@ -34,7 +38,7 @@ function mapTransaction(row) {
     quantity: qty,
     price,
     unit_price: price,
-    total_price: Number(row.total_price) || (qty * price),
+    total_price: (Number(row.total_price) > 0 ? Number(row.total_price) : (qty * price)),
     note,
     notes: note,
     created_by,
@@ -355,7 +359,22 @@ export const transactions = {
           }
 
           const quantity = Number(data.qty ?? data.quantity);
-          const unitPrice = Number(data.price ?? data.unit_price);
+          let unitPrice = Number(data.price ?? data.unit_price);
+          if (data.type === 'in' && unitPrice <= 0 && Number(data.cost_price) > 0) {
+            unitPrice = Number(data.cost_price);
+          }
+          if (data.type === 'in' && unitPrice <= 0 && data.product_id && isSupabaseAvailable()) {
+            try {
+              const { data: prodData } = await window.supabase
+                .from('products')
+                .select('cost_price')
+                .eq('id', isNaN(Number(data.product_id)) ? data.product_id : Number(data.product_id))
+                .maybeSingle();
+              if (prodData && Number(prodData.cost_price) > 0) {
+                unitPrice = Number(prodData.cost_price);
+              }
+            } catch (_) {}
+          }
           if (!['in', 'out'].includes(data.type)
             || !data.product_id
             || !Number.isInteger(quantity)

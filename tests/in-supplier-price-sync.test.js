@@ -326,4 +326,80 @@ describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk M2Stock', () => {
     // Verifikasi onclick menggunakan quotes: selectInProduct('7')
     expect(suggestionsEl.innerHTML).toContain("selectInProduct('7')");
   });
+
+  it('9. Sinkronisasi Harga Transaksi Rp 0 dengan Hrg Beli Master Barang (Elite & Bradley bug fix)', async () => {
+    const transactions = [
+      {
+        id: 'IN-31D691EC',
+        type: 'in',
+        product_id: 101,
+        products: { id: 101, name: 'Elite', cost_price: 8500 },
+        qty: 26,
+        price: 0,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'IN-C3B88305',
+        type: 'in',
+        product_id: 102,
+        products: { id: 102, name: 'Bradley', cost_price: 24000 },
+        qty: 6,
+        price: null,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'IN-2FEBABD4',
+        type: 'in',
+        product_id: 103,
+        products: { id: 103, name: 'Batik Series 1053B', cost_price: 12000 },
+        qty: 15,
+        price: 12000,
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    window.Api.transactions.getByType = vi.fn().mockResolvedValue({
+      ok: true,
+      data: transactions
+    });
+
+    await window.loadInTransactions();
+
+    expect(window.resolveProductPrice(transactions[0])).toBe(8500);
+    expect(window.resolveProductPrice(transactions[1])).toBe(24000);
+    expect(window.resolveProductPrice(transactions[2])).toBe(12000);
+
+    const tbody = document.getElementById('in-tbody');
+    expect(tbody.innerHTML).toContain('Rp&nbsp;8.500');
+    expect(tbody.innerHTML).toContain('Rp&nbsp;221.000');
+    expect(tbody.innerHTML).toContain('Rp&nbsp;24.000');
+    expect(tbody.innerHTML).toContain('Rp&nbsp;144.000');
+    expect(tbody.innerHTML).toContain('Rp&nbsp;12.000');
+    expect(tbody.innerHTML).toContain('Rp&nbsp;180.000');
+
+    const elTodayAmount = document.getElementById('stat-in-today-amount');
+    const elTotalAmount = document.getElementById('stat-in-total-amount');
+    expect(elTodayAmount.textContent).toBe('Rp 545rb');
+    expect(elTotalAmount.textContent).toBe('Rp 545rb');
+  });
+
+  it('10. handleInSubmit otomatis memakai cost_price produk jika input harga Rp 0 / kosong', async () => {
+    await window.loadDropdowns();
+    await window.selectInProduct(sampleProduct.id);
+
+    const priceInput = document.getElementById('in-price');
+    priceInput.value = '0';
+    const qtyInput = document.getElementById('in-qty');
+    qtyInput.value = '5';
+
+    await window.handleInSubmit();
+
+    expect(window.Api.transactions.createIn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        product_id: String(sampleProduct.id),
+        price: 25000,
+        qty: 5
+      })
+    );
+  });
 });
