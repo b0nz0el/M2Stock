@@ -250,74 +250,78 @@
   }
 
   async function handleInImageSelection(e) {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    if (files.length === 0) return;
+    try {
+      const files = e.target.files ? Array.from(e.target.files) : [];
+      if (files.length === 0) return;
 
-    if (typeof ImageUtils === 'undefined') {
-      if (typeof showToast === 'function') showToast('Modul kompresi gambar (ImageUtils) belum siap', 'error');
-      return;
-    }
-
-    const availableSlots = MAX_IN_PRODUCT_PHOTOS - inProductPhotos.length;
-    if (availableSlots <= 0) {
-      if (typeof showToast === 'function') {
-        showToast(`Maksimal ${MAX_IN_PRODUCT_PHOTOS} foto produk telah tercapai`, 'warning');
+      if (typeof ImageUtils === 'undefined') {
+        if (typeof showToast === 'function') showToast('Modul kompresi gambar (ImageUtils) belum siap', 'error');
+        return;
       }
-      e.target.value = '';
-      return;
-    }
 
-    const filesToProcess = files.slice(0, availableSlots);
-    if (files.length > availableSlots && typeof showToast === 'function') {
-      showToast(`Hanya ${availableSlots} foto yang ditambahkan (batas maksimal ${MAX_IN_PRODUCT_PHOTOS} foto)`, 'info');
-    }
-
-    const compInfo = document.getElementById('in-compression-info');
-    const compText = document.getElementById('in-compression-info-text');
-    if (compInfo && compText) {
-      compText.textContent = filesToProcess.length > 1 
-        ? `Mengompresi ${filesToProcess.length} foto ke WebP...` 
-        : 'Mengompresi ke WebP...';
-      compInfo.classList.remove('hidden');
-    }
-
-    let successCount = 0;
-    for (let i = 0; i < filesToProcess.length; i++) {
-      const file = filesToProcess[i];
-      try {
-        if (compText && filesToProcess.length > 1) {
-          compText.textContent = `Mengompresi foto ${i + 1}/${filesToProcess.length}...`;
-        }
-        const result = await ImageUtils.compressImage(file);
-        inProductPhotos.push({
-          id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-          blob: result.blob,
-          previewUrl: result.previewUrl,
-          sizeText: `${result.originalSizeText} → ${result.compressedSizeText}`
-        });
-        successCount++;
-      } catch (err) {
-        console.error('Compress error for file:', file.name, err);
+      const availableSlots = MAX_IN_PRODUCT_PHOTOS - inProductPhotos.length;
+      if (availableSlots <= 0) {
         if (typeof showToast === 'function') {
-          showToast(`Gagal memproses ${file.name}: ${err.message}`, 'error');
+          showToast(`Maksimal ${MAX_IN_PRODUCT_PHOTOS} foto produk telah tercapai`, 'warning');
+        }
+        return;
+      }
+
+      const filesToProcess = files.slice(0, availableSlots);
+      if (files.length > availableSlots && typeof showToast === 'function') {
+        showToast(`Hanya ${availableSlots} foto yang ditambahkan (batas maksimal ${MAX_IN_PRODUCT_PHOTOS} foto)`, 'info');
+      }
+
+      const compInfo = document.getElementById('in-compression-info');
+      const compText = document.getElementById('in-compression-info-text');
+      if (compInfo && compText) {
+        compText.textContent = filesToProcess.length > 1 
+          ? `Mengompresi ${filesToProcess.length} foto ke WebP...` 
+          : 'Mengompresi ke WebP...';
+        compInfo.classList.remove('hidden');
+      }
+
+      let successCount = 0;
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i];
+        try {
+          if (compText && filesToProcess.length > 1) {
+            compText.textContent = `Mengompresi foto ${i + 1}/${filesToProcess.length}...`;
+          }
+          const result = await ImageUtils.compressImage(file);
+          inProductPhotos.push({
+            id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            blob: result.blob,
+            previewUrl: result.previewUrl,
+            sizeText: `${result.originalSizeText} → ${result.compressedSizeText}`
+          });
+          successCount++;
+        } catch (err) {
+          console.error('Compress error for file:', file.name, err);
+          if (typeof showToast === 'function') {
+            showToast(`Gagal memproses ${file.name}: ${err.message}`, 'error');
+          }
         }
       }
-    }
 
-    if (compInfo && compText) {
-      if (successCount > 0) {
-        const lastPhoto = inProductPhotos[inProductPhotos.length - 1];
-        compText.textContent = successCount > 1 
-          ? `${successCount} foto siap diunggah (WebP ≤ 1 MB)` 
-          : `${lastPhoto.sizeText} (WebP)`;
-        compInfo.classList.remove('hidden');
-      } else {
-        compInfo.classList.add('hidden');
+      if (compInfo && compText) {
+        if (successCount > 0) {
+          const lastPhoto = inProductPhotos[inProductPhotos.length - 1];
+          compText.textContent = successCount > 1 
+            ? `${successCount} foto siap diunggah (WebP ≤ 1 MB)` 
+            : `${lastPhoto.sizeText} (WebP)`;
+          compInfo.classList.remove('hidden');
+        } else {
+          compInfo.classList.add('hidden');
+        }
+      }
+
+      renderInPhotoGallery();
+    } finally {
+      if (e?.target) {
+        e.target.value = '';
       }
     }
-
-    e.target.value = '';
-    renderInPhotoGallery();
   }
 
   function escapeHtml(str) {

@@ -11,8 +11,8 @@ describe('ImageUtils — Client-Side Image Compression (500 KB – 1 MB Target)'
       expect(ImageUtils.MAX_HEIGHT).toBe(1600);
     });
 
-    it('enforces 10 MB raw upload limit to support high-res smartphone camera photos', () => {
-      expect(ImageUtils.MAX_RAW_SIZE_BYTES).toBe(10 * 1024 * 1024);
+    it('enforces 30 MB raw upload limit to support high-res smartphone camera photos (48MP/50MP)', () => {
+      expect(ImageUtils.MAX_RAW_SIZE_BYTES).toBe(30 * 1024 * 1024);
     });
 
     it('sets compression target budget to 1 MB (1024 KB) and optimal floor to 500 KB', () => {
@@ -30,6 +30,7 @@ describe('ImageUtils — Client-Side Image Compression (500 KB – 1 MB Target)'
       expect(ImageUtils.formatFileSize(500 * 1024)).toBe('500 KB');
       expect(ImageUtils.formatFileSize(1024 * 1024)).toBe('1 MB');
       expect(ImageUtils.formatFileSize(10 * 1024 * 1024)).toBe('10 MB');
+      expect(ImageUtils.formatFileSize(30 * 1024 * 1024)).toBe('30 MB');
     });
   });
 
@@ -39,19 +40,19 @@ describe('ImageUtils — Client-Side Image Compression (500 KB – 1 MB Target)'
       expect(() => ImageUtils.validateImageFile(undefined)).toThrow('Tidak ada file gambar yang dipilih');
     });
 
-    it('throws error when file exceeds 10 MB', () => {
+    it('throws error when file exceeds 30 MB', () => {
       const hugeFile = {
         name: 'huge-camera-photo.jpg',
-        size: 11 * 1024 * 1024,
+        size: 32 * 1024 * 1024,
         type: 'image/jpeg'
       };
-      expect(() => ImageUtils.validateImageFile(hugeFile)).toThrow('Ukuran file melebihi batas 10 MB');
+      expect(() => ImageUtils.validateImageFile(hugeFile)).toThrow('Ukuran file melebihi batas 30 MB');
     });
 
-    it('accepts files within 10 MB raw limit', () => {
+    it('accepts files within 30 MB raw limit (e.g. 24 MB smartphone raw camera file)', () => {
       const cameraPhoto = {
         name: 'camera-photo.jpg',
-        size: 8 * 1024 * 1024,
+        size: 24 * 1024 * 1024,
         type: 'image/jpeg'
       };
       expect(ImageUtils.validateImageFile(cameraPhoto)).toBe(true);

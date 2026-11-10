@@ -469,76 +469,81 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
   }
 
   async function handleImageSelection(e) {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    if (files.length === 0) return;
+    try {
+      const files = e.target.files ? Array.from(e.target.files) : [];
+      if (files.length === 0) return;
 
-    if (typeof ImageUtils === 'undefined') {
-      if (typeof showToast === 'function') showToast('Modul kompresi gambar (ImageUtils) belum siap', 'error');
-      return;
-    }
-
-    const availableSlots = MAX_PRODUCT_PHOTOS - productPhotos.length;
-    if (availableSlots <= 0) {
-      if (typeof showToast === 'function') {
-        showToast(`Maksimal ${MAX_PRODUCT_PHOTOS} foto produk telah tercapai`, 'warning');
+      if (typeof ImageUtils === 'undefined') {
+        if (typeof showToast === 'function') showToast('Modul kompresi gambar (ImageUtils) belum siap', 'error');
+        return;
       }
-      e.target.value = '';
-      return;
-    }
 
-    const filesToProcess = files.slice(0, availableSlots);
-    if (files.length > availableSlots && typeof showToast === 'function') {
-      showToast(`Hanya ${availableSlots} foto yang ditambahkan (batas maksimal ${MAX_PRODUCT_PHOTOS} foto)`, 'info');
-    }
-
-    const compInfo = document.getElementById('image-compression-info');
-    const compText = document.getElementById('compression-info-text');
-    if (compInfo && compText) {
-      compText.textContent = filesToProcess.length > 1 
-        ? `Mengompresi ${filesToProcess.length} foto ke WebP...` 
-        : 'Mengompresi ke WebP...';
-      compInfo.classList.remove('hidden');
-    }
-
-    let successCount = 0;
-    for (let i = 0; i < filesToProcess.length; i++) {
-      const file = filesToProcess[i];
-      try {
-        if (compText && filesToProcess.length > 1) {
-          compText.textContent = `Mengompresi foto ${i + 1}/${filesToProcess.length}...`;
-        }
-        const result = await ImageUtils.compressImage(file);
-        productPhotos.push({
-          id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-          type: 'new',
-          blob: result.blob,
-          previewUrl: result.previewUrl,
-          sizeText: `${result.originalSizeText} → ${result.compressedSizeText}`
-        });
-        isImageChanged = true;
-        successCount++;
-      } catch (err) {
-        console.error('Compress error for file:', file.name, err);
+      const availableSlots = MAX_PRODUCT_PHOTOS - productPhotos.length;
+      if (availableSlots <= 0) {
         if (typeof showToast === 'function') {
-          showToast(`Gagal memproses ${file.name}: ${err.message}`, 'error');
+          showToast(`Maksimal ${MAX_PRODUCT_PHOTOS} foto produk telah tercapai`, 'warning');
+        }
+        return;
+      }
+
+      const filesToProcess = files.slice(0, availableSlots);
+      if (files.length > availableSlots && typeof showToast === 'function') {
+        showToast(`Hanya ${availableSlots} foto yang ditambahkan (batas maksimal ${MAX_PRODUCT_PHOTOS} foto)`, 'info');
+      }
+
+      const compInfo = document.getElementById('image-compression-info');
+      const compText = document.getElementById('compression-info-text');
+      if (compInfo && compText) {
+        compText.textContent = filesToProcess.length > 1 
+          ? `Mengompresi ${filesToProcess.length} foto ke WebP...` 
+          : 'Mengompresi ke WebP...';
+        compInfo.classList.remove('hidden');
+      }
+
+      let successCount = 0;
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i];
+        try {
+          if (compText && filesToProcess.length > 1) {
+            compText.textContent = `Mengompresi foto ${i + 1}/${filesToProcess.length}...`;
+          }
+          const result = await ImageUtils.compressImage(file);
+          productPhotos.push({
+            id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            type: 'new',
+            blob: result.blob,
+            previewUrl: result.previewUrl,
+            sizeText: `${result.originalSizeText} → ${result.compressedSizeText}`
+          });
+          isImageChanged = true;
+          successCount++;
+        } catch (err) {
+          console.error('Compress error for file:', file.name, err);
+          if (typeof showToast === 'function') {
+            showToast(`Gagal memproses ${file.name}: ${err.message}`, 'error');
+          }
         }
       }
-    }
 
-    if (compInfo && compText) {
-      if (successCount > 0) {
-        const lastPhoto = productPhotos[productPhotos.length - 1];
-        compText.textContent = successCount > 1 
-          ? `${successCount} foto siap diunggah (WebP ≤ 1 MB)` 
-          : `${lastPhoto.sizeText} (WebP)`;
-        compInfo.classList.remove('hidden');
-      } else {
-        compInfo.classList.add('hidden');
+      if (compInfo && compText) {
+        if (successCount > 0) {
+          const lastPhoto = productPhotos[productPhotos.length - 1];
+          compText.textContent = successCount > 1 
+            ? `${successCount} foto siap diunggah (WebP ≤ 1 MB)` 
+            : `${lastPhoto.sizeText} (WebP)`;
+          compInfo.classList.remove('hidden');
+        } else {
+          compInfo.classList.add('hidden');
+        }
+      }
+
+      renderPhotoGallery();
+    } finally {
+      // Selalu kosongkan nilai input agar pemilihan ulang file/kamera yang sama selalu memicu event 'change'
+      if (e?.target) {
+        e.target.value = '';
       }
     }
-
-    e.target.value = ''; // Reset input agar pengguna bisa memilih file/kamera berulang kali
-    renderPhotoGallery();
   }
 
   function isValidChannelUrl(val) {

@@ -3770,12 +3770,13 @@
 
               <div class="flex items-center gap-2">
                 <button type="button" id="btn-capture-camera"
-                  onclick="document.getElementById('item-image-camera').click()"
+                  onclick="const inp=document.getElementById('item-image-camera'); if(inp){inp.value=''; inp.click();}"
                   class="bg-[#0088CC]/20 hover:bg-[#0088CC]/30 border border-[#0088CC]/40 text-[#32ADE6] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
                   <i data-lucide="camera" class="w-3.5 h-3.5" aria-hidden="true"></i>
                   <span>Ambil Kamera</span>
                 </button>
-                <button type="button" id="btn-pick-photo" onclick="document.getElementById('item-image-file').click()"
+                <button type="button" id="btn-pick-photo"
+                  onclick="const inp=document.getElementById('item-image-file'); if(inp){inp.value=''; inp.click();}"
                   class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition active:scale-95">
                   <i data-lucide="image" class="w-3.5 h-3.5" aria-hidden="true"></i>
                   <span>Pilih Galeri</span>
@@ -4541,13 +4542,13 @@
 
                 <div class="flex items-center gap-2">
                   <button type="button" id="btn-in-capture-camera"
-                    onclick="document.getElementById('in-image-camera').click()"
+                    onclick="const inp=document.getElementById('in-image-camera'); if(inp){inp.value=''; inp.click();}"
                     class="bg-[#0088CC]/20 hover:bg-[#0088CC]/30 border border-[#0088CC]/40 text-[#32ADE6] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
                     <i data-lucide="camera" class="w-3.5 h-3.5" aria-hidden="true"></i>
                     <span>Ambil Kamera</span>
                   </button>
                   <button type="button" id="btn-in-pick-photo"
-                    onclick="document.getElementById('in-image-file').click()"
+                    onclick="const inp=document.getElementById('in-image-file'); if(inp){inp.value=''; inp.click();}"
                     class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition active:scale-95">
                     <i data-lucide="image" class="w-3.5 h-3.5" aria-hidden="true"></i>
                     <span>Pilih Galeri</span>

@@ -15,7 +15,7 @@
 
   const MAX_WIDTH = 1600;
   const MAX_HEIGHT = 1600;
-  const MAX_RAW_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB batas unggah mentah
+  const MAX_RAW_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB batas unggah mentah (mendukung foto kamera smartphone 48MP/50MP)
   const TARGET_SIZE_BYTES = 1024 * 1024;       // 1 MB batas maksimal target kompresi (500 KB – 1 MB)
   const MIN_TARGET_SIZE_BYTES = 500 * 1024;   // 500 KB batas bawah optimal kualitas
   const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
@@ -33,7 +33,7 @@
       throw new Error('Tidak ada file gambar yang dipilih');
     }
     if (file.size > MAX_RAW_SIZE_BYTES) {
-      throw new Error(`Ukuran file melebihi batas 10 MB (${formatFileSize(file.size)})`);
+      throw new Error(`Ukuran file melebihi batas 30 MB (${formatFileSize(file.size)})`);
     }
     const type = (file.type || '').toLowerCase();
     const isAllowed = ALLOWED_MIME_TYPES.some(t => type.includes(t)) ||
@@ -65,12 +65,11 @@
       const objectUrl = URL.createObjectURL(file);
 
       img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        resolve(img);
+        resolve({ img, objectUrl });
       };
       img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Gagal memproses file gambar. File mungkin rusak'));
+        try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+        reject(new Error('Gagal memproses file gambar. File mungkin rusak atau format tidak didukung'));
       };
       img.src = objectUrl;
     });
@@ -101,48 +100,85 @@
   async function compressImage(file) {
     validateImageFile(file);
 
-    const img = await loadImage(file);
-    const { width, height } = calculateTargetDimensions(
-      img.naturalWidth || img.width,
-      img.naturalHeight || img.height,
-      MAX_WIDTH,
-      MAX_HEIGHT
-    );
+    let drawable = null;
+    let objectUrlToRevoke = null;
+    let naturalW = 0;
+    let naturalH = 0;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Gagal menginisialisasi Canvas 2D context');
+    // 1. Coba decode via createImageBitmap jika tersedia (lebih cepat, auto EXIF orientation, hemat memori)
+    if (typeof createImageBitmap === 'function') {
+      try {
+        const bitmap = await createImageBitmap(file);
+        if (bitmap && bitmap.width > 0 && bitmap.height > 0) {
+          drawable = bitmap;
+          naturalW = bitmap.width;
+          naturalH = bitmap.height;
+        }
+      } catch (_) {
+        // Fallback ke Image element biasa
+      }
     }
 
-    // Gambar ke canvas dengan dimensi terhitung
-    ctx.drawImage(img, 0, 0, width, height);
-
-    // Kompresi adaptif: mulai dari kualitas sangat tinggi (0.92)
-    // Turunkan bertahap hanya jika ukuran melebihi TARGET_SIZE_BYTES (1 MB)
-    let quality = 0.92;
-    let blob = await canvasToBlob(canvas, quality);
-
-    while (blob.size > TARGET_SIZE_BYTES && quality > 0.55) {
-      quality -= 0.08;
-      blob = await canvasToBlob(canvas, Math.max(0.55, quality));
+    // 2. Fallback via Image element jika createImageBitmap tidak tersedia/gagal
+    if (!drawable) {
+      const loaded = await loadImage(file);
+      drawable = loaded.img;
+      objectUrlToRevoke = loaded.objectUrl;
+      naturalW = drawable.naturalWidth || drawable.width;
+      naturalH = drawable.naturalHeight || drawable.height;
     }
 
-    const previewUrl = URL.createObjectURL(blob);
+    try {
+      const { width, height } = calculateTargetDimensions(
+        naturalW,
+        naturalH,
+        MAX_WIDTH,
+        MAX_HEIGHT
+      );
 
-    return {
-      blob: blob,
-      previewUrl: previewUrl,
-      originalSize: file.size,
-      compressedSize: blob.size,
-      originalSizeText: formatFileSize(file.size),
-      compressedSizeText: formatFileSize(blob.size),
-      width: width,
-      height: height,
-      quality: quality
-    };
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Gagal menginisialisasi Canvas 2D context');
+      }
+
+      // Gambar ke canvas dengan dimensi terhitung
+      ctx.drawImage(drawable, 0, 0, width, height);
+
+      // Kompresi adaptif: mulai dari kualitas sangat tinggi (0.92)
+      // Turunkan bertahap hanya jika ukuran melebihi TARGET_SIZE_BYTES (1 MB)
+      let quality = 0.92;
+      let blob = await canvasToBlob(canvas, quality);
+
+      while (blob.size > TARGET_SIZE_BYTES && quality > 0.55) {
+        quality -= 0.08;
+        blob = await canvasToBlob(canvas, Math.max(0.55, quality));
+      }
+
+      const previewUrl = URL.createObjectURL(blob);
+
+      return {
+        blob: blob,
+        previewUrl: previewUrl,
+        originalSize: file.size,
+        compressedSize: blob.size,
+        originalSizeText: formatFileSize(file.size),
+        compressedSizeText: formatFileSize(blob.size),
+        width: width,
+        height: height,
+        quality: quality
+      };
+    } finally {
+      // Bersihkan resource memori hanya setelah proses drawImage pada canvas selesai
+      if (drawable && typeof drawable.close === 'function') {
+        try { drawable.close(); } catch (_) {}
+      }
+      if (objectUrlToRevoke) {
+        try { URL.revokeObjectURL(objectUrlToRevoke); } catch (_) {}
+      }
+    }
   }
 
   return {
