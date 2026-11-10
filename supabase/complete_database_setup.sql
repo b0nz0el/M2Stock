@@ -15,6 +15,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL DEFAULT 'Pengguna',
+  full_name TEXT,
+  email TEXT,
   role TEXT NOT NULL CHECK (role IN ('OWNER', 'STAFF', 'VIEWER')) DEFAULT 'VIEWER',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -490,10 +492,12 @@ BEGIN
     split_part(NEW.email, '@', 1)
   );
 
-  INSERT INTO public.profiles (id, name, role)
-  VALUES (NEW.id, user_name, assigned_role)
+  INSERT INTO public.profiles (id, name, full_name, email, role)
+  VALUES (NEW.id, user_name, user_name, NEW.email, assigned_role)
   ON CONFLICT (id) DO UPDATE
-  SET name = EXCLUDED.name;
+  SET name = EXCLUDED.name,
+      full_name = COALESCE(EXCLUDED.full_name, EXCLUDED.name),
+      email = COALESCE(EXCLUDED.email, profiles.email);
 
   RETURN NEW;
 END;

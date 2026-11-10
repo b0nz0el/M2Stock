@@ -186,16 +186,29 @@ class AppSidebar extends HTMLElement {
         // Ambil role langsung dari tabel profiles di Supabase jika client tersedia
         if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.from === 'function' && user.id) {
           try {
-            const { data: profile, error } = await window.supabase
+            let { data: profile, error } = await window.supabase
               .from('profiles')
               .select('role, full_name')
               .eq('id', user.id)
               .maybeSingle();
 
+            if (error && error.code === 'PGRST204') {
+              const fb = await window.supabase
+                .from('profiles')
+                .select('role, name')
+                .eq('id', user.id)
+                .maybeSingle();
+              if (!fb.error && fb.data) {
+                profile = fb.data;
+                error = null;
+              }
+            }
+
             if (!error && profile) {
               if (profile.role) role = profile.role.toString().trim().toUpperCase();
-              if (profile.full_name) {
-                displayName = profile.full_name;
+              const profileName = profile.full_name || profile.name;
+              if (profileName) {
+                displayName = profileName;
               }
             }
           } catch (_) {}

@@ -213,17 +213,71 @@ export const settings = {
       const user = authData?.user;
       if (!user) throw new Error('Pengguna tidak terotentikasi.');
 
-      const { data, error } = await supabase
+      // 1. Update user metadata di Supabase Auth
+      try {
+        await supabase.auth.updateUser({
+          data: { full_name: fullName, name: fullName }
+        });
+      } catch (_) {}
+
+      // 2. Update tabel profiles di Supabase dengan dual-column fallback
+      let updateResult = null;
+      let updateError = null;
+
+      // Coba update both full_name & name
+      const attemptBoth = await supabase
         .from('profiles')
         .update({
-          full_name: fullName
+          full_name: fullName,
+          name: fullName
         })
         .eq('id', user.id)
-        .select()
-        .single();
+        .select();
 
-      if (error) throw error;
-      return { ok: true, data };
+      if (!attemptBoth.error) {
+        updateResult = attemptBoth.data?.[0] || { full_name: fullName, name: fullName };
+      } else {
+        // Jika kolom full_name belum ada di schema cache, coba update kolom name saja
+        const attemptNameOnly = await supabase
+          .from('profiles')
+          .update({ name: fullName })
+          .eq('id', user.id)
+          .select();
+
+        if (!attemptNameOnly.error) {
+          updateResult = attemptNameOnly.data?.[0] || { name: fullName };
+        } else {
+          // Coba update full_name saja
+          const attemptFullNameOnly = await supabase
+            .from('profiles')
+            .update({ full_name: fullName })
+            .eq('id', user.id)
+            .select();
+
+          if (!attemptFullNameOnly.error) {
+            updateResult = attemptFullNameOnly.data?.[0] || { full_name: fullName };
+          } else {
+            updateError = attemptFullNameOnly.error || attemptBoth.error;
+          }
+        }
+      }
+
+      if (updateError && !updateResult) {
+        throw updateError;
+      }
+
+      // 3. Sinkronkan sesi auth_user di localStorage
+      try {
+        const cur = JSON.parse(localStorage.getItem('auth_user') || '{}');
+        localStorage.setItem('auth_user', JSON.stringify({
+          ...cur,
+          id: user.id,
+          full_name: fullName,
+          name: fullName
+        }));
+      } catch (_) {}
+
+      return { ok: true, data: updateResult || { full_name: fullName, name: fullName } };
     } catch (err) {
       console.error('settingsApi.updateProfile error:', err);
       return { ok: false, error: err };

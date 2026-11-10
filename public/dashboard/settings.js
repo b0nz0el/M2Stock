@@ -426,16 +426,33 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       const { data: authData } = await supabase.auth.getUser();
       const user = authData?.user;
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, full_name, role, email')
-          .eq('id', user.id)
-          .maybeSingle();
+        let profile = null;
+        try {
+          const res = await supabase
+            .from('profiles')
+            .select('id, full_name, name, role, email')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (!res.error && res.data) {
+            profile = res.data;
+          } else if (res.error && res.error.code === 'PGRST204') {
+            // Fallback jika full_name atau email belum ada di schema cache profiles
+            const fallbackRes = await supabase
+              .from('profiles')
+              .select('id, name, role')
+              .eq('id', user.id)
+              .maybeSingle();
+            if (!fallbackRes.error && fallbackRes.data) {
+              profile = fallbackRes.data;
+            }
+          }
+        } catch (_) {}
 
         currentUserProfile = {
           id: user.id,
           email: user.email || (profile ? profile.email : '-'),
-          full_name: profile?.full_name || user.user_metadata?.full_name || 'Owner',
+          full_name: profile?.full_name || profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || 'Owner',
           role: profile?.role || user.user_metadata?.role || 'OWNER'
         };
       }
@@ -649,11 +666,20 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       const res = await settingsApi.updateProfile(newName);
       if (!res.ok) throw new Error(res.error?.message || 'Gagal memperbarui profil pengguna');
 
-      if (currentUserProfile) currentUserProfile.full_name = newName;
+      if (currentUserProfile) {
+        currentUserProfile.full_name = newName;
+        currentUserProfile.name = newName;
+      }
 
       // Update header welcome name if present
       const welcomeEl = document.getElementById('welcome-name');
       if (welcomeEl) welcomeEl.textContent = newName;
+
+      // Update sidebar user display if present
+      const sidebarEmail = document.getElementById('sidebar-user-email');
+      if (sidebarEmail) sidebarEmail.textContent = newName;
+      const sidebarAvatar = document.getElementById('sidebar-user-avatar');
+      if (sidebarAvatar && newName) sidebarAvatar.textContent = newName.charAt(0).toUpperCase();
 
       if (typeof showToast === 'function') {
         showToast('Profil akun berhasil diperbarui', 'success');
@@ -662,7 +688,11 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
       }
     } catch (err) {
       console.error('handleSaveAccount error:', err);
-      alert('Error: ' + (err.message || 'Gagal memperbarui profil'));
+      if (typeof showToast === 'function') {
+        showToast('Gagal memperbarui profil: ' + (err.message || 'Terjadi kesalahan sistem'), 'error');
+      } else {
+        alert('Error: ' + (err.message || 'Gagal memperbarui profil'));
+      }
     } finally {
       if (btn) btn.disabled = false;
     }

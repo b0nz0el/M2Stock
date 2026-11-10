@@ -46,24 +46,41 @@ export async function loadUserDirectory() {
           if (metaName) userDirectory.set(u.id, metaName);
 
           // Cek profil di tabel profiles
-          const { data: myProfile } = await window.supabase
-            .from('profiles')
-            .select('full_name, role, email')
-            .eq('id', u.id)
-            .maybeSingle();
+          let myProfile = null;
+          try {
+            const { data, error } = await window.supabase
+              .from('profiles')
+              .select('full_name, role, email')
+              .eq('id', u.id)
+              .maybeSingle();
 
-          if (myProfile?.full_name) {
-            activeUserName = myProfile.full_name;
-            userDirectory.set(u.id, myProfile.full_name);
+            if (!error && data) {
+              myProfile = data;
+            } else if (error && error.code === 'PGRST204') {
+              const fb = await window.supabase
+                .from('profiles')
+                .select('name, role')
+                .eq('id', u.id)
+                .maybeSingle();
+              if (!fb.error && fb.data) {
+                myProfile = fb.data;
+              }
+            }
+          } catch (_) {}
+
+          const resolvedName = myProfile?.full_name || myProfile?.name;
+          if (resolvedName) {
+            activeUserName = resolvedName;
+            userDirectory.set(u.id, resolvedName);
             try {
               const cur = JSON.parse(localStorage.getItem('auth_user') || '{}');
               localStorage.setItem('auth_user', JSON.stringify({
                 ...cur,
                 id: u.id,
                 email: u.email,
-                full_name: myProfile.full_name,
-                name: myProfile.full_name,
-                role: myProfile.role || cur.role || 'OWNER'
+                full_name: resolvedName,
+                name: resolvedName,
+                role: myProfile?.role || cur.role || 'OWNER'
               }));
             } catch (_) {}
           }
@@ -74,14 +91,24 @@ export async function loadUserDirectory() {
     // 3. Ambil dari Supabase profiles untuk semua pengguna (jika diizinkan RLS)
     if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
       try {
-        const { data, error } = await window.supabase
+        let { data, error } = await window.supabase
           .from('profiles')
           .select('id, full_name, role, email');
+
+        if (error && error.code === 'PGRST204') {
+          const fb = await window.supabase
+            .from('profiles')
+            .select('id, name, role');
+          if (!fb.error && Array.isArray(fb.data)) {
+            data = fb.data;
+            error = null;
+          }
+        }
 
         if (!error && Array.isArray(data)) {
           data.forEach(p => {
             if (p.id) {
-              const displayName = p.full_name || (p.email ? p.email.split('@')[0] : 'Kasir');
+              const displayName = p.full_name || p.name || (p.email ? p.email.split('@')[0] : 'Kasir');
               userDirectory.set(p.id, displayName);
             }
           });

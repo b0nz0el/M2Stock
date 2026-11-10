@@ -423,16 +423,26 @@ console.info('M2Stock v3.0 — Fully Responsive');
     const user = authData?.user;
     if (!user) return;
     
-    const { data: profile } = await client
+    let { data: profile, error } = await client
       .from('profiles')
       .select('full_name')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (error && error.code === 'PGRST204') {
+      const fb = await client
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!fb.error && fb.data) {
+        profile = fb.data;
+      }
+    }
     
-    if (profile?.full_name) {
-      el.textContent = profile.full_name;
-    } else if (user.email) {
-      el.textContent = user.email.split('@')[0];
+    const resolvedName = profile?.full_name || profile?.name || (user.user_metadata?.full_name || user.user_metadata?.name || (user.email ? user.email.split('@')[0] : null));
+    if (resolvedName) {
+      el.textContent = resolvedName;
     }
   } catch (err) {
     console.warn('[Welcome] Failed to load name:', err.message);
