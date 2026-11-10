@@ -1,6 +1,6 @@
 {
   "name": "m2stock",
-  "version": "3.5.71",
+  "version": "3.5.72",
   "description": "M2Stock - Sistem Manajemen Inventori dan Kasir POS Modern (static frontend, siap dihubungkan ke backend)",
   "private": true,
   "scripts": {
