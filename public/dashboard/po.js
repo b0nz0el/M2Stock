@@ -500,8 +500,11 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         const docStoreSign = document.getElementById('doc-po-sign-name');
         if (docStoreSign && storeInfo.name) docStoreSign.textContent = storeInfo.name;
         const docStoreLogo = document.querySelector('.po-document-logo');
-        if (docStoreLogo && storeInfo.logo_url) {
-          docStoreLogo.src = storeInfo.logo_url;
+        if (docStoreLogo) {
+          const logoToUse = (storeInfo.logo_url && !storeInfo.logo_url.includes('habitic-logo'))
+            ? storeInfo.logo_url
+            : '/assets/images/hasanah-pancing-logo.png';
+          docStoreLogo.src = logoToUse;
         }
       }
     } catch (_) { }

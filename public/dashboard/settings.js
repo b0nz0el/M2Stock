@@ -15,17 +15,17 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
 
   let currentSettings = {
     store_info: {
-      name: 'JTMaquarium',
-      slogan: 'Perlengkapan Aksesoris Aquarium',
-      email: 'jtmaquarium@gmail.com',
-      phone: '0812-9662-8052',
-      address: 'Jl. Mangga No. 67, Jatimakmur, Pondok Gede, Kota Bekasi'
+      name: 'Hasanah Pancing',
+      slogan: 'Perlengkapan Aksesoris Alat Pancing',
+      email: 'hasanahpancing1@gmail.com',
+      phone: '0822-2550-0365',
+      address: 'Jl. Hj Toha No. 66a, Jatimakmur, Pondok Gede, Kota Bekasi'
     },
     pos_config: {
       tax_rate: 11,
       service_rate: 0,
       default_payment: 'Cash',
-      receipt_footer: 'Terima kasih telah berbelanja di JTMaquarium!'
+      receipt_footer: 'Terima kasih telah berbelanja di Hasanah Pancing!'
     },
     stock_config: {
       min_stock_alert: 5,
@@ -447,7 +447,7 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
               profile = fallbackRes.data;
             }
           }
-        } catch (_) {}
+        } catch (_) { }
 
         currentUserProfile = {
           id: user.id,
@@ -485,8 +485,11 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     if (shopEmail) shopEmail.value = store.email || '';
     if (shopPhone) shopPhone.value = store.phone || '';
     if (shopAddress) shopAddress.value = store.address || '';
-    const logoVal = store.logo_url || (String(store.name || '').toLowerCase().includes('habitic') ? '/assets/images/habitic-logo.png' : '/assets/images/habitic-logo.png');
-    if (shopLogo) shopLogo.value = store.logo_url || '';
+    let logoVal = store.logo_url;
+    if (!logoVal || String(logoVal).includes('habitic-logo')) {
+      logoVal = '/assets/images/hasanah-pancing-logo.png';
+    }
+    if (shopLogo) shopLogo.value = (store.logo_url && !String(store.logo_url).includes('habitic-logo')) ? store.logo_url : '/assets/images/hasanah-pancing-logo.png';
     if (shopLogoPreview) shopLogoPreview.src = logoVal;
 
     // 2. POS Config
@@ -537,13 +540,14 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     if (btn) btn.disabled = true;
 
     try {
+      const rawLogo = document.getElementById('setting-shop-logo')?.value.trim();
       const payload = {
-        name: document.getElementById('setting-shop-name')?.value.trim() || '',
+        name: document.getElementById('setting-shop-name')?.value.trim() || 'Hasanah Pancing',
         slogan: document.getElementById('setting-shop-slogan')?.value.trim() || '',
         email: document.getElementById('setting-shop-email')?.value.trim() || '',
         phone: document.getElementById('setting-shop-phone')?.value.trim() || '',
         address: document.getElementById('setting-shop-address')?.value.trim() || '',
-        logo_url: document.getElementById('setting-shop-logo')?.value.trim() || '/assets/images/habitic-logo.png'
+        logo_url: (rawLogo && !rawLogo.includes('habitic-logo')) ? rawLogo : '/assets/images/hasanah-pancing-logo.png'
       };
 
       const res = await settingsApi.save('store_info', payload);
@@ -745,19 +749,19 @@ import { applyReadOnlyUI } from '../assets/js/utils/rbac-ui.js';
     if (shopLogoInput && shopLogoPreview) {
       shopLogoInput.addEventListener('input', () => {
         const val = shopLogoInput.value.trim();
-        shopLogoPreview.src = val || '/assets/images/habitic-logo.png';
+        shopLogoPreview.src = (val && !val.includes('habitic-logo')) ? val : '/assets/images/hasanah-pancing-logo.png';
       });
       shopLogoPreview.addEventListener('error', () => {
-        shopLogoPreview.src = '/assets/images/habitic-logo.png';
+        shopLogoPreview.src = '/assets/images/hasanah-pancing-logo.png';
       });
     }
 
     if (btnUseHabiticLogo && shopLogoInput && shopLogoPreview) {
       btnUseHabiticLogo.addEventListener('click', () => {
-        shopLogoInput.value = '/assets/images/habitic-logo.png';
-        shopLogoPreview.src = '/assets/images/habitic-logo.png';
+        shopLogoInput.value = '/assets/images/hasanah-pancing-logo.png';
+        shopLogoPreview.src = '/assets/images/hasanah-pancing-logo.png';
         if (typeof showToast === 'function') {
-          showToast('Logo Habitic dipilih', 'info');
+          showToast('Logo Hasanah Pancing dipilih', 'info');
         }
       });
     }

@@ -329,6 +329,13 @@ button:disabled:active {
   animation: popoverIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+#items-import-export-menu {
+  left: 0 !important;
+  right: auto !important;
+  min-width: 240px !important;
+  max-width: calc(100vw - 32px) !important;
+}
+
 /* ═══ PO & RETURN DIALOGS ═══ */
 .po-modal-overlay {
   overscroll-behavior: contain;

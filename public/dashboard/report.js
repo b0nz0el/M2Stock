@@ -451,12 +451,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function generateReportPrintHTML() {
-    let storeName = 'Habitic';
-    let storeSlogan = 'Aquarium Lifestyle Solutions';
+    let storeName = 'Hasanah Pancing';
+    let storeSlogan = 'Perlengkapan Memancing & Akuarium';
     let storeAddress = 'Jl. Mangga No. 67, Jatimakmur, Kota Bekasi';
     let storePhone = '0812-9662-8052';
-    let storeEmail = 'halo.habitic@gmail.com';
-    let storeLogoUrl = '/assets/images/habitic-logo.png';
+    let storeEmail = 'hasanahpancing1@gmail.com';
+    let storeLogoUrl = '/assets/images/hasanah-pancing-logo.png';
 
     let info = null;
     try {
@@ -471,13 +471,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       if (info.address) storeAddress = info.address;
       if (info.phone) storePhone = info.phone;
       if (info.email) storeEmail = info.email;
-      if (info.logo_url) storeLogoUrl = info.logo_url;
+      if (info.logo_url && !info.logo_url.includes('habitic-logo')) {
+        storeLogoUrl = info.logo_url;
+      }
     }
 
-    if (!storeLogoUrl || storeLogoUrl.trim() === '') {
-      if (String(storeName).toLowerCase().includes('habitic')) {
-        storeLogoUrl = '/assets/images/habitic-logo.png';
-      }
+    if (!storeLogoUrl || storeLogoUrl.trim() === '' || storeLogoUrl.includes('habitic-logo')) {
+      storeLogoUrl = '/assets/images/hasanah-pancing-logo.png';
     }
 
     const contactParts = [];

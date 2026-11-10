@@ -355,27 +355,27 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
     expect(printSpy).toHaveBeenCalled();
   });
 
-  it('menyinkronkan logo resmi Habitic, slogan, alamat, dan kontak dari Informasi Profil Toko', () => {
+  it('menyinkronkan logo resmi Hasanah Pancing, slogan, alamat, dan kontak dari Informasi Profil Toko', () => {
     localStorage.setItem('aquastock_store_info', JSON.stringify({
-      name: 'Habitic',
-      slogan: 'Aquarium Lifestyle Solutions',
+      name: 'Hasanah Pancing',
+      slogan: 'Perlengkapan Memancing & Akuarium',
       address: 'Jl. Mangga No. 67, Jatimakmur, Kota Bekasi',
       phone: '0812-9662-8052',
-      email: 'halo.habitic@gmail.com',
-      logo_url: '/assets/images/habitic-logo.png'
+      email: 'hasanahpancing1@gmail.com',
+      logo_url: '/assets/images/hasanah-pancing-logo.png'
     }));
 
     const html = window.generateReportPrintHTML();
 
-    // Verifikasi kop resmi berlogo dan beridentitas Habitic
+    // Verifikasi kop resmi berlogo dan beridentitas Hasanah Pancing
     expect(html).toContain('doc-logo-img');
-    expect(html).toContain('/assets/images/habitic-logo.png');
+    expect(html).toContain('/assets/images/hasanah-pancing-logo.png');
     expect(html).toContain('Diterbitkan oleh');
-    expect(html).toContain('Habitic');
-    expect(html).toContain('Aquarium Lifestyle Solutions');
+    expect(html).toContain('Hasanah Pancing');
+    expect(html).toContain('Perlengkapan Memancing &amp; Akuarium');
     expect(html).toContain('Jl. Mangga No. 67, Jatimakmur, Kota Bekasi');
     expect(html).toContain('0812-9662-8052');
-    expect(html).toContain('halo.habitic@gmail.com');
+    expect(html).toContain('hasanahpancing1@gmail.com');
   });
 
   it('mendukung custom logo_url dari profil toko pada kop laporan', () => {
@@ -385,11 +385,11 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
       address: 'Jl. Jendral Sudirman Kav. 50, Jakarta',
       phone: '081122334455',
       email: 'info@habitic.com',
-      logo_url: 'https://cdn.example.com/custom-habitic-logo.png'
+      logo_url: 'https://cdn.example.com/custom-logo.png'
     }));
 
     const html = window.generateReportPrintHTML();
-    expect(html).toContain('https://cdn.example.com/custom-habitic-logo.png');
+    expect(html).toContain('https://cdn.example.com/custom-logo.png');
     expect(html).toContain('Habitic Megastore');
     expect(html).toContain('Premium Aquatic Center');
   });

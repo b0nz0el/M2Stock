@@ -28,6 +28,7 @@ const STATIC_PRECACHE = [
   '/manifest.json',
   '/assets/images/icons/icon-192x192.png',
   '/assets/images/icons/icon-512x512.png',
+  '/assets/images/hasanah-pancing-logo.png',
   '/assets/fonts/InterVariable.woff2',
   '/assets/fonts/inter.css',
   '/assets/css/tailwind.static.css',
@@ -147,7 +148,8 @@ self.addEventListener('fetch', (event) => {
       caches.match(req).then((cached) => {
         const fetchPromise = fetch(req).then((networkRes) => {
           if (networkRes && networkRes.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, networkRes));
+            const resClone = networkRes.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
           }
           return networkRes;
         }).catch(() => { });

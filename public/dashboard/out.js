@@ -1822,11 +1822,15 @@
 
   function generateInvoicePrintHTML(inv) {
     const store = inv.storeInfo || {
-      name: 'HABITIC',
-      slogan: 'Perlengkapan Aksesoris Aquarium',
+      name: 'Hasanah Pancing',
+      slogan: 'Perlengkapan Memancing & Akuarium',
       address: 'Jl. Mangga No. 67, Pondok Gede, Kota Bekasi',
-      phone: '0812-9662-8052'
+      phone: '0812-9662-8052',
+      logo_url: '/assets/images/hasanah-pancing-logo.png'
     };
+    const storeLogo = (store.logo_url && !String(store.logo_url).includes('habitic-logo'))
+      ? store.logo_url
+      : '/assets/images/hasanah-pancing-logo.png';
 
     const isPaid = (inv.status || 'LUNAS').toUpperCase() === 'LUNAS';
     const terbilangStr = terbilang(inv.total) + ' Rupiah';
@@ -1892,10 +1896,15 @@
     <table class="header-table">
       <tr>
         <td style="vertical-align: top;">
-          <div class="store-name">${escapeHtml(store.name || 'HABITIC')}</div>
-          <div class="store-info">${escapeHtml(store.slogan || 'Perlengkapan Aksesoris Aquarium')}</div>
-          <div class="store-info">${escapeHtml(store.address || '')}</div>
-          <div class="store-info">WhatsApp / Telp: ${escapeHtml(store.phone || '')}</div>
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <img src="${escapeHtml(storeLogo)}" alt="${escapeHtml(store.name || 'Hasanah Pancing')}" style="height: 50px; max-width: 140px; object-fit: contain;" onerror="this.style.display='none'">
+            <div>
+              <div class="store-name">${escapeHtml(store.name || 'Hasanah Pancing')}</div>
+              <div class="store-info">${escapeHtml(store.slogan || 'Perlengkapan Memancing & Akuarium')}</div>
+              <div class="store-info">${escapeHtml(store.address || '')}</div>
+              <div class="store-info">WhatsApp / Telp: ${escapeHtml(store.phone || '')}</div>
+            </div>
+          </div>
         </td>
         <td style="vertical-align: top; text-align: right;">
           <div class="inv-title">INVOICE PENJUALAN</div>

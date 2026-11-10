@@ -163,9 +163,13 @@ export const settings = {
         .maybeSingle();
 
       if (!error && data?.value && data.value.name) {
+        let logo = data.value.logo_url;
+        if (!logo || String(logo).includes('habitic-logo')) {
+          logo = '/assets/images/hasanah-pancing-logo.png';
+        }
         const val = {
           ...data.value,
-          logo_url: data.value.logo_url || (data.value.name?.toLowerCase().includes('habitic') ? '/assets/images/habitic-logo.png' : '')
+          logo_url: logo
         };
         if (typeof localStorage !== 'undefined') {
           try {
@@ -183,8 +187,8 @@ export const settings = {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && parsed.name) {
-            if (!parsed.logo_url && String(parsed.name).toLowerCase().includes('habitic')) {
-              parsed.logo_url = '/assets/images/habitic-logo.png';
+            if (!parsed.logo_url || String(parsed.logo_url).includes('habitic-logo')) {
+              parsed.logo_url = '/assets/images/hasanah-pancing-logo.png';
             }
             return parsed;
           }
@@ -193,12 +197,12 @@ export const settings = {
     }
 
     return {
-      name: 'JTMaquarium',
-      slogan: 'Perlengkapan Aksesoris Aquarium',
-      email: 'jtmaquarium@gmail.com',
+      name: 'Hasanah Pancing',
+      slogan: 'Perlengkapan Memancing & Akuarium',
+      email: 'hasanahpancing1@gmail.com',
       phone: '0812-9662-8052',
       address: 'Jl. Mangga No. 67, Jatimakmur, Pondok Gede, Kota Bekasi',
-      logo_url: '/assets/images/habitic-logo.png'
+      logo_url: '/assets/images/hasanah-pancing-logo.png'
     };
   },
 
