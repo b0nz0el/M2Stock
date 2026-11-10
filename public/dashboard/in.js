@@ -99,6 +99,15 @@
     return `${day} ${m} ${hh}:${mm}`;
   }
 
+  function formatTxCode(id, prefix = 'IN') {
+    if (!id) return `${prefix}-000000`;
+    const str = String(id).trim();
+    if (str.includes('-')) {
+      return `${prefix}-${str.split('-')[0].toUpperCase()}`;
+    }
+    return `${prefix}-${str.padStart(6, '0')}`;
+  }
+
   function resolveProductName(tx) {
     if (tx.products && tx.products.name) return tx.products.name;
     if (availableProducts && availableProducts.length > 0) {
@@ -1327,12 +1336,16 @@
       if (currentFilterPeriod === '30d' && tTime < thirtyDaysAgo) return false;
 
       if (searchQuery) {
-        const code = `IN-${String(tx.id).padStart(6, '0')}`.toLowerCase();
+        const fullId = String(tx.id || '').toLowerCase();
+        const code = formatTxCode(tx.id, 'IN').toLowerCase();
+        const fullCode = `in-${fullId}`;
         const prodName = resolveProductName(tx).toLowerCase();
         const supName = (tx.suppliers?.name || 'umum').toLowerCase();
         const kasir = (tx.created_by || '').toLowerCase();
         const note = (tx.note || tx.notes || '').toLowerCase();
         if (!code.includes(searchQuery) &&
+            !fullCode.includes(searchQuery) &&
+            !fullId.includes(searchQuery) &&
             !prodName.includes(searchQuery) &&
             !supName.includes(searchQuery) &&
             !kasir.includes(searchQuery) &&
@@ -1376,7 +1389,7 @@
     const paged = filtered.slice(startIdx, startIdx + pageSize);
 
     tbody.innerHTML = paged.map(tx => {
-      const code = `IN-${String(tx.id).padStart(6, '0')}`;
+      const code = formatTxCode(tx.id, 'IN');
       const dateStr = formatTxDate(tx.created_at);
       const prodName = resolveProductName(tx);
       const supName = tx.suppliers?.name || 'Umum';
@@ -1388,20 +1401,12 @@
       const total = qty * price;
 
       return `
-        <tr class="table-row border-b border-white/5">
-          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5]">${code}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${dateStr}</td>
-          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">${code}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${dateStr}</td>
-          <td class="px-4 py-3.5 font-medium">${prodName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]">${supName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5]" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
-          <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold">+${qty}</td>
-          <td class="px-4 py-3.5 text-right text-[#A0A0A5]">${formatRupiahVal(price)}</td>
-          <td class="px-4 py-3.5 text-right font-semibold text-white">${formatRupiahVal(total)}</td>
-          <td class="px-4 py-3.5 text-right">
-          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${supName}</td>
-          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
+        <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
+          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap" title="ID: ${escapeHtml(String(tx.id))}">${escapeHtml(code)}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${escapeHtml(dateStr)}</td>
+          <td class="px-4 py-3.5 font-medium text-white max-w-[220px] truncate" title="${escapeHtml(prodName)}">${escapeHtml(prodName)}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${escapeHtml(supName)}</td>
+          <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
           <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">+${qty}</td>
           <td class="px-4 py-3.5 text-right text-[#A0A0A5] whitespace-nowrap">${formatRupiahVal(price)}</td>
           <td class="px-4 py-3.5 text-right font-semibold text-white whitespace-nowrap">${formatRupiahVal(total)}</td>
@@ -1451,9 +1456,9 @@
 
     const headers = ['No. Transaksi', 'Tanggal', 'Nama Barang', 'Supplier', 'Kasir', 'Jumlah', 'Harga (Rp)', 'Total (Rp)', 'Catatan'];
     const rows = allInTransactions.map(tx => {
-      const code = `IN-${String(tx.id).padStart(6, '0')}`;
+      const code = formatTxCode(tx.id, 'IN');
       const dateStr = formatTxDate(tx.created_at);
-      const prodName = tx.products?.name || ('Produk #' + tx.product_id);
+      const prodName = resolveProductName(tx);
       const supName = tx.suppliers?.name || 'Umum';
       const kasir = (typeof window.resolveUserName === 'function')
         ? window.resolveUserName(tx.created_by)

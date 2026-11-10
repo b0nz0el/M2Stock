@@ -139,7 +139,11 @@
       const firstWord = note.split(' ')[0].replace(/^[\[\(]+|[\]\)]+$/g, '');
       if (firstWord) return firstWord;
     }
-    return `OUT-${String(tx.id || '').padStart(6, '0')}`;
+    const rawId = String(tx.id || '').trim();
+    if (rawId.includes('-')) {
+      return `OUT-${rawId.split('-')[0].toUpperCase()}`;
+    }
+    return `OUT-${rawId.padStart(6, '0')}`;
   }
 
   function getTransactionNetTotal(tx, list = allOutTransactions) {
@@ -1354,9 +1358,9 @@
 
       return `
         <tr class="table-row border-b border-white/5">
-          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap">${code}</td>
+          <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap" title="ID: ${escapeHtml(String(tx.id))}">${code}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${dateStr}</td>
-          <td class="px-4 py-3.5 font-medium">${prodName}</td>
+          <td class="px-4 py-3.5 font-medium text-white max-w-[220px] truncate" title="${escapeHtml(prodName)}">${prodName}</td>
           <td class="px-4 py-3.5 whitespace-nowrap">${channelBadge}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${custName}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap" data-label="KASIR" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>

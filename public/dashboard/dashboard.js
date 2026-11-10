@@ -71,7 +71,11 @@ function getTransactionCode(tx) {
     const firstWord = note.split(' ')[0].replace(/^[\[\(]+|[\]\)]+$/g, '');
     if (firstWord) return firstWord;
   }
-  return `OUT-${String(tx.id || '').padStart(6, '0')}`;
+  const rawId = String(tx.id || '').trim();
+  if (rawId.includes('-')) {
+    return `OUT-${rawId.split('-')[0].toUpperCase()}`;
+  }
+  return `OUT-${rawId.padStart(6, '0')}`;
 }
 
 function getTransactionNetTotal(tx, list = []) {
