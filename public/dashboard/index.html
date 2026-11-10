@@ -1033,15 +1033,28 @@
               oninput="handleSearchOut(this.value)"
               class="w-full bg-[#1C1C1E] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#0088CC]">
           </div>
-          <div class="report-tabs sm:flex sm:flex-wrap sm:gap-2" id="out-filter-buttons">
-            <button type="button" data-period="today" onclick="filterOutPeriod('today')"
-              class="out-period-btn active">Hari Ini</button>
-            <button type="button" data-period="7d" onclick="filterOutPeriod('7d')" class="out-period-btn">7
-              Hari</button>
-            <button type="button" data-period="30d" onclick="filterOutPeriod('30d')" class="out-period-btn">30
-              Hari</button>
-            <button type="button" data-period="all" onclick="filterOutPeriod('all')"
-              class="out-period-btn">Semua</button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <select id="filter-out-channel" onchange="filterOutChannel(this.value)"
+              aria-label="Filter Channel Penjualan"
+              class="bg-[#1C1C1E] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#0088CC]">
+              <option value="all">Semua Channel</option>
+              <option value="Offline">Offline Toko</option>
+              <option value="Shopee">Shopee</option>
+              <option value="Tokopedia">Tokopedia</option>
+              <option value="TikTok">TikTok Shop</option>
+              <option value="Lazada">Lazada</option>
+              <option value="WhatsApp">WhatsApp</option>
+            </select>
+            <div class="report-tabs sm:flex sm:flex-wrap sm:gap-2" id="out-filter-buttons">
+              <button type="button" data-period="today" onclick="filterOutPeriod('today')"
+                class="out-period-btn active">Hari Ini</button>
+              <button type="button" data-period="7d" onclick="filterOutPeriod('7d')" class="out-period-btn">7
+                Hari</button>
+              <button type="button" data-period="30d" onclick="filterOutPeriod('30d')" class="out-period-btn">30
+                Hari</button>
+              <button type="button" data-period="all" onclick="filterOutPeriod('all')"
+                class="out-period-btn">Semua</button>
+            </div>
           </div>
         </div>
 
@@ -4874,7 +4887,7 @@
                 <label for="out-note" class="block text-xs font-medium text-[#A0A0A5] mb-1">No. Resi</label>
                 <div class="flex items-center gap-2">
                   <input type="text" id="out-note" inputmode="text" autocomplete="off"
-                    placeholder="Scan atau ketik nomor resi..."
+                    placeholder="Scan atau ketik nomor resi..." oninput="handlePosTrackingInputChange()"
                     class="min-w-0 flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-[#0088CC]">
                   <button type="button" id="btn-scan-pos-resi" onclick="startWebBarcodeScan('resi')"
                     aria-label="Scan nomor resi marketplace dengan kamera" title="Scan nomor resi dengan kamera"
@@ -4882,6 +4895,7 @@
                     <i data-lucide="scan-line" class="w-4 h-4" aria-hidden="true"></i>
                   </button>
                 </div>
+                <div id="pos-courier-detected" class="hidden items-center gap-1.5 mt-1.5 text-xs"></div>
               </div>
 
               <!-- Diskon & Pajak (PPN 11%) -->
@@ -4932,6 +4946,11 @@
                     <option value="QRIS">QRIS</option>
                     <option value="Tempo">Tempo</option>
                   </select>
+                </div>
+                <div id="pos-marketplace-escrow-notice"
+                  class="hidden items-center gap-2 p-2.5 rounded-xl bg-[#0088CC]/10 border border-[#0088CC]/20 text-[11px] text-[#32ADE6]">
+                  <i data-lucide="shield-check" class="w-4 h-4 shrink-0 text-[#32ADE6]"></i>
+                  <span>Pesanan Marketplace dijamin sistem Escrow (Otomatis Lunas).</span>
                 </div>
 
                 <!-- Kalkulator Uang Masuk Kasir (Khusus Cash) -->
@@ -5067,6 +5086,21 @@
             <span class="text-xs bg-[#0088CC]/20 text-[#32ADE6] px-2.5 py-1 rounded-full font-semibold"
               id="packing-total-orders">0 Pesanan</span>
           </div>
+        </div>
+
+        <!-- Filter Channel Tabs Packing List -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 print:hidden" id="packing-channel-tabs">
+          <button type="button" onclick="filterPackingChannel('all')"
+            class="packing-tab-btn active px-3 py-1 rounded-lg text-xs font-semibold bg-[#0088CC] text-white">Semua</button>
+          <button type="button" onclick="filterPackingChannel('Shopee')"
+            class="packing-tab-btn px-3 py-1 rounded-lg text-xs font-semibold bg-[#1C1C1E] text-[#A0A0A5] hover:text-white border border-white/5">Shopee</button>
+          <button type="button" onclick="filterPackingChannel('Tokopedia')"
+            class="packing-tab-btn px-3 py-1 rounded-lg text-xs font-semibold bg-[#1C1C1E] text-[#A0A0A5] hover:text-white border border-white/5">Tokopedia</button>
+          <button type="button" onclick="filterPackingChannel('TikTok')"
+            class="packing-tab-btn px-3 py-1 rounded-lg text-xs font-semibold bg-[#1C1C1E] text-[#A0A0A5] hover:text-white border border-white/5">TikTok
+            Shop</button>
+          <button type="button" onclick="filterPackingChannel('Offline')"
+            class="packing-tab-btn px-3 py-1 rounded-lg text-xs font-semibold bg-[#1C1C1E] text-[#A0A0A5] hover:text-white border border-white/5">Offline</button>
         </div>
 
         <!-- DESKTOP / PRINT VIEW (Table) -->
@@ -5211,16 +5245,30 @@
       </div>
 
       <!-- Tombol Aksi -->
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
-        <button type="button" onclick="closeThermalReceiptModal()"
-          class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
-          Tutup
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-white/5">
+        <button type="button" id="btn-receipt-whatsapp" onclick="shareReceiptViaWhatsApp()"
+          class="bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-md shadow-[#25D366]/20 transition"
+          title="Kirim rincian nota belanja ke nomor WhatsApp pelanggan">
+          <i data-lucide="message-circle" class="w-4 h-4" aria-hidden="true"></i>
+          <span>Kirim WhatsApp</span>
         </button>
-        <button type="button" onclick="executeReceiptPrint()"
-          class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#0088CC]/20 transition">
-          <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i>
-          <span>Cetak Struk Thermal</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-receipt-invoice-pdf" onclick="printCurrentReceiptAsInvoicePDF()"
+            class="bg-white/10 hover:bg-white/15 active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-1.5 transition"
+            title="Cetak Invoice Formal A4 / PDF">
+            <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Invoice PDF</span>
+          </button>
+          <button type="button" onclick="executeReceiptPrint()"
+            class="bg-[#0088CC] hover:bg-[#0077BB] active:scale-95 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-[#0088CC]/20 transition">
+            <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Cetak Thermal</span>
+          </button>
+          <button type="button" onclick="closeThermalReceiptModal()"
+            class="bg-white/5 hover:bg-white/10 text-[#A0A0A5] hover:text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
+            Tutup
+          </button>
+        </div>
       </div>
     </div>
   </div>

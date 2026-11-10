@@ -258,3 +258,4 @@ END;
 $$ LANGUAGE plpgsql;
 
 NOTIFY pgrst, 'reload schema';
+

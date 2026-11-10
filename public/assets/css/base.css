@@ -12,6 +12,9 @@ html, body {
   height: 100%;
   min-height: 100vh;
   background-color: #000;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* ═══ TOUCH-ACTION & ERGONOMICS ═══ */
@@ -32,9 +35,38 @@ body {
   line-height: 1.5;
   font-optical-sizing: auto;
   overflow-x: hidden;
+  font-feature-settings: "cv05" 1; /* Disambiguate 'l' (with tail) from '1' and 'I' */
 }
 
-/* ═══ TABULAR NUMS (Linear / MD3 standard for currencies & stock) ═══ */
+/* ═══ 10/10 MICRO-TYPOGRAPHY: DYNAMIC INVERSE TRACKING ═══ */
+/* 1. Large display headings & KPI metrics: compact & punchy */
+h1, h2, .text-3xl, .text-4xl {
+  letter-spacing: -0.025em;
+}
+h3, .text-xl, .text-2xl {
+  letter-spacing: -0.015em;
+}
+
+/* 2. Micro uppercase & table headers: airy & instant scannability */
+th,
+th.uppercase,
+td.uppercase,
+.badge,
+.badge-pill,
+.badge-status,
+.section-title,
+.tracking-wider,
+.uppercase {
+  letter-spacing: 0.045em;
+}
+
+.text-\[10px\].uppercase,
+.text-\[11px\].uppercase,
+.text-xs.uppercase {
+  letter-spacing: 0.055em;
+}
+
+/* ═══ TABULAR NUMS & FINANCIAL PRECISION (Linear / Apple Pro / MD3 standard) ═══ */
 .tabular-nums,
 [data-tabular-nums],
 .font-tabular,
@@ -44,10 +76,21 @@ th.text-right,
 .currency-value,
 .stock-val,
 .cart-total,
-.tabular {
-  font-variant-numeric: tabular-nums;
-  -webkit-font-feature-settings: "tnum" 1;
-  font-feature-settings: "tnum" 1;
+.tabular,
+.sku-tag,
+.barcode-val,
+.tracking-no {
+  font-variant-numeric: tabular-nums slashed-zero;
+  -webkit-font-feature-settings: "tnum" 1, "zero" 1;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+/* ═══ MONOSPACE PRECISION (Code, Resi, Barcode & Struk) ═══ */
+code, kbd, pre, samp, .font-mono, [data-mono], .receipt-paper {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: tabular-nums slashed-zero;
+  -webkit-font-feature-settings: "tnum" 1, "zero" 1;
+  font-feature-settings: "tnum" 1, "zero" 1;
 }
 
 /* ═══ SCROLLBAR ═══ */

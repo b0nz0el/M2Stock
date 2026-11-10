@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://yscswrxgylkryvxmwlza.supabase.co';
+const SUPABASE_URL = 'https://kvdktgknwxmqpankwpre.supabase.co';
 const HABITIC_SYNC_URL = 'https://habitic.pages.dev/api/sync/aquastock-products';
 
 function jsonResponse(data, status = 200) {

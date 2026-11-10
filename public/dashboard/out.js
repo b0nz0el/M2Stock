@@ -1,10 +1,100 @@
   let allOutTransactions = [];
   let availableProducts = [];
+  let availableCustomers = [];
   let currentFilterPeriod = 'today';
+  let currentFilterChannel = 'all';
+  let currentPackingFilterChannel = 'all';
   let searchQuery = '';
   let currentPage = 1;
   const pageSize = 10;
   let deleteOutId = null;
+
+  function detectCourierFromTracking(trackingNumber) {
+    const tn = String(trackingNumber || '').trim().toUpperCase();
+    if (!tn) return null;
+
+    if (tn.startsWith('SPX') || tn.startsWith('NLID') || /^ID\d{10,}/.test(tn)) {
+      return {
+        code: 'SPX',
+        name: 'Shopee Express (SPX)',
+        badgeClass: 'bg-[#EE4D2D]/20 text-[#EE4D2D] border border-[#EE4D2D]/40',
+        icon: 'truck'
+      };
+    }
+    if (tn.startsWith('TJNT') || tn.startsWith('JP') || tn.startsWith('JX') || tn.startsWith('JD')) {
+      return {
+        code: 'J&T',
+        name: 'J&T Express',
+        badgeClass: 'bg-[#E31E24]/20 text-[#E31E24] border border-[#E31E24]/40',
+        icon: 'truck'
+      };
+    }
+    if (tn.startsWith('TKP') || tn.startsWith('INV/') || tn.startsWith('MP-TKP')) {
+      return {
+        code: 'TOKOPEDIA',
+        name: 'Tokopedia Order',
+        badgeClass: 'bg-[#00AA5B]/20 text-[#00AA5B] border border-[#00AA5B]/40',
+        icon: 'shopping-bag'
+      };
+    }
+    if (tn.startsWith('TTS') || tn.startsWith('TT-') || tn.startsWith('TIKTOK')) {
+      return {
+        code: 'TIKTOK',
+        name: 'TikTok Shop',
+        badgeClass: 'bg-black/50 text-white border border-white/30',
+        icon: 'shopping-bag'
+      };
+    }
+    if (tn.startsWith('00') || tn.startsWith('SIP')) {
+      return {
+        code: 'SICEPAT',
+        name: 'SiCepat Ekspres',
+        badgeClass: 'bg-[#FF3B30]/20 text-[#FF3B30] border border-[#FF3B30]/40',
+        icon: 'truck'
+      };
+    }
+    if (tn.startsWith('JNE') || /^(SOC|CGK|BDG|SUB|SRG|MDN|PLM|BPN|MKS|DPS)[A-Z0-9]{7,}/.test(tn)) {
+      return {
+        code: 'JNE',
+        name: 'JNE Express',
+        badgeClass: 'bg-[#0088CC]/20 text-[#32ADE6] border border-[#0088CC]/40',
+        icon: 'truck'
+      };
+    }
+    if (tn.startsWith('ANTR') || /^1000\d{8,}/.test(tn)) {
+      return {
+        code: 'ANTERAJA',
+        name: 'Anteraja',
+        badgeClass: 'bg-[#9C27B0]/20 text-[#BA68C8] border border-[#9C27B0]/40',
+        icon: 'truck'
+      };
+    }
+    if (tn.startsWith('NINJA') || tn.startsWith('NVNID')) {
+      return {
+        code: 'NINJA',
+        name: 'Ninja Xpress',
+        badgeClass: 'bg-[#C41230]/20 text-[#FF453A] border border-[#C41230]/40',
+        icon: 'truck'
+      };
+    }
+    return null;
+  }
+
+  function terbilang(n) {
+    const bilangan = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+    n = Math.floor(Math.abs(Number(n) || 0));
+    if (n === 0) return 'Nol';
+    if (n < 12) return bilangan[n];
+    if (n < 20) return terbilang(n - 10) + ' Belas';
+    if (n < 100) return terbilang(Math.floor(n / 10)) + ' Puluh' + (n % 10 ? ' ' + terbilang(n % 10) : '');
+    if (n < 200) return 'Seratus' + (n - 100 ? ' ' + terbilang(n - 100) : '');
+    if (n < 1000) return terbilang(Math.floor(n / 100)) + ' Ratus' + (n % 100 ? ' ' + terbilang(n % 100) : '');
+    if (n < 2000) return 'Seribu' + (n - 1000 ? ' ' + terbilang(n - 1000) : '');
+    if (n < 1000000) return terbilang(Math.floor(n / 1000)) + ' Ribu' + (n % 1000 ? ' ' + terbilang(n % 1000) : '');
+    if (n < 1000000000) return terbilang(Math.floor(n / 1000000)) + ' Juta' + (n % 1000000 ? ' ' + terbilang(n % 1000000) : '');
+    if (n < 1000000000000) return terbilang(Math.floor(n / 1000000000)) + ' Miliar' + (n % 1000000000 ? ' ' + terbilang(n % 1000000000) : '');
+    return terbilang(Math.floor(n / 1000000000000)) + ' Triliun' + (n % 1000000000000 ? ' ' + terbilang(n % 1000000000000) : '');
+  }
 
   function formatRupiahVal(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
@@ -182,14 +272,15 @@
 
       const custRes = await Api.customers.getAll();
       if (custRes && custRes.ok) {
+        availableCustomers = custRes.data || [];
         const custSelect = document.getElementById('out-customer-id');
         if (custSelect) {
           const currentCustVal = custSelect.value;
           custSelect.innerHTML = '<option value="">Umum</option>';
-          (custRes.data || []).forEach(c => {
+          availableCustomers.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = c.name;
+            opt.textContent = c.phone ? `${c.name} (${c.phone})` : c.name;
             custSelect.appendChild(opt);
           });
           if (currentCustVal) custSelect.value = currentCustVal;
@@ -248,7 +339,64 @@
   }
 
   function handlePosChannelChange() {
+    const channelSelect = document.getElementById('out-channel');
+    const channel = channelSelect?.value || 'Offline';
+    const noteInput = document.getElementById('out-note');
+    const noteLabel = document.querySelector('label[for="out-note"]');
+    const payMethodSelect = document.getElementById('out-payment-method');
+    const isMarketplace = ['Shopee', 'Tokopedia', 'TikTok', 'Lazada'].includes(channel);
+
+    if (isMarketplace) {
+      if (noteLabel) noteLabel.innerHTML = `No. Resi Kurir / Pesanan <span class="text-[#0088CC] font-normal">(${channel})</span> <span class="text-[#FF3B30]">*</span>`;
+      if (noteInput) {
+        noteInput.placeholder = `Scan resi SPX, J&T, SiCepat, JNE untuk ${channel}...`;
+        noteInput.setAttribute('aria-label', `Nomor resi pengiriman ${channel}`);
+      }
+      if (payMethodSelect && payMethodSelect.value === 'Cash') {
+        payMethodSelect.value = 'Transfer';
+        handlePosPaymentMethodChange();
+      }
+      const escrowNotice = document.getElementById('pos-marketplace-escrow-notice');
+      if (escrowNotice) {
+        escrowNotice.innerHTML = `<i data-lucide="shield-check" class="w-4 h-4 shrink-0 text-[#32ADE6]"></i><span>Pesanan <b>${channel}</b> ditagih via Escrow Marketplace. Status otomatis LUNAS.</span>`;
+        escrowNotice.classList.remove('hidden');
+        escrowNotice.classList.add('flex');
+        if (typeof window.refreshIcons === 'function') window.refreshIcons(escrowNotice);
+      }
+    } else {
+      if (noteLabel) noteLabel.textContent = 'No. Resi';
+      if (noteInput) {
+        noteInput.placeholder = 'Scan atau ketik nomor resi...';
+        noteInput.setAttribute('aria-label', 'Nomor resi');
+      }
+      const escrowNotice = document.getElementById('pos-marketplace-escrow-notice');
+      if (escrowNotice) {
+        escrowNotice.classList.add('hidden');
+        escrowNotice.classList.remove('flex');
+      }
+    }
+
+    handlePosTrackingInputChange();
     syncPosCartToChannel();
+  }
+
+  function handlePosTrackingInputChange() {
+    const noteInput = document.getElementById('out-note');
+    const detectedDiv = document.getElementById('pos-courier-detected');
+    if (!noteInput || !detectedDiv) return;
+
+    const val = noteInput.value.trim();
+    const courier = detectCourierFromTracking(val);
+    if (courier) {
+      detectedDiv.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${courier.badgeClass}"><i data-lucide="${courier.icon}" class="w-3.5 h-3.5"></i> Kurir: ${courier.name}</span>`;
+      detectedDiv.classList.remove('hidden');
+      detectedDiv.classList.add('flex');
+      if (typeof window.refreshIcons === 'function') window.refreshIcons(detectedDiv);
+    } else {
+      detectedDiv.innerHTML = '';
+      detectedDiv.classList.add('hidden');
+      detectedDiv.classList.remove('flex');
+    }
   }
 
   function renderPosCart() {
@@ -848,20 +996,29 @@
       await loadOutTransactions();
       await loadDropdowns();
 
-      // Dapatkan nama pelanggan untuk struk
+      // Dapatkan nama & nomor HP pelanggan untuk struk / WhatsApp
       let customerName = 'Umum';
+      let customerPhone = '';
       if (customerId) {
-        const custSelect = document.getElementById('out-customer-id');
-        const selectedOpt = custSelect?.querySelector(`option[value="${customerId}"]`);
-        if (selectedOpt) customerName = selectedOpt.textContent;
+        const custObj = availableCustomers.find(c => String(c.id) === String(customerId));
+        if (custObj) {
+          customerName = custObj.name || 'Umum';
+          customerPhone = custObj.phone || '';
+        } else {
+          const custSelect = document.getElementById('out-customer-id');
+          const selectedOpt = custSelect?.querySelector(`option[value="${customerId}"]`);
+          if (selectedOpt) customerName = selectedOpt.textContent;
+        }
       }
 
       // Langsung buka Struk Kasir Thermal dengan semua item keranjang
       openThermalReceiptModal({
         invoice_no: res.data?.invoice_no,
         note: note,
+        channel: channel,
         date: new Date().toISOString(),
         customer: customerName,
+        customer_phone: customerPhone,
         cashier: (typeof window !== 'undefined' && window.Auth?.getUserEmail) ? window.Auth.getUserEmail() : 'Admin',
         method: paymentMethod,
         status: paymentStatus,
@@ -1097,6 +1254,16 @@
     return userId;
   }
 
+  function filterOutChannel(channel) {
+    currentFilterChannel = channel || 'all';
+    currentPage = 1;
+    const select = document.getElementById('filter-out-channel');
+    if (select && select.value !== currentFilterChannel) {
+      select.value = currentFilterChannel;
+    }
+    renderOutTable();
+  }
+
   function renderOutTable() {
     const tbody = document.getElementById('out-tbody');
     if (!tbody) return;
@@ -1111,6 +1278,15 @@
       if (currentFilterPeriod === 'today' && tTime < startToday) return false;
       if (currentFilterPeriod === '7d' && tTime < sevenDaysAgo) return false;
       if (currentFilterPeriod === '30d' && tTime < thirtyDaysAgo) return false;
+
+      if (currentFilterChannel !== 'all') {
+        const txChannel = (tx.channel || 'Offline').toLowerCase();
+        if (currentFilterChannel.toLowerCase() === 'offline') {
+          if (txChannel !== 'offline') return false;
+        } else if (!txChannel.includes(currentFilterChannel.toLowerCase())) {
+          return false;
+        }
+      }
 
       if (searchQuery) {
         const code = getTransactionCode(tx).toLowerCase();
@@ -1196,6 +1372,10 @@
                       class="p-1.5 hover:bg-white/5 rounded-lg text-[#32ADE6] hover:text-white transition">
                 <i data-lucide="receipt" class="w-4 h-4" aria-hidden="true"></i>
               </button>
+              <button type="button" data-action="print-invoice" data-transaction-id="${tx.id}" title="Cetak Invoice Formal A4 / PDF" aria-label="Cetak Invoice Formal A4 / PDF"
+                      class="p-1.5 hover:bg-white/5 rounded-lg text-[#34C759] hover:text-white transition">
+                <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
               <button type="button" data-action="delete" data-transaction-id="${tx.id}" title="Hapus transaksi" aria-label="Hapus transaksi"
                       class="p-1.5 hover:bg-white/5 rounded-lg text-[#FF3B30] transition">
                 <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
@@ -1208,6 +1388,22 @@
 
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     if (typeof window.syncTableLabels === 'function') window.syncTableLabels();
+  }
+
+  function filterPackingChannel(channel) {
+    currentPackingFilterChannel = channel || 'all';
+    const tabs = document.querySelectorAll('#packing-channel-tabs .packing-tab-btn');
+    tabs.forEach(btn => {
+      const isTarget = btn.getAttribute('onclick')?.includes(`'${channel}'`);
+      if (isTarget) {
+        btn.classList.add('active', 'bg-[#0088CC]', 'text-white');
+        btn.classList.remove('bg-[#1C1C1E]', 'text-[#A0A0A5]');
+      } else {
+        btn.classList.remove('active', 'bg-[#0088CC]', 'text-white');
+        btn.classList.add('bg-[#1C1C1E]', 'text-[#A0A0A5]');
+      }
+    });
+    openPackingListModal();
   }
 
   function openPackingListModal() {
@@ -1226,13 +1422,22 @@
       todaysOut = allOutTransactions.slice(0, 10);
     }
 
+    // Filter per channel pesanan jika user memilih tab filter packing
+    if (currentPackingFilterChannel !== 'all') {
+      todaysOut = todaysOut.filter(tx => {
+        const ch = (tx.channel || 'Offline').toLowerCase();
+        if (currentPackingFilterChannel.toLowerCase() === 'offline') return ch === 'offline';
+        return ch.includes(currentPackingFilterChannel.toLowerCase());
+      });
+    }
+
     const dStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     if (dateText) dateText.textContent = `Tanggal: ${dStr}`;
     if (countBadge) countBadge.textContent = `${todaysOut.length} Pesanan`;
 
     if (tbody) {
       if (todaysOut.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-[#A0A0A5]">Belum ada pesanan keluar hari ini</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-[#A0A0A5]">Belum ada pesanan keluar untuk channel ini</td></tr>`;
       } else {
         tbody.innerHTML = todaysOut.map(tx => {
           const code = getTransactionCode(tx);
@@ -1240,10 +1445,17 @@
           const channel = tx.channel || 'Offline';
           const cust = tx.customers?.name || 'Umum';
           const qty = getTransactionOutQty(tx);
+          const courier = detectCourierFromTracking(code) || detectCourierFromTracking(tx.note);
+          const courierBadge = courier
+            ? `<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${courier.badgeClass}">${courier.code}</span>`
+            : '';
 
           return `
             <tr class="border-b border-white/5 print:border-gray-200">
-              <td class="py-2.5 px-2 font-mono text-xs whitespace-nowrap">${code}</td>
+              <td class="py-2.5 px-2 font-mono text-xs whitespace-nowrap">
+                <span>${code}</span>
+                ${courierBadge}
+              </td>
               <td class="py-2.5 px-2 font-medium">${prodName}</td>
               <td class="py-2.5 px-2 text-center font-bold text-white print:text-black whitespace-nowrap">${qty}</td>
               <td class="py-2.5 px-2 whitespace-nowrap">${channel}</td>
@@ -1259,7 +1471,7 @@
 
     if (mobileList) {
       if (todaysOut.length === 0) {
-        mobileList.innerHTML = `<div class="text-center py-6 text-sm text-[#A0A0A5]">Belum ada pesanan keluar hari ini</div>`;
+        mobileList.innerHTML = `<div class="text-center py-6 text-sm text-[#A0A0A5]">Belum ada pesanan keluar untuk channel ini</div>`;
       } else {
         mobileList.innerHTML = todaysOut.map(tx => {
           const code = getTransactionCode(tx);
@@ -1267,11 +1479,15 @@
           const channel = tx.channel || 'Offline';
           const cust = tx.customers?.name || 'Umum';
           const qty = getTransactionOutQty(tx);
+          const courier = detectCourierFromTracking(code) || detectCourierFromTracking(tx.note);
 
           return `
             <div class="p-3 bg-white/[0.03] border border-white/10 rounded-xl space-y-2">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-mono text-[#32ADE6] bg-[#0088CC]/10 px-2 py-0.5 rounded font-semibold">${code}</span>
+                <div class="flex items-center gap-1 font-mono text-[#32ADE6] bg-[#0088CC]/10 px-2 py-0.5 rounded font-semibold">
+                  <span>${code}</span>
+                  ${courier ? `<span class="text-[10px] px-1 rounded ${courier.badgeClass}">${courier.code}</span>` : ''}
+                </div>
                 <span class="bg-white/5 px-2 py-0.5 rounded text-[#A0A0A5] font-medium">${channel}</span>
               </div>
               <div class="flex items-start justify-between gap-3">
@@ -1355,10 +1571,22 @@
       checkoutTax = Number(txIdOrBatch.tax || 0);
 
       activeReceiptTx = {
+        invoice_no: invoiceNo,
+        tracking: trackingNote,
+        date: dateStr,
+        customer: customerName,
+        customer_phone: txIdOrBatch.customer_phone || (availableCustomers.find(c => c.name === customerName)?.phone) || '',
+        cashier: cashierName,
+        method: method,
+        status: status,
+        channel: txIdOrBatch.channel || 'Offline',
         total: total,
         paid: initialPaid,
         change: initialChange,
-        items: items
+        items: items,
+        subtotal: checkoutSubtotal || (total + checkoutDiscount - checkoutTax),
+        discount: checkoutDiscount,
+        tax: checkoutTax
       };
     } else {
       // From transaction table row click
@@ -1423,11 +1651,26 @@
       initialPaid = isSingleUnpaid ? 0 : total;
       initialChange = 0;
 
+      const custObj = availableCustomers.find(c => String(c.id) === String(tx.customer_id));
+      const customerPhone = tx.customers?.phone || custObj?.phone || '';
+
       activeReceiptTx = {
+        invoice_no: invoiceNo,
+        tracking: trackingNote,
+        date: dateStr,
+        customer: customerName,
+        customer_phone: customerPhone,
+        cashier: cashierName,
+        method: method,
+        status: status,
+        channel: tx.channel || 'Offline',
         total: total,
         paid: initialPaid,
         change: initialChange,
-        items: items
+        items: items,
+        subtotal: checkoutSubtotal || (total + checkoutDiscount - checkoutTax),
+        discount: checkoutDiscount,
+        tax: checkoutTax
       };
     }
 
@@ -1453,7 +1696,8 @@
     if (elCustomer) elCustomer.textContent = customerName;
     if (elMethod) elMethod.textContent = method;
     if (elTracking) {
-      elTracking.textContent = trackingNote || '-';
+      const courier = detectCourierFromTracking(trackingNote);
+      elTracking.textContent = courier ? `${trackingNote} (${courier.name})` : (trackingNote || '-');
       elTracking.closest('[data-receipt-tracking]')?.classList.toggle('hidden', !trackingNote);
     }
     if (elStatus) elStatus.textContent = status;
@@ -1576,6 +1820,406 @@
     window.print();
   }
 
+  function generateInvoicePrintHTML(inv) {
+    const store = inv.storeInfo || {
+      name: 'HABITIC',
+      slogan: 'Perlengkapan Aksesoris Aquarium',
+      address: 'Jl. Mangga No. 67, Pondok Gede, Kota Bekasi',
+      phone: '0812-9662-8052'
+    };
+
+    const isPaid = (inv.status || 'LUNAS').toUpperCase() === 'LUNAS';
+    const terbilangStr = terbilang(inv.total) + ' Rupiah';
+
+    const itemRows = (inv.items || []).map((it, idx) => `
+      <tr>
+        <td class="text-center" style="width: 35px;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #111827;">${escapeHtml(it.name)}</div>
+        </td>
+        <td class="text-center" style="width: 60px; font-weight: 600;">${it.qty}</td>
+        <td class="text-right" style="width: 110px;">${formatRupiahVal(it.price)}</td>
+        <td class="text-right" style="width: 120px; font-weight: 700;">${formatRupiahVal(it.total)}</td>
+      </tr>
+    `).join('');
+
+    return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice - ${escapeHtml(inv.invoice_no || 'INV')}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm 15mm 15mm 15mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #1f2937; margin: 0; padding: 20px; background: #fff; }
+    .invoice-card { max-width: 800px; margin: 0 auto; }
+    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border-bottom: 2px solid #0088CC; padding-bottom: 12px; }
+    .store-name { font-size: 20px; font-weight: 800; color: #0088CC; text-transform: uppercase; letter-spacing: 0.5px; }
+    .store-info { font-size: 10px; color: #4b5563; line-height: 1.35; margin-top: 3px; }
+    .inv-title { font-size: 22px; font-weight: 900; text-align: right; color: #111827; letter-spacing: 0.5px; }
+    .inv-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+    .inv-badge-paid { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .inv-badge-unpaid { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    
+    .meta-box { width: 100%; border-collapse: collapse; margin-bottom: 18px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; }
+    .meta-box td { padding: 9px 12px; vertical-align: top; width: 50%; font-size: 10.5px; }
+    .meta-box td.right-col { border-left: 1px solid #e5e7eb; }
+    .meta-label { color: #6b7280; font-weight: 600; font-size: 10px; text-transform: uppercase; margin-bottom: 2px; }
+    .meta-val { color: #111827; font-weight: 600; }
+    
+    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    .items-table th { background: #0088CC; color: #ffffff; font-weight: 700; font-size: 10px; text-transform: uppercase; padding: 8px 10px; text-align: left; }
+    .items-table td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; font-size: 10.5px; color: #1f2937; }
+    .items-table tr:nth-child(even) td { background: #fafafa; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    
+    .summary-grid { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .terbilang-box { background: #f3f4f6; border-left: 3px solid #0088CC; padding: 8px 12px; font-style: italic; font-size: 10.5px; color: #374151; border-radius: 0 4px 4px 0; margin-top: 6px; }
+    .totals-box { width: 280px; margin-left: auto; border-collapse: collapse; }
+    .totals-box td { padding: 4px 8px; font-size: 10.5px; }
+    .totals-box tr.grand-total td { font-size: 13px; font-weight: 800; color: #0088CC; border-top: 2px solid #0088CC; border-bottom: 2px solid #0088CC; padding: 6px 8px; }
+    
+    .signature-grid { width: 100%; border-collapse: collapse; margin-top: 35px; }
+    .signature-grid td { width: 50%; text-align: center; vertical-align: top; font-size: 10.5px; }
+    .sig-space { height: 60px; }
+    .sig-name { font-weight: 700; text-decoration: underline; color: #111827; }
+    .footer-notes { margin-top: 25px; padding-top: 10px; border-top: 1px dashed #d1d5db; font-size: 9.5px; color: #6b7280; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="invoice-card">
+    <table class="header-table">
+      <tr>
+        <td style="vertical-align: top;">
+          <div class="store-name">${escapeHtml(store.name || 'HABITIC')}</div>
+          <div class="store-info">${escapeHtml(store.slogan || 'Perlengkapan Aksesoris Aquarium')}</div>
+          <div class="store-info">${escapeHtml(store.address || '')}</div>
+          <div class="store-info">WhatsApp / Telp: ${escapeHtml(store.phone || '')}</div>
+        </td>
+        <td style="vertical-align: top; text-align: right;">
+          <div class="inv-title">INVOICE PENJUALAN</div>
+          <div class="inv-badge ${isPaid ? 'inv-badge-paid' : 'inv-badge-unpaid'}">${isPaid ? 'LUNAS' : 'BELUM LUNAS'}</div>
+          <div style="font-size: 10px; color: #6b7280; margin-top: 6px;">Metode: <b>${escapeHtml(inv.method || 'Cash')}</b></div>
+        </td>
+      </tr>
+    </table>
+
+    <table class="meta-box">
+      <tr>
+        <td>
+          <div class="meta-label">Ditagihkan Kepada:</div>
+          <div class="meta-val" style="font-size: 12px;">${escapeHtml(inv.customer || 'Umum')}</div>
+          ${inv.customer_phone ? `<div style="color: #4b5563; font-size: 10px; margin-top: 2px;">Telp: ${escapeHtml(inv.customer_phone)}</div>` : ''}
+          <div style="color: #6b7280; font-size: 10px; margin-top: 3px;">Channel Penjualan: <b>${escapeHtml(inv.channel || 'Offline')}</b></div>
+        </td>
+        <td class="right-col">
+          <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+            <tr><td class="meta-label" style="width: 90px;">No. Invoice</td><td class="meta-val">: ${escapeHtml(inv.invoice_no || '-')}</td></tr>
+            <tr><td class="meta-label">Tanggal</td><td class="meta-val">: ${escapeHtml(inv.date || '-')}</td></tr>
+            <tr><td class="meta-label">Kasir</td><td class="meta-val">: ${escapeHtml(inv.cashier || 'Admin')}</td></tr>
+            ${inv.tracking && inv.tracking !== '-' ? `<tr><td class="meta-label">No. Resi</td><td class="meta-val">: ${escapeHtml(inv.tracking)}</td></tr>` : ''}
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th class="text-center">No</th>
+          <th>Nama Barang / Produk</th>
+          <th class="text-center">Qty</th>
+          <th class="text-right">Harga Satuan</th>
+          <th class="text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRows}
+      </tbody>
+    </table>
+
+    <table class="summary-grid">
+      <tr>
+        <td style="vertical-align: top; width: 55%; padding-right: 15px;">
+          <div class="meta-label">Terbilang:</div>
+          <div class="terbilang-box">"${escapeHtml(terbilangStr)}"</div>
+          <div style="margin-top: 14px; font-size: 10px; color: #4b5563; line-height: 1.4;">
+            <b>Catatan &amp; Ketentuan:</b><br>
+            • Barang yang sudah dibeli dapat ditukar maksimal 2 hari setelah transaksi dengan menyertakan invoice ini.<br>
+            • Garansi perlengkapan elektrik (pompa/lampu) mengikuti kebijakan distributor resmi.
+          </div>
+        </td>
+        <td style="vertical-align: top; width: 45%;">
+          <table class="totals-box">
+            <tr>
+              <td class="meta-label">Subtotal</td>
+              <td class="text-right">${formatRupiahVal(inv.subtotal || inv.total)}</td>
+            </tr>
+            ${inv.discount > 0 ? `
+            <tr>
+              <td class="meta-label" style="color: #16a34a;">Diskon Nota</td>
+              <td class="text-right" style="color: #16a34a;">-${formatRupiahVal(inv.discount)}</td>
+            </tr>` : ''}
+            ${inv.tax > 0 ? `
+            <tr>
+              <td class="meta-label">PPN (11%)</td>
+              <td class="text-right">+${formatRupiahVal(inv.tax)}</td>
+            </tr>` : ''}
+            <tr class="grand-total">
+              <td>TOTAL AKHIR</td>
+              <td class="text-right">${formatRupiahVal(inv.total)}</td>
+            </tr>
+            ${inv.paid > 0 ? `
+            <tr>
+              <td class="meta-label">Bayar Diterima</td>
+              <td class="text-right font-semibold">${formatRupiahVal(inv.paid)}</td>
+            </tr>
+            <tr>
+              <td class="meta-label">Kembalian</td>
+              <td class="text-right font-semibold">${formatRupiahVal(inv.change || 0)}</td>
+            </tr>` : ''}
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table class="signature-grid">
+      <tr>
+        <td>
+          <div>Tanda Terima / Pelanggan,</div>
+          <div class="sig-space"></div>
+          <div class="sig-name">( ${escapeHtml(inv.customer || '........................')} )</div>
+        </td>
+        <td>
+          <div>Hormat Kami,</div>
+          <div class="sig-space"></div>
+          <div class="sig-name">( ${escapeHtml(store.name || 'Habitic Store')} )</div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="footer-notes">
+      Terima kasih telah mempercayakan kebutuhan akuarium Anda kepada ${escapeHtml(store.name || 'Habitic')}.
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
+  async function printInvoicePDF(txIdOrBatch) {
+    let invData = null;
+
+    if (txIdOrBatch && typeof txIdOrBatch === 'object' && txIdOrBatch.items) {
+      invData = { ...txIdOrBatch };
+    } else if (txIdOrBatch) {
+      const tx = allOutTransactions.find(t => String(t.id) === String(txIdOrBatch));
+      if (!tx) {
+        if (typeof showToast === 'function') showToast('Transaksi tidak ditemukan', 'error');
+        return;
+      }
+
+      const invCode = tx.invoice_no || (tx.note ? (tx.note.match(/\[(INV-[^\]]+)\]/i)?.[1]) : null);
+      let siblingTxs = [];
+      if (invCode) {
+        siblingTxs = allOutTransactions.filter(t => t.invoice_no === invCode || (t.note && t.note.includes(`[${invCode}]`)));
+      }
+      if (siblingTxs.length === 0) siblingTxs = [tx];
+
+      const items = siblingTxs.map(t => ({
+        name: t.products?.name || ('Produk #' + t.product_id),
+        qty: getTransactionOutQty(t),
+        price: t.price || 0,
+        total: getTransactionOutQty(t) * (t.price || 0)
+      }));
+
+      const rawTotal = items.reduce((s, it) => s + it.total, 0);
+      const receiptMeta = parsePosReceiptMeta(siblingTxs[0]?.note);
+      const discount = Number(siblingTxs[0]?.discount_amount !== undefined ? siblingTxs[0].discount_amount : receiptMeta.discount);
+      const tax = Number(siblingTxs[0]?.tax_amount !== undefined ? siblingTxs[0].tax_amount : receiptMeta.tax);
+      const finalTotal = Number(siblingTxs[0]?.final_total !== undefined ? siblingTxs[0].final_total : (receiptMeta.total !== null ? receiptMeta.total : rawTotal));
+
+      const custObj = availableCustomers.find(c => String(c.id) === String(tx.customer_id));
+      const customerPhone = tx.customers?.phone || custObj?.phone || '';
+
+      invData = {
+        invoice_no: invCode || getTransactionCode(tx),
+        date: formatTxDate(tx.created_at),
+        customer: tx.customers?.name || custObj?.name || 'Umum',
+        customer_phone: customerPhone,
+        cashier: formatCashierName(tx.created_by),
+        channel: tx.channel || 'Offline',
+        method: tx.payment_method || 'Cash',
+        status: (tx.payment_status || 'Lunas').toUpperCase(),
+        tracking: cleanPosTrackingNote(tx.note) || '',
+        items: items,
+        subtotal: rawTotal,
+        discount: discount,
+        tax: tax,
+        total: finalTotal,
+        paid: finalTotal,
+        change: 0
+      };
+    } else if (activeReceiptTx) {
+      invData = { ...activeReceiptTx };
+    }
+
+    if (!invData) {
+      if (typeof showToast === 'function') showToast('Data invoice tidak ditemukan untuk dicetak', 'error');
+      return;
+    }
+
+    // Ambil info profil toko
+    try {
+      let storeInfo = (typeof window !== 'undefined' && window.Api?.settings?.getStoreInfo)
+        ? await window.Api.settings.getStoreInfo()
+        : null;
+      if (!storeInfo && typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('aquastock_store_info');
+        if (cached) {
+          try { storeInfo = JSON.parse(cached); } catch (_) {}
+        }
+      }
+      if (storeInfo) invData.storeInfo = storeInfo;
+    } catch (_) {}
+
+    const htmlContent = generateInvoicePrintHTML(invData);
+
+    // Buka dedicated print window atau hidden iframe fallback
+    let printWindow = null;
+    try {
+      printWindow = window.open('', '_blank');
+    } catch (_) {}
+
+    if (printWindow) {
+      try {
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          try { printWindow.print(); } catch (_) {}
+        }, 250);
+        return;
+      } catch (err) {
+        console.warn('Fallback ke iframe untuk invoice PDF print:', err);
+      }
+    }
+
+    // Hidden iframe fallback
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow ? (iframe.contentWindow.document || iframe.contentDocument) : null;
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(htmlContent);
+        iframeDoc.close();
+      }
+      setTimeout(() => {
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }
+        } catch (_) {}
+        setTimeout(() => { try { iframe.remove(); } catch (_) {} }, 2000);
+      }, 350);
+    } catch (fallbackErr) {
+      console.error('Gagal cetak invoice:', fallbackErr);
+      if (typeof showToast === 'function') {
+        showToast('Gagal membuka dialog cetak invoice: ' + fallbackErr.message, 'error');
+      }
+    }
+  }
+
+  function printCurrentReceiptAsInvoicePDF() {
+    if (!activeReceiptTx) {
+      if (typeof showToast === 'function') showToast('Tidak ada data struk aktif', 'error');
+      return;
+    }
+    printInvoicePDF(activeReceiptTx);
+  }
+
+  function shareReceiptViaWhatsApp() {
+    if (!activeReceiptTx) {
+      if (typeof showToast === 'function') showToast('Tidak ada data struk aktif', 'error');
+      return;
+    }
+
+    let phone = activeReceiptTx.customer_phone || '';
+    if (!phone) {
+      const inputPhone = prompt(`Masukkan nomor WhatsApp pelanggan (${activeReceiptTx.customer || 'Umum'}):`, '');
+      if (inputPhone === null) return;
+      phone = inputPhone.trim();
+    }
+
+    let cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '62' + cleanPhone.slice(1);
+    }
+
+    const storeName = document.getElementById('receipt-store-name')?.textContent || 'Habitic';
+    const storeAddress = document.getElementById('receipt-store-address')?.textContent || '';
+    const storePhone = document.getElementById('receipt-store-phone')?.textContent || '';
+
+    let msg = `🧾 *NOTA PENJUALAN - ${storeName.toUpperCase()}*\n`;
+    if (storeAddress) msg += `📍 ${storeAddress}\n`;
+    if (storePhone) msg += `📞 ${storePhone}\n`;
+    msg += `────────────────────────────\n`;
+    msg += `No. Nota   : *${activeReceiptTx.invoice_no || '-'}*\n`;
+    msg += `Tanggal    : ${activeReceiptTx.date || '-'}\n`;
+    msg += `Kasir      : ${activeReceiptTx.cashier || 'Admin'}\n`;
+    msg += `Pelanggan  : ${activeReceiptTx.customer || 'Umum'}\n`;
+    if (activeReceiptTx.channel && activeReceiptTx.channel !== 'Offline') {
+      msg += `Channel    : ${activeReceiptTx.channel}\n`;
+    }
+    if (activeReceiptTx.tracking && activeReceiptTx.tracking !== '-') {
+      msg += `No. Resi   : ${activeReceiptTx.tracking}\n`;
+    }
+    msg += `Metode     : ${activeReceiptTx.method || 'Cash'}\n`;
+    msg += `────────────────────────────\n`;
+    msg += `📦 *RINCIAN PEMBELIAN:*\n`;
+
+    (activeReceiptTx.items || []).forEach((it, idx) => {
+      msg += `${idx + 1}. *${it.name}*\n`;
+      msg += `   ${it.qty} x ${formatRupiahVal(it.price)} = *${formatRupiahVal(it.total)}*\n`;
+    });
+
+    msg += `────────────────────────────\n`;
+    const subtotal = activeReceiptTx.subtotal || activeReceiptTx.total;
+    msg += `Subtotal   : ${formatRupiahVal(subtotal)}\n`;
+    if (activeReceiptTx.discount > 0) {
+      msg += `Diskon     : -${formatRupiahVal(activeReceiptTx.discount)}\n`;
+    }
+    if (activeReceiptTx.tax > 0) {
+      msg += `PPN (11%)  : +${formatRupiahVal(activeReceiptTx.tax)}\n`;
+    }
+    msg += `*TOTAL     : ${formatRupiahVal(activeReceiptTx.total)}*\n`;
+    if (activeReceiptTx.paid > 0) {
+      msg += `Bayar      : ${formatRupiahVal(activeReceiptTx.paid)}\n`;
+      msg += `Kembali    : ${formatRupiahVal(activeReceiptTx.change || 0)}\n`;
+    }
+    msg += `Status     : *${activeReceiptTx.status || 'LUNAS'}*\n`;
+    msg += `────────────────────────────\n`;
+    msg += `Terima kasih atas kunjungan Anda! 🙏\n`;
+    msg += `_Barang yang sudah dibeli dapat ditukar maks 2 hari dengan membawa nota ini._\n`;
+
+    const waUrl = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+    window.open(waUrl, '_blank');
+  }
+
   window.addEventListener('afterprint', () => {
     document.body.classList.remove('print-mode-receipt', 'print-mode-packing');
   });
@@ -1586,6 +2230,9 @@
   window.calculateReceiptChange = calculateReceiptChange;
   window.executeReceiptPrint = executeReceiptPrint;
   window.executePackingListPrint = executePackingListPrint;
+  window.printInvoicePDF = printInvoicePDF;
+  window.printCurrentReceiptAsInvoicePDF = printCurrentReceiptAsInvoicePDF;
+  window.shareReceiptViaWhatsApp = shareReceiptViaWhatsApp;
 
   async function handleRefreshOut() {
     const headerBtn = document.getElementById('btn-refresh-out-header');
@@ -1683,6 +2330,12 @@
       if (printBtn) {
         event.stopPropagation();
         openThermalReceiptModal(printBtn.dataset.transactionId);
+        return;
+      }
+      const invoiceBtn = event.target.closest('[data-action="print-invoice"]');
+      if (invoiceBtn) {
+        event.stopPropagation();
+        printInvoicePDF(invoiceBtn.dataset.transactionId);
         return;
       }
       const deleteBtn = event.target.closest('[data-action="delete"]');
@@ -2269,6 +2922,13 @@ window.loadOutTransactions = loadOutTransactions;
 window.handleExportOut = handleExportOut;
 window.openPackingListModal = openPackingListModal;
 window.closePackingListModal = closePackingListModal;
+window.detectCourierFromTracking = detectCourierFromTracking;
+window.handlePosTrackingInputChange = handlePosTrackingInputChange;
+window.filterOutChannel = filterOutChannel;
+window.filterPackingChannel = filterPackingChannel;
+window.printInvoicePDF = printInvoicePDF;
+window.printCurrentReceiptAsInvoicePDF = printCurrentReceiptAsInvoicePDF;
+window.shareReceiptViaWhatsApp = shareReceiptViaWhatsApp;
 
 document.addEventListener('DOMContentLoaded', () => {
   const discountInput = document.getElementById('pos-discount-input');

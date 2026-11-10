@@ -284,24 +284,37 @@ async function handleCreateUserSubmit(e) {
       return;
     }
     
-    const res = await fetch(
-      'https://yscswrxgylkryvxmwlza.supabase.co/functions/v1/create-user',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzY3N3cnhneWxrcnl2eG13bHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3OTUwNDksImV4cCI6MjEwNzM3MTA0OX0.1TMiwmF0JhefAwXZZZjA1-382oYEnqdGwzDXeXWeZG0'
-        },
-        body: JSON.stringify({ email, password, role: role.toLowerCase(), full_name })
+    let data;
+    if (window.supabase.functions && typeof window.supabase.functions.invoke === 'function') {
+      const { data: funcData, error: funcErr } = await window.supabase.functions.invoke('create-user', {
+        body: { email, password, role: role.toLowerCase(), full_name }
+      });
+      if (funcErr) {
+        showToast(funcErr.message || 'Gagal menambah user', 'error');
+        return;
       }
-    );
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      showToast(data.error || 'Gagal menambah user', 'error');
-      return;
+      data = funcData;
+    } else {
+      const clientUrl = window.supabase.supabaseUrl || 'https://kvdktgknwxmqpankwpre.supabase.co';
+      const clientKey = window.supabase.supabaseKey || '';
+      const res = await fetch(
+        `${clientUrl}/functions/v1/create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token,
+            'apikey': clientKey
+          },
+          body: JSON.stringify({ email, password, role: role.toLowerCase(), full_name })
+        }
+      );
+      
+      data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Gagal menambah user', 'error');
+        return;
+      }
     }
     
     showToast('User ' + email + ' berhasil ditambahkan', 'success');

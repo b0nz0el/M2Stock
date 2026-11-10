@@ -50,3 +50,4 @@ describe('Normalisasi Kolom Finansial Transaksi (Header-Detail Lite)', () => {
     expect(reportJs).toContain('if (tx.invoice_no) return tx.invoice_no;');
   });
 });
+

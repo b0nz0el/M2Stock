@@ -65,7 +65,7 @@
   border-radius: 6px;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.045em;
 }
 .badge-pill,
 .badge-status {
@@ -75,7 +75,7 @@
   padding: 3px 10px;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.045em;
 }
 
 /* ═══ BOTTOM SHEET / MOBILE SLIDE-UP MODAL ═══ */
