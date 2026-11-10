@@ -443,12 +443,13 @@ if (typeof window !== 'undefined') {
   window.loadDashboardData = loadDashboardData;
   window.handleDashboardPeriodChange = handleDashboardPeriodChange;
 
-  window.addEventListener('aquastock:transactions-updated', () => {
+  const refreshDash = () => {
     loadDashboardData(null, false);
-  });
-  window.addEventListener('aquastock:products-updated', () => {
-    loadDashboardData(null, false);
-  });
+  };
+  window.addEventListener('m2stock:transactions-updated', refreshDash);
+  window.addEventListener('aquastock:transactions-updated', refreshDash);
+  window.addEventListener('m2stock:products-updated', refreshDash);
+  window.addEventListener('aquastock:products-updated', refreshDash);
 }
 
 if (document.readyState === 'loading') {

@@ -1611,14 +1611,16 @@
   window.syncZeroPriceTransactions = syncZeroPriceTransactions;
 
   if (typeof window !== 'undefined') {
-    window.addEventListener('aquastock:products-updated', async () => {
+    const handleProductsUpdatedIn = async () => {
       try {
         await loadDropdowns();
         await loadInTransactions();
       } catch (err) {
-        console.error('Auto-sync on aquastock:products-updated failed:', err);
+        console.error('Auto-sync on m2stock:products-updated failed:', err);
       }
-    });
+    };
+    window.addEventListener('m2stock:products-updated', handleProductsUpdatedIn);
+    window.addEventListener('aquastock:products-updated', handleProductsUpdatedIn);
   }
 
   document.addEventListener('DOMContentLoaded', function () {

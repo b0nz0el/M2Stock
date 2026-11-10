@@ -31,9 +31,11 @@ function scheduleRefresh(domain) {
 }
 
 export function initSyncEvents() {
-  if (typeof window === 'undefined' || window.__aquastockSyncEventsInitialized) return;
+  if (typeof window === 'undefined' || window.__m2stockSyncEventsInitialized || window.__aquastockSyncEventsInitialized) return;
+  window.__m2stockSyncEventsInitialized = true;
   window.__aquastockSyncEventsInitialized = true;
   Object.keys(DOMAIN_LOADERS).forEach((domain) => {
+    window.addEventListener(`m2stock:${domain}-updated`, () => scheduleRefresh(domain));
     window.addEventListener(`aquastock:${domain}-updated`, () => scheduleRefresh(domain));
   });
 }

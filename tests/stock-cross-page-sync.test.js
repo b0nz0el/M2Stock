@@ -7,6 +7,7 @@ describe('Sinkronisasi stok lintas halaman', () => {
 
   it('POS reload katalog ketika stok produk berubah', () => {
     const outJs = fs.readFileSync(path.join(root, 'public/dashboard/out.js'), 'utf8');
+    expect(outJs).toContain("window.addEventListener('m2stock:products-updated'");
     expect(outJs).toContain("window.addEventListener('aquastock:products-updated'");
     expect(outJs).toContain('loadDropdowns()');
   });

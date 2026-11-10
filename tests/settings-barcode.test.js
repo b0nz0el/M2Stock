@@ -384,5 +384,9 @@ describe('Internal product barcode creation', () => {
     window.dispatchEvent(new CustomEvent('aquastock:barcode-layout-updated', { detail: '40x30_double' }));
     expect(getCurrentBarcodeLayout()).toBe('40x30_double');
     expect(selectElem.value).toBe('40x30_double');
+
+    window.dispatchEvent(new CustomEvent('m2stock:barcode-layout-updated', { detail: '50x30_single' }));
+    expect(getCurrentBarcodeLayout()).toBe('50x30_single');
+    expect(selectElem.value).toBe('50x30_single');
   });
 });

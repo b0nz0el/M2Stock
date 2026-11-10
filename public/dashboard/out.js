@@ -296,9 +296,11 @@
     }
   }
 
-  window.addEventListener('aquastock:products-updated', () => {
+  const handleProductsUpdatedOut = () => {
     loadDropdowns().catch(console.error);
-  });
+  };
+  window.addEventListener('m2stock:products-updated', handleProductsUpdatedOut);
+  window.addEventListener('aquastock:products-updated', handleProductsUpdatedOut);
 
   function escapeHtml(str) {
     if (!str) return '';
@@ -3037,12 +3039,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+  window.addEventListener('m2stock:channels-updated', loadChannelDropdown);
   window.addEventListener('aquastock:channels-updated', loadChannelDropdown);
-  window.addEventListener('aquastock:transactions-updated', () => {
+  const handleTxUpdatedOut = () => {
     if (typeof loadOutTransactions === 'function') {
       loadOutTransactions();
     }
-  });
+  };
+  window.addEventListener('m2stock:transactions-updated', handleTxUpdatedOut);
+  window.addEventListener('aquastock:transactions-updated', handleTxUpdatedOut);
   window.refreshIcons?.();
 });
 

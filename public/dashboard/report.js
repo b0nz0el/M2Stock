@@ -1425,12 +1425,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     window.printReportPDF = printReportPDF;
     window.setReportTab = setReportTab;
 
-    window.addEventListener('aquastock:transactions-updated', () => {
+    const refreshReport = () => {
       loadReport(false);
-    });
-    window.addEventListener('aquastock:products-updated', () => {
-      loadReport(false);
-    });
+    };
+    window.addEventListener('m2stock:transactions-updated', refreshReport);
+    window.addEventListener('aquastock:transactions-updated', refreshReport);
+    window.addEventListener('m2stock:products-updated', refreshReport);
+    window.addEventListener('aquastock:products-updated', refreshReport);
   }
 
   if (document.readyState === 'loading') {

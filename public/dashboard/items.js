@@ -1265,9 +1265,9 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
       await loadItemsFromBackend();
 
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('aquastock:products-updated', {
-          detail: { id: id || (res?.data && res.data.id) }
-        }));
+        const detail = { id: id || (res?.data && res.data.id) };
+        window.dispatchEvent(new CustomEvent('m2stock:products-updated', { detail }));
+        window.dispatchEvent(new CustomEvent('aquastock:products-updated', { detail }));
         if (typeof window.loadDropdowns === 'function') {
           window.loadDropdowns().catch(console.error);
         }
@@ -1362,9 +1362,9 @@ import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
       await loadItemsFromBackend();
 
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('aquastock:products-updated', {
-          detail: { id }
-        }));
+        const detail = { id };
+        window.dispatchEvent(new CustomEvent('m2stock:products-updated', { detail }));
+        window.dispatchEvent(new CustomEvent('aquastock:products-updated', { detail }));
         if (typeof window.loadDropdowns === 'function') {
           window.loadDropdowns().catch(console.error);
         }

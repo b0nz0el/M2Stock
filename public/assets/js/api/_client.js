@@ -24,6 +24,7 @@ export function emitDataChanged(domain, detail = {}) {
 
   try {
     if (typeof window.CustomEvent === 'function') {
+      window.dispatchEvent(new window.CustomEvent(`m2stock:${domain}-updated`, { detail: payload.detail }));
       window.dispatchEvent(new window.CustomEvent(`aquastock:${domain}-updated`, { detail: payload.detail }));
     }
   } catch (_) {}
@@ -49,6 +50,7 @@ if (typeof window !== 'undefined') {
     if (seenSyncSources.has(payload.source)) return;
     seenSyncSources.add(payload.source);
     if (typeof window.CustomEvent === 'function') {
+      window.dispatchEvent(new window.CustomEvent(`m2stock:${payload.domain}-updated`, { detail: payload.detail || {} }));
       window.dispatchEvent(new window.CustomEvent(`aquastock:${payload.domain}-updated`, { detail: payload.detail || {} }));
     }
   };

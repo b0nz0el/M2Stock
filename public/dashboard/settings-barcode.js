@@ -907,11 +907,13 @@ export function initBarcodeSettings() {
   // Dengarkan event sinkronisasi layout antar modul/perangkat
   if (typeof window !== 'undefined' && !window.__barcodeLayoutListenerBound) {
     window.__barcodeLayoutListenerBound = true;
-    window.addEventListener('aquastock:barcode-layout-updated', event => {
+    const handleLayoutUpdate = event => {
       if (event.detail && BARCODE_LAYOUTS[event.detail]) {
         setBarcodeLayout(event.detail, false);
       }
-    });
+    };
+    window.addEventListener('m2stock:barcode-layout-updated', handleLayoutUpdate);
+    window.addEventListener('aquastock:barcode-layout-updated', handleLayoutUpdate);
   }
 
   // Pastikan layout terbaru dari database toko dimuat

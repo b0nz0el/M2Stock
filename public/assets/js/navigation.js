@@ -24,7 +24,7 @@ const PAGE_SLUGS = {
 /* Tab yang tersedia di bottom nav */
 const BOTTOM_TABS = ['dashboard', 'items', 'in', 'out'];
 
-/* Basis path folder dashboard, mis. "/aquastock-pro/dashboard/" */
+/* Basis path folder dashboard, mis. "/M2Stock/dashboard/" */
 function dashboardBase() {
   const path = window.location.pathname;
   const i = path.indexOf('/dashboard/');
@@ -113,7 +113,7 @@ function syncActiveState() {
   updateSidebarAria(false);
 }
 
-/* Bangun URL bersih untuk sebuah halaman, mis. "/aquastock-pro/dashboard/items/" */
+/* Bangun URL bersih untuk sebuah halaman, mis. "/M2Stock/dashboard/items/" */
 function pageUrl(pageId) {
   const slug = PAGE_SLUGS[pageId] !== undefined ? PAGE_SLUGS[pageId] : pageId;
   return dashboardBase() + (slug ? slug + '/' : '');

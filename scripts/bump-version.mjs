@@ -39,7 +39,7 @@ if (arg === 'patch' || arg === 'minor' || arg === 'major') {
   newVersion = arg.replace(/^v/, '');
 }
 
-console.log(`🚀 Mengupgrade versi Aquastock Pro: v${currentVersion} → v${newVersion}`);
+console.log(`🚀 Mengupgrade versi M2Stock: v${currentVersion} → v${newVersion}`);
 
 // 3. Update package.json
 pkg.version = newVersion;

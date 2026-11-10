@@ -11,6 +11,7 @@ function notifyProductsUpdated(detail = {}) {
     window.emitDataChanged?.('transactions', detail);
   }
   if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('m2stock:products-updated', { detail }));
     window.dispatchEvent(new CustomEvent('aquastock:products-updated', { detail }));
   }
 }

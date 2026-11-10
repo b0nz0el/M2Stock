@@ -48,6 +48,7 @@ class AppSidebar extends HTMLElement {
       if (e?.detail?.name) this._updateStoreName(e.detail.name);
     };
     if (typeof window !== 'undefined') {
+      window.addEventListener('m2stock:store-info-updated', this._handleStoreUpdate);
       window.addEventListener('aquastock:store-info-updated', this._handleStoreUpdate);
     }
   }
@@ -56,6 +57,7 @@ class AppSidebar extends HTMLElement {
     this.removeEventListener('click', this._handleClick);
     document.removeEventListener('keydown', this._handleTrapFocus);
     if (typeof window !== 'undefined' && this._handleStoreUpdate) {
+      window.removeEventListener('m2stock:store-info-updated', this._handleStoreUpdate);
       window.removeEventListener('aquastock:store-info-updated', this._handleStoreUpdate);
     }
   }

@@ -274,12 +274,14 @@ describe('Dashboard Transaksi Barang Masuk & Keluar', () => {
     expect(outTbody.innerHTML).toContain('4.475');
   });
 
-  it('mendengarkan event aquastock:transactions-updated dan otomatis memuat ulang dashboard', () => {
+  it('mendengarkan event m2stock:transactions-updated & aquastock:transactions-updated dan otomatis memuat ulang dashboard', () => {
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
     const runDashboard = new Function('window', 'document', 'Api', dashboardScript);
     runDashboard(window, document, window.Api);
 
+    expect(addEventListenerSpy).toHaveBeenCalledWith('m2stock:transactions-updated', expect.any(Function));
     expect(addEventListenerSpy).toHaveBeenCalledWith('aquastock:transactions-updated', expect.any(Function));
+    expect(addEventListenerSpy).toHaveBeenCalledWith('m2stock:products-updated', expect.any(Function));
     expect(addEventListenerSpy).toHaveBeenCalledWith('aquastock:products-updated', expect.any(Function));
   });
 });
