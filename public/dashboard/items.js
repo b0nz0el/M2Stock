@@ -1,8 +1,4 @@
 import { getChannelIconConfig } from '../assets/js/utils/channel-icons.js';
-import {
-  MARKETPLACE_LINK_CSV_HEADERS,
-  prepareMarketplaceLinkImport
-} from '../assets/js/utils/marketplace-link-import.js';
   const isStudioImagePath = function (url) {
     if (typeof window !== 'undefined' && typeof window.isStudioImagePath === 'function') {
       return window.isStudioImagePath(url);
@@ -55,9 +51,6 @@ import {
   let pendingItemPayload = null;
   let pendingItemId = null;
   let pendingSaveLocalMeta = null;
-  let habiticSyncConfirmResolver = null;
-  let habiticSyncReturnFocus = null;
-  let habiticSyncHadBodyLock = false;
 
   function parseNumericValue(value) {
     if (value === null || value === undefined) return 0;
@@ -3086,130 +3079,6 @@ import {
     }
   }
 
-  async function syncMarketplaceLinksToHabitic() {
-    const button = document.getElementById('btn-sync-habitic-links');
-    if (!window.supabase?.auth || !button) {
-      if (typeof showToast === 'function') showToast('Fitur sinkronisasi belum siap. Muat ulang halaman.', 'error');
-      return;
-    }
-
-    if (!await requestHabiticSyncConfirmation()) return;
-
-    let session;
-    try {
-      const { data, error } = await window.supabase.auth.getSession();
-      session = error ? null : data?.session;
-    } catch (sessionError) {
-      console.error('Gagal membaca sesi untuk sinkronisasi Habitic:', sessionError);
-    }
-    if (!session?.access_token) {
-      if (typeof showToast === 'function') showToast('Sesi M2Stock tidak tersedia. Silakan login ulang.', 'error');
-      return;
-    }
-
-    const previousContent = button.innerHTML;
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-    button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i><span>Menyinkronkan...</span>';
-    if (typeof window.refreshIcons === 'function') window.refreshIcons();
-
-    try {
-      const response = await fetch('/api/integrations/habitic', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'X-Supabase-Key': window.supabase.supabaseKey || ''
-        }
-      });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || result?.success !== true) {
-        throw new Error(result?.error || `Sinkronisasi gagal (HTTP ${response.status}).`);
-      }
-
-      const summary = result.summary || {};
-      const message = `${Number(summary.updatedProducts) || 0} produk diperbarui, ${Number(summary.updatedLinks) || 0} link disinkronkan; SKU tidak cocok: ${Number(summary.unmatchedSkus) || 0}, SKU ganda: ${Number(summary.ambiguousSkus) || 0}.`;
-      if (typeof showToast === 'function') showToast(message, 'success', 7000);
-    } catch (syncError) {
-      if (typeof showToast === 'function') showToast(syncError.message || 'Sinkronisasi link ke Habitic gagal.', 'error', 7000);
-    } finally {
-      button.disabled = false;
-      button.removeAttribute('aria-busy');
-      button.innerHTML = previousContent;
-      if (typeof window.refreshIcons === 'function') window.refreshIcons();
-    }
-  }
-
-  function requestHabiticSyncConfirmation() {
-    const modal = document.getElementById('modal-habitic-sync-confirm');
-    const cancelButton = document.getElementById('btn-cancel-habitic-sync');
-    if (!modal || !cancelButton || habiticSyncConfirmResolver) {
-      if (typeof showToast === 'function') showToast('Dialog konfirmasi sinkronisasi tidak tersedia.', 'error');
-      return Promise.resolve(false);
-    }
-
-    habiticSyncReturnFocus = document.activeElement;
-    habiticSyncHadBodyLock = document.body.classList.contains('overflow-hidden');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    document.body.classList.add('overflow-hidden');
-    if (typeof window.refreshIcons === 'function') window.refreshIcons();
-    cancelButton.focus();
-
-    return new Promise(resolve => {
-      habiticSyncConfirmResolver = resolve;
-    });
-  }
-
-  function closeHabiticSyncConfirmation(confirmed) {
-    const modal = document.getElementById('modal-habitic-sync-confirm');
-    if (!modal || !habiticSyncConfirmResolver) return;
-
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    if (!habiticSyncHadBodyLock) document.body.classList.remove('overflow-hidden');
-    const resolve = habiticSyncConfirmResolver;
-    habiticSyncConfirmResolver = null;
-    resolve(Boolean(confirmed));
-
-    if (habiticSyncReturnFocus instanceof HTMLElement) habiticSyncReturnFocus.focus();
-    habiticSyncReturnFocus = null;
-  }
-
-  function handleHabiticSyncDialogKeydown(event) {
-    const modal = document.getElementById('modal-habitic-sync-confirm');
-    if (!modal || modal.classList.contains('hidden')) return;
-
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeHabiticSyncConfirmation(false);
-      return;
-    }
-
-    if (event.key !== 'Tab') return;
-    const focusable = Array.from(modal.querySelectorAll('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'));
-    if (focusable.length === 0) return;
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (!modal.contains(document.activeElement)) {
-      event.preventDefault();
-      first.focus();
-    } else if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  document.getElementById('btn-cancel-habitic-sync')?.addEventListener('click', () => closeHabiticSyncConfirmation(false));
-  document.getElementById('btn-confirm-habitic-sync')?.addEventListener('click', () => closeHabiticSyncConfirmation(true));
-  document.getElementById('modal-habitic-sync-confirm')?.addEventListener('click', event => {
-    if (event.target === event.currentTarget) closeHabiticSyncConfirmation(false);
-  });
-  document.addEventListener('keydown', handleHabiticSyncDialogKeydown);
-
   function handleItemStockInput() {
     const val = Number(document.getElementById('item-stock')?.value || 0);
     const warnBanner = document.getElementById('item-stock-warning-banner');
@@ -3237,7 +3106,6 @@ import {
   window.closeDeleteModal = closeDeleteModal;
   window.confirmDeleteItem = confirmDeleteItem;
   window.loadItemsFromBackend = loadItemsFromBackend;
-  window.syncMarketplaceLinksToHabitic = syncMarketplaceLinksToHabitic;
   window.autoGenerateSkuForItem = autoGenerateSkuForItem;
 
   // Fitur Fase 4.8 & Sorting
@@ -3738,64 +3606,6 @@ import {
     });
   });
 
-  document.getElementById('btn-import-channel-links')?.addEventListener('click', function () {
-    if (typeof window.startCsvImport !== 'function') {
-      showToast('Fitur import belum siap. Muat ulang halaman dan coba lagi.', 'error');
-      return;
-    }
-
-    window.startCsvImport({
-      title: 'Link Channel',
-      templateName: 'template-link-channel.csv',
-      headers: MARKETPLACE_LINK_CSV_HEADERS,
-      requiredHeaders: ['SKU'],
-      instructions: [
-        'SKU harus sama dengan SKU barang di M2Stock. SKU yang tidak cocok atau ganda akan membatalkan impor.',
-        'Isi URL channel yang ingin ditambahkan atau diperbarui. Kolom URL kosong mempertahankan link yang sudah ada.',
-        'Hanya URL Shopee, Tokopedia, Lazada, TikTok Shop, dan WhatsApp yang sesuai domain resminya yang diterima.',
-        'Nama produk hanya untuk referensi. Harga, stok, deskripsi, foto, dan data barang lain tidak diubah.'
-      ],
-      validate: async function (records) {
-        const productsResult = await Api.items.getAll();
-        if (!productsResult?.ok) {
-          throw new Error(productsResult?.error?.message || 'Gagal memuat barang M2Stock untuk mencocokkan SKU.');
-        }
-        return prepareMarketplaceLinkImport(records, productsResult.data || []);
-      },
-      commit: async function (rows) {
-        const productsResult = await Api.items.getAll();
-        if (!productsResult?.ok) {
-          throw new Error(productsResult?.error?.message || 'Gagal memuat ulang barang sebelum menyimpan link channel.');
-        }
-
-        const latestRecords = rows.map(row => row.sourceRecord);
-        const latestPlan = prepareMarketplaceLinkImport(latestRecords, productsResult.data || []);
-        if (latestPlan.errors.length || latestPlan.skipped.length) {
-          throw new Error('Data barang berubah sejak pratinjau. Impor dibatalkan; pilih file kembali untuk memeriksa SKU terbaru.');
-        }
-
-        let updatedCount = 0;
-        for (const row of latestPlan.rows) {
-          const result = await Api.items.update(row.id, {
-            sku: row.sku,
-            channel: row.channel,
-            channel_link: row.channel_link,
-            channels: row.channels
-          });
-          if (!result?.ok) {
-            throw new Error(
-              updatedCount > 0
-                ? `Impor berhenti setelah ${updatedCount} barang diperbarui. Muat ulang data, lalu impor ulang file untuk melanjutkan. ${result?.error?.message || ''}`.trim()
-                : result?.error?.message || `Gagal memperbarui link channel SKU ${row.sku}.`
-            );
-          }
-          updatedCount += 1;
-        }
-        return { ok: true, data: { updated_count: updatedCount } };
-      },
-      onComplete: loadItemsFromBackend
-    });
-  });
 
   function setupSearchListeners() {
     const pageSearch = document.getElementById('search-items');

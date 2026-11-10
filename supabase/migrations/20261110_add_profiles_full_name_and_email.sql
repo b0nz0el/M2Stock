@@ -39,3 +39,4 @@ EXECUTE FUNCTION public.sync_profiles_name_and_fullname();
 
 -- 4. Reload PostgREST Schema Cache
 NOTIFY pgrst, 'reload schema';
+

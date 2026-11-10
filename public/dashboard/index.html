@@ -355,15 +355,6 @@
               Potensi Jual: Rp 0</p>
           </div>
           <div class="items-toolbar-actions flex items-center gap-2.5 flex-wrap">
-            <!-- 1. Tombol Sinkron Compact -->
-            <button type="button" data-action="sync-habitic" id="btn-sync-habitic-links"
-              onclick="syncMarketplaceLinksToHabitic()"
-              class="bg-[#1C1C1E] hover:bg-white/5 active:scale-95 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-white/5 flex items-center justify-center gap-1.5 transition whitespace-nowrap shrink-0 text-[#A0A0A5] hover:text-white"
-              title="Kirim link marketplace berdasarkan SKU ke katalog Habitic">
-              <i data-lucide="refresh-cw" class="w-4 h-4 shrink-0 text-[#32ADE6]" aria-hidden="true"></i>
-              <span class="whitespace-nowrap">Sinkron</span>
-            </button>
-
             <!-- 2. Dropdown Menu Impor / Ekspor (Standar Shopify & Stripe) -->
             <div class="relative inline-block text-left" id="items-import-export-dropdown">
               <button type="button" id="btn-import-export-menu" onclick="toggleImportExportMenu(event)"
@@ -396,17 +387,6 @@
                   <div class="min-w-0">
                     <span class="font-semibold block truncate">Ekspor Semua Produk</span>
                     <span class="text-[10px] text-[#A0A0A5] block truncate">Unduh katalog ke CSV</span>
-                  </div>
-                </button>
-                <button type="button" data-action="import-channel-links" id="btn-import-channel-links"
-                  onclick="closeImportExportMenu()"
-                  class="w-full text-left px-3.5 py-2.5 text-xs sm:text-sm text-white hover:bg-white/5 flex items-center gap-2.5 transition border-t border-white/5">
-                  <div class="w-7 h-7 rounded-lg bg-[#FF9F0A]/15 text-[#FF9F0A] grid place-items-center shrink-0">
-                    <i data-lucide="link" class="w-3.5 h-3.5"></i>
-                  </div>
-                  <div class="min-w-0">
-                    <span class="font-semibold block truncate">Impor Link Marketplace</span>
-                    <span class="text-[10px] text-[#A0A0A5] block truncate">Tautkan link Shopee/Tokopedia</span>
                   </div>
                 </button>
               </div>
@@ -3501,46 +3481,6 @@
 
 
   <!-- =========================== MODAL (ITEMS: modal-bulk-delete) =========================== -->
-  <div id="modal-habitic-sync-confirm"
-    class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-[120] items-center justify-center p-4" role="dialog"
-    aria-modal="true" aria-labelledby="modal-habitic-sync-title" aria-describedby="modal-habitic-sync-description">
-    <div
-      class="w-full max-w-md rounded-2xl border border-white/10 bg-[#1C1C1E] shadow-2xl shadow-black/50 overflow-hidden">
-      <div class="p-5 sm:p-6">
-        <div class="flex items-start gap-3.5">
-          <div
-            class="w-11 h-11 shrink-0 rounded-xl bg-[#0088CC]/15 border border-[#0088CC]/25 text-[#32ADE6] grid place-items-center">
-            <i data-lucide="refresh-cw" class="w-5 h-5" aria-hidden="true"></i>
-          </div>
-          <div class="min-w-0">
-            <h2 id="modal-habitic-sync-title" class="text-lg font-bold text-white">Sinkron Link Marketplace</h2>
-            <p id="modal-habitic-sync-description" class="mt-2 text-sm leading-relaxed text-[#A0A0A5]">
-              Kirim tautan marketplace dari M2Stock ke katalog Habitic. Produk akan dicocokkan berdasarkan SKU yang
-              sama.
-            </p>
-          </div>
-        </div>
-        <div class="mt-4 rounded-xl border border-[#FF9500]/20 bg-[#FF9500]/[0.07] px-3.5 py-3">
-          <p class="text-xs leading-relaxed text-[#D1D1D6]">
-            Hanya link marketplace valid yang diubah. Harga, stok, deskripsi, dan data produk lain tidak akan berubah.
-            Link kosong dilewati.
-          </p>
-        </div>
-      </div>
-      <div
-        class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-white/10 bg-black/20 px-5 py-4">
-        <button type="button" id="btn-cancel-habitic-sync"
-          class="min-h-11 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-[#D1D1D6] hover:bg-white/[0.08] transition">
-          Batal
-        </button>
-        <button type="button" id="btn-confirm-habitic-sync"
-          class="min-h-11 rounded-xl border border-[#0088CC]/40 bg-[#0088CC] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0077BB] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#32ADE6]">
-          Lanjutkan Sinkronisasi
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div id="modal-bulk-delete"
     class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"
     role="dialog" aria-modal="true" aria-labelledby="modal-bulk-delete-title">
