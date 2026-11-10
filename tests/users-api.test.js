@@ -1,0 +1,117 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+describe('Api.users.create & user management', () => {
+  let users;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.stubGlobal('window', {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      supabase: {
+        rpc: vi.fn(),
+        functions: {
+          invoke: vi.fn()
+        },
+        from: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }
+    });
+    vi.stubGlobal('fetch', vi.fn());
+
+    const mod = await import('../public/assets/js/api/users.js');
+    users = mod.users;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('validates missing email or password', async () => {
+    const res = await users.create({ email: '', password: '' });
+    expect(res.ok).toBe(false);
+    expect(res.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('calls admin_create_user RPC when available', async () => {
+    window.supabase.rpc.mockResolvedValueOnce({
+      data: { success: true, email: 'new@example.com', role: 'STAFF' },
+      error: null
+    });
+
+    const res = await users.create({
+      email: 'new@example.com',
+      password: 'Password123!',
+      role: 'STAFF',
+      full_name: 'Budi Santoso'
+    });
+
+    expect(res.ok).toBe(true);
+    expect(window.supabase.rpc).toHaveBeenCalledWith('admin_create_user', {
+      new_email: 'new@example.com',
+      new_password: 'Password123!',
+      new_role: 'STAFF',
+      new_full_name: 'Budi Santoso'
+    });
+  });
+
+  it('falls back to signup when RPC and Edge functions are unavailable', async () => {
+    window.supabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'PGRST202', message: 'Could not find the function' }
+    });
+    window.supabase.functions.invoke.mockRejectedValueOnce(
+      new Error('Failed to send a request to the Edge Function')
+    );
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'usr-123', email: 'staff@example.com' }
+      })
+    });
+
+    const res = await users.create({
+      email: 'staff@example.com',
+      password: 'Password123!',
+      role: 'STAFF',
+      full_name: 'Staff Toko'
+    });
+
+    expect(res.ok).toBe(true);
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  it('translates rate limit error to informative guidance for OWNER', async () => {
+    window.supabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'PGRST202', message: 'Could not find the function' }
+    });
+    window.supabase.functions.invoke.mockRejectedValueOnce(
+      new Error('Failed to send a request to the Edge Function')
+    );
+
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        code: 429,
+        error_code: 'over_email_send_rate_limit',
+        msg: 'email rate limit exceeded'
+      })
+    });
+
+    const res = await users.create({
+      email: 'staff@example.com',
+      password: 'Password123!',
+      role: 'STAFF'
+    });
+
+    expect(res.ok).toBe(false);
+    expect(res.error.code).toBe('RATE_LIMIT');
+    expect(res.error.message).toContain('Batas kirim email Supabase tercapai');
+  });
+});

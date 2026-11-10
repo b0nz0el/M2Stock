@@ -307,50 +307,23 @@ async function handleCreateUserSubmit(e) {
   }
 
   try {
-    const { data: { session } } = await window.supabase.auth.getSession();
-    if (!session) {
-      showToast('Sesi tidak valid', 'error');
+    const res = await Api.users.create({
+      email,
+      password,
+      role,
+      full_name
+    });
+
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal menambah user', 'error');
       return;
     }
-    
-    let data;
-    if (window.supabase.functions && typeof window.supabase.functions.invoke === 'function') {
-      const { data: funcData, error: funcErr } = await window.supabase.functions.invoke('create-user', {
-        body: { email, password, role: role.toLowerCase(), full_name }
-      });
-      if (funcErr) {
-        showToast(funcErr.message || 'Gagal menambah user', 'error');
-        return;
-      }
-      data = funcData;
-    } else {
-      const clientUrl = window.supabase.supabaseUrl || 'https://kvdktgknwxmqpankwpre.supabase.co';
-      const clientKey = window.supabase.supabaseKey || '';
-      const res = await fetch(
-        `${clientUrl}/functions/v1/create-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + session.access_token,
-            'apikey': clientKey
-          },
-          body: JSON.stringify({ email, password, role: role.toLowerCase(), full_name })
-        }
-      );
-      
-      data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Gagal menambah user', 'error');
-        return;
-      }
-    }
-    
-    showToast('User ' + email + ' berhasil ditambahkan', 'success');
+
+    showToast(`User ${email} berhasil ditambahkan (${role})`, 'success');
     closeCreateUserModal();
     const form = document.getElementById('create-user-form');
     if (form) form.reset();
-    await loadUsersFromBackend(); // reload tabel
+    await loadUsersFromBackend();
   } catch (err) {
     showToast('Terjadi kesalahan: ' + err.message, 'error');
   } finally {
