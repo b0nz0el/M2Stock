@@ -1,6 +1,7 @@
 let usersData = [];
 let searchQuery = '';
 let currentUserRole = 'VIEWER';
+let currentUserId = null;
 
 const AVATAR_GRADIENTS = [
   'from-[#0088CC] to-[#32ADE6]',
@@ -42,6 +43,11 @@ async function loadUsers() {
   const tbody = document.getElementById('users-table-body');
   try {
     currentUserRole = await window.RBAC?.getUserRole?.() || 'VIEWER';
+    try {
+      const sessionRes = await window.supabase?.auth?.getSession?.();
+      currentUserId = sessionRes?.data?.session?.user?.id || null;
+    } catch (_) {}
+
     const res = await Api.users.getAll();
     if (!res.ok) {
       tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-[#FF3B30]">${res.error?.message || 'Gagal memuat daftar pengguna'}</td></tr>`;
@@ -101,6 +107,9 @@ function renderUsers() {
     const grad = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
     const roleBadge = getRoleBadge(u.role);
     const lastLoginText = formatTimeAgoWIB(u.last_sign_in_at);
+    const isOwner = currentUserRole === 'OWNER';
+    const isSelf = currentUserId && String(u.id) === String(currentUserId);
+    const isTargetOwner = (u.role || '').toUpperCase() === 'OWNER';
 
     return `
       <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
@@ -124,10 +133,17 @@ function renderUsers() {
         </td>
         <td class="px-5 py-3.5 text-[#A0A0A5] text-xs">${lastLoginText}</td>
         <td class="px-5 py-3.5 text-right">
-          ${currentUserRole === 'OWNER' ? `
-            <button onclick="openRoleModal('${u.id}')" title="Edit Role" aria-label="Edit Role ${escapeHtml(u.email)}" class="btn-edit-role p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
-              <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
-            </button>
+          ${isOwner ? `
+            <div class="flex items-center justify-end gap-1.5">
+              <button onclick="openRoleModal('${escapeHtml(u.id)}')" title="Edit Role" aria-label="Edit Role ${escapeHtml(u.email)}" class="btn-edit-role p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
+                <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
+              ${!isSelf && !isTargetOwner ? `
+                <button onclick="openDeleteUserModal('${escapeHtml(u.id)}')" title="Hapus User" aria-label="Hapus User ${escapeHtml(u.email)}" class="btn-delete-user p-1.5 hover:bg-[#FF3B30]/20 rounded-lg text-[#FF3B30] transition">
+                  <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
+              ` : ''}
+            </div>
           ` : '<span class="text-[#A0A0A5]">-</span>'}
         </td>
       </tr>
@@ -337,6 +353,72 @@ async function handleCreateUserSubmit(e) {
   }
 }
 
+function openDeleteUserModal(userId) {
+  if (currentUserRole !== 'OWNER') return;
+  const user = usersData.find(u => String(u.id) === String(userId));
+  if (!user) return;
+
+  const modal = document.getElementById('modal-delete-user');
+  if (!modal) return;
+
+  const targetIdInput = document.getElementById('delete-user-target-id');
+  const targetNameEl = document.getElementById('delete-user-target-name');
+  const targetEmailEl = document.getElementById('delete-user-target-email');
+  const targetRoleEl = document.getElementById('delete-user-target-role');
+
+  if (targetIdInput) targetIdInput.value = user.id;
+  if (targetNameEl) targetNameEl.textContent = user.full_name || user.email.split('@')[0];
+  if (targetEmailEl) targetEmailEl.textContent = user.email;
+  if (targetRoleEl) targetRoleEl.innerHTML = getRoleBadge(user.role);
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeDeleteUserModal() {
+  const modal = document.getElementById('modal-delete-user');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function confirmDeleteUser() {
+  const userId = document.getElementById('delete-user-target-id')?.value;
+  if (!userId) return;
+
+  const user = usersData.find(u => String(u.id) === String(userId));
+  const email = user ? user.email : 'user';
+
+  const btn = document.getElementById('btn-confirm-delete-user');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menghapus...`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  try {
+    const res = await Api.users.delete(userId);
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal menghapus user', 'error');
+      return;
+    }
+
+    showToast(`Pengguna ${email} berhasil dihapus`, 'success');
+    closeDeleteUserModal();
+    await loadUsers();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml || `<i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Pengguna`;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+
 window.openCreateUserModal = openCreateUserModal;
 window.closeCreateUserModal = closeCreateUserModal;
 window.handleCreateUserSubmit = handleCreateUserSubmit;
@@ -345,6 +427,9 @@ window.loadUsers = loadUsers;
 window.openRoleModal = openRoleModal;
 window.closeRoleModal = closeRoleModal;
 window.handleSaveRole = handleSaveRole;
+window.openDeleteUserModal = openDeleteUserModal;
+window.closeDeleteUserModal = closeDeleteUserModal;
+window.confirmDeleteUser = confirmDeleteUser;
 window.handleSearch = handleSearch;
 window.handleSearchUsers = handleSearch;
 window.initUsers = loadUsers;
@@ -353,6 +438,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeCreateUserModal();
     closeRoleModal();
+    closeDeleteUserModal();
   }
 });
 

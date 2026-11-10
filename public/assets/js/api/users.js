@@ -9,11 +9,20 @@ export const users = {
     getAll: async (opts) => {
       if (isSupabaseAvailable()) {
         try {
+          // Ambil data profile di public.profiles untuk validasi integritas
+          const { data: profData } = await window.supabase
+            .from('profiles')
+            .select('id, name, full_name, email, role, created_at, updated_at');
+
+          const profileMap = new Map();
+          if (Array.isArray(profData)) {
+            profData.forEach(p => profileMap.set(String(p.id), p));
+          }
+
           const { data, error } = await window.supabase.rpc('get_auth_users');
           if (error) {
-            // Jika RPC ditolak (bukan Owner), fallback baca profile sendiri
-            const { data: profData, error: profErr } = await window.supabase.from('profiles').select('*');
-            if (profErr) {
+            // Jika RPC ditolak / error, gunakan data profiles langsung
+            if (!profData) {
               return formatResponse({
                 ok: false,
                 error: { code: error.code || 'RPC_ERROR', message: error.message }
@@ -21,7 +30,24 @@ export const users = {
             }
             return formatResponse({ ok: true, data: profData || [] });
           }
-          return formatResponse({ ok: true, data: data || [] });
+
+          // Sinkronisasi data: Jika user sudah dihapus dari tabel profiles, jangan tampilkan di UI!
+          let validUsers = data || [];
+          if (profileMap.size > 0) {
+            validUsers = validUsers.filter(u => profileMap.has(String(u.id))).map(u => {
+              const p = profileMap.get(String(u.id));
+              return {
+                ...u,
+                role: (p?.role || u.role || 'VIEWER').toUpperCase(),
+                full_name: p?.full_name || p?.name || u.full_name || u.name || (u.email ? u.email.split('@')[0] : 'User')
+              };
+            });
+          } else if (Array.isArray(profData) && profData.length === 0) {
+            // Jika profiles kosong, jangan tampilkan user tak bertuan
+            validUsers = [];
+          }
+
+          return formatResponse({ ok: true, data: validUsers });
         } catch (err) {
           return handleError(err);
         }
@@ -29,17 +55,18 @@ export const users = {
       return apiRequest('/system/users', { ...opts });
     },
     updateRole: async (targetUserId, newRole, opts) => {
+      const normalizedRole = String(newRole || 'STAFF').trim().toUpperCase();
       if (isSupabaseAvailable()) {
         try {
           const { data, error } = await window.supabase.rpc('update_user_role', {
             target_user_id: targetUserId,
-            new_role: newRole
+            new_role: normalizedRole
           });
           if (error) {
             // Jika RPC gagal, lakukan update langsung ke tabel profiles (dilindungi RLS is_owner())
             const { data: upData, error: upErr } = await window.supabase
               .from('profiles')
-              .update({ role: newRole })
+              .update({ role: normalizedRole, updated_at: new Date().toISOString() })
               .eq('id', targetUserId)
               .select()
               .single();
@@ -56,7 +83,44 @@ export const users = {
           return handleError(err);
         }
       }
-      return apiRequest(`/system/users/${targetUserId}/role`, { method: 'PUT', body: { role: newRole }, ...opts });
+      return apiRequest(`/system/users/${targetUserId}/role`, { method: 'PUT', body: { role: normalizedRole }, ...opts });
+    },
+    delete: async (targetUserId, opts) => {
+      if (!targetUserId) {
+        return formatResponse({ ok: false, error: { message: 'ID pengguna tidak valid' } });
+      }
+
+      if (isSupabaseAvailable()) {
+        try {
+          // 1. Coba RPC admin_delete_user jika tersedia
+          const { data, error } = await window.supabase.rpc('admin_delete_user', {
+            target_user_id: targetUserId
+          });
+
+          if (!error) {
+            return formatResponse({ ok: true, data: { success: true, user_id: targetUserId }, meta: { message: 'Pengguna berhasil dihapus' } });
+          }
+
+          // 2. Fallback: Hapus langsung dari public.profiles (dilindungi RLS is_owner)
+          const { error: profDelErr } = await window.supabase
+            .from('profiles')
+            .delete()
+            .eq('id', targetUserId);
+
+          if (profDelErr) {
+            return formatResponse({
+              ok: false,
+              error: { code: profDelErr.code || 'DELETE_USER_ERROR', message: profDelErr.message }
+            });
+          }
+
+          return formatResponse({ ok: true, data: { success: true, user_id: targetUserId }, meta: { message: 'Pengguna berhasil dihapus' } });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+
+      return apiRequest(`/system/users/${targetUserId}`, { method: 'DELETE', ...opts });
     },
     create: async ({ email, password, role = 'STAFF', full_name = '' }, opts) => {
       if (!email || !password) {

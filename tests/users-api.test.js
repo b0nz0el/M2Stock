@@ -114,4 +114,44 @@ describe('Api.users.create & user management', () => {
     expect(res.error.code).toBe('RATE_LIMIT');
     expect(res.error.message).toContain('Batas kirim email Supabase tercapai');
   });
+
+  it('filters out ghost users whose profiles were deleted in Supabase', async () => {
+    // profiles table only has Maulana and Salma (test01 was deleted in Supabase)
+    window.supabase.from.mockReturnValueOnce({
+      select: vi.fn().mockResolvedValue({
+        data: [
+          { id: '1', name: 'Maulana', full_name: 'Maulana', email: 'owner@example.com', role: 'OWNER' },
+          { id: '2', name: 'Salma', full_name: 'Salma', email: 'salma@example.com', role: 'STAFF' }
+        ]
+      })
+    });
+
+    // auth.users still has 3 users (including orphaned test01)
+    window.supabase.rpc.mockResolvedValueOnce({
+      data: [
+        { id: '1', email: 'owner@example.com', full_name: 'Maulana', role: 'OWNER' },
+        { id: '2', email: 'salma@example.com', full_name: 'Salma', role: 'STAFF' },
+        { id: '3', email: 'test01@test.com', full_name: 'test01', role: 'VIEWER' }
+      ],
+      error: null
+    });
+
+    const res = await users.getAll();
+    expect(res.ok).toBe(true);
+    expect(res.data.length).toBe(2);
+    expect(res.data.some(u => u.email === 'test01@test.com')).toBe(false);
+  });
+
+  it('deletes user via admin_delete_user RPC or profile fallback', async () => {
+    window.supabase.rpc.mockResolvedValueOnce({
+      data: { success: true },
+      error: null
+    });
+
+    const res = await users.delete('usr-to-delete');
+    expect(res.ok).toBe(true);
+    expect(window.supabase.rpc).toHaveBeenCalledWith('admin_delete_user', {
+      target_user_id: 'usr-to-delete'
+    });
+  });
 });

@@ -1,9 +1,11 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- M2Stock: RPC admin_create_user & fix get_auth_users
--- Memungkinkan OWNER membuat akun pengguna baru langsung di Supabase tanpa Edge Function
+-- M2Stock: RPC admin_create_user, admin_delete_user & sync profiles
+-- Memungkinkan OWNER membuat & menghapus akun pengguna langsung dari M2Stock
+-- Serta memastikan pengguna yang dihapus dari public.profiles langsung hilang dari UI
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- 1. Perbaiki fungsi get_auth_users agar tidak terjadi ambiguous column reference 'id'
+-- 1. Perbaiki fungsi get_auth_users:
+-- Mengambil DARI public.profiles agar user yang dihapus dari tabel profiles tidak muncul lagi sebagai ghost user!
 CREATE OR REPLACE FUNCTION public.get_auth_users()
 RETURNS TABLE (
   id UUID,
@@ -31,19 +33,19 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    users.id,
-    users.email::TEXT,
+    profiles.id,
+    COALESCE(users.email, profiles.email, '')::TEXT,
     COALESCE(
-      to_jsonb(profiles)->>'full_name',
-      to_jsonb(profiles)->>'name',
-      split_part(users.email, '@', 1)
+      profiles.full_name,
+      profiles.name,
+      split_part(COALESCE(users.email, profiles.email, ''), '@', 1)
     )::TEXT,
-    COALESCE(to_jsonb(profiles)->>'role', 'VIEWER')::TEXT,
+    COALESCE(UPPER(profiles.role), 'VIEWER')::TEXT,
     users.last_sign_in_at,
-    users.created_at
-  FROM auth.users AS users
-  LEFT JOIN public.profiles AS profiles ON profiles.id = users.id
-  ORDER BY users.created_at DESC;
+    COALESCE(profiles.created_at, users.created_at)
+  FROM public.profiles AS profiles
+  LEFT JOIN auth.users AS users ON users.id = profiles.id
+  ORDER BY COALESCE(profiles.created_at, users.created_at) DESC;
 END;
 $$;
 
@@ -184,5 +186,61 @@ $$;
 REVOKE ALL ON FUNCTION public.admin_create_user(TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_create_user(TEXT, TEXT, TEXT, TEXT) TO authenticated;
 
-NOTIFY pgrst, 'reload schema';
+-- 3. Buat fungsi admin_delete_user (Hanya OWNER yang dapat menghapus user)
+CREATE OR REPLACE FUNCTION public.admin_delete_user(target_user_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+#variable_conflict use_column
+DECLARE
+  calling_role TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Akses ditolak: Pengguna belum login.' USING ERRCODE = '42501';
+  END IF;
 
+  SELECT UPPER(profiles.role) INTO calling_role
+  FROM public.profiles WHERE profiles.id = auth.uid();
+
+  IF calling_role <> 'OWNER' THEN
+    RAISE EXCEPTION 'Akses ditolak: Hanya OWNER yang berhak menghapus user.' USING ERRCODE = '42501';
+  END IF;
+
+  IF target_user_id = auth.uid() THEN
+    RAISE EXCEPTION 'Anda tidak dapat menghapus akun Anda sendiri.' USING ERRCODE = '23514';
+  END IF;
+
+  DELETE FROM auth.identities WHERE user_id = target_user_id;
+  DELETE FROM public.profiles WHERE id = target_user_id;
+  DELETE FROM auth.users WHERE id = target_user_id;
+
+  RETURN jsonb_build_object('success', true, 'user_id', target_user_id);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_delete_user(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_delete_user(UUID) TO authenticated;
+
+-- 4. Trigger pembersih otomatis jika profile dihapus langsung dari Supabase Table Editor
+CREATE OR REPLACE FUNCTION public.handle_profile_deleted()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+BEGIN
+  DELETE FROM auth.identities WHERE user_id = OLD.id;
+  DELETE FROM auth.users WHERE id = OLD.id;
+  RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_profile_deleted ON public.profiles;
+CREATE TRIGGER trg_profile_deleted
+  AFTER DELETE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_profile_deleted();
+
+NOTIFY pgrst, 'reload schema';

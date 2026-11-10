@@ -6319,6 +6319,47 @@
     </div>
   </div>
 
+  <!-- =========================== MODAL (USERS: modal-delete-user) =========================== -->
+  <div id="modal-delete-user"
+    class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"
+    role="dialog" aria-modal="true" aria-labelledby="modal-delete-user-title"
+    onclick="if (event.target === this) closeDeleteUserModal()">
+    <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
+      <div class="flex items-center gap-3 pb-3 border-b border-white/5">
+        <div class="w-10 h-10 rounded-xl bg-[#FF3B30]/15 grid place-items-center text-[#FF3B30]">
+          <i data-lucide="trash-2" class="w-5 h-5" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="modal-delete-user-title" class="text-lg font-bold text-white">Hapus Pengguna</h3>
+          <p class="text-xs text-[#A0A0A5] mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+        </div>
+      </div>
+
+      <div class="space-y-3 py-2 text-sm text-[#A0A0A5]">
+        <p>Apakah Anda yakin ingin menghapus akun pengguna berikut dari sistem?</p>
+        <div class="bg-black/30 border border-white/5 rounded-xl p-3.5 space-y-1">
+          <div class="font-medium text-white text-sm" id="delete-user-target-name">-</div>
+          <div class="text-xs text-[#A0A0A5] font-mono" id="delete-user-target-email">-</div>
+          <div class="text-xs mt-1" id="delete-user-target-role">-</div>
+        </div>
+        <p class="text-xs text-[#FF3B30]">Pengguna ini tidak akan dapat login lagi ke dalam aplikasi M2Stock.</p>
+      </div>
+
+      <input type="hidden" id="delete-user-target-id">
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+        <button type="button" onclick="closeDeleteUserModal()"
+          class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+          Batal
+        </button>
+        <button type="button" id="btn-confirm-delete-user" onclick="confirmDeleteUser()"
+          class="bg-[#FF3B30] hover:bg-[#D70015] text-white px-5 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-[#FF3B30]/20 transition">
+          <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i> Hapus Pengguna
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════ UNIVERSAL IMAGE VIEWER (LIGHTBOX) ═══════════ -->
   <div id="modal-image-viewer"
     class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-[110] items-center justify-center p-4 transition-all duration-200"
