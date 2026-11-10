@@ -7,47 +7,211 @@
    Hover-to-pause, swipe-to-dismiss, action button,
    stacking limit, & spring physics.
    ═══════════════════════════════════════════════════ */
-function playNotificationChime(type) {
+/* ═══════════════════════════════════════════════════
+   AUDIO FEEDBACK ENGINE (WEB AUDIO API)
+   Synthesizer nada murni tanpa aset audio eksternal,
+   0ms latensi, bekerja offline, haptic vibration support.
+   ═══════════════════════════════════════════════════ */
+const SOUND_STORAGE_KEY = 'm2stock_sound_enabled';
+
+function isAudioFeedbackEnabled() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    if (!window._notifAudioCtx) {
-      window._notifAudioCtx = new AudioCtx();
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(SOUND_STORAGE_KEY) !== 'false';
     }
-    const ctx = window._notifAudioCtx;
+  } catch (_) {}
+  return true;
+}
+
+function setAudioFeedbackEnabled(enabled) {
+  const isEnabled = Boolean(enabled);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SOUND_STORAGE_KEY, isEnabled ? 'true' : 'false');
+    }
+  } catch (_) {}
+  updateAudioFeedbackUI(isEnabled);
+  try {
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('m2stock:sound-toggled', { detail: { enabled: isEnabled } }));
+    }
+  } catch (_) {}
+  return isEnabled;
+}
+
+function toggleAudioFeedback() {
+  const next = !isAudioFeedbackEnabled();
+  setAudioFeedbackEnabled(next);
+  if (next) {
+    playAudioFeedback('scan');
+    if (typeof showToast === 'function') {
+      showToast('Suara audio diaktifkan', 'info', { duration: 1500 });
+    }
+  } else {
+    if (typeof showToast === 'function') {
+      showToast('Suara audio dinonaktifkan', 'info', { duration: 1500 });
+    }
+  }
+  return next;
+}
+
+function updateAudioFeedbackUI(enabled = isAudioFeedbackEnabled()) {
+  try {
+    if (typeof document === 'undefined') return;
+    const buttons = document.querySelectorAll('.btn-toggle-sound-ui, #btn-toggle-sound-pos, #btn-toggle-sound-in');
+    buttons.forEach(btn => {
+      btn.dataset.soundState = enabled ? 'on' : 'off';
+      btn.title = enabled ? 'Suara Audio: Aktif (klik untuk senyap)' : 'Suara Audio: Senyap (klik untuk aktifkan)';
+      btn.setAttribute('aria-label', btn.title);
+      btn.classList.toggle('text-[#34C759]', enabled);
+      btn.classList.toggle('text-[#8E8E93]', !enabled);
+      const icon = btn.querySelector('i[data-lucide]');
+      if (icon) {
+        icon.setAttribute('data-lucide', enabled ? 'volume-2' : 'volume-x');
+      }
+      const label = btn.querySelector('.sound-toggle-label');
+      if (label) {
+        label.textContent = enabled ? 'Suara: ON' : 'Suara: OFF';
+      }
+    });
+    if (typeof window !== 'undefined' && typeof window.refreshIcons === 'function') {
+      window.refreshIcons();
+    }
+  } catch (_) {}
+}
+
+function playAudioFeedback(type = 'scan') {
+  if (!isAudioFeedbackEnabled()) return;
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      if (type === 'warning' || type === 'error') {
+        navigator.vibrate([60, 40, 60]);
+      } else if (type === 'cash' || type === 'checkout') {
+        navigator.vibrate([40, 30, 70]);
+      } else {
+        navigator.vibrate(30);
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const AudioCtx = (typeof window !== 'undefined') ? (window.AudioContext || window.webkitAudioContext) : null;
+    if (!AudioCtx) return;
+    if (typeof window !== 'undefined' && !window._m2AudioCtx) {
+      window._m2AudioCtx = new AudioCtx();
+    }
+    const ctx = (typeof window !== 'undefined') ? window._m2AudioCtx : null;
+    if (!ctx) return;
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
     }
     const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
 
-    if (type === 'success') {
-      // Nada lembut naik ala fintech kelas dunia (C6 -> G6)
+    if (type === 'scan' || type === 'barcode' || type === 'beep') {
+      // Beep kasir POS retail profesional (1500Hz -> 1550Hz, 65ms, sinusoidal bersih)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1046.5, now);
-      osc.frequency.exponentialRampToValueAtTime(1567.98, now + 0.08);
+      osc.frequency.setValueAtTime(1500, now);
+      osc.frequency.linearRampToValueAtTime(1550, now + 0.02);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.035, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      gain.gain.linearRampToValueAtTime(0.14, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.22);
-    } else if (type === 'error') {
-      // Nada lembut turun
+      osc.stop(now + 0.07);
+    } else if (type === 'input' || type === 'click' || type === 'item-add') {
+      // Sentuhan halus/klik saat memilih produk atau ubah jumlah
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, now);
-      osc.frequency.exponentialRampToValueAtTime(311.13, now + 0.1);
+      osc.frequency.setValueAtTime(980, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.035);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.04, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.24);
+      osc.stop(now + 0.05);
+    } else if (type === 'warning' || type === 'error') {
+      // Peringatan nada ganda rendah untuk stok habis, produk tidak ditemukan, atau salah input
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(280, now);
+      gain1.gain.setValueAtTime(0.001, now);
+      gain1.gain.linearRampToValueAtTime(0.15, now + 0.01);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.065);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(220, now + 0.07);
+      gain2.gain.setValueAtTime(0.001, now + 0.07);
+      gain2.gain.linearRampToValueAtTime(0.15, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.07);
+      osc2.stop(now + 0.16);
+    } else if (type === 'cash' || type === 'checkout') {
+      // Denting register kasir bertingkat (B5 987Hz -> E6 1318Hz, resonansi hangat)
+      const t1 = now;
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(987.77, t1);
+      gain1.gain.setValueAtTime(0.001, t1);
+      gain1.gain.linearRampToValueAtTime(0.12, t1 + 0.01);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.12);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(t1);
+      osc1.stop(t1 + 0.13);
+
+      const t2 = now + 0.09;
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1318.51, t2);
+      gain2.gain.setValueAtTime(0.001, t2);
+      gain2.gain.linearRampToValueAtTime(0.15, t2 + 0.01);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.26);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(t2);
+      osc2.stop(t2 + 0.28);
+    } else if (type === 'success' || type === 'save') {
+      // Melodi sukses hangat (C5 -> G5 -> C6)
+      const notes = [523.25, 783.99, 1046.50];
+      notes.forEach((freq, i) => {
+        const t = now + (i * 0.06);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.09, t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.18);
+      });
     }
   } catch (_) {
-    // Silent fail jika browser melarang autoplay audio sebelum gesture
+    // Autoplay restrictions or unsupported audio context
   }
+}
+
+function playNotificationChime(type) {
+  playAudioFeedback(type === 'error' ? 'warning' : 'success');
 }
 
 function showToast(msg, type = 'success', durationOrOptions = (type === 'loading' ? 8000 : 3000)) {
@@ -675,17 +839,37 @@ function fuzzyMatch(query, targetText) {
 }
 
 if (typeof window !== 'undefined') {
+  window.isAudioFeedbackEnabled = isAudioFeedbackEnabled;
+  window.setAudioFeedbackEnabled = setAudioFeedbackEnabled;
+  window.toggleAudioFeedback = toggleAudioFeedback;
+  window.updateAudioFeedbackUI = updateAudioFeedbackUI;
+  window.playAudioFeedback = playAudioFeedback;
+  window.playNotificationChime = playNotificationChime;
   window.exportToCSV = exportToCSV;
   window.generateSKU = generateSKU;
   window.calculateLevenshteinDistance = calculateLevenshteinDistance;
   window.normalizeSearchText = normalizeSearchText;
   window.fuzzyScore = fuzzyScore;
   window.fuzzyMatch = fuzzyMatch;
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => updateAudioFeedbackUI());
+    } else {
+      updateAudioFeedbackUI();
+    }
+  }
 }
 
 /* Export untuk unit testing (Vitest/Node) tanpa mengganggu browser runtime */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
+    isAudioFeedbackEnabled,
+    setAudioFeedbackEnabled,
+    toggleAudioFeedback,
+    updateAudioFeedbackUI,
+    playAudioFeedback,
+    playNotificationChime,
     showToast,
     escapeHtml,
     showConfirmDialog,

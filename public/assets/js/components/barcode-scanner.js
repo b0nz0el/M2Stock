@@ -109,6 +109,10 @@
   }
 
   function playScanFeedback() {
+    if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+      window.playAudioFeedback('scan');
+      return;
+    }
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
         navigator.vibrate(100);

@@ -487,19 +487,32 @@
       const targetQty = current.qty + qty;
       if (stock > 0 && targetQty > stock) {
         current.qty = stock;
+        if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+          window.playAudioFeedback('warning');
+        }
         if (typeof showToast === 'function') {
           showToast(`Stok ${prod.name} terbatas: tersisa ${stock} unit`, 'warning');
         }
       } else {
         current.qty = targetQty;
+        if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+          window.playAudioFeedback('scan');
+        }
         if (typeof showToast === 'function') {
           showToast(`${prod.name} (+${qty})`, 'info');
         }
       }
     } else {
       if (stock <= 0) {
+        if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+          window.playAudioFeedback('warning');
+        }
         if (typeof showToast === 'function') {
           showToast(`Perhatian: Stok ${prod.name} kosong (${stock})`, 'warning');
+        }
+      } else {
+        if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+          window.playAudioFeedback('scan');
         }
       }
       const initialQty = stock > 0 ? Math.min(qty, stock) : qty;
@@ -545,8 +558,15 @@
 
     if (item.stock > 0 && target > item.stock) {
       target = item.stock;
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('warning');
+      }
       if (typeof showToast === 'function') {
         showToast(`Maksimal stok ${item.name} adalah ${item.stock} unit`, 'warning');
+      }
+    } else {
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('input');
       }
     }
 
@@ -557,6 +577,9 @@
   function removeFromPosCart(index) {
     if (index >= 0 && index < posCart.length) {
       const removed = posCart.splice(index, 1);
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('input');
+      }
       if (typeof showToast === 'function' && removed[0]) {
         showToast(`${removed[0].name} dihapus dari keranjang`, 'info');
       }
@@ -1014,6 +1037,7 @@
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
+    if (typeof window.updateAudioFeedbackUI === 'function') window.updateAudioFeedbackUI();
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     setTimeout(() => {
       document.getElementById('out-product-search')?.focus();
@@ -1103,6 +1127,9 @@
         throw new Error(res.error?.message || 'Gagal menyimpan transaksi kasir');
       }
 
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('cash');
+      }
       if (typeof showToast === 'function') {
         showToast(`Penjualan berhasil disimpan! (${res.data?.invoice_no || 'Lunas'})`, 'success');
       }
@@ -2610,6 +2637,10 @@ function hasNativeBarcodeDetector() {
 }
 
 function triggerScanFeedback() {
+  if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+    window.playAudioFeedback('scan');
+    return;
+  }
   try {
     if (typeof navigator.vibrate === 'function') {
       navigator.vibrate([80]);
@@ -2834,6 +2865,9 @@ function handleScanSuccess(decodedText) {
       addToPosCart(matchedProduct);
       showToast(`✓ ${matchedProduct.name} ditambahkan ke keranjang`, 'success');
       return;
+    }
+    if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+      window.playAudioFeedback('warning');
     }
     showToast(`Barcode "${trimmed.slice(0, 30)}" tidak cocok dengan SKU atau barcode produk.`, 'error');
     return;

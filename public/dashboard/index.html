@@ -4387,10 +4387,18 @@
             <p class="text-xs text-[#A0A0A5] mt-0.5">Penambahan stok dari supplier atau pembelian</p>
           </div>
         </div>
-        <button type="button" onclick="closeInModal()" aria-label="Tutup modal"
-          class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
-          <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-toggle-sound-in" onclick="toggleAudioFeedback()"
+            title="Suara Audio: Aktif (klik untuk senyap)" aria-label="Toggle Suara Audio Barang Masuk"
+            class="btn-toggle-sound-ui p-1.5 sm:px-2.5 sm:py-1.5 hover:bg-white/5 rounded-lg text-[#34C759] hover:text-white transition flex items-center gap-1.5 text-xs font-semibold">
+            <i data-lucide="volume-2" class="w-4 h-4" aria-hidden="true"></i>
+            <span class="hidden sm:inline sound-toggle-label">Suara: ON</span>
+          </button>
+          <button type="button" onclick="closeInModal()" aria-label="Tutup modal"
+            class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
 
       <form id="form-in" class="space-y-4" onsubmit="handleInSubmit(event)" novalidate>
@@ -4693,10 +4701,18 @@
               transaksi instan</p>
           </div>
         </div>
-        <button type="button" onclick="closeOutModal()" aria-label="Tutup modal"
-          class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
-          <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-toggle-sound-pos" onclick="toggleAudioFeedback()"
+            title="Suara Audio: Aktif (klik untuk senyap)" aria-label="Toggle Suara Audio Kasir POS"
+            class="btn-toggle-sound-ui p-1.5 sm:px-2.5 sm:py-1.5 hover:bg-white/5 rounded-lg text-[#34C759] hover:text-white transition flex items-center gap-1.5 text-xs font-semibold">
+            <i data-lucide="volume-2" class="w-4 h-4" aria-hidden="true"></i>
+            <span class="hidden sm:inline sound-toggle-label">Suara: ON</span>
+          </button>
+          <button type="button" onclick="closeOutModal()" aria-label="Tutup modal"
+            class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
 
       <form id="form-out" onsubmit="handleOutSubmit(event)" novalidate>

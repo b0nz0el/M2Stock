@@ -552,6 +552,10 @@
     const prod = availableProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
 
+    if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+      window.playAudioFeedback('scan');
+    }
+
     inCurrentMode = 'existing';
     const tabExisting = document.getElementById('tab-in-existing');
     const tabNew = document.getElementById('tab-in-new');
@@ -672,6 +676,9 @@
     const prod = availableProducts.find(p => String(p.id) === String(pId));
     const priceInput = document.getElementById('in-price');
     if (prod && priceInput) {
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('scan');
+      }
       if (!selectedPriceManuallyChanged) {
         priceInput.value = formatNumberInput(prod.cost_price);
       }
@@ -690,6 +697,9 @@
   }
 
   function selectNewProduct(name) {
+    if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+      window.playAudioFeedback('input');
+    }
     switchInMode('new');
     const searchInput = document.getElementById('in-product-search');
     if (searchInput && name) {
@@ -848,6 +858,9 @@
       }
 
       if (status) status.textContent = 'Barcode tidak ditemukan. Pastikan produk dan barcode sudah terdaftar.';
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('warning');
+      }
       if (typeof showToast === 'function') {
         showToast('Produk dengan barcode tersebut tidak ditemukan', 'error');
       }
@@ -906,6 +919,7 @@
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
+    if (typeof window.updateAudioFeedbackUI === 'function') window.updateAudioFeedbackUI();
     if (typeof window.refreshIcons === 'function') window.refreshIcons();
     if (typeof window.refreshNumericClearButtons === 'function') window.refreshNumericClearButtons();
     setTimeout(() => {
@@ -1135,6 +1149,9 @@
         throw inTxErr;
       }
 
+      if (typeof window !== 'undefined' && typeof window.playAudioFeedback === 'function') {
+        window.playAudioFeedback('success');
+      }
       if (typeof showToast === 'function') {
         showToast('Barang masuk berhasil dicatat! Stok diperbarui.', 'success');
       }
