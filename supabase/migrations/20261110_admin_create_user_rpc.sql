@@ -125,7 +125,7 @@ BEGIN
     confirmation_token,
     recovery_token
   ) VALUES (
-    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000000'::uuid,
     new_user_id,
     'authenticated',
     'authenticated',
@@ -140,7 +140,7 @@ BEGIN
     ''
   );
 
-  -- F. Insert identitas auth
+  -- F. Insert identitas auth (id bertipe UUID)
   INSERT INTO auth.identities (
     id,
     user_id,
@@ -151,7 +151,7 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    new_user_id::text,
+    gen_random_uuid(),
     new_user_id,
     jsonb_build_object('sub', new_user_id::text, 'email', clean_email),
     'email',
@@ -185,3 +185,4 @@ REVOKE ALL ON FUNCTION public.admin_create_user(TEXT, TEXT, TEXT, TEXT) FROM PUB
 GRANT EXECUTE ON FUNCTION public.admin_create_user(TEXT, TEXT, TEXT, TEXT) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
