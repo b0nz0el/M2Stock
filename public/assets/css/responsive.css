@@ -1387,7 +1387,39 @@ app-sidebar aside .sidebar-drawer-logout {
   }
 
   #page-items .items-page-header .items-toolbar-actions > button[data-action="add"] {
-    grid-column: span 2;
+    grid-column: auto;
+  }
+
+  #items-import-export-menu {
+    left: 0 !important;
+    right: auto !important;
+    min-width: 240px !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  .items-search-filter-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .items-search-filter-bar > div:first-child {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .items-search-filter-bar select {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .items-search-filter-bar select#sort-items {
+    grid-column: 1 / -1 !important;
   }
 
   /* Bottom nav muncul */
@@ -2411,7 +2443,7 @@ app-sidebar aside .sidebar-drawer-logout {
   }
 
   #page-items .items-page-header .items-toolbar-actions > button[data-action="add"] {
-    grid-column: span 2;
+    grid-column: auto;
   }
 
   #page-report #report-filter-tabs {
