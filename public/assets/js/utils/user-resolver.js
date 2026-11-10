@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — user-resolver.js
+   M2Stock — user-resolver.js
    Resolves User UUIDs to Real Human Display Names
    ═══════════════════════════════════════════════════ */
 

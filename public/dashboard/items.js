@@ -3103,7 +3103,7 @@ import {
       console.error('Gagal membaca sesi untuk sinkronisasi Habitic:', sessionError);
     }
     if (!session?.access_token) {
-      if (typeof showToast === 'function') showToast('Sesi Aquastock tidak tersedia. Silakan login ulang.', 'error');
+      if (typeof showToast === 'function') showToast('Sesi M2Stock tidak tersedia. Silakan login ulang.', 'error');
       return;
     }
 
@@ -3750,7 +3750,7 @@ import {
       headers: MARKETPLACE_LINK_CSV_HEADERS,
       requiredHeaders: ['SKU'],
       instructions: [
-        'SKU harus sama dengan SKU barang di Aquastock. SKU yang tidak cocok atau ganda akan membatalkan impor.',
+        'SKU harus sama dengan SKU barang di M2Stock. SKU yang tidak cocok atau ganda akan membatalkan impor.',
         'Isi URL channel yang ingin ditambahkan atau diperbarui. Kolom URL kosong mempertahankan link yang sudah ada.',
         'Hanya URL Shopee, Tokopedia, Lazada, TikTok Shop, dan WhatsApp yang sesuai domain resminya yang diterima.',
         'Nama produk hanya untuk referensi. Harga, stok, deskripsi, foto, dan data barang lain tidak diubah.'
@@ -3758,7 +3758,7 @@ import {
       validate: async function (records) {
         const productsResult = await Api.items.getAll();
         if (!productsResult?.ok) {
-          throw new Error(productsResult?.error?.message || 'Gagal memuat barang Aquastock untuk mencocokkan SKU.');
+          throw new Error(productsResult?.error?.message || 'Gagal memuat barang M2Stock untuk mencocokkan SKU.');
         }
         return prepareMarketplaceLinkImport(records, productsResult.data || []);
       },

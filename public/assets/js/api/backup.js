@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — api/backup.js
+   M2Stock — api/backup.js
    Layer API untuk Backup, Export/Import & Backup Logs
    Integrasi backup dengan Supabase
    ═══════════════════════════════════════════════════ */
@@ -115,7 +115,7 @@ export const backup = {
       const timestamp = new Date().toISOString();
       const exportPayload = {
         meta: {
-          app: 'Aquastock Pro',
+          app: 'M2Stock',
           version: '3.0',
           created_at: timestamp,
           total_records: totalRecords,
@@ -124,7 +124,7 @@ export const backup = {
         data: backupData
       };
 
-      const fileName = `aquastock_backup_all_${timestamp.slice(0, 10)}_${Date.now().toString().slice(-4)}.json`;
+      const fileName = `m2stock_backup_all_${timestamp.slice(0, 10)}_${Date.now().toString().slice(-4)}.json`;
 
       // Log ke backup_logs
       await this.log({
@@ -167,7 +167,7 @@ export const backup = {
 
       const records = data || [];
       const timestamp = new Date().toISOString().slice(0, 10);
-      const fileName = `aquastock_${tableId}_${timestamp}.csv`;
+      const fileName = `m2stock_${tableId}_${timestamp}.csv`;
 
       // Generate CSV string
       let csvContent = '';
@@ -216,7 +216,7 @@ export const backup = {
         throw new Error('Format file backup JSON tidak valid.');
       }
 
-      // Format backup Aquastock memiliki properti .data atau merupakan objek key-value tabel langsung
+      // Format backup M2Stock memiliki properti .data atau merupakan objek key-value tabel langsung
       const tablesData = parsedData.data && typeof parsedData.data === 'object'
         ? parsedData.data
         : parsedData;
@@ -228,7 +228,7 @@ export const backup = {
         Object.prototype.hasOwnProperty.call(tablesData, table.id)
       );
       if (providedTables.length === 0) {
-        throw new Error('File backup tidak berisi tabel Aquastock yang didukung.');
+        throw new Error('File backup tidak berisi tabel M2Stock yang didukung.');
       }
 
       let totalImported = 0;

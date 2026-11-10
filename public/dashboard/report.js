@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — report.js
+   M2Stock — report.js
    Controller Modul Laporan & Visualisasi Agregasi
    ═══════════════════════════════════════════════════ */
 
@@ -1231,7 +1231,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     <!-- Footer Timestamp & App Version -->
     <footer class="report-footer">
-      <span>Dicetak otomatis via Aquastock Pro pada: ${printTimestamp}</span>
+      <span>Dicetak otomatis via M2Stock pada: ${printTimestamp}</span>
       <span>Dokumen ini sah dan bersifat rahasia untuk operasional internal toko</span>
     </footer>
   </main>

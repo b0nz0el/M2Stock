@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — icons.js
+   M2Stock — icons.js
    Local SVG Icon Registry
    ═══════════════════════════════════════════════════ */
 (function() {

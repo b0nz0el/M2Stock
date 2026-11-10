@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — animations.js
+   M2Stock — animations.js
    Animation engine (entrance, stagger, number ticker)
    ═══════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════

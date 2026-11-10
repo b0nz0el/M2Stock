@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — api/storage.js
+   M2Stock — api/storage.js
    Domain Supabase Storage (bucket product-images)
    ═══════════════════════════════════════════════════ */
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — backup.js
+   M2Stock — backup.js
    Controller Modul Backup & Restore (/dashboard/backup/)
    Riwayat backup dari Supabase backup_logs
    ═══════════════════════════════════════════════════ */
@@ -536,14 +536,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     updateGDriveUI();
 
     // Load saved settings
-    let gdriveConfig = { schedule: 'daily', folder: 'Aquastock-Pro-Backups', lastSync: null };
+    let gdriveConfig = { schedule: 'daily', folder: 'M2Stock-Backups', lastSync: null };
     try {
       const raw = localStorage.getItem('aquastock_gdrive_config');
       if (raw) gdriveConfig = { ...gdriveConfig, ...JSON.parse(raw) };
     } catch (_) {}
 
     if (scheduleSelect) scheduleSelect.value = gdriveConfig.schedule || 'daily';
-    if (folderInput) folderInput.value = gdriveConfig.folder || 'Aquastock-Pro-Backups';
+    if (folderInput) folderInput.value = gdriveConfig.folder || 'M2Stock-Backups';
     if (lastSyncText) {
       lastSyncText.textContent = gdriveConfig.lastSync ? formatDate(gdriveConfig.lastSync) : 'Belum pernah dicadangkan';
     }
@@ -555,7 +555,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     });
 
     folderInput?.addEventListener('change', (e) => {
-      gdriveConfig.folder = e.target.value.trim() || 'Aquastock-Pro-Backups';
+      gdriveConfig.folder = e.target.value.trim() || 'M2Stock-Backups';
       localStorage.setItem('aquastock_gdrive_config', JSON.stringify(gdriveConfig));
     });
 
@@ -670,7 +670,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         const backupData = res.data;
         const totalRecords = Object.values(backupData.tables || {}).reduce((acc, rows) => acc + (Array.isArray(rows) ? rows.length : 0), 0);
         const dateStr = new Date().toISOString().slice(0, 10);
-        const fileName = `aquastock-backup-${dateStr}-${Date.now().toString().slice(-4)}.json`;
+        const fileName = `m2stock-backup-${dateStr}-${Date.now().toString().slice(-4)}.json`;
 
         // Direct Download / Cloud snapshot
         const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
@@ -685,7 +685,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         await backupApi.log({
           action: 'export',
           scope: 'all',
-          file_name: `[Google Drive: ${gdriveAuth.email} / ${gdriveConfig.folder || 'Aquastock-Pro-Backups'}] ${fileName}`,
+          file_name: `[Google Drive: ${gdriveAuth.email} / ${gdriveConfig.folder || 'M2Stock-Backups'}] ${fileName}`,
           records_count: totalRecords
         });
 

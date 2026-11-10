@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — api/customers.js
+   M2Stock — api/customers.js
    Domain Customers / Master Customer
    ═══════════════════════════════════════════════════ */
 

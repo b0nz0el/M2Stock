@@ -72,7 +72,7 @@ const SUPABASE_ANON_KEY = '<production-anon-key>';
 
 ### 3.2 Pengaturan Supabase Produksi
 1. **Authentication**:
-   - Pada Supabase Dashboard → **Authentication → URL Configuration**, daftarkan URL domain produksi toko (misal: `https://aquastock.jaquris.com`) ke dalam daftar **Site URL** dan **Redirect URLs**.
+   - Pada Supabase Dashboard → **Authentication → URL Configuration**, daftarkan URL domain produksi toko (misal: `https://m2stock.pages.dev/`) ke dalam daftar **Site URL** dan **Redirect URLs**.
 2. **CORS Headers**:
    - Di menu **Settings → API**, batasi Allowed Origins hanya ke domain produksi aplikasi untuk mencegah penyalahgunaan API dari domain asing.
 3. **Database Backup**:

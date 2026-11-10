@@ -5,7 +5,7 @@ import {
   prepareMarketplaceLinkImport
 } from '../public/assets/js/utils/marketplace-link-import.js';
 
-describe('Aquastock marketplace link CSV import', () => {
+describe('M2Stock marketplace link CSV import', () => {
   it('uses the Habitic export headers and accepts its channel URL domains', () => {
     expect(MARKETPLACE_LINK_CSV_HEADERS).toEqual([
       'SKU',
@@ -71,7 +71,7 @@ describe('Aquastock marketplace link CSV import', () => {
     expect(rows).toHaveLength(1);
     expect(errors).toHaveLength(4);
     expect(errors.map(error => error.message).join(' ')).toMatch(/duplikat|lebih dari sekali|domainnya tidak sesuai|SKU wajib/i);
-    expect(skipped).toEqual([{ row: 4, sku: 'SKU-MISSING', message: 'SKU "SKU-MISSING" tidak ditemukan di Aquastock.' }]);
+    expect(skipped).toEqual([{ row: 4, sku: 'SKU-MISSING', message: 'SKU "SKU-MISSING" tidak ditemukan di M2Stock.' }]);
   });
 
   it('requires at least one URL and treats blank channel cells as keep-existing', () => {

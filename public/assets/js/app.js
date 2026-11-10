@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — app.js
+   M2Stock — app.js
    Inisialisasi aplikasi, konversi tabel→card, bulk selection, shortcut
    ═══════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════
@@ -398,11 +398,11 @@ if (typeof animateActivePage === 'function') {
 if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem('welcomeShown')) {
   sessionStorage.setItem('welcomeShown', 'true');
   if (typeof showToast === 'function') {
-    setTimeout(() => showToast('Selamat datang di Aquastock Pro 3.0', 'success'), 500);
+    setTimeout(() => showToast('Selamat datang di M2Stock', 'success'), 500);
   }
 }
 
-console.info('Aquastock Pro v3.0 — Fully Responsive');
+console.info('M2Stock v3.0 — Fully Responsive');
 
 /* ═══ Set Welcome Name dari Profile ═══ */
 (async function setWelcomeName() {
@@ -503,7 +503,7 @@ if (typeof window !== 'undefined') {
       badge.textContent = `v${installedVersion} (${isCurrent ? 'Terkini' : 'Pembaruan tersedia'})`;
       badge.classList.toggle('is-update-available', !isCurrent);
     }
-    if (localVersion) localVersion.textContent = `Aquastock Pro v${installedVersion} (PWA Local-First)`;
+    if (localVersion) localVersion.textContent = `M2Stock v${installedVersion} (PWA Local-First)`;
     if (sidebarVersion) sidebarVersion.textContent = `v${installedVersion}`;
     if (syncStatus) {
       syncStatus.textContent = isCurrent
@@ -522,7 +522,7 @@ if (typeof window !== 'undefined') {
     if (!response.ok) throw new Error(`Pemeriksaan versi gagal (HTTP ${response.status})`);
     const release = await response.json();
     if (!release || !/^\d+\.\d+\.\d+$/.test(release.version || '') ||
-        release.repository !== 'b0nz0el/aquastock-pro' || !release.branch) {
+        !['b0nz0el/M2Stock', 'b0nz0el/aquastock-pro'].includes(release.repository) || !release.branch) {
       throw new Error('Metadata versi GitHub tidak valid');
     }
     renderVersionStatus(release);
@@ -587,7 +587,7 @@ if (typeof window !== 'undefined') {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               if (typeof showToast === 'function') {
-                showToast('Versi terbaru Aquastock Pro terpasang! Memperbarui...', 'info');
+                showToast('Versi terbaru M2Stock terpasang! Memperbarui...', 'info');
               }
               promptAndActivate(newWorker);
             }
@@ -658,7 +658,7 @@ if (typeof window !== 'undefined') {
         return;
       }
 
-      showUpdateToast(`Aquastock Pro v${installedVersion} sudah sinkron dengan GitHub main.`, 'success');
+      showUpdateToast(`M2Stock v${installedVersion} sudah sinkron dengan GitHub main.`, 'success');
     } catch (error) {
       console.warn('[PWA] Manual update check error:', error);
       const status = document.getElementById('github-version-status');

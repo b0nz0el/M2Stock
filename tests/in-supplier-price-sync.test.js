@@ -86,7 +86,7 @@ function setupDOM() {
   window.eval(inScript);
 }
 
-describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk Aquastock Pro', () => {
+describe('Sinkronisasi Supplier dan Harga Beli Barang Masuk M2Stock', () => {
   beforeEach(() => {
     setupDOM();
   });

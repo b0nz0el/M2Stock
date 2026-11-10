@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — cash.js
+   M2Stock — cash.js
    Controller Modul Kas & Keuangan (cash_flow)
    ═══════════════════════════════════════════════════ */
 

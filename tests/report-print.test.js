@@ -123,10 +123,10 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
   beforeEach(async () => {
     localStorage.clear();
     localStorage.setItem('aquastock_store_info', JSON.stringify({
-      name: 'Aquastock Pro Premium Store',
+      name: 'M2Stock Official Store',
       address: 'Jl. Sam Ratulangi No. 88, Manado',
       phone: '081234567890',
-      email: 'owner@aquastock.pro'
+      email: 'owner@m2stock.id'
     }));
 
     document.body.innerHTML = `
@@ -159,7 +159,7 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
           <tbody id="report-table-body"></tbody>
           <tfoot id="report-table-footer"></tfoot>
         </table>
-        <div id="sidebar-user-email">owner@aquastock.pro</div>
+        <div id="sidebar-user-email">owner@m2stock.id</div>
         <div id="sidebar-user-role">Owner</div>
       </div>
     `;
@@ -193,7 +193,7 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
     expect(html).toContain('font-family: -apple-system, BlinkMacSystemFont, "Segoe UI"');
 
     // Validasi Kop Toko
-    expect(html).toContain('Aquastock Pro Premium Store');
+    expect(html).toContain('M2Stock Official Store');
     expect(html).toContain('Jl. Sam Ratulangi No. 88, Manado');
     expect(html).toContain('Telp: 081234567890');
     expect(html).toContain('Laporan Resmi Bisnis');
@@ -222,10 +222,10 @@ describe('Report Print & PDF Generation (/dashboard/report/)', () => {
     // Validasi Kolom Tanda Tangan
     expect(html).toContain('Kasir / Pembuat Laporan');
     expect(html).toContain('Pemilik Toko / Penanggung Jawab');
-    expect(html).toContain('owner@aquastock.pro (Owner)');
+    expect(html).toContain('owner@m2stock.id (Owner)');
 
     // Validasi Footer Kerahasiaan & Timestamp
-    expect(html).toContain('Dicetak otomatis via Aquastock Pro pada:');
+    expect(html).toContain('Dicetak otomatis via M2Stock pada:');
     expect(html).toContain('Dokumen ini sah dan bersifat rahasia untuk operasional internal toko');
   });
 

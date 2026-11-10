@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — login.js
+   M2Stock — login.js
    Logika halaman login (splash, toggle password, login handler)
    ═══════════════════════════════════════════════════ */
   // Init icons

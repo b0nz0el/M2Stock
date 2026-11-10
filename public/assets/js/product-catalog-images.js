@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — product-catalog-images.js
+   M2Stock — product-catalog-images.js
    Pemetaan Resmi 64 Foto Studio Resolusi Tinggi Habitic
    ═══════════════════════════════════════════════════ */
 
@@ -521,7 +521,7 @@ export const OFFICIAL_PRODUCT_CATALOG = [
   }
 ];
 
-// Alias SKU khusus (misal variasi penamaan lama atau SKU alternatif di Aquastock)
+// Alias SKU khusus (misal variasi penamaan lama atau SKU alternatif di M2Stock)
 const SKU_ALIASES = {
   "POM-AMA-024": "AER-AMA-353",
   "POM-AMA-025": "AER-AMA-354",

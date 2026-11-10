@@ -57,7 +57,7 @@ describe('Backup export and restore', () => {
     configureTables();
     vi.spyOn(backup, 'log').mockResolvedValue({ ok: true });
     const payload = {
-      meta: { app: 'Aquastock Pro' },
+      meta: { app: 'M2Stock' },
       data: {
         products: [{ id: 'product-1', name: 'Test Aquarium' }],
         suppliers: []
@@ -100,7 +100,7 @@ describe('Backup export and restore', () => {
     const result = await backup.importJSON({ data: { unknown_table: [{ id: 'x' }] } });
 
     expect(result.ok).toBe(false);
-    expect(result.error.message).toContain('tidak berisi tabel Aquastock');
+    expect(result.error.message).toContain('tidak berisi tabel M2Stock');
     expect(supabase.from).not.toHaveBeenCalled();
   });
 });

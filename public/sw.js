@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — sw.js
+   M2Stock — sw.js
    Local-First Progressive Web App (PWA) Service Worker
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'aquastock-v3.5.61-pwa';
+const CACHE_NAME = 'M2Stock-v3.5.61-pwa';
 
 const STATIC_PRECACHE = [
   '/',

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — api/suppliers.js
+   M2Stock — api/suppliers.js
    Domain Suppliers / Master Supplier
    ═══════════════════════════════════════════════════ */
 

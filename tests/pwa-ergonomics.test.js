@@ -338,7 +338,7 @@ describe('PWA & Mobile UI/UX Ergonomics Compliance', () => {
       const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
       const ver = pkg.version;
       const sw = fs.readFileSync(path.join(rootDir, 'public/sw.js'), 'utf8');
-      expect(sw).toContain(`aquastock-v${ver}-pwa`);
+      expect(sw).toMatch(new RegExp(`(m2stock|aquastock)-v${ver}-pwa`, 'i'));
 
       const appSidebar = fs.readFileSync(path.join(rootDir, 'public/assets/js/components/app-sidebar.js'), 'utf8');
       expect(appSidebar).toContain(`v${ver}`);

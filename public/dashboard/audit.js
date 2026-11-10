@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — audit.js
+   M2Stock — audit.js
    Controller Modul Audit Log & Jejak Aktivitas User
    ═══════════════════════════════════════════════════ */
 

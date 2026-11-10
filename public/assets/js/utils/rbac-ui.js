@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — rbac-ui.js
+   M2Stock — rbac-ui.js
    Read-Only UI Enforcement for Role-Based Access
    ═══════════════════════════════════════════════════ */
 

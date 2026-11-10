@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — image-utils.js
+   M2Stock — image-utils.js
    Client-Side Image Compression (Canvas API native)
    Target: WebP 500 KB – 1 MB (Maks. 1 MB), Max 1600x1600 px
    ═══════════════════════════════════════════════════ */

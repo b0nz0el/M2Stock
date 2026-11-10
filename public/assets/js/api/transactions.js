@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — api/transactions.js
+   M2Stock — api/transactions.js
    Domain Transaksi Barang Masuk & Keluar, PO, & Retur
    ═══════════════════════════════════════════════════ */
 

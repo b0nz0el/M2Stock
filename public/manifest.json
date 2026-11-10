@@ -1,6 +1,6 @@
 {
-  "name": "Aquastock Pro - Inventory & POS System",
-  "short_name": "Aquastock",
+  "name": "M2Stock - Inventory & POS System",
+  "short_name": "M2Stock",
   "description": "Sistem Manajemen Inventori dan Kasir POS Modern",
   "start_url": "/dashboard/",
   "scope": "/",

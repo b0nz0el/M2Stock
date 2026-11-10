@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — debt.js
+   M2Stock — debt.js
    Controller Modul Hutang & Piutang (debts)
    ═══════════════════════════════════════════════════ */
 

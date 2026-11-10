@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — settings.js
+   M2Stock — settings.js
    Controller Modul Pengaturan (/dashboard/settings/)
    Pengaturan dari Supabase app_settings & profiles
    ═══════════════════════════════════════════════════ */

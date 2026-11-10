@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — return.js
+   M2Stock — return.js
    Controller Modul Retur Barang (returns)
    ═══════════════════════════════════════════════════ */
 

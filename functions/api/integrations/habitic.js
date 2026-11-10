@@ -17,9 +17,9 @@ export async function onRequestPost({ request, env }) {
   const apiKey = request.headers.get('X-Supabase-Key') || '';
   const syncSecret = env?.HABITIC_SYNC_SECRET;
 
-  if (!accessToken) return jsonResponse({ success: false, error: 'Sesi Aquastock tidak ditemukan. Silakan login ulang.' }, 401);
+  if (!accessToken) return jsonResponse({ success: false, error: 'Sesi M2Stock tidak ditemukan. Silakan login ulang.' }, 401);
   if (!apiKey) return jsonResponse({ success: false, error: 'Konfigurasi Supabase browser tidak tersedia.' }, 400);
-  if (!syncSecret) return jsonResponse({ success: false, error: 'Integrasi Habitic belum dikonfigurasi di server Aquastock.' }, 503);
+  if (!syncSecret) return jsonResponse({ success: false, error: 'Integrasi Habitic belum dikonfigurasi di server M2Stock.' }, 503);
 
   const headers = {
     apikey: apiKey,
@@ -36,7 +36,7 @@ export async function onRequestPost({ request, env }) {
       return jsonResponse({ success: false, error: 'Sesi Supabase tidak valid atau telah berakhir. Silakan login ulang.' }, 401);
     }
     const user = await userResponse.json();
-    if (!user?.id) return jsonResponse({ success: false, error: 'Identitas pengguna Aquastock tidak dapat diverifikasi.' }, 401);
+    if (!user?.id) return jsonResponse({ success: false, error: 'Identitas pengguna M2Stock tidak dapat diverifikasi.' }, 401);
 
     const productsUrl = new URL(`${SUPABASE_URL}/rest/v1/products`);
     productsUrl.searchParams.set('select', 'sku,channel,channel_link');

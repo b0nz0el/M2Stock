@@ -98,11 +98,11 @@ export function prepareMarketplaceLinkImport(records, products) {
 
     const matches = productsBySku.get(skuKey) || [];
     if (matches.length === 0) {
-      skipped.push({ row: rowNumber, sku, message: `SKU "${sku}" tidak ditemukan di Aquastock.` });
+      skipped.push({ row: rowNumber, sku, message: `SKU "${sku}" tidak ditemukan di M2Stock.` });
       return;
     }
     if (matches.length > 1) {
-      errors.push({ row: rowNumber, message: `SKU "${sku}" ditemukan lebih dari sekali di Aquastock; impor dibatalkan demi keamanan.` });
+      errors.push({ row: rowNumber, message: `SKU "${sku}" ditemukan lebih dari sekali di M2Stock; impor dibatalkan demi keamanan.` });
       return;
     }
 

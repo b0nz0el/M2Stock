@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — rbac.js
+   M2Stock — rbac.js
    Role-Based Access Control (RBAC) & Route Guard
    ═══════════════════════════════════════════════════ */
 

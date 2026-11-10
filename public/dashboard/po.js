@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — po.js
+   M2Stock — po.js
    Controller Modul Purchase Order & PO Items
    ═══════════════════════════════════════════════════ */
 
@@ -963,7 +963,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">↵</kbd> Pilih</span>
           <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">Esc</kbd> Tutup</span>
         </div>
-        <span class="text-[#A0A0A5]/60 font-medium">Aquastock Engine</span>
+        <span class="text-[#A0A0A5]/60 font-medium">M2Stock Engine</span>
       </div>
     `;
 
@@ -1449,7 +1449,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         </style>
       </head>
       <body>
-        <h2>Aquastock — ${title}</h2>
+        <h2>M2Stock — ${title}</h2>
         <p>Dicetak pada: ${today} | Total: ${poEntries.length} Dokumen PO</p>
         <table>
           <thead>

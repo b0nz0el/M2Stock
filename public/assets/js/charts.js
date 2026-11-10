@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — charts.js
+   M2Stock — charts.js
    Konfigurasi Chart.js (sales bar, channel doughnut, report line)
    Grafik menampilkan data aktual yang diberikan oleh dashboard.js
    ═══════════════════════════════════════════════════ */

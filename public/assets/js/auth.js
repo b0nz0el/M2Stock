@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — auth.js
+   M2Stock — auth.js
    Modul Autentikasi Supabase & Proteksi Halaman
    ═══════════════════════════════════════════════════ */
 

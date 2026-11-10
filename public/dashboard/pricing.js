@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock — dashboard/pricing.js
+   M2Stock — dashboard/pricing.js
    Modul Simulasi & Strategi Harga Marketplace
    ═══════════════════════════════════════════════════ */
 

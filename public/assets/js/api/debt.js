@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Aquastock Pro — api/debt.js
+   M2Stock — api/debt.js
    Layer API untuk Modul Hutang & Piutang (debts)
    ═══════════════════════════════════════════════════ */
 
