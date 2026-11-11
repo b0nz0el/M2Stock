@@ -13,7 +13,6 @@ CREATE OR REPLACE FUNCTION public.auto_confirm_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.email_confirmed_at := COALESCE(NEW.email_confirmed_at, now());
-  NEW.confirmed_at := COALESCE(NEW.confirmed_at, now());
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -138,7 +137,6 @@ BEGIN
     email,
     encrypted_password,
     email_confirmed_at,
-    confirmed_at,
     raw_app_meta_data,
     raw_user_meta_data,
     created_at,
@@ -154,7 +152,6 @@ BEGIN
     'authenticated',
     clean_email,
     encrypted_pw,
-    now(),
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     jsonb_build_object('full_name', clean_name, 'name', clean_name, 'role', normalized_role),
@@ -259,7 +256,6 @@ BEGIN
   UPDATE auth.users
   SET encrypted_password = encrypted_pw,
       email_confirmed_at = COALESCE(email_confirmed_at, now()),
-      confirmed_at = COALESCE(confirmed_at, now()),
       updated_at = now()
   WHERE id = target_user_id;
 
@@ -303,9 +299,8 @@ GRANT EXECUTE ON FUNCTION public.admin_reset_password(UUID, TEXT) TO authenticat
 
 -- 5.1 Pastikan semua akun di auth.users terkonfirmasi (tidak tertahan email confirmation)
 UPDATE auth.users
-SET email_confirmed_at = COALESCE(email_confirmed_at, now()),
-    confirmed_at = COALESCE(confirmed_at, now())
-WHERE email_confirmed_at IS NULL OR confirmed_at IS NULL;
+SET email_confirmed_at = COALESCE(email_confirmed_at, now())
+WHERE email_confirmed_at IS NULL;
 
 -- 5.2 Perbaiki record auth.identities lama yang provider_id atau id-nya salah
 UPDATE auth.identities
