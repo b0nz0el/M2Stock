@@ -85,7 +85,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1
     FROM public.products p
-    WHERE COALESCE(p.is_active, TRUE) = TRUE
+    WHERE COALESCE(NULLIF(to_jsonb(p)->>'is_active', '')::BOOLEAN, TRUE) = TRUE
       AND COALESCE(p.stock, 0) <= GREATEST(0, COALESCE(p.min_stock, 0))
       AND (v_sup_filter IS NULL OR p.supplier_id::TEXT = v_sup_filter)
       AND NOT EXISTS (
@@ -113,10 +113,10 @@ BEGIN
     SELECT
       COALESCE(p.supplier_id::TEXT, '__NONE__') AS sup_key,
       NULLIF(p.supplier_id::TEXT, '') AS raw_sup_id,
-      COALESCE(MAX(s.name), CASE WHEN p.supplier_id IS NULL THEN 'Tanpa Supplier' ELSE 'Supplier' END) AS sup_name
+      COALESCE(MAX(s.name), CASE WHEN NULLIF(p.supplier_id::TEXT, '') IS NULL THEN 'Tanpa Supplier' ELSE 'Supplier' END) AS sup_name
     FROM public.products p
     LEFT JOIN public.suppliers s ON s.id::TEXT = p.supplier_id::TEXT
-    WHERE COALESCE(p.is_active, TRUE) = TRUE
+    WHERE COALESCE(NULLIF(to_jsonb(p)->>'is_active', '')::BOOLEAN, TRUE) = TRUE
       AND COALESCE(p.stock, 0) <= GREATEST(0, COALESCE(p.min_stock, 0))
       AND (v_sup_filter IS NULL OR p.supplier_id::TEXT = v_sup_filter)
       AND NOT EXISTS (
@@ -193,7 +193,7 @@ BEGIN
     FOR v_prod IN
       SELECT p.*
       FROM public.products p
-      WHERE COALESCE(p.is_active, TRUE) = TRUE
+      WHERE COALESCE(NULLIF(to_jsonb(p)->>'is_active', '')::BOOLEAN, TRUE) = TRUE
         AND COALESCE(p.stock, 0) <= GREATEST(0, COALESCE(p.min_stock, 0))
         AND COALESCE(p.supplier_id::TEXT, '__NONE__') = v_sup_group.sup_key
         AND NOT EXISTS (
@@ -280,7 +280,7 @@ BEGIN
         COALESCE(
           NULLIF(to_jsonb(v_prod)->>'cost_price', '')::NUMERIC,
           NULLIF(to_jsonb(v_prod)->>'buy_price', '')::NUMERIC,
-          v_prod.price,
+          NULLIF(to_jsonb(v_prod)->>'price', '')::NUMERIC,
           0
         )
       );

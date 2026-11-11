@@ -227,6 +227,9 @@ describe('Auto-PO Cerdas: Demand Velocity, Transaksi Bersih, & Transparansi UI',
     expect(sqlMigration).toContain('CREATE OR REPLACE FUNCTION public.generate_draft_po_from_low_stock(');
     expect(sqlMigration).toContain('generate_draft_po_from_low_stock_v2(');
     expect(sqlMigration).toContain("NOTIFY pgrst, 'reload schema';");
+    expect(sqlMigration).not.toContain('p.is_active');
+    expect(sqlMigration).not.toContain('v_prod.price');
+    expect(sqlMigration).not.toContain('CASE WHEN p.supplier_id IS NULL');
     expect(swJs).toContain("'/dashboard/po.js'");
     expect(poDashboardJs).toContain('po-doc-item-insight');
   });
