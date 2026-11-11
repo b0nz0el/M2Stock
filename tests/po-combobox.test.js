@@ -697,7 +697,7 @@ describe('Purchase Order Mobile/Tablet/PWA Runtime Behavior', () => {
     const { po: poApi } = await import('../public/assets/js/api/po.js');
     const draftPO = {
       id: 'po-auto-draft-1',
-      no_po: 'PO-202611-AUTO001',
+      no_po: 'PO-AUTO-261111-001',
       tanggal: '2026-11-11',
       supplier_id: 'sup-1',
       supplier_name: 'Supplier Utama',
@@ -804,7 +804,7 @@ describe('Purchase Order Mobile/Tablet/PWA Runtime Behavior', () => {
     const { po: poApi } = await import('../public/assets/js/api/po.js');
     const draftPrintPO = {
       id: 'po-auto-print-1',
-      no_po: 'PO-202611-AUTO002',
+      no_po: 'PO-AUTO-261111-002',
       tanggal: '2026-11-11',
       supplier_id: 'sup-1',
       supplier_name: 'Supplier Utama',

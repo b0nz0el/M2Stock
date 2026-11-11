@@ -12,7 +12,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_month_key TEXT := TO_CHAR(CURRENT_DATE, 'YYYYMM');
+  v_local_date DATE := (now() AT TIME ZONE 'Asia/Jakarta')::DATE;
+  v_day_key TEXT := TO_CHAR((now() AT TIME ZONE 'Asia/Jakarta')::DATE, 'YYMMDD');
   v_sup_col_type TEXT;
   v_sup_filter TEXT := NULLIF(TRIM(COALESCE(p_supplier_id, '')), '');
   v_coverage_days INT := 18;
@@ -53,8 +54,8 @@ DECLARE
   v_first_id UUID := NULL;
   v_first_no_po TEXT := NULL;
 BEGIN
-  -- Serialize Auto-PO generation for the current month so concurrent calls do not collide on gap numbers
-  PERFORM pg_advisory_xact_lock(hashtext('aquastock_auto_po_' || v_month_key));
+  -- Serialize Auto-PO generation for the current local date so concurrent calls do not collide on gap numbers
+  PERFORM pg_advisory_xact_lock(hashtext('aquastock_auto_po_' || v_day_key));
 
   -- Read optional coverage days config from app_settings.stock_config (default 18 days = 14d + 4d buffer)
   BEGIN
@@ -132,22 +133,26 @@ BEGIN
     v_no_po := NULL;
     v_sup_name := v_sup_group.sup_name;
 
-    -- Reuse existing open DRAFT PO for this supplier if available (preferring current month AUTO POs)
+    -- Reuse existing open DRAFT PO for this supplier if available (preferring current date PO-AUTO-YYMMDD-NNN, skipping stale random legacy rows)
     SELECT po.id, po.no_po, COALESCE(po.supplier_name, v_sup_name)
     INTO v_po_id, v_no_po, v_sup_name
     FROM public.purchase_orders po
     WHERE po.status = 'draft'
       AND COALESCE(po.supplier_id::TEXT, '__NONE__') = v_sup_group.sup_key
+      AND NOT (
+        po.no_po ~* '^PO-AUTO-[0-9]{6}-[0-9]{4,}$'
+        AND COALESCE(po.catatan, '') = 'Auto-generated PO dari batas stok minimum'
+      )
     ORDER BY
-      CASE WHEN po.no_po ~* ('^PO-' || v_month_key || '-AUTO[0-9]+$') THEN 0 ELSE 1 END ASC,
+      CASE WHEN po.no_po ~* ('^PO-AUTO-' || v_day_key || '-[0-9]{3}$') THEN 0 ELSE 1 END ASC,
       po.created_at ASC
     LIMIT 1;
 
     IF v_po_id IS NULL THEN
-      -- Gap-filling sequence starting from 001 for current YYYYMM
+      -- Gap-filling sequence starting from 001 for current YYMMDD (PO-AUTO-YYMMDD-001)
       v_seq := 1;
       LOOP
-        v_no_po := 'PO-' || v_month_key || '-AUTO' || LPAD(v_seq::TEXT, 3, '0');
+        v_no_po := 'PO-AUTO-' || v_day_key || '-' || LPAD(v_seq::TEXT, 3, '0');
         EXIT WHEN NOT EXISTS (
           SELECT 1 FROM public.purchase_orders WHERE no_po = v_no_po
         );
@@ -159,19 +164,19 @@ BEGIN
           no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at
         )
         VALUES (
-          v_no_po, CURRENT_DATE, NULL, v_sup_name, 'draft', 0, 'Restock Otomatis', auth.uid(), now(), now()
+          v_no_po, v_local_date, NULL, v_sup_name, 'draft', 0, 'Restock Otomatis', auth.uid(), now(), now()
         )
         RETURNING id INTO v_po_id;
       ELSIF v_sup_col_type IN ('integer', 'bigint', 'smallint') THEN
-        EXECUTE 'INSERT INTO public.purchase_orders (no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at) VALUES ($1, CURRENT_DATE, $2::INT, $3, ''draft'', 0, ''Restock Otomatis'', $4, now(), now()) RETURNING id'
+        EXECUTE 'INSERT INTO public.purchase_orders (no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at) VALUES ($1, $2, $3::INT, $4, ''draft'', 0, ''Restock Otomatis'', $5, now(), now()) RETURNING id'
         INTO v_po_id
-        USING v_no_po, v_sup_group.raw_sup_id, v_sup_name, auth.uid();
+        USING v_no_po, v_local_date, v_sup_group.raw_sup_id, v_sup_name, auth.uid();
       ELSE
         INSERT INTO public.purchase_orders (
           no_po, tanggal, supplier_id, supplier_name, status, total, catatan, created_by, created_at, updated_at
         )
         VALUES (
-          v_no_po, CURRENT_DATE, v_sup_group.raw_sup_id::UUID, v_sup_name, 'draft', 0, 'Restock Otomatis', auth.uid(), now(), now()
+          v_no_po, v_local_date, v_sup_group.raw_sup_id::UUID, v_sup_name, 'draft', 0, 'Restock Otomatis', auth.uid(), now(), now()
         )
         RETURNING id INTO v_po_id;
       END IF;
@@ -355,6 +360,40 @@ $$;
 
 REVOKE ALL ON FUNCTION public.generate_draft_po_from_low_stock_unchecked(TEXT) FROM PUBLIC, anon, authenticated;
 
+-- Self-contained guarded wrapper (safe even if earlier security migration was not run manually)
+CREATE OR REPLACE FUNCTION public.generate_draft_po_from_low_stock(
+  p_supplier_id TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_user_role TEXT;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Akses ditolak: pengguna harus terautentikasi'
+      USING ERRCODE = '42501';
+  END IF;
+
+  SELECT role INTO v_user_role
+  FROM public.profiles
+  WHERE id = v_user_id;
+
+  IF UPPER(COALESCE(v_user_role, '')) NOT IN ('OWNER', 'STAFF', 'ADMIN', 'SUPERADMIN', 'MANAGER') THEN
+    RAISE EXCEPTION 'Akses ditolak: Hanya OWNER atau STAFF yang dapat membuat Draft PO'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN public.generate_draft_po_from_low_stock_unchecked(p_supplier_id);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.generate_draft_po_from_low_stock(TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.generate_draft_po_from_low_stock(TEXT) TO authenticated;
+
 -- Versioned wrapper invoked by the upgraded client after migration is applied
 CREATE OR REPLACE FUNCTION public.generate_draft_po_from_low_stock_v2(
   p_supplier_id TEXT DEFAULT NULL
@@ -371,3 +410,5 @@ $$;
 
 REVOKE ALL ON FUNCTION public.generate_draft_po_from_low_stock_v2(TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.generate_draft_po_from_low_stock_v2(TEXT) TO authenticated;
+
+NOTIFY pgrst, 'reload schema';

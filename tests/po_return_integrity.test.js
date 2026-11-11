@@ -413,21 +413,23 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(poJs).toContain('.po-document-table tbody tr, .po-document-table thead { break-inside: avoid;');
     });
 
-    it('generateAutoNoPO melakukan gap-filling mulai dari AUTO001 dan reset setiap ganti bulan', () => {
-      expect(poApi.generateAutoNoPO([], '2026-11-11')).toBe('PO-202611-AUTO001');
+    it('generateAutoNoPO melakukan gap-filling PO-AUTO-YYMMDD-001 dan reset setiap ganti tanggal', () => {
+      expect(poApi.generateAutoNoPO([], '2026-11-11')).toBe('PO-AUTO-261111-001');
       expect(poApi.generateAutoNoPO([
         { no_po: 'PO-202611-001' },
-        { no_po: 'PO-202611-AUTO001' },
-        { no_po: 'PO-202611-AUTO003' }
-      ], '2026-11-11')).toBe('PO-202611-AUTO002');
+        { no_po: 'PO-AUTO-261111-001' },
+        { no_po: 'PO-AUTO-261111-003' },
+        { no_po: 'PO-AUTO-261111-9592' }
+      ], '2026-11-11')).toBe('PO-AUTO-261111-002');
       expect(poApi.generateAutoNoPO([
-        { no_po: 'PO-202611-AUTO002' },
-        { no_po: 'PO-202611-AUTO003' }
-      ], '2026-11-11')).toBe('PO-202611-AUTO001');
+        { no_po: 'PO-AUTO-261111-002' },
+        { no_po: 'PO-AUTO-261111-003' },
+        { no_po: 'PO-AUTO-261111-9592' }
+      ], '2026-11-11')).toBe('PO-AUTO-261111-001');
       expect(poApi.generateAutoNoPO([
-        { no_po: 'PO-202611-AUTO001' },
-        { no_po: 'PO-202611-AUTO002' }
-      ], '2026-12-01')).toBe('PO-202612-AUTO001');
+        { no_po: 'PO-AUTO-261111-001' },
+        { no_po: 'PO-AUTO-261111-002' }
+      ], '2026-11-12')).toBe('PO-AUTO-261112-001');
     });
 
     it('calculateAutoOrderQty memprioritaskan target_stock/max_stock, demand velocity 18h, atau zero-velocity cap <= 5 serta clamp stok minus ke 0', () => {
@@ -494,8 +496,9 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
                 if (cols === 'no_po') {
                   const resRows = Promise.resolve({
                     data: [
-                      { no_po: 'PO-202611-AUTO001' },
-                      { no_po: 'PO-202611-AUTO003' }
+                      { no_po: 'PO-AUTO-261111-001' },
+                      { no_po: 'PO-AUTO-261111-003' },
+                      { no_po: 'PO-AUTO-261111-9592' }
                     ],
                     error: null
                   });
@@ -509,7 +512,8 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
                 return {
                   in: vi.fn().mockResolvedValue({
                     data: [
-                      { id: 'po-draft-a', no_po: 'PO-202611-AUTO001', status: 'draft', supplier_id: 'sup-a', supplier_name: 'Supplier Alpha', total: 100000 },
+                      { id: 'po-draft-a', no_po: 'PO-AUTO-261111-001', status: 'draft', supplier_id: 'sup-a', supplier_name: 'Supplier Alpha', total: 100000 },
+                      { id: 'po-legacy-rand', no_po: 'PO-AUTO-261111-9592', status: 'draft', supplier_id: 'sup-b', supplier_name: 'Supplier Otomatis', total: 0, catatan: 'Auto-generated PO dari batas stok minimum' },
                       { id: 'po-ord-1', no_po: 'PO-202611-009', status: 'dikirim', supplier_id: 'sup-a', supplier_name: 'Supplier Alpha', total: 50000 }
                     ],
                     error: null
@@ -573,10 +577,10 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
         ]);
         expect(updatedHeaderCalls[0].total).toBe(225000);
 
-        // Supplier B membuat 1 draft PO baru memakai gap AUTO002 dengan qty target_stock - stock = 16
+        // Supplier B membuat 1 draft PO baru memakai gap PO-AUTO-261111-002 dengan qty target_stock - stock = 16
         expect(createdRpcCalls.length).toBe(1);
         expect(createdRpcCalls[0]).toMatchObject({
-          p_no_po: 'PO-202611-AUTO002',
+          p_no_po: 'PO-AUTO-261111-002',
           p_supplier_id: 'sup-b',
           p_supplier_name: 'Supplier Beta',
           p_status: 'draft'

@@ -199,10 +199,12 @@ describe('Auto-PO Cerdas: Demand Velocity, Transaksi Bersih, & Transparansi UI',
     });
 
     const res = await poApi.generateFromLowStock();
+    const today = new Date();
+    const expectedDayKey = `${String(today.getFullYear() % 100).padStart(2, '0')}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
     expect(res.ok).toBe(true);
     expect(res.data.created).toBe(true);
     expect(res.data.coverage_days).toBe(20);
-    expect(res.data.no_po).toBe('PO-202611-AUTO001');
+    expect(res.data.no_po).toBe(`PO-AUTO-${expectedDayKey}-001`);
 
     const reasonsByPid = new Map(res.data.item_reasons.map(r => [r.product_id, r]));
     expect(reasonsByPid.get('p-fast-db').qty).toBe(18);
@@ -221,6 +223,10 @@ describe('Auto-PO Cerdas: Demand Velocity, Transaksi Bersih, & Transparansi UI',
     expect(sqlMigration).toContain('%[STOCK OPNAME]%');
     expect(sqlMigration).toContain('reversal_of_id');
     expect(sqlMigration).toContain('item_reasons');
+    expect(sqlMigration).toContain("'PO-AUTO-' || v_day_key || '-'");
+    expect(sqlMigration).toContain('CREATE OR REPLACE FUNCTION public.generate_draft_po_from_low_stock(');
+    expect(sqlMigration).toContain('generate_draft_po_from_low_stock_v2(');
+    expect(sqlMigration).toContain("NOTIFY pgrst, 'reload schema';");
     expect(swJs).toContain("'/dashboard/po.js'");
     expect(poDashboardJs).toContain('po-doc-item-insight');
   });

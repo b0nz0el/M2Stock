@@ -21,6 +21,22 @@ function getMonthKey(dateInput = new Date()) {
   return `${year}${month}`;
 }
 
+function getDayKey(dateInput = new Date()) {
+  if (typeof dateInput === 'string') {
+    const match = dateInput.trim().match(/^(\d{4})-?(\d{2})-?(\d{2})/);
+    if (match) {
+      return `${match[1].slice(-2)}${match[2]}${match[3]}`;
+    }
+  }
+  const dateObj = dateInput instanceof Date && !Number.isNaN(dateInput.getTime())
+    ? dateInput
+    : new Date();
+  const yy = String(dateObj.getFullYear() % 100).padStart(2, '0');
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  return `${yy}${mm}${dd}`;
+}
+
 function getLocalDateISO(dateInput = new Date()) {
   const dateObj = dateInput instanceof Date && !Number.isNaN(dateInput.getTime())
     ? dateInput
@@ -71,15 +87,15 @@ export const po = {
   },
 
   /**
-   * Helper Auto-Generator Nomor Auto-PO dengan Gap-Filling mulai dari 001.
-   * Format: PO-{YYYYMM}-AUTO{NNN} (contoh: PO-202611-AUTO001).
-   * Reset ke 001 otomatis setiap ganti bulan.
+   * Helper Auto-Generator Nomor Auto-PO harian dengan Gap-Filling mulai dari 001.
+   * Format: PO-AUTO-{YYMMDD}-{NNN} (contoh: PO-AUTO-261111-001).
+   * Reset ke 001 otomatis setiap ganti tanggal.
    */
   generateAutoNoPO(existingPOs = [], dateInput = new Date()) {
-    const ym = getMonthKey(dateInput);
-    const seqPattern = new RegExp(`^PO-${ym}-AUTO(\\d+)$`, 'i');
+    const dayKey = getDayKey(dateInput);
+    const seqPattern = new RegExp(`^PO-AUTO-${dayKey}-(\\d+)$`, 'i');
     const nextSeq = findNextGapSequence(existingPOs, seqPattern);
-    return `PO-${ym}-AUTO${String(nextSeq).padStart(3, '0')}`;
+    return `PO-AUTO-${dayKey}-${String(nextSeq).padStart(3, '0')}`;
   },
 
   /**
@@ -311,11 +327,11 @@ export const po = {
   },
 
   /**
-   * Mengambil nomor Auto-PO berikutnya secara akurat dari database Supabase untuk bulan terkait.
+   * Mengambil nomor Auto-PO berikutnya secara akurat dari database Supabase untuk tanggal terkait.
    */
   async getNextAutoNoPO(dateInput = new Date(), fallbackPOs = []) {
-    const ym = getMonthKey(dateInput);
-    const rows = await this._fetchMonthNoPOs(`PO-${ym}-AUTO`, fallbackPOs);
+    const dayKey = getDayKey(dateInput);
+    const rows = await this._fetchMonthNoPOs(`PO-AUTO-${dayKey}-`, fallbackPOs);
     return this.generateAutoNoPO(rows, dateInput);
   },
 
@@ -688,7 +704,7 @@ export const po = {
 
       const { data: openPOs } = await supabase
         .from('purchase_orders')
-        .select('id, no_po, status, supplier_id, supplier_name, total')
+        .select('id, no_po, status, supplier_id, supplier_name, total, catatan')
         .in('status', ['draft', 'dikirim']);
 
       const safeOpenPOs = Array.isArray(openPOs) ? openPOs : [];
@@ -810,9 +826,10 @@ export const po = {
           reason: details.reason
         });
       });
-      const ym = getMonthKey(now);
+      const dayKey = getDayKey(now);
+      const autoPrefix = `PO-AUTO-${dayKey}-`;
       const todayStr = getLocalDateISO(now);
-      const fetchedMonthNoPOs = await this._fetchMonthNoPOs(`PO-${ym}-AUTO`, safeOpenPOs);
+      const fetchedMonthNoPOs = await this._fetchMonthNoPOs(autoPrefix, safeOpenPOs);
       const usedAutoNoPOs = [...fetchedMonthNoPOs];
       safeOpenPOs.forEach(poRow => {
         if (poRow?.no_po) usedAutoNoPOs.push({ no_po: poRow.no_po });
@@ -821,13 +838,17 @@ export const po = {
       const findOpenDraftForSupplier = (supKey) => {
         const candidates = safeOpenPOs.filter(poRow => {
           if (poRow?.status !== 'draft') return false;
+          const noPo = String(poRow?.no_po || '');
+          const isLegacyRandomAutoPo = /^PO-AUTO-\d{6}-\d{4,}$/i.test(noPo)
+            && String(poRow?.catatan || '').trim() === 'Auto-generated PO dari batas stok minimum';
+          if (isLegacyRandomAutoPo) return false;
           const rowSup = poRow?.supplier_id !== null && poRow?.supplier_id !== undefined && String(poRow.supplier_id).trim() !== ''
             ? String(poRow.supplier_id).trim()
             : '__NONE__';
           return rowSup === supKey;
         });
         if (candidates.length === 0) return null;
-        return candidates.find(c => new RegExp(`^PO-${ym}-AUTO\\d+$`, 'i').test(String(c.no_po || ''))) || candidates[0];
+        return candidates.find(c => new RegExp(`^PO-AUTO-${dayKey}-\\d{3}$`, 'i').test(String(c.no_po || ''))) || candidates[0];
       };
 
       const processedPOs = [];
@@ -893,7 +914,7 @@ export const po = {
 
         // Retry once cleanly if another session concurrently grabbed the same AUTO sequence
         if (!createRes.ok && createRes.error?.code === '23505') {
-          const freshRows = await this._fetchMonthNoPOs(`PO-${ym}-AUTO`, usedAutoNoPOs);
+          const freshRows = await this._fetchMonthNoPOs(autoPrefix, usedAutoNoPOs);
           freshRows.forEach(r => usedAutoNoPOs.push(r));
           no_po = this.generateAutoNoPO(usedAutoNoPOs, now);
           usedAutoNoPOs.push({ no_po });
