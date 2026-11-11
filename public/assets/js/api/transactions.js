@@ -55,7 +55,37 @@ function mapTransaction(row) {
   };
 }
 
+export function extractInvoiceSequence(inv) {
+  if (!inv || typeof inv !== 'string') return 0;
+  const m = inv.match(/INV-\d{6}-(\d+)/i);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+export function formatSequentialInvoiceNo(seqNumber, txDate = new Date()) {
+  const d = txDate instanceof Date ? txDate : new Date(txDate);
+  const yy = String(d.getFullYear()).slice(-2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const seqStr = String(Math.max(1, Number(seqNumber) || 1)).padStart(4, '0');
+  return `INV-${yy}${mm}${dd}-${seqStr}`;
+}
+
+export function getNextSequentialInvoiceNo(existingList = [], txDate = new Date()) {
+  let maxSeq = 0;
+  if (Array.isArray(existingList)) {
+    for (const item of existingList) {
+      const code = item?.invoice_no || item?.note || item?.notes || '';
+      const seq = extractInvoiceSequence(code);
+      if (seq > maxSeq) maxSeq = seq;
+    }
+  }
+  return formatSequentialInvoiceNo(maxSeq + 1, txDate);
+}
+
 export const transactions = {
+  extractInvoiceSequence,
+  formatSequentialInvoiceNo,
+  getNextSequentialInvoiceNo,
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
         try {
@@ -165,12 +195,15 @@ export const transactions = {
         }
       }
 
-      // Generate Invoice Code jika belum ada
-      const now = new Date();
-      const datePart = now.toISOString().slice(2, 10).replace(/-/g, '');
-      const randomPart = Math.floor(1000 + Math.random() * 9000);
-      const invoiceNo = commonData.invoice_no || `INV-${datePart}-${randomPart}`;
-      const payloadCommon = { ...commonData, invoice_no: invoiceNo };
+      // Periksa apakah invoice_no sudah ditentukan secara spesifik
+      let invoiceNo = commonData.invoice_no ? String(commonData.invoice_no).trim() : null;
+      const payloadCommon = { ...commonData };
+      if (invoiceNo) {
+        payloadCommon.invoice_no = invoiceNo;
+      } else {
+        delete payloadCommon.invoice_no;
+      }
+
       const discountAmount = Math.max(0, Math.min(
         cartItems.reduce((sum, item) => sum + (Number(item.qty ?? item.quantity) || 0) * (Number(item.price ?? item.unit_price) || 0), 0),
         Number(payloadCommon.discount_amount || 0)
@@ -192,7 +225,9 @@ export const transactions = {
             p_common: payloadCommon
           });
 
-          if (!rpcErr && rpcData && rpcData.ok) {
+          if (!rpcErr && rpcData && (rpcData.ok || rpcData.success)) {
+            const finalInvoiceNo = rpcData.invoice_no || invoiceNo || getNextSequentialInvoiceNo([], new Date());
+            invoiceNo = finalInvoiceNo;
             notifyProductsUpdated({ type: 'out', invoice_no: invoiceNo });
             // Sukses atomik dari database
             try {
@@ -243,6 +278,36 @@ export const transactions = {
       }
 
       // PRIORITAS 2 (Fallback): Client-side Loop dengan ATOMIC COMPENSATION ROLLBACK
+      // Jika invoiceNo belum ditentukan, coba ambil nomor urut berikutnya secara terurut
+      if (!invoiceNo) {
+        if (isSupabaseAvailable() && typeof window !== 'undefined' && window.supabase && typeof window.supabase.rpc === 'function') {
+          try {
+            const { data: nextCode, error: seqErr } = await window.supabase.rpc('get_next_invoice_no');
+            if (!seqErr && nextCode) {
+              invoiceNo = nextCode;
+            }
+          } catch (_) {}
+        }
+      }
+
+      // Jika get_next_invoice_no tidak tersedia / offline, cari nomor tertinggi dari riwayat transaksi
+      if (!invoiceNo) {
+        if (isSupabaseAvailable() && typeof window !== 'undefined' && window.supabase) {
+          try {
+            const { data: recentTxs } = await window.supabase
+              .from('transactions')
+              .select('invoice_no, note, notes')
+              .order('created_at', { ascending: false })
+              .limit(50);
+            invoiceNo = getNextSequentialInvoiceNo(recentTxs || [], new Date());
+          } catch (_) {
+            invoiceNo = getNextSequentialInvoiceNo([], new Date());
+          }
+        } else {
+          invoiceNo = getNextSequentialInvoiceNo([], new Date());
+        }
+      }
+
       const createdTxs = [];
       let subtotalAmount = 0;
       const receiptSubtotalAmount = cartItems.reduce((sum, item) =>
@@ -533,7 +598,7 @@ export const transactions = {
           // Stock is mutated by the PostgreSQL transaction trigger only. A client-side
           // fallback can race with the trigger and apply the same movement twice.
           // Catat audit log dan notifikasi jika bukan bagian dari transaksi kasir multi-item (batch POS)
-          const isPosBatchItem = Boolean((data.note || '').includes('[INV-'));
+          const isPosBatchItem = Boolean((data.note || '').includes('[INV-') || Boolean(data.invoice_no));
           if (!isPosBatchItem) {
             try {
               const txTypeLabel = data.type === 'in' ? 'Barang Masuk' : 'Barang Keluar';

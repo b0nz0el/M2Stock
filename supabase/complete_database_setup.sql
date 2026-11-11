@@ -655,7 +655,28 @@ CREATE TRIGGER trg_transaction_stock_update
   AFTER INSERT OR DELETE ON public.transactions
   FOR EACH ROW EXECUTE FUNCTION public.handle_transaction_stock_update();
 
--- 7.6 RPC: process_pos_checkout (Transaksi Kasir Atomik Multibarang)
+-- 7.6 Sequence & RPC: invoice_number_seq & process_pos_checkout (Transaksi Kasir Atomik Multibarang)
+CREATE SEQUENCE IF NOT EXISTS public.invoice_number_seq
+  START WITH 1
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+CREATE OR REPLACE FUNCTION public.get_next_invoice_no()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_seq BIGINT;
+BEGIN
+  v_seq := nextval('public.invoice_number_seq');
+  RETURN 'INV-' || to_char((now() AT TIME ZONE 'Asia/Jakarta')::DATE, 'YYMMDD') || '-' || lpad(v_seq::TEXT, 4, '0');
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.process_pos_checkout(
   p_items JSONB,
   p_common JSONB
@@ -673,6 +694,7 @@ DECLARE
   v_cost_price NUMERIC;
   v_item_note TEXT;
   v_invoice_no TEXT;
+  v_seq BIGINT;
   v_current_stock NUMERIC;
   v_prod_name TEXT;
   v_prod_sku TEXT;
@@ -693,7 +715,12 @@ BEGIN
     RAISE EXCEPTION 'Keranjang belanja kasir kosong' USING ERRCODE = '22023';
   END IF;
 
-  v_invoice_no := COALESCE(p_common->>'invoice_no', 'INV-' || to_char(now(), 'YYMMDD') || '-' || floor(random() * 9000 + 1000)::TEXT);
+  v_invoice_no := NULLIF(trim(p_common->>'invoice_no'), '');
+  IF v_invoice_no IS NULL THEN
+    v_seq := nextval('public.invoice_number_seq');
+    v_invoice_no := 'INV-' || to_char((now() AT TIME ZONE 'Asia/Jakarta')::DATE, 'YYMMDD') || '-' || lpad(v_seq::TEXT, 4, '0');
+  END IF;
+
   v_channel := COALESCE(p_common->>'channel', 'Offline');
   v_customer_id := p_common->>'customer_id';
   v_payment_method := COALESCE(p_common->>'payment_method', 'Cash');
@@ -708,6 +735,7 @@ BEGIN
     IF EXISTS (SELECT 1 FROM public.transactions WHERE idempotency_key = v_idempotency_key) THEN
       RETURN jsonb_build_object(
         'success', true,
+        'ok', true,
         'idempotent_replay', true,
         'invoice_no', v_invoice_no,
         'message', 'Transaksi sudah diproses sebelumnya (Idempotent Replay)'
@@ -762,6 +790,7 @@ BEGIN
 
   RETURN jsonb_build_object(
     'success', true,
+    'ok', true,
     'invoice_no', v_invoice_no,
     'total_amount', v_total_amount,
     'items_count', jsonb_array_length(p_items),

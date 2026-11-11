@@ -1691,7 +1691,7 @@
 
     if (txIdOrBatch && typeof txIdOrBatch === 'object') {
       // Direct batch payload from POS checkout
-      invoiceNo = txIdOrBatch.invoice_no || `INV-${Date.now()}`;
+      invoiceNo = txIdOrBatch.invoice_no || '-';
       trackingNote = String(txIdOrBatch.note || txIdOrBatch.tracking_number || '').trim();
       dateStr = formatTxDate(txIdOrBatch.date || new Date().toISOString());
       customerName = txIdOrBatch.customer || 'Umum';
@@ -1740,14 +1740,18 @@
 
       // Check if this transaction belongs to an invoice batch [INV-...]
       const invMatch = tx.note ? tx.note.match(/\[(INV-[^\]]+)\]/) : null;
-      const invCode = invMatch ? invMatch[1] : null;
+      const invCode = tx.invoice_no || (invMatch ? invMatch[1] : null);
       trackingNote = String(tx.note || tx.notes || '')
         .replace(/\[(?:INV-[^\]]+)\]\s*/, '')
         .replace(/\|AQ_(?:DISCOUNT|TAX|TOTAL)=[^|]*/g, '')
         .trim();
 
       if (invCode) {
-        const siblingTxs = allOutTransactions.filter(t => t.note && t.note.includes(`[${invCode}]`));
+        const siblingTxs = allOutTransactions.filter(t =>
+          (t.invoice_no && t.invoice_no === invCode) ||
+          (t.note && t.note.includes(`[${invCode}]`)) ||
+          (t.notes && t.notes.includes(`[${invCode}]`))
+        );
         invoiceNo = invCode;
         dateStr = formatTxDate(tx.created_at);
         customerName = tx.customers?.name || 'Umum';
