@@ -154,14 +154,34 @@
         if (window.supabase) {
           const userObj = res.data?.user || (await window.supabase.auth.getUser())?.data?.user;
           if (userObj) {
-            const userName = userObj.user_metadata?.full_name || (userObj.email ? userObj.email.split('@')[0] : 'David');
+            let userRole = userObj.user_metadata?.role || null;
+            let userName = userObj.user_metadata?.full_name || (userObj.email ? userObj.email.split('@')[0] : 'User');
+
+            // Ambil role & nama aktual dari tabel profiles Supabase
+            try {
+              const { data: prof } = await window.supabase
+                .from('profiles')
+                .select('role, full_name, name')
+                .eq('id', userObj.id)
+                .maybeSingle();
+              if (prof?.role) userRole = prof.role.toString().trim().toUpperCase();
+              if (prof?.full_name || prof?.name) userName = prof.full_name || prof.name;
+            } catch (_) {}
+
+            userRole = userRole || 'STAFF';
+
             try {
               localStorage.setItem('auth_user', JSON.stringify({
                 id: userObj.id,
                 email: userObj.email,
                 full_name: userName,
                 name: userName,
-                role: userObj.user_metadata?.role || 'OWNER'
+                role: userRole
+              }));
+              sessionStorage.setItem('rbac_user_role', JSON.stringify({
+                role: userRole,
+                userId: userObj.id,
+                timestamp: Date.now()
               }));
             } catch (_) {}
           }

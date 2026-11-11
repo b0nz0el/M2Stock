@@ -6451,6 +6451,59 @@
     </div>
   </div>
 
+  <!-- =========================== MODAL (USERS: modal-reset-password) =========================== -->
+  <div id="modal-reset-password"
+    class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"
+    role="dialog" aria-modal="true" aria-labelledby="modal-reset-password-title"
+    onclick="if (event.target === this) closeResetPasswordModal()">
+    <div class="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#FF9500]/15 grid place-items-center text-[#FF9500]">
+            <i data-lucide="key" class="w-5 h-5" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h3 id="modal-reset-password-title" class="text-lg font-bold text-white">Reset Password Pengguna</h3>
+            <p class="text-xs text-[#A0A0A5] mt-0.5">Atur password baru untuk akun staf / pengguna</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeResetPasswordModal()" aria-label="Tutup modal"
+          class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <form id="form-reset-password" class="space-y-4" onsubmit="handleSaveResetPassword(event)">
+        <input type="hidden" id="reset-target-user-id">
+
+        <div>
+          <label class="block text-xs font-medium text-[#A0A0A5] mb-1">Email Pengguna</label>
+          <input type="email" id="reset-target-user-email" readonly=""
+            class="w-full bg-black/40 border border-white/5 rounded-xl px-3.5 py-2.5 text-sm text-[#A0A0A5] focus:outline-none cursor-not-allowed font-mono">
+        </div>
+
+        <div>
+          <label for="reset-new-password" class="block text-xs font-medium text-[#A0A0A5] mb-1.5">Password Baru <span
+              class="text-[#FF3B30]">*</span></label>
+          <input type="password" id="reset-new-password" required="" minlength="8" placeholder="Minimal 8 karakter"
+            autocomplete="new-password"
+            class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#0088CC] focus:outline-none">
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+          <button type="button" onclick="closeResetPasswordModal()"
+            class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 text-[#A0A0A5] hover:text-white transition">
+            Batal
+          </button>
+          <button type="submit" id="btn-submit-reset-password"
+            class="bg-[#FF9500] hover:bg-[#E08500] px-5 py-2 rounded-xl text-sm font-semibold text-black flex items-center gap-2 shadow-lg shadow-[#FF9500]/20 transition">
+            <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Simpan Password Baru
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- =========================== MODAL (USERS: modal-delete-user) =========================== -->
   <div id="modal-delete-user"
     class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"

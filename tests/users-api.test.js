@@ -154,4 +154,50 @@ describe('Api.users.create & user management', () => {
       target_user_id: 'usr-to-delete'
     });
   });
+
+  describe('resetPassword', () => {
+    it('validates missing targetUserId or password', async () => {
+      const res1 = await users.resetPassword('', 'Password123!');
+      expect(res1.ok).toBe(false);
+      expect(res1.error.code).toBe('VALIDATION_ERROR');
+
+      const res2 = await users.resetPassword('usr-1', '');
+      expect(res2.ok).toBe(false);
+      expect(res2.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('validates password length under 8 characters', async () => {
+      const res = await users.resetPassword('usr-1', 'short');
+      expect(res.ok).toBe(false);
+      expect(res.error.code).toBe('VALIDATION_ERROR');
+      expect(res.error.message).toContain('minimal 8 karakter');
+    });
+
+    it('calls admin_reset_password RPC when available', async () => {
+      window.supabase.rpc.mockResolvedValueOnce({
+        data: { success: true, user_id: 'usr-123' },
+        error: null
+      });
+
+      const res = await users.resetPassword('usr-123', 'NewSecret123!');
+      expect(res.ok).toBe(true);
+      expect(window.supabase.rpc).toHaveBeenCalledWith('admin_reset_password', {
+        target_user_id: 'usr-123',
+        new_password: 'NewSecret123!'
+      });
+      expect(res.meta.message).toContain('berhasil direset');
+    });
+
+    it('handles RPC error properly', async () => {
+      window.supabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: { code: 'P0001', message: 'Hanya OWNER yang dapat mereset password pengguna' }
+      });
+
+      const res = await users.resetPassword('usr-123', 'NewSecret123!');
+      expect(res.ok).toBe(false);
+      expect(res.error.code).toBe('P0001');
+      expect(res.error.message).toContain('Hanya OWNER');
+    });
+  });
 });

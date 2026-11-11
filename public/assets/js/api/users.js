@@ -85,6 +85,48 @@ export const users = {
       }
       return apiRequest(`/system/users/${targetUserId}/role`, { method: 'PUT', body: { role: normalizedRole }, ...opts });
     },
+    resetPassword: async (targetUserId, newPassword, opts) => {
+      if (!targetUserId || !newPassword) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'VALIDATION_ERROR', message: 'ID pengguna dan password baru wajib diisi' }
+        });
+      }
+      if (newPassword.length < 8) {
+        return formatResponse({
+          ok: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Password minimal 8 karakter' }
+        });
+      }
+
+      if (isSupabaseAvailable()) {
+        try {
+          const { data, error } = await window.supabase.rpc('admin_reset_password', {
+            target_user_id: targetUserId,
+            new_password: newPassword
+          });
+          if (error) {
+            return formatResponse({
+              ok: false,
+              error: { code: error.code || 'RESET_PW_ERROR', message: error.message }
+            });
+          }
+          return formatResponse({
+            ok: true,
+            data: data || { success: true },
+            meta: { message: 'Password pengguna berhasil direset' }
+          });
+        } catch (err) {
+          return handleError(err);
+        }
+      }
+
+      return apiRequest(`/system/users/${targetUserId}/password`, {
+        method: 'POST',
+        body: { password: newPassword },
+        ...opts
+      });
+    },
     delete: async (targetUserId, opts) => {
       if (!targetUserId) {
         return formatResponse({ ok: false, error: { message: 'ID pengguna tidak valid' } });

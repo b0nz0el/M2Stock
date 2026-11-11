@@ -476,14 +476,18 @@ DECLARE
   user_count INTEGER;
   assigned_role TEXT;
   user_name TEXT;
+  meta_role TEXT;
 BEGIN
   SELECT COUNT(*) INTO user_count FROM public.profiles;
 
-  -- Akun pertama otomatis menjadi OWNER, berikutnya VIEWER
+  meta_role := UPPER(TRIM(COALESCE(NEW.raw_user_meta_data->>'role', '')));
+
   IF user_count = 0 THEN
     assigned_role := 'OWNER';
+  ELSIF meta_role IN ('OWNER', 'STAFF', 'VIEWER') THEN
+    assigned_role := meta_role;
   ELSE
-    assigned_role := 'VIEWER';
+    assigned_role := 'STAFF';
   END IF;
 
   user_name := COALESCE(
@@ -497,7 +501,11 @@ BEGIN
   ON CONFLICT (id) DO UPDATE
   SET name = EXCLUDED.name,
       full_name = COALESCE(EXCLUDED.full_name, EXCLUDED.name),
-      email = COALESCE(EXCLUDED.email, profiles.email);
+      email = COALESCE(EXCLUDED.email, profiles.email),
+      role = CASE 
+               WHEN public.profiles.role IS NULL THEN EXCLUDED.role 
+               ELSE public.profiles.role 
+             END;
 
   RETURN NEW;
 END;
@@ -507,6 +515,22 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Trigger: Auto-Confirm User Baru (Bypass Email Confirmation Lock)
+CREATE OR REPLACE FUNCTION public.auto_confirm_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.email_confirmed_at := COALESCE(NEW.email_confirmed_at, now());
+  NEW.confirmed_at := COALESCE(NEW.confirmed_at, now());
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_auto_confirm_new_user ON auth.users;
+CREATE TRIGGER trg_auto_confirm_new_user
+  BEFORE INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.auto_confirm_new_user();
 
 -- 7.4 Trigger: Sinkronisasi Kolom Transaksi Bi-Directional (qty/quantity, price/unit_price, note/notes)
 CREATE OR REPLACE FUNCTION public.sync_transaction_columns()
@@ -981,6 +1005,197 @@ BEGIN
   WHERE id = target_user_id;
 END;
 $$;
+
+-- 7.9.1 RPC: admin_create_user (Buat Pengguna Baru oleh OWNER)
+CREATE OR REPLACE FUNCTION public.admin_create_user(
+  new_email TEXT,
+  new_password TEXT,
+  new_role TEXT,
+  new_full_name TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+#variable_conflict use_column
+DECLARE
+  calling_role TEXT;
+  new_user_id UUID := gen_random_uuid();
+  encrypted_pw TEXT;
+  normalized_role TEXT := UPPER(TRIM(COALESCE(new_role, 'STAFF')));
+  clean_email TEXT := LOWER(TRIM(new_email));
+  clean_name TEXT := TRIM(COALESCE(new_full_name, ''));
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Akses ditolak: Pengguna belum login.' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT UPPER(profiles.role) INTO calling_role
+  FROM public.profiles WHERE profiles.id = auth.uid();
+
+  IF calling_role <> 'OWNER' THEN
+    RAISE EXCEPTION 'Akses ditolak: Hanya role OWNER yang berhak membuat user baru.' USING ERRCODE = '42501';
+  END IF;
+
+  IF clean_email IS NULL OR clean_email = '' OR clean_email NOT LIKE '%@%.%' THEN
+    RAISE EXCEPTION 'Format email tidak valid.' USING ERRCODE = '23514';
+  END IF;
+
+  IF new_password IS NULL OR length(new_password) < 8 THEN
+    RAISE EXCEPTION 'Password minimal 8 karakter.' USING ERRCODE = '23514';
+  END IF;
+
+  IF normalized_role NOT IN ('OWNER', 'STAFF', 'VIEWER') THEN
+    normalized_role := 'STAFF';
+  END IF;
+
+  IF clean_name = '' THEN
+    clean_name := split_part(clean_email, '@', 1);
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM auth.users WHERE LOWER(email) = clean_email) THEN
+    RAISE EXCEPTION 'Email "%" sudah terdaftar di sistem.', clean_email USING ERRCODE = '23505';
+  END IF;
+
+  encrypted_pw := crypt(new_password, gen_salt('bf'));
+
+  INSERT INTO auth.users (
+    instance_id, id, aud, role, email, encrypted_password,
+    email_confirmed_at, confirmed_at, raw_app_meta_data, raw_user_meta_data,
+    created_at, updated_at, confirmation_token, recovery_token,
+    email_change_token_new, email_change
+  ) VALUES (
+    '00000000-0000-0000-0000-000000000000'::uuid, new_user_id, 'authenticated', 'authenticated',
+    clean_email, encrypted_pw, now(), now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    jsonb_build_object('full_name', clean_name, 'name', clean_name, 'role', normalized_role),
+    now(), now(), '', '', '', ''
+  );
+
+  DELETE FROM auth.identities WHERE user_id = new_user_id AND provider = 'email';
+  INSERT INTO auth.identities (
+    id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+  ) VALUES (
+    new_user_id::text, new_user_id,
+    jsonb_build_object('sub', new_user_id::text, 'email', clean_email),
+    'email', new_user_id::text, now(), now(), now()
+  );
+
+  INSERT INTO public.profiles (id, name, full_name, email, role, created_at, updated_at)
+  VALUES (new_user_id, clean_name, clean_name, clean_email, normalized_role, now(), now())
+  ON CONFLICT (id) DO UPDATE
+  SET role = normalized_role, name = clean_name, full_name = clean_name, email = clean_email, updated_at = now();
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'user_id', new_user_id,
+    'email', clean_email,
+    'role', normalized_role,
+    'full_name', clean_name
+  );
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_create_user(TEXT, TEXT, TEXT, TEXT) TO authenticated;
+
+-- 7.9.2 RPC: admin_reset_password (Reset Password Pengguna khusus OWNER)
+CREATE OR REPLACE FUNCTION public.admin_reset_password(
+  target_user_id UUID,
+  new_password TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+#variable_conflict use_column
+DECLARE
+  calling_role TEXT;
+  encrypted_pw TEXT;
+  target_email TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Akses ditolak: Pengguna belum login.' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT UPPER(profiles.role) INTO calling_role
+  FROM public.profiles WHERE profiles.id = auth.uid();
+
+  IF calling_role <> 'OWNER' THEN
+    RAISE EXCEPTION 'Akses ditolak: Hanya OWNER yang berhak mereset password pengguna.' USING ERRCODE = '42501';
+  END IF;
+
+  IF new_password IS NULL OR length(new_password) < 8 THEN
+    RAISE EXCEPTION 'Password minimal 8 karakter.' USING ERRCODE = '23514';
+  END IF;
+
+  SELECT email INTO target_email FROM auth.users WHERE id = target_user_id;
+  IF target_email IS NULL THEN
+    RAISE EXCEPTION 'Pengguna dengan ID % tidak ditemukan.', target_user_id USING ERRCODE = 'P0002';
+  END IF;
+
+  encrypted_pw := crypt(new_password, gen_salt('bf'));
+
+  UPDATE auth.users
+  SET encrypted_password = encrypted_pw,
+      email_confirmed_at = COALESCE(email_confirmed_at, now()),
+      confirmed_at = COALESCE(confirmed_at, now()),
+      updated_at = now()
+  WHERE id = target_user_id;
+
+  DELETE FROM auth.identities WHERE user_id = target_user_id AND provider = 'email';
+  INSERT INTO auth.identities (
+    id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+  ) VALUES (
+    target_user_id::text, target_user_id,
+    jsonb_build_object('sub', target_user_id::text, 'email', lower(target_email)),
+    'email', target_user_id::text, now(), now(), now()
+  );
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'user_id', target_user_id,
+    'email', target_email,
+    'message', 'Password berhasil direset'
+  );
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_reset_password(UUID, TEXT) TO authenticated;
+
+-- 7.9.3 RPC: admin_delete_user (Hapus Pengguna khusus OWNER)
+CREATE OR REPLACE FUNCTION public.admin_delete_user(target_user_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+#variable_conflict use_column
+DECLARE
+  calling_role TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Akses ditolak: Pengguna belum login.' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT UPPER(profiles.role) INTO calling_role
+  FROM public.profiles WHERE profiles.id = auth.uid();
+
+  IF calling_role <> 'OWNER' THEN
+    RAISE EXCEPTION 'Akses ditolak: Hanya OWNER yang berhak menghapus user.' USING ERRCODE = '42501';
+  END IF;
+
+  IF auth.uid() = target_user_id THEN
+    RAISE EXCEPTION 'Tidak dapat menghapus akun sendiri.' USING ERRCODE = '23514';
+  END IF;
+
+  DELETE FROM public.profiles WHERE id = target_user_id;
+  DELETE FROM auth.identities WHERE user_id = target_user_id;
+  DELETE FROM auth.users WHERE id = target_user_id;
+
+  RETURN jsonb_build_object('success', true, 'user_id', target_user_id);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_delete_user(UUID) TO authenticated;
 
 -- 7.10 RPC: create_purchase_order_atomic (Buat PO Beserta Item-nya Secara Atomik)
 CREATE OR REPLACE FUNCTION public.create_purchase_order_atomic(

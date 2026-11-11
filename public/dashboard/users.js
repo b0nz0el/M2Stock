@@ -135,6 +135,9 @@ function renderUsers() {
         <td class="px-5 py-3.5 text-right">
           ${isOwner ? `
             <div class="flex items-center justify-end gap-1.5">
+              <button onclick="openResetPasswordModal('${escapeHtml(u.id)}', '${escapeHtml(u.email || '')}')" title="Reset Password" aria-label="Reset Password ${escapeHtml(u.email || '')}" class="btn-reset-pw p-1.5 hover:bg-white/10 rounded-lg text-[#FF9500] transition">
+                <i data-lucide="key" class="w-4 h-4" aria-hidden="true"></i>
+              </button>
               <button onclick="openRoleModal('${escapeHtml(u.id)}')" title="Edit Role" aria-label="Edit Role ${escapeHtml(u.email)}" class="btn-edit-role p-1.5 hover:bg-white/10 rounded-lg text-[#32ADE6] transition">
                 <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
               </button>
@@ -230,6 +233,94 @@ async function handleSaveRole(e) {
     btn.disabled = false;
     btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simpan Role`;
     if (window.lucide) lucide.createIcons();
+  }
+}
+
+function openResetPasswordModal(userId, userEmail) {
+  let roleCheck = String(currentUserRole || '').toUpperCase();
+  if (roleCheck !== 'OWNER') {
+    showToast('Hanya OWNER yang dapat mereset password pengguna', 'error');
+    return;
+  }
+
+  const user = usersData.find(u => u.id === userId) || { id: userId, email: userEmail };
+  if (!user || !user.id) return;
+
+  const targetIdEl = document.getElementById('reset-target-user-id');
+  const targetEmailEl = document.getElementById('reset-target-user-email');
+  const newPwEl = document.getElementById('reset-new-password');
+
+  if (targetIdEl) targetIdEl.value = user.id;
+  if (targetEmailEl) targetEmailEl.value = user.email || userEmail || '';
+  if (newPwEl) {
+    newPwEl.value = '';
+    setTimeout(() => newPwEl.focus(), 50);
+  }
+
+  const modal = document.getElementById('modal-reset-password');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeResetPasswordModal() {
+  const modal = document.getElementById('modal-reset-password');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function handleSaveResetPassword(e) {
+  e.preventDefault();
+  let roleCheck = String(currentUserRole || '').toUpperCase();
+  if (roleCheck !== 'OWNER') {
+    showToast('Hanya OWNER yang dapat mereset password pengguna', 'error');
+    return;
+  }
+
+  const userId = document.getElementById('reset-target-user-id')?.value;
+  const userEmail = document.getElementById('reset-target-user-email')?.value || 'user';
+  const newPassword = document.getElementById('reset-new-password')?.value;
+
+  if (!userId || !newPassword) {
+    showToast('User ID dan password baru wajib diisi', 'error');
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    showToast('Password minimal 8 karakter', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-submit-reset-password');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  try {
+    const res = await Api.users.resetPassword(userId, newPassword);
+    if (!res.ok) {
+      showToast(res.error?.message || 'Gagal mereset password', 'error');
+      return;
+    }
+
+    showToast(`Password untuk ${userEmail} berhasil diperbarui`, 'success');
+    closeResetPasswordModal();
+    const form = document.getElementById('form-reset-password');
+    if (form) form.reset();
+  } catch (err) {
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml || `<i data-lucide="check" class="w-4 h-4"></i> Simpan Password Baru`;
+      if (window.lucide) lucide.createIcons();
+    }
   }
 }
 
@@ -430,6 +521,9 @@ window.handleSaveRole = handleSaveRole;
 window.openDeleteUserModal = openDeleteUserModal;
 window.closeDeleteUserModal = closeDeleteUserModal;
 window.confirmDeleteUser = confirmDeleteUser;
+window.openResetPasswordModal = openResetPasswordModal;
+window.closeResetPasswordModal = closeResetPasswordModal;
+window.handleSaveResetPassword = handleSaveResetPassword;
 window.handleSearch = handleSearch;
 window.handleSearchUsers = handleSearch;
 window.initUsers = loadUsers;
@@ -439,6 +533,7 @@ document.addEventListener('keydown', (e) => {
     closeCreateUserModal();
     closeRoleModal();
     closeDeleteUserModal();
+    closeResetPasswordModal();
   }
 });
 
