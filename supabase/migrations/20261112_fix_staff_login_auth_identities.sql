@@ -163,7 +163,7 @@ BEGIN
     ''
   );
 
-  -- F. Insert identitas auth (Kritis: id dan provider_id wajib new_user_id::text)
+  -- F. Insert identitas auth (Kritis: provider_id wajib new_user_id::text)
   DELETE FROM auth.identities WHERE user_id = new_user_id AND provider = 'email';
   INSERT INTO auth.identities (
     id,
@@ -175,7 +175,7 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    new_user_id::text,
+    gen_random_uuid(),
     new_user_id,
     jsonb_build_object('sub', new_user_id::text, 'email', clean_email),
     'email',
@@ -271,7 +271,7 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    target_user_id::text,
+    gen_random_uuid(),
     target_user_id,
     jsonb_build_object('sub', target_user_id::text, 'email', lower(target_email)),
     'email',
@@ -297,21 +297,20 @@ GRANT EXECUTE ON FUNCTION public.admin_reset_password(UUID, TEXT) TO authenticat
 -- 5. AUTO-REPAIR DATA STAF & PENGGUNA LAMA (One-Click Repair)
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- 5.1 Pastikan semua akun di auth.users terkonfirmasi (tidak tertahan email confirmation)
+-- 5.1 Konfirmasi semua akun yang tertahan email verification (hanya update email_confirmed_at)
 UPDATE auth.users
 SET email_confirmed_at = COALESCE(email_confirmed_at, now())
 WHERE email_confirmed_at IS NULL;
 
--- 5.2 Perbaiki record auth.identities lama yang provider_id atau id-nya salah
+-- 5.2 Perbaiki record auth.identities lama yang provider_id tidak sesuai
 UPDATE auth.identities
-SET id = user_id::text,
-    provider_id = user_id::text,
+SET provider_id = user_id::text,
     identity_data = jsonb_build_object('sub', user_id::text, 'email', lower(users.email)),
     updated_at = now()
 FROM auth.users users
 WHERE auth.identities.user_id = users.id
   AND auth.identities.provider = 'email'
-  AND (auth.identities.provider_id <> user_id::text OR auth.identities.id <> user_id::text);
+  AND (auth.identities.provider_id IS NULL OR auth.identities.provider_id <> user_id::text);
 
 -- 5.3 Buat record auth.identities bagi user yang belum memilikinya
 INSERT INTO auth.identities (
@@ -325,7 +324,7 @@ INSERT INTO auth.identities (
   updated_at
 )
 SELECT
-  u.id::text,
+  gen_random_uuid(),
   u.id,
   jsonb_build_object('sub', u.id::text, 'email', lower(u.email)),
   'email',

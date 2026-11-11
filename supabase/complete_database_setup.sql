@@ -1076,7 +1076,7 @@ BEGIN
   INSERT INTO auth.identities (
     id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
   ) VALUES (
-    new_user_id::text, new_user_id,
+    gen_random_uuid(), new_user_id,
     jsonb_build_object('sub', new_user_id::text, 'email', clean_email),
     'email', new_user_id::text, now(), now(), now()
   );
@@ -1145,7 +1145,7 @@ BEGIN
   INSERT INTO auth.identities (
     id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
   ) VALUES (
-    target_user_id::text, target_user_id,
+    gen_random_uuid(), target_user_id,
     jsonb_build_object('sub', target_user_id::text, 'email', lower(target_email)),
     'email', target_user_id::text, now(), now(), now()
   );
