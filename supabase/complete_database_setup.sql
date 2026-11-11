@@ -1057,7 +1057,7 @@ BEGIN
     RAISE EXCEPTION 'Email "%" sudah terdaftar di sistem.', clean_email USING ERRCODE = '23505';
   END IF;
 
-  encrypted_pw := crypt(new_password, gen_salt('bf'));
+  encrypted_pw := crypt(new_password, gen_salt('bf', 10));
 
   INSERT INTO auth.users (
     instance_id, id, aud, role, email, encrypted_password,
@@ -1133,7 +1133,7 @@ BEGIN
     RAISE EXCEPTION 'Pengguna dengan ID % tidak ditemukan.', target_user_id USING ERRCODE = 'P0002';
   END IF;
 
-  encrypted_pw := crypt(new_password, gen_salt('bf'));
+  encrypted_pw := crypt(new_password, gen_salt('bf', 10));
 
   UPDATE auth.users
   SET encrypted_password = encrypted_pw,

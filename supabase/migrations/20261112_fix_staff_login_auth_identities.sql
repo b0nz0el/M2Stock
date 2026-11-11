@@ -126,7 +126,7 @@ BEGIN
   END IF;
 
   -- D. Hash password dengan bcrypt
-  encrypted_pw := crypt(new_password, gen_salt('bf'));
+  encrypted_pw := crypt(new_password, gen_salt('bf', 10));
 
   -- E. Insert akun ke auth.users (langsung terkonfirmasi)
   INSERT INTO auth.users (
@@ -250,7 +250,7 @@ BEGIN
   END IF;
 
   -- D. Hash password baru dengan bcrypt
-  encrypted_pw := crypt(new_password, gen_salt('bf'));
+  encrypted_pw := crypt(new_password, gen_salt('bf', 10));
 
   -- E. Update password di auth.users & pastikan status email confirmed
   UPDATE auth.users
@@ -296,6 +296,32 @@ GRANT EXECUTE ON FUNCTION public.admin_reset_password(UUID, TEXT) TO authenticat
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. AUTO-REPAIR DATA STAF & PENGGUNA LAMA (One-Click Repair)
 -- ─────────────────────────────────────────────────────────────────────────────
+
+-- 5.0 Bersihkan seluruh kolom NULL token string di auth.users (Mencegah "Database error querying schema")
+DO $$
+DECLARE
+  col TEXT;
+BEGIN
+  FOR col IN 
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'auth' 
+      AND table_name = 'users' 
+      AND data_type IN ('text', 'character varying')
+      AND column_name IN (
+        'confirmation_token', 
+        'recovery_token', 
+        'email_change', 
+        'email_change_token_new', 
+        'email_change_token_current',
+        'phone_change',
+        'phone_change_token',
+        'reauthentication_token'
+      )
+  LOOP
+    EXECUTE format('UPDATE auth.users SET %I = '''' WHERE %I IS NULL', col, col);
+  END LOOP;
+END $$;
 
 -- 5.1 Konfirmasi semua akun yang tertahan email verification (hanya update email_confirmed_at)
 UPDATE auth.users
