@@ -64,19 +64,22 @@ function getTransactionCode(tx) {
   const note = String(tx.note || tx.notes || '');
   const invMatch = note.match(/\[(INV-[^\]]+)\]/i);
   if (invMatch) return invMatch[1];
+  const inMatch = note.match(/\[(IN-[^\]]+)\]/i);
+  if (inMatch) return inMatch[1];
   const spxMatch = note.match(/\[(SPX-[^\]]+)\]/i);
   if (spxMatch) return spxMatch[1];
   const tkpMatch = note.match(/\[(TKP-[^\]]+)\]/i);
   if (tkpMatch) return tkpMatch[1];
-  if (note && (note.includes('SPX-') || note.includes('INV-') || note.includes('TKP-'))) {
+  if (note && (note.includes('SPX-') || note.includes('INV-') || note.includes('IN-') || note.includes('TKP-'))) {
     const firstWord = note.split(' ')[0].replace(/^[\[\(]+|[\]\)]+$/g, '');
     if (firstWord) return firstWord;
   }
+  const prefix = (tx.type === 'in') ? 'IN' : 'OUT';
   const rawId = String(tx.id || '').trim();
   if (rawId.includes('-')) {
-    return `OUT-${rawId.split('-')[0].toUpperCase()}`;
+    return `${prefix}-${rawId.split('-')[0].toUpperCase()}`;
   }
-  return `OUT-${rawId.padStart(6, '0')}`;
+  return `${prefix}-${rawId.padStart(6, '0')}`;
 }
 
 function getTransactionNetTotal(tx, list = []) {

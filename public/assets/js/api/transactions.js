@@ -27,7 +27,7 @@ function mapTransaction(row) {
   const created_by = row.created_by ?? row.user_id ?? null;
   const noteStr = String(note || '');
 
-  const invoice_no = row.invoice_no || ((noteStr.match(/\[((?:INV|SPX|TKP)-[^\]]+)\]/i) || [])[1]) || null;
+  const invoice_no = row.invoice_no || ((noteStr.match(/\[((?:INV|IN|SPX|TKP)-[^\]]+)\]/i) || [])[1]) || null;
   const discount_amount = Number(row.discount_amount ?? (noteStr.match(/\|AQ_DISCOUNT=([0-9.]+)/) || [])[1]) || 0;
   const tax_amount = Number(row.tax_amount ?? (noteStr.match(/\|AQ_TAX=([0-9.]+)/) || [])[1]) || 0;
   const final_total = Number(row.final_total ?? (noteStr.match(/\|AQ_TOTAL=([0-9.]+)/) || [])[1]) || (Number(row.total_price) > 0 ? Number(row.total_price) : (qty * price));
@@ -82,10 +82,40 @@ export function getNextSequentialInvoiceNo(existingList = [], txDate = new Date(
   return formatSequentialInvoiceNo(maxSeq + 1, txDate);
 }
 
+export function extractStockInSequence(str) {
+  if (!str || typeof str !== 'string') return 0;
+  const m = str.match(/IN-\d{6}-(\d+)/i);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+export function formatSequentialStockInNo(seqNumber, txDate = new Date()) {
+  const d = txDate instanceof Date ? txDate : new Date(txDate);
+  const yy = String(d.getFullYear()).slice(-2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const seqStr = String(Math.max(1, Number(seqNumber) || 1)).padStart(4, '0');
+  return `IN-${yy}${mm}${dd}-${seqStr}`;
+}
+
+export function getNextSequentialStockInNo(existingList = [], txDate = new Date()) {
+  let maxSeq = 0;
+  if (Array.isArray(existingList)) {
+    for (const item of existingList) {
+      const code = item?.invoice_no || item?.note || item?.notes || '';
+      const seq = extractStockInSequence(code);
+      if (seq > maxSeq) maxSeq = seq;
+    }
+  }
+  return formatSequentialStockInNo(maxSeq + 1, txDate);
+}
+
 export const transactions = {
   extractInvoiceSequence,
   formatSequentialInvoiceNo,
   getNextSequentialInvoiceNo,
+  extractStockInSequence,
+  formatSequentialStockInNo,
+  getNextSequentialStockInNo,
     getAll: async (params, opts) => {
       if (isSupabaseAvailable()) {
         try {

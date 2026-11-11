@@ -99,9 +99,25 @@
     return `${day} ${m} ${hh}:${mm}`;
   }
 
-  function formatTxCode(id, prefix = 'IN') {
-    if (!id) return `${prefix}-000000`;
-    const str = String(id).trim();
+  function formatTxCode(txOrId, prefix = 'IN') {
+    if (!txOrId) return `${prefix}-000000`;
+    if (typeof txOrId === 'object') {
+      if (txOrId.invoice_no) return txOrId.invoice_no;
+      const note = String(txOrId.note || txOrId.notes || '');
+      const inMatch = note.match(/\[(IN-[^\]]+)\]/i);
+      if (inMatch) return inMatch[1];
+      const invMatch = note.match(/\[(INV-[^\]]+)\]/i);
+      if (invMatch) return invMatch[1];
+      const idStr = String(txOrId.id || '').trim();
+      if (idStr.includes('-')) {
+        return `${prefix}-${idStr.split('-')[0].toUpperCase()}`;
+      }
+      return `${prefix}-${idStr.padStart(6, '0')}`;
+    }
+    const str = String(txOrId).trim();
+    if (str.startsWith('IN-') || str.startsWith('INV-')) {
+      return str;
+    }
     if (str.includes('-')) {
       return `${prefix}-${str.split('-')[0].toUpperCase()}`;
     }
@@ -1384,7 +1400,7 @@
 
       if (searchQuery) {
         const fullId = String(tx.id || '').toLowerCase();
-        const code = formatTxCode(tx.id, 'IN').toLowerCase();
+        const code = formatTxCode(tx, 'IN').toLowerCase();
         const fullCode = `in-${fullId}`;
         const prodName = resolveProductName(tx).toLowerCase();
         const supName = (tx.suppliers?.name || 'umum').toLowerCase();
@@ -1436,7 +1452,7 @@
     const paged = filtered.slice(startIdx, startIdx + pageSize);
 
     tbody.innerHTML = paged.map(tx => {
-      const code = formatTxCode(tx.id, 'IN');
+      const code = formatTxCode(tx, 'IN');
       const dateStr = formatTxDate(tx.created_at);
       const prodName = resolveProductName(tx);
       const supName = tx.suppliers?.name || 'Umum';
@@ -1503,7 +1519,7 @@
 
     const headers = ['No. Transaksi', 'Tanggal', 'Nama Barang', 'Supplier', 'Kasir', 'Jumlah', 'Harga (Rp)', 'Total (Rp)', 'Catatan'];
     const rows = allInTransactions.map(tx => {
-      const code = formatTxCode(tx.id, 'IN');
+      const code = formatTxCode(tx, 'IN');
       const dateStr = formatTxDate(tx.created_at);
       const prodName = resolveProductName(tx);
       const supName = tx.suppliers?.name || 'Umum';

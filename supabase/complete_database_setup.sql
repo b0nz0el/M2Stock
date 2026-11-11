@@ -540,6 +540,22 @@ BEGIN
     NEW.user_id := NEW.created_by;
   END IF;
 
+  -- Auto extract invoice_no from notes if missing
+  IF NEW.invoice_no IS NULL OR trim(NEW.invoice_no) = '' THEN
+    NEW.invoice_no := (regexp_match(COALESCE(NEW.note, NEW.notes, ''), '\[((?:INV|IN|SPX|TKP)-[^\]]+)\]'))[1];
+  END IF;
+
+  -- Auto assign sequential number for 'in' transactions if still missing
+  IF NEW.type = 'in' AND (NEW.invoice_no IS NULL OR trim(NEW.invoice_no) = '') THEN
+    NEW.invoice_no := 'IN-' || to_char((COALESCE(NEW.created_at, now()) AT TIME ZONE 'Asia/Jakarta')::DATE, 'YYMMDD') || '-' || lpad(nextval('public.stock_in_number_seq')::TEXT, 4, '0');
+    IF NEW.note IS NULL OR trim(NEW.note) = '' THEN
+      NEW.note := '[' || NEW.invoice_no || ']';
+    ELSIF NEW.note NOT LIKE '%[' || NEW.invoice_no || ']%' THEN
+      NEW.note := '[' || NEW.invoice_no || '] ' || NEW.note;
+    END IF;
+    NEW.notes := NEW.note;
+  END IF;
+
   -- Hitung total_price otomatis jika belum diisi
   IF NEW.total_price IS NULL OR NEW.total_price = 0 THEN
     NEW.total_price := COALESCE(NEW.quantity, NEW.qty, 0) * COALESCE(NEW.unit_price, NEW.price, 0);
@@ -655,7 +671,28 @@ CREATE TRIGGER trg_transaction_stock_update
   AFTER INSERT OR DELETE ON public.transactions
   FOR EACH ROW EXECUTE FUNCTION public.handle_transaction_stock_update();
 
--- 7.6 Sequence & RPC: invoice_number_seq & process_pos_checkout (Transaksi Kasir Atomik Multibarang)
+-- 7.6 Sequences & RPC: invoice_number_seq & stock_in_number_seq
+CREATE SEQUENCE IF NOT EXISTS public.stock_in_number_seq
+  START WITH 1
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+CREATE OR REPLACE FUNCTION public.get_next_stock_in_no()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_seq BIGINT;
+BEGIN
+  v_seq := nextval('public.stock_in_number_seq');
+  RETURN 'IN-' || to_char((now() AT TIME ZONE 'Asia/Jakarta')::DATE, 'YYMMDD') || '-' || lpad(v_seq::TEXT, 4, '0');
+END;
+$$;
+
 CREATE SEQUENCE IF NOT EXISTS public.invoice_number_seq
   START WITH 1
   INCREMENT BY 1
@@ -1024,6 +1061,8 @@ DECLARE
   v_user_role TEXT;
   v_po RECORD;
   v_item RECORD;
+  v_in_seq BIGINT;
+  v_in_no TEXT;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'Akses ditolak: Pengguna harus login' USING ERRCODE = '42501';
@@ -1043,21 +1082,25 @@ BEGIN
     RAISE EXCEPTION 'PO % sudah pernah diterima sebelumnya', v_po.no_po;
   END IF;
 
+  -- Alokasikan satu nomor transaksi IN- untuk seluruh item dalam PO ini
+  v_in_seq := nextval('public.stock_in_number_seq');
+  v_in_no := 'IN-' || to_char((now() AT TIME ZONE 'Asia/Jakarta')::DATE, 'YYMMDD') || '-' || lpad(v_in_seq::TEXT, 4, '0');
+
   FOR v_item IN SELECT * FROM public.purchase_order_items WHERE po_id = v_po.id
   LOOP
     INSERT INTO public.transactions (
       product_id, type, quantity, qty, unit_price, price, total_price, cost_price,
-      supplier_id, channel, reference_no, po_id, notes, note, user_id, created_by
+      supplier_id, channel, reference_no, po_id, invoice_no, notes, note, user_id, created_by
     ) VALUES (
       v_item.product_id, 'in', v_item.qty, v_item.qty, v_item.harga, v_item.harga, v_item.subtotal, v_item.harga,
-      v_po.supplier_id, 'PO', v_po.no_po, v_po.id,
-      'Penerimaan PO ' || v_po.no_po, 'Penerimaan PO ' || v_po.no_po, v_user_id, v_user_id
+      v_po.supplier_id, 'PO', v_po.no_po, v_po.id, v_in_no,
+      '[' || v_in_no || '] Penerimaan PO ' || v_po.no_po, '[' || v_in_no || '] Penerimaan PO ' || v_po.no_po, v_user_id, v_user_id
     );
   END LOOP;
 
   UPDATE public.purchase_orders SET status = 'diterima', updated_at = now() WHERE id = v_po.id;
 
-  RETURN jsonb_build_object('success', true, 'po_id', v_po.id, 'status', 'diterima');
+  RETURN jsonb_build_object('success', true, 'po_id', v_po.id, 'status', 'diterima', 'invoice_no', v_in_no);
 END;
 $$;
 
