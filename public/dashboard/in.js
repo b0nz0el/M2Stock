@@ -1467,7 +1467,7 @@
         <tr class="table-row border-b border-white/5 hover:bg-white/[0.02] transition">
           <td class="px-4 py-3.5 font-mono text-xs text-[#A0A0A5] whitespace-nowrap" title="ID: ${escapeHtml(String(tx.id))}">${escapeHtml(code)}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${escapeHtml(dateStr)}</td>
-          <td class="px-4 py-3.5 font-medium text-white max-w-[220px] truncate" title="${escapeHtml(prodName)}">${escapeHtml(prodName)}</td>
+          <td class="px-4 py-3.5 font-medium text-white md:max-w-[220px] md:text-left text-right" title="${escapeHtml(prodName)}"><span class="truncate block max-w-[220px] sm:max-w-[300px] md:max-w-none text-right md:text-left font-medium text-white ml-auto md:ml-0">${escapeHtml(prodName)}</span></td>
           <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap">${escapeHtml(supName)}</td>
           <td class="px-4 py-3.5 text-[#A0A0A5] whitespace-nowrap" data-cashier-id="${escapeHtml(tx.created_by || '')}">${escapeHtml(kasir)}</td>
           <td class="px-4 py-3.5 text-right text-[#34C759] font-semibold whitespace-nowrap">+${qty}</td>

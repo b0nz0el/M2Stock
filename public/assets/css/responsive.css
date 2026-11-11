@@ -1581,6 +1581,9 @@ app-sidebar aside .sidebar-drawer-logout {
     text-align: right;
     background: transparent !important;
     line-height: 1.4 !important;
+    max-width: none !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .card table tbody td::before {
@@ -1805,11 +1808,23 @@ app-sidebar aside .sidebar-drawer-logout {
     font-weight: 600 !important;
     color: #FFFFFF !important;
     padding: 6px 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    text-align: right !important;
+    justify-content: space-between !important;
   }
   .card table tbody td[data-label="BARANG"]::before,
   .card table tbody td[data-label="NAMA BARANG"]::before,
   .card table tbody td[data-label="NAMA PRODUK"]::before {
     color: #A0A0A5 !important;
+    flex-shrink: 0 !important;
+  }
+  .card table tbody td[data-label="BARANG"] > span,
+  .card table tbody td[data-label="NAMA BARANG"] > span,
+  .card table tbody td[data-label="NAMA PRODUK"] > span {
+    text-align: right !important;
+    margin-left: auto !important;
+    min-width: 0 !important;
   }
 
   /* Field Finansial / Total — divider garis putus-putus dan warna aksen hijau Apple */
