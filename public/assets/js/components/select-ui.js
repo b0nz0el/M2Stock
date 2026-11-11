@@ -3,7 +3,7 @@
   "use strict";
 
   const SELECTOR =
-    "select:not([multiple]):not([size]):not([data-native-select])";
+    "select:not([multiple]):not([size]):not([data-native-select]):not([hidden]):not(.hidden):not([aria-hidden='true'])";
   const nativeValue = Object.getOwnPropertyDescriptor(
     HTMLSelectElement.prototype,
     "value",
@@ -288,7 +288,17 @@
   }
 
   function enhanceSelect(select) {
-    if (select.dataset.uiEnhanced || select.multiple || select.size > 0) return;
+    if (
+      select.dataset.uiEnhanced ||
+      select.multiple ||
+      select.size > 0 ||
+      select.hidden ||
+      select.classList.contains("hidden") ||
+      select.getAttribute("aria-hidden") === "true" ||
+      select.hasAttribute("data-native-select")
+    ) {
+      return;
+    }
 
     const label = getLabel(select);
     const wrapper = document.createElement("span");

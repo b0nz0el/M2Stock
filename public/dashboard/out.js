@@ -2650,16 +2650,20 @@ function triggerScanFeedback() {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (AudioCtx) {
       const ctx = new AudioCtx();
+      const now = ctx.currentTime || 0;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(2000, now);
+      osc.frequency.linearRampToValueAtTime(2150, now + 0.04);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.9, now + 0.004);
+      gain.gain.setValueAtTime(0.9, now + 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.115);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.125);
     }
   } catch (_) {}
 }

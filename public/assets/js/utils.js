@@ -80,6 +80,219 @@ function updateAudioFeedbackUI(enabled = isAudioFeedbackEnabled()) {
   } catch (_) {}
 }
 
+function getAudioOutputNode(ctx) {
+  if (!ctx || !ctx.destination) return null;
+  if (ctx._m2OutputNode) return ctx._m2OutputNode;
+
+  let output = ctx.destination;
+  try {
+    // Soft-saturation waveshaper meningkatkan energi RMS agar terdengar jauh lebih keras tanpa clipping (> 1.0)
+    if (typeof ctx.createWaveShaper === 'function') {
+      const shaper = ctx.createWaveShaper();
+      const samples = 1025;
+      const curve = new Float32Array(samples);
+      const drive = 2.4;
+      const norm = Math.tanh(drive);
+      for (let i = 0; i < samples; i++) {
+        const x = (i * 2) / (samples - 1) - 1;
+        curve[i] = (Math.tanh(drive * x) / norm) * 0.98;
+      }
+      shaper.curve = curve;
+      shaper.oversample = '2x';
+      shaper.connect(output);
+      output = shaper;
+    }
+
+    // Limiter/compressor mencegah distorsi saat nada tumpang-tindih (cash/success/scan cepat)
+    if (typeof ctx.createDynamicsCompressor === 'function') {
+      const compressor = ctx.createDynamicsCompressor();
+      const setParam = (param, val) => {
+        if (!param) return;
+        if (typeof param.setValueAtTime === 'function') {
+          param.setValueAtTime(val, ctx.currentTime || 0);
+        } else {
+          param.value = val;
+        }
+      };
+      setParam(compressor.threshold, -3);
+      setParam(compressor.knee, 4);
+      setParam(compressor.ratio, 12);
+      setParam(compressor.attack, 0.002);
+      setParam(compressor.release, 0.06);
+      compressor.connect(output);
+      output = compressor;
+    }
+  } catch (_) {
+    output = ctx.destination;
+  }
+
+  ctx._m2OutputNode = output;
+  return output;
+}
+
+function scheduleAudioTone(ctx, outputNode, {
+  waveform = 'sine',
+  freq = 1000,
+  endFreq = null,
+  freqRamp = 'linear',
+  startTime = ctx.currentTime,
+  attack = 0.005,
+  sustain = 0.04,
+  duration = 0.1,
+  peakGain = 0.85
+}) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = waveform;
+  osc.frequency.setValueAtTime(freq, startTime);
+
+  if (endFreq && endFreq !== freq) {
+    const rampEnd = startTime + Math.min(duration * 0.7, sustain || duration);
+    if (freqRamp === 'exponential' && endFreq > 0 && freq > 0) {
+      osc.frequency.exponentialRampToValueAtTime(endFreq, rampEnd);
+    } else {
+      osc.frequency.linearRampToValueAtTime(endFreq, rampEnd);
+    }
+  }
+
+  const attackEnd = startTime + attack;
+  const sustainEnd = Math.max(attackEnd, startTime + sustain);
+  const decayEnd = Math.max(sustainEnd + 0.01, startTime + duration);
+
+  gain.gain.setValueAtTime(0.001, startTime);
+  gain.gain.linearRampToValueAtTime(peakGain, attackEnd);
+  if (sustainEnd > attackEnd) {
+    gain.gain.setValueAtTime(peakGain, sustainEnd);
+  }
+  gain.gain.exponentialRampToValueAtTime(0.0001, decayEnd);
+
+  osc.connect(gain);
+  gain.connect(outputNode);
+  osc.start(startTime);
+  osc.stop(decayEnd + 0.015);
+}
+
+function synthesizeAudioFeedback(ctx, type) {
+  const outputNode = getAudioOutputNode(ctx);
+  if (!outputNode) return;
+  const now = ctx.currentTime || 0;
+
+  if (type === 'scan' || type === 'barcode' || type === 'beep') {
+    // Beep scanner POS retail keras & tegas (2000Hz -> 2150Hz, square wave + sustain)
+    scheduleAudioTone(ctx, outputNode, {
+      waveform: 'square',
+      freq: 2000,
+      endFreq: 2150,
+      startTime: now,
+      attack: 0.004,
+      sustain: 0.070,
+      duration: 0.115,
+      peakGain: 0.95
+    });
+  } else if (type === 'input' || type === 'click' || type === 'item-add') {
+    // Klik/sentuhan tegas saat memilih produk atau ubah jumlah
+    scheduleAudioTone(ctx, outputNode, {
+      waveform: 'triangle',
+      freq: 1150,
+      endFreq: 1450,
+      freqRamp: 'exponential',
+      startTime: now,
+      attack: 0.004,
+      sustain: 0.032,
+      duration: 0.070,
+      peakGain: 0.85
+    });
+  } else if (type === 'warning' || type === 'error') {
+    // Peringatan nada ganda rendah dengan harmonik sawtooth agar keras di speaker kecil
+    scheduleAudioTone(ctx, outputNode, {
+      waveform: 'sawtooth',
+      freq: 480,
+      startTime: now,
+      attack: 0.006,
+      sustain: 0.065,
+      duration: 0.105,
+      peakGain: 0.95
+    });
+    scheduleAudioTone(ctx, outputNode, {
+      waveform: 'sawtooth',
+      freq: 340,
+      startTime: now + 0.115,
+      attack: 0.006,
+      sustain: 0.095,
+      duration: 0.155,
+      peakGain: 1.0
+    });
+  } else if (type === 'cash' || type === 'checkout') {
+    // Denting register kasir nyaring & keras (B5 987Hz -> E6 1318Hz)
+    scheduleAudioTone(ctx, outputNode, {
+      waveform: 'triangle',
+      freq: 987.77,
+      startTime: now,
+      attack: 0.006,
+      sustain: 0.055,
+      duration: 0.16,
+      peakGain: 0.95
+    });
+    scheduleAudioTone(ctx, outputNode, {
+      waveform: 'triangle',
+      freq: 1318.51,
+      startTime: now + 0.095,
+      attack: 0.006,
+      sustain: 0.120,
+      duration: 0.36,
+      peakGain: 1.0
+    });
+  } else if (type === 'success' || type === 'save') {
+    // Melodi sukses jelas & keras (C5 -> G5 -> C6)
+    const notes = [523.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      scheduleAudioTone(ctx, outputNode, {
+        waveform: 'triangle',
+        freq,
+        startTime: now + (i * 0.065),
+        attack: 0.006,
+        sustain: 0.050,
+        duration: 0.21,
+        peakGain: 0.90
+      });
+    });
+  }
+}
+
+function setupAudioContextUnlock() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (window._m2AudioUnlockInstalled) return;
+  window._m2AudioUnlockInstalled = true;
+
+  const events = ['pointerdown', 'keydown', 'touchstart', 'click'];
+  const cleanup = () => {
+    events.forEach(evt => document.removeEventListener(evt, unlock, true));
+  };
+  const unlock = () => {
+    if (!isAudioFeedbackEnabled()) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        cleanup();
+        return;
+      }
+      if (!window._m2AudioCtx) {
+        window._m2AudioCtx = new AudioCtx();
+      }
+      const ctx = window._m2AudioCtx;
+      if (ctx && ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+        ctx.resume().then(() => {
+          if (ctx.state === 'running') cleanup();
+        }).catch(() => {});
+      } else if (ctx && ctx.state === 'running') {
+        cleanup();
+      }
+    } catch (_) {}
+  };
+
+  events.forEach(evt => document.addEventListener(evt, unlock, { capture: true, passive: true }));
+}
+
 function playAudioFeedback(type = 'scan') {
   if (!isAudioFeedbackEnabled()) return;
   try {
@@ -102,109 +315,15 @@ function playAudioFeedback(type = 'scan') {
     }
     const ctx = (typeof window !== 'undefined') ? window._m2AudioCtx : null;
     if (!ctx) return;
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+
+    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+      ctx.resume()
+        .then(() => synthesizeAudioFeedback(ctx, type))
+        .catch(() => {});
+      return;
     }
-    const now = ctx.currentTime;
 
-    if (type === 'scan' || type === 'barcode' || type === 'beep') {
-      // Beep kasir POS retail profesional (1500Hz -> 1550Hz, 65ms, sinusoidal bersih)
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1500, now);
-      osc.frequency.linearRampToValueAtTime(1550, now + 0.02);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.14, now + 0.005);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.07);
-    } else if (type === 'input' || type === 'click' || type === 'item-add') {
-      // Sentuhan halus/klik saat memilih produk atau ubah jumlah
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(980, now);
-      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.035);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.08, now + 0.004);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.05);
-    } else if (type === 'warning' || type === 'error') {
-      // Peringatan nada ganda rendah untuk stok habis, produk tidak ditemukan, atau salah input
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(280, now);
-      gain1.gain.setValueAtTime(0.001, now);
-      gain1.gain.linearRampToValueAtTime(0.15, now + 0.01);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.065);
-
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(220, now + 0.07);
-      gain2.gain.setValueAtTime(0.001, now + 0.07);
-      gain2.gain.linearRampToValueAtTime(0.15, now + 0.08);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(now + 0.07);
-      osc2.stop(now + 0.16);
-    } else if (type === 'cash' || type === 'checkout') {
-      // Denting register kasir bertingkat (B5 987Hz -> E6 1318Hz, resonansi hangat)
-      const t1 = now;
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(987.77, t1);
-      gain1.gain.setValueAtTime(0.001, t1);
-      gain1.gain.linearRampToValueAtTime(0.12, t1 + 0.01);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.12);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(t1);
-      osc1.stop(t1 + 0.13);
-
-      const t2 = now + 0.09;
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1318.51, t2);
-      gain2.gain.setValueAtTime(0.001, t2);
-      gain2.gain.linearRampToValueAtTime(0.15, t2 + 0.01);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.26);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(t2);
-      osc2.stop(t2 + 0.28);
-    } else if (type === 'success' || type === 'save') {
-      // Melodi sukses hangat (C5 -> G5 -> C6)
-      const notes = [523.25, 783.99, 1046.50];
-      notes.forEach((freq, i) => {
-        const t = now + (i * 0.06);
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, t);
-        gain.gain.setValueAtTime(0.001, t);
-        gain.gain.linearRampToValueAtTime(0.09, t + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + 0.18);
-      });
-    }
+    synthesizeAudioFeedback(ctx, type);
   } catch (_) {
     // Autoplay restrictions or unsupported audio context
   }
@@ -853,6 +972,9 @@ if (typeof window !== 'undefined') {
   window.fuzzyMatch = fuzzyMatch;
 
   if (typeof document !== 'undefined') {
+    if (window.AudioContext || window.webkitAudioContext) {
+      setupAudioContextUnlock();
+    }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => updateAudioFeedbackUI());
     } else {

@@ -720,6 +720,58 @@ app-sidebar aside .sidebar-drawer-logout {
     width: 23% !important;
   }
 
+  #po-document-paper.is-draft-editable .po-document-table th:nth-child(1),
+  #po-document-paper.is-draft-editable .po-document-table td:nth-child(1) {
+    width: 6% !important;
+  }
+
+  #po-document-paper.is-draft-editable .po-document-table th:nth-child(2),
+  #po-document-paper.is-draft-editable .po-document-table td:nth-child(2) {
+    width: 26% !important;
+  }
+
+  #po-document-paper.is-draft-editable .po-document-table th:nth-child(3),
+  #po-document-paper.is-draft-editable .po-document-table td:nth-child(3) {
+    width: 16% !important;
+  }
+
+  #po-document-paper.is-draft-editable .po-document-table th:nth-child(4),
+  #po-document-paper.is-draft-editable .po-document-table td:nth-child(4) {
+    width: 23% !important;
+  }
+
+  #po-document-paper.is-draft-editable .po-document-table th:nth-child(5),
+  #po-document-paper.is-draft-editable .po-document-table td:nth-child(5) {
+    width: 20% !important;
+  }
+
+  #po-document-paper.is-draft-editable .po-document-table th:nth-child(6),
+  #po-document-paper.is-draft-editable .po-document-table td:nth-child(6) {
+    width: 9% !important;
+  }
+
+  #po-document-paper .doc-item-qty-input {
+    width: 40px;
+    padding: 2px 3px;
+    font-size: 9px;
+  }
+
+  #po-document-paper .doc-item-harga-input {
+    width: 58px;
+    padding: 2px 3px;
+    font-size: 9px;
+  }
+
+  #po-document-paper .po-doc-unit-tag,
+  #po-document-paper .po-doc-currency-prefix {
+    font-size: 8px;
+  }
+
+  #po-document-paper .btn-doc-remove-item {
+    width: 20px;
+    height: 20px;
+  }
+
   #po-document-paper .po-document-notes {
     margin-bottom: 14px !important;
     padding: 10px !important;

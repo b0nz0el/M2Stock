@@ -25,6 +25,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   let pendingDeleteId = null;
   let deleteTrigger = null;
   let deleteInProgress = false;
+  let pendingReceiveId = null;
+  let receiveTrigger = null;
+  let receiveInProgress = false;
   let isGeneratingAutoPo = false;
   let eventsSetup = false;
   let availableSuppliers = [];
@@ -57,7 +60,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function isAutomaticRestockPO(item) {
-    const supplierName = item.supplier_nama || item.suppliers?.name || '';
+    if (!item) return false;
+    const supplierName = item.supplier_nama || item.supplier_name || item.suppliers?.name || '';
     const supplierNameLower = supplierName.toLowerCase();
     const hasLinkedSupplier = item.supplier_id != null || item.suppliers?.id != null;
     const isAutoRestock = /restock (otomatis|assistant|stok kritis)/i.test(
@@ -74,8 +78,9 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function resolvePoSupplierName(item) {
+    if (!item) return '-';
     if (isAutomaticRestockPO(item)) return RESTOCK_ASSISTANT_LABEL;
-    const supplierName = item.supplier_nama || item.suppliers?.name || '';
+    const supplierName = item.supplier_nama || item.supplier_name || item.suppliers?.name || '';
     return supplierName || item.catatan?.replace('Supplier: ', '') || 'Supplier Mitra';
   }
 
@@ -356,6 +361,135 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     deleteTrigger = null;
   }
 
+  function syncReceivePaymentSelection(selectedValue = 'Cash') {
+    const normalized = String(selectedValue || 'Cash');
+    const optionsContainer = document.getElementById('receive-po-payment-options');
+    if (!optionsContainer) return;
+
+    optionsContainer.querySelectorAll('.po-payment-option').forEach((card) => {
+      const radio = card.querySelector('input[name="po-receive-payment"]');
+      if (!radio) return;
+      const isSelected = radio.value === normalized;
+      radio.checked = isSelected;
+      card.classList.toggle('is-selected', isSelected);
+    });
+  }
+
+  function openReceiveConfirmation(id, trigger) {
+    const modal = document.getElementById('modal-receive-po');
+    if (!modal) {
+      showToast('Dialog konfirmasi penerimaan PO tidak tersedia', 'error');
+      return;
+    }
+
+    const poItem = poEntries.find((item) => String(item.id) === String(id));
+    pendingReceiveId = id;
+    receiveTrigger = trigger;
+
+    const noEl = document.getElementById('receive-po-no');
+    const supplierEl = document.getElementById('receive-po-supplier');
+    const totalEl = document.getElementById('receive-po-total');
+    if (noEl) noEl.textContent = poItem?.no_po || '-';
+    if (supplierEl) supplierEl.textContent = poItem ? resolvePoSupplierName(poItem) : '-';
+    if (totalEl) totalEl.textContent = formatRupiah(poItem?.total || 0);
+
+    const feedback = document.getElementById('receive-po-feedback');
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+
+    syncReceivePaymentSelection('Cash');
+    document.body.classList.add('modal-open');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons({ root: modal });
+    }
+
+    const activeRadio = modal.querySelector('input[name="po-receive-payment"]:checked');
+    activeRadio?.focus();
+  }
+
+  function closeReceiveConfirmation() {
+    if (receiveInProgress) return;
+    const modal = document.getElementById('modal-receive-po');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    document.body.classList.remove('modal-open');
+    pendingReceiveId = null;
+    receiveTrigger?.focus();
+    receiveTrigger = null;
+  }
+
+  async function handleReceiveSubmit(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (receiveInProgress || !pendingReceiveId) return;
+
+    const modal = document.getElementById('modal-receive-po');
+    const button = document.getElementById('btn-confirm-receive-po');
+    const cancelButton = document.getElementById('btn-cancel-receive-po');
+    const closeButton = document.getElementById('btn-close-receive-po');
+    const feedback = document.getElementById('receive-po-feedback');
+    const originalButtonHtml = button?.innerHTML;
+    const selectedRadio = modal?.querySelector('input[name="po-receive-payment"]:checked');
+    const paymentMethod = selectedRadio?.value || 'Cash';
+
+    receiveInProgress = true;
+    if (button) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.innerHTML = '<span>Memproses...</span>';
+    }
+    if (cancelButton) cancelButton.disabled = true;
+    if (closeButton) closeButton.disabled = true;
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+
+    try {
+      const res = await poApi.updateStatus(pendingReceiveId, 'diterima', paymentMethod);
+      if (res.ok) {
+        receiveInProgress = false;
+        closeReceiveConfirmation();
+        showToast(`Barang PO diterima (${paymentMethod}) & stok inventori berhasil bertambah`, 'success');
+        await loadData();
+      } else {
+        const message = res.error?.message || 'Gagal mengonfirmasi penerimaan PO';
+        if (feedback) {
+          feedback.textContent = message;
+          feedback.classList.remove('hidden');
+        }
+        showToast(message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      const message = err.message || 'Terjadi kesalahan sistem saat menerima Purchase Order';
+      if (feedback) {
+        feedback.textContent = message;
+        feedback.classList.remove('hidden');
+      }
+      showToast(message, 'error');
+    } finally {
+      receiveInProgress = false;
+      if (button) {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.innerHTML = originalButtonHtml;
+      }
+      if (cancelButton) cancelButton.disabled = false;
+      if (closeButton) closeButton.disabled = false;
+      if (window.lucide && typeof window.lucide.createIcons === 'function' && modal) {
+        window.lucide.createIcons({ root: modal });
+      }
+    }
+  }
+
   async function handleDelete(id) {
     const button = document.getElementById('btn-confirm-delete-po');
     const cancelButton = document.getElementById('btn-cancel-delete-po');
@@ -410,6 +544,377 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
   let activePrintPO = null;
   let activeStoreInfo = null;
+  let draftSaveTimer = null;
+  let pendingDraftSavePromise = null;
+
+  function formatDocStatusText(status) {
+    const s = String(status || 'draft').toLowerCase();
+    if (s === 'dikirim') return 'ORDERED (DIKIRIM)';
+    return s.toUpperCase();
+  }
+
+  function normalizeDocItemList(item) {
+    if (!item) return [];
+    const source = (Array.isArray(item.items) && item.items.length > 0)
+      ? item.items
+      : (Array.isArray(item.purchase_order_items) ? item.purchase_order_items : []);
+    const normalized = source.map(it => {
+      const qty = Math.max(1, Math.round(Number(it?.qty) || 1));
+      const harga = Math.max(0, Number(it?.harga ?? it?.unit_price ?? 0));
+      return {
+        ...it,
+        product_id: it?.product_id || null,
+        product_name: resolveItemProductName(it),
+        qty,
+        harga,
+        subtotal: qty * harga
+      };
+    });
+    item.items = normalized;
+    item.purchase_order_items = normalized;
+    return normalized;
+  }
+
+  function syncActiveDraftFromInputs() {
+    if (!activePrintPO || String(activePrintPO.status || 'draft').toLowerCase() !== 'draft') return;
+    const tbody = document.getElementById('doc-po-items-tbody');
+    if (!tbody || !Array.isArray(activePrintPO.items)) return;
+
+    tbody.querySelectorAll('tr[data-idx]').forEach(row => {
+      const idx = Number.parseInt(row.dataset.idx, 10);
+      if (!Number.isInteger(idx) || !activePrintPO.items[idx]) return;
+      const qtyInput = row.querySelector('.doc-item-qty-input');
+      const hargaInput = row.querySelector('.doc-item-harga-input');
+      if (qtyInput) {
+        const parsedQty = Number.parseInt(qtyInput.value, 10);
+        const safeQty = Number.isFinite(parsedQty) && parsedQty >= 1 ? parsedQty : 1;
+        qtyInput.value = String(safeQty);
+        activePrintPO.items[idx].qty = safeQty;
+      }
+      if (hargaInput) {
+        const parsedHarga = Number(hargaInput.value);
+        const safeHarga = Number.isFinite(parsedHarga) && parsedHarga >= 0 ? parsedHarga : 0;
+        hargaInput.value = String(safeHarga);
+        activePrintPO.items[idx].harga = safeHarga;
+      }
+      activePrintPO.items[idx].subtotal = activePrintPO.items[idx].qty * activePrintPO.items[idx].harga;
+    });
+  }
+
+  function recalcActiveDraftTotals(item = activePrintPO, { syncTable = true } = {}) {
+    if (!item || !Array.isArray(item.items) || item.items.length === 0) {
+      return Number(item?.total) || 0;
+    }
+    let grandTotal = 0;
+    const tbody = document.getElementById('doc-po-items-tbody');
+
+    item.items.forEach((it, idx) => {
+      const qty = Math.max(1, Math.round(Number(it?.qty) || 1));
+      const harga = Math.max(0, Number(it?.harga ?? it?.unit_price ?? 0));
+      const subtotal = qty * harga;
+      it.subtotal = subtotal;
+      grandTotal += subtotal;
+      if (tbody) {
+        const subEl = tbody.querySelector(`.doc-item-subtotal[data-idx="${idx}"]`);
+        if (subEl) subEl.textContent = formatRupiah(subtotal);
+      }
+    });
+
+    item.total = grandTotal;
+    item.purchase_order_items = item.items;
+    const docTotal = document.getElementById('doc-po-total');
+    if (docTotal) docTotal.textContent = formatRupiah(grandTotal);
+
+    if (syncTable) {
+      const entryIdx = poEntries.findIndex(p => String(p.id) === String(item.id));
+      if (entryIdx >= 0) {
+        poEntries[entryIdx] = {
+          ...poEntries[entryIdx],
+          total: grandTotal,
+          items: item.items,
+          purchase_order_items: item.items
+        };
+        renderTable();
+      }
+    }
+    return grandTotal;
+  }
+
+  async function flushDraftPOSave(item = activePrintPO, options = {}) {
+    if (draftSaveTimer) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    if (!item || !item.id || String(item.status || 'draft').toLowerCase() !== 'draft') {
+      return { ok: true, data: item };
+    }
+    const items = normalizeDocItemList(item);
+    if (items.length === 0) {
+      return { ok: false, error: { message: 'Minimal harus ada 1 barang dalam Draft PO' } };
+    }
+
+    if (typeof poApi?.updateDraftPO !== 'function') {
+      return { ok: true, data: item };
+    }
+
+    const saveTask = poApi.updateDraftPO(item.id, items, {
+      status: options.status || 'draft',
+      silent: options.silent ?? !options.status
+    }).then((res) => {
+      if (res?.ok) {
+        item._hasPendingDraftEdits = false;
+        if (res.data?.total !== undefined) item.total = res.data.total;
+        if (res.data?.status) item.status = res.data.status;
+      }
+      return res;
+    }).finally(() => {
+      if (pendingDraftSavePromise === saveTask) {
+        pendingDraftSavePromise = null;
+      }
+    });
+
+    pendingDraftSavePromise = saveTask;
+    return await saveTask;
+  }
+
+  function scheduleDraftPOSave(item = activePrintPO) {
+    if (!item || !item.id || String(item.status || 'draft').toLowerCase() !== 'draft') return;
+    if (draftSaveTimer) clearTimeout(draftSaveTimer);
+    draftSaveTimer = setTimeout(() => {
+      draftSaveTimer = null;
+      void flushDraftPOSave(item, { silent: true });
+    }, 350);
+  }
+
+  async function commitAndLockDraftPO(poId) {
+    const target = (activePrintPO && String(activePrintPO.id) === String(poId))
+      ? activePrintPO
+      : poEntries.find(p => String(p.id) === String(poId));
+    if (!target) {
+      showToast('Data Purchase Order tidak ditemukan', 'error');
+      return null;
+    }
+
+    if (activePrintPO && String(activePrintPO.id) === String(target.id)) {
+      syncActiveDraftFromInputs();
+      recalcActiveDraftTotals(target);
+    }
+
+    if (pendingDraftSavePromise) {
+      try { await pendingDraftSavePromise; } catch (_) {}
+    }
+    if (draftSaveTimer) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+
+    if (String(target.status || 'draft').toLowerCase() === 'draft') {
+      const items = normalizeDocItemList(target);
+      let lockRes = null;
+
+      if (typeof poApi?.updateDraftPO === 'function' && items.length > 0) {
+        lockRes = await poApi.updateDraftPO(target.id, items, { status: 'dikirim' });
+      } else if (typeof poApi?.updateStatus === 'function') {
+        lockRes = await poApi.updateStatus(target.id, 'dikirim');
+      } else {
+        lockRes = { ok: true, data: { ...target, status: 'dikirim' } };
+      }
+
+      if (!lockRes?.ok) {
+        showToast(lockRes?.error?.message || 'Gagal mengunci Draft PO ke status ORDERED', 'error');
+        return null;
+      }
+
+      target.status = 'dikirim';
+      target._hasPendingDraftEdits = false;
+      target._restockInsights = null;
+      if (lockRes.data?.total !== undefined) target.total = lockRes.data.total;
+
+      const idx = poEntries.findIndex(p => String(p.id) === String(target.id));
+      if (idx >= 0) {
+        poEntries[idx] = { ...poEntries[idx], ...target, status: 'dikirim' };
+      }
+
+      if (activePrintPO && String(activePrintPO.id) === String(target.id)) {
+        const docStatus = document.getElementById('doc-po-status');
+        if (docStatus) docStatus.textContent = formatDocStatusText('dikirim');
+        renderDocPOItems(target);
+      }
+
+      await loadData();
+      checkAutoPoConfigAndStock();
+      showToast('Draft PO disimpan dan status dikunci menjadi ORDERED (Dikirim)!', 'success');
+    }
+
+    return target;
+  }
+
+  function bindDocItemsInteractions(tbody) {
+    if (!tbody || tbody.dataset.draftInteractiveBound === '1') return;
+    tbody.dataset.draftInteractiveBound = '1';
+
+    tbody.addEventListener('input', (e) => {
+      const target = e.target;
+      if (!activePrintPO || String(activePrintPO.status || 'draft').toLowerCase() !== 'draft') return;
+      if (!target.classList.contains('doc-item-qty-input') && !target.classList.contains('doc-item-harga-input')) return;
+
+      const idx = Number.parseInt(target.dataset.idx, 10);
+      if (!Number.isInteger(idx) || !activePrintPO.items?.[idx]) return;
+
+      if (target.classList.contains('doc-item-qty-input')) {
+        const parsedQty = Number.parseInt(target.value, 10);
+        activePrintPO.items[idx].qty = Number.isFinite(parsedQty) && parsedQty >= 1 ? parsedQty : 1;
+      } else {
+        const parsedHarga = Number(target.value);
+        activePrintPO.items[idx].harga = Number.isFinite(parsedHarga) && parsedHarga >= 0 ? parsedHarga : 0;
+      }
+
+      activePrintPO._hasPendingDraftEdits = true;
+      recalcActiveDraftTotals(activePrintPO);
+      scheduleDraftPOSave(activePrintPO);
+    });
+
+    tbody.addEventListener('change', async (e) => {
+      const target = e.target;
+      if (!activePrintPO || String(activePrintPO.status || 'draft').toLowerCase() !== 'draft') return;
+      if (!target.classList.contains('doc-item-qty-input') && !target.classList.contains('doc-item-harga-input')) return;
+
+      const idx = Number.parseInt(target.dataset.idx, 10);
+      if (!Number.isInteger(idx) || !activePrintPO.items?.[idx]) return;
+
+      if (target.classList.contains('doc-item-qty-input')) {
+        const parsedQty = Number.parseInt(target.value, 10);
+        const safeQty = Number.isFinite(parsedQty) && parsedQty >= 1 ? parsedQty : 1;
+        target.value = String(safeQty);
+        activePrintPO.items[idx].qty = safeQty;
+      } else {
+        const parsedHarga = Number(target.value);
+        const safeHarga = Number.isFinite(parsedHarga) && parsedHarga >= 0 ? parsedHarga : 0;
+        target.value = String(safeHarga);
+        activePrintPO.items[idx].harga = safeHarga;
+      }
+
+      activePrintPO._hasPendingDraftEdits = true;
+      recalcActiveDraftTotals(activePrintPO);
+      const saveRes = await flushDraftPOSave(activePrintPO, { silent: true });
+      if (saveRes && !saveRes.ok) {
+        showToast(saveRes.error?.message || 'Gagal menyimpan perubahan item PO', 'error');
+      }
+    });
+
+    tbody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-doc-remove-item');
+      if (!btn || !activePrintPO || String(activePrintPO.status || 'draft').toLowerCase() !== 'draft') return;
+
+      const idx = Number.parseInt(btn.dataset.idx, 10);
+      if (!Number.isInteger(idx) || !Array.isArray(activePrintPO.items)) return;
+
+      if (activePrintPO.items.length <= 1) {
+        showToast('Minimal harus ada 1 barang dalam Draft PO. Hapus PO dari daftar jika ingin membatalkan seluruh pesanan.', 'warning');
+        return;
+      }
+
+      const removed = activePrintPO.items.splice(idx, 1);
+      activePrintPO.purchase_order_items = activePrintPO.items;
+      activePrintPO._hasPendingDraftEdits = true;
+      renderDocPOItems(activePrintPO);
+      recalcActiveDraftTotals(activePrintPO);
+
+      const saveRes = await flushDraftPOSave(activePrintPO, { silent: true });
+      if (saveRes && !saveRes.ok) {
+        activePrintPO.items.splice(idx, 0, ...removed);
+        renderDocPOItems(activePrintPO);
+        recalcActiveDraftTotals(activePrintPO);
+        showToast(saveRes.error?.message || 'Gagal menghapus baris item Draft PO', 'error');
+        return;
+      }
+      showToast('Baris item dihapus dan Draft PO diperbarui', 'info');
+    });
+  }
+
+  const recentAutoPoInsights = new Map();
+
+  function renderDocPOItems(item, insightsMap = null) {
+    const paper = document.getElementById('po-document-paper');
+    const draftBanner = document.getElementById('doc-po-draft-banner');
+    const actionHeader = document.getElementById('doc-po-action-header');
+    const totalSpacer = document.getElementById('doc-po-total-action-spacer');
+    const tbody = document.getElementById('doc-po-items-tbody');
+    const isDraft = String(item?.status || 'draft').toLowerCase() === 'draft';
+
+    if (insightsMap instanceof Map) {
+      item._restockInsights = insightsMap;
+    }
+    const activeInsights = isDraft
+      ? (item?._restockInsights instanceof Map ? item._restockInsights : recentAutoPoInsights)
+      : null;
+
+    if (paper) paper.classList.toggle('is-draft-editable', isDraft);
+    if (draftBanner) draftBanner.classList.toggle('hidden', !isDraft);
+    if (actionHeader) actionHeader.classList.toggle('hidden', !isDraft);
+    if (totalSpacer) totalSpacer.classList.toggle('hidden', !isDraft);
+    if (!tbody) return;
+
+    bindDocItemsInteractions(tbody);
+    const items = normalizeDocItemList(item);
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${isDraft ? 6 : 5}" class="py-4 text-center text-gray-500">Rincian produk tidak tersedia</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map((it, idx) => {
+      const pName = escapeHtml(resolveItemProductName(it));
+      const qty = Math.max(1, Math.round(Number(it.qty) || 1));
+      const harga = Math.max(0, Number(it.harga ?? it.unit_price ?? 0));
+      const subtotal = qty * harga;
+      const pid = it?.product_id !== undefined && it?.product_id !== null ? String(it.product_id) : '';
+      const insight = isDraft && pid ? (activeInsights?.get(pid) || recentAutoPoInsights.get(pid) || null) : null;
+      const reasonHtml = insight?.reason
+        ? `<div class="po-doc-item-insight" data-non-print="true">${escapeHtml(insight.reason)}</div>`
+        : '';
+
+      if (isDraft) {
+        return `
+          <tr class="border-b border-gray-100" data-idx="${idx}">
+            <td class="py-2 px-2 text-center text-gray-600">${idx + 1}</td>
+            <td class="py-2 px-2 font-medium text-black">
+              <div>${pName}</div>
+              ${reasonHtml}
+            </td>
+            <td class="py-2 px-2 text-center font-bold text-black">
+              <div class="po-doc-qty-edit-wrap">
+                <input type="number" min="1" step="1" class="doc-item-qty-input" data-idx="${idx}" value="${qty}" aria-label="Jumlah ${pName}">
+                <span class="po-doc-unit-tag">unit</span>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-right text-gray-700">
+              <div class="po-doc-price-edit-wrap">
+                <span class="po-doc-currency-prefix">Rp</span>
+                <input type="number" min="0" step="any" class="doc-item-harga-input" data-idx="${idx}" value="${harga}" aria-label="Harga satuan ${pName}">
+              </div>
+            </td>
+            <td class="py-2 px-2 text-right font-semibold text-black doc-item-subtotal" data-idx="${idx}">${formatRupiah(subtotal)}</td>
+            <td class="po-doc-action-cell py-2 px-1 text-center">
+              <button type="button" class="btn-doc-remove-item" data-idx="${idx}" title="Hapus item" aria-label="Hapus ${pName}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+
+      return `
+        <tr class="border-b border-gray-100" data-idx="${idx}">
+          <td class="py-2 px-2 text-center text-gray-600">${idx + 1}</td>
+          <td class="py-2 px-2 font-medium text-black">${pName}</td>
+          <td class="py-2 px-2 text-center font-bold text-black">${qty} unit</td>
+          <td class="py-2 px-2 text-right text-gray-700">${formatRupiah(harga)}</td>
+          <td class="py-2 px-2 text-right font-semibold text-black doc-item-subtotal" data-idx="${idx}">${formatRupiah(subtotal)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
 
   function resolveItemProductName(it) {
     if (!it) return 'Produk';
@@ -438,7 +943,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const noPO = item.no_po || '-';
     const tanggalPO = formatDate(item.tanggal);
     const supplierName = resolvePoSupplierName(item);
-    const status = (item.status || 'draft').toUpperCase();
+    const statusLabel = formatDocStatusText(item.status || 'draft');
     const notes = formatPoNote(item.catatan) || 'Mohon konfirmasi ketersediaan stok sebelum pengiriman barang.';
     const total = formatRupiah(item.total || 0);
 
@@ -450,7 +955,6 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const docStatus = document.getElementById('doc-po-status');
     const docNotes = document.getElementById('doc-po-notes');
     const docTotal = document.getElementById('doc-po-total');
-    const tbody = document.getElementById('doc-po-items-tbody');
 
     if (docNo) docNo.textContent = noPO;
     if (docSupplier) {
@@ -464,7 +968,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     }
     if (docSupplierNotes) docSupplierNotes.textContent = item.supplier_kontak || item.suppliers?.phone || 'Pemasok Terdaftar';
     if (docDate) docDate.textContent = tanggalPO;
-    if (docStatus) docStatus.textContent = status;
+    if (docStatus) docStatus.textContent = statusLabel;
     if (docNotes) docNotes.textContent = notes;
     if (docTotal) docTotal.textContent = total;
 
@@ -509,28 +1013,24 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       }
     } catch (_) { }
 
-    const items = item.items || item.purchase_order_items || [];
-    if (tbody) {
-      if (items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">Rincian produk tidak tersedia</td></tr>`;
-      } else {
-        tbody.innerHTML = items.map((it, idx) => {
-          const pName = resolveItemProductName(it);
-          const qty = it.qty || 1;
-          const harga = it.harga || it.unit_price || 0;
-          const subtotal = qty * harga;
-          return `
-            <tr class="border-b border-gray-100">
-              <td class="py-2 px-2 text-center text-gray-600">${idx + 1}</td>
-              <td class="py-2 px-2 font-medium text-black">${pName}</td>
-              <td class="py-2 px-2 text-center font-bold text-black">${qty} unit</td>
-              <td class="py-2 px-2 text-right text-gray-700">${formatRupiah(harga)}</td>
-              <td class="py-2 px-2 text-right font-semibold text-black">${formatRupiah(subtotal)}</td>
-            </tr>
-          `;
-        }).join('');
-      }
+    let insightsMap = null;
+    if (String(item.status || 'draft').toLowerCase() === 'draft' && typeof poApi?.getRestockInsightsForProducts === 'function') {
+      try {
+        const draftItems = normalizeDocItemList(item);
+        const productStubs = draftItems
+          .filter(it => it?.product_id !== undefined && it?.product_id !== null)
+          .map(it => {
+            const matched = availableProducts.find(p => String(p.id) === String(it.product_id));
+            return matched || { id: it.product_id, name: it.product_name, stock: 0, min_stock: 0 };
+          });
+        if (productStubs.length > 0) {
+          insightsMap = await poApi.getRestockInsightsForProducts(productStubs);
+        }
+      } catch (_) {}
     }
+
+    renderDocPOItems(item, insightsMap);
+    recalcActiveDraftTotals(item, { syncTable: false });
 
     const modal = document.getElementById('modal-print-po');
     if (modal) {
@@ -543,7 +1043,15 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   function closePrintPOModal() {
+    if (activePrintPO && String(activePrintPO.status || 'draft').toLowerCase() === 'draft') {
+      syncActiveDraftFromInputs();
+      if (activePrintPO._hasPendingDraftEdits) {
+        void flushDraftPOSave(activePrintPO, { silent: false });
+      }
+    }
     activePrintPO = null;
+    const draftBanner = document.getElementById('doc-po-draft-banner');
+    if (draftBanner) draftBanner.classList.add('hidden');
     const modal = document.getElementById('modal-print-po');
     if (modal) {
       modal.classList.add('hidden');
@@ -608,11 +1116,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   }
 
   async function sharePOWhatsApp(poId) {
-    const item = poEntries.find(p => String(p.id) === String(poId));
-    if (!item) {
+    const initialItem = (activePrintPO && String(activePrintPO.id) === String(poId))
+      ? activePrintPO
+      : poEntries.find(p => String(p.id) === String(poId));
+    if (!initialItem) {
       showToast('Data PO tidak ditemukan', 'error');
       return;
     }
+
     if (!availableProducts || availableProducts.length === 0) {
       await loadMasterData();
     }
@@ -623,15 +1134,21 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         }
       } catch (_) { }
     }
-    const msg = generatePOWhatsAppText(item, activeStoreInfo);
+
+    const finalItem = String(initialItem.status || 'draft').toLowerCase() === 'draft'
+      ? await commitAndLockDraftPO(initialItem.id)
+      : initialItem;
+    if (!finalItem) return;
+
+    const msg = generatePOWhatsAppText(finalItem, activeStoreInfo);
     const encoded = encodeURIComponent(msg);
-    const supObj = availableSuppliers.find(s => String(s.id) === String(item.supplier_id)) || item.suppliers;
+    const supObj = availableSuppliers.find(s => String(s.id) === String(finalItem.supplier_id)) || finalItem.suppliers;
     const phone = supObj?.phone ? supObj.phone.replace(/[^0-9]/g, '') : '';
     const targetUrl = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
     window.open(targetUrl, '_blank');
   }
 
-  function printPODocument() {
+  async function printPODocument() {
     const paper = document.getElementById('po-document-paper');
     if (!paper) {
       showToast('Dokumen PO tidak siap untuk dicetak', 'error');
@@ -642,6 +1159,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (!printWindow) {
       showToast('Izinkan pop-up untuk mencetak atau menyimpan PDF PO', 'error');
       return;
+    }
+
+    if (activePrintPO && activePrintPO.id && String(activePrintPO.status || 'draft').toLowerCase() === 'draft') {
+      const locked = await commitAndLockDraftPO(activePrintPO.id);
+      if (!locked) {
+        try { printWindow.close(); } catch (_) {}
+        return;
+      }
     }
 
     const itemCount = paper.querySelectorAll('tbody tr').length;
@@ -659,7 +1184,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
             *, *::before, *::after { box-sizing: border-box; }
             html, body { width: 100%; min-height: 0; margin: 0; background: #fff; }
             h2, p { margin: 0; }
-            .hidden { display: none !important; }
+            .hidden, .po-doc-item-insight { display: none !important; }
             body { color: #172033; font: 9pt/1.3 Arial, Helvetica, sans-serif; }
             .po-print-sheet { width: 190mm; max-width: 100%; margin: 0 auto; padding: 0; background: #fff; }
             #po-document-paper { width: 100%; max-width: 100%; margin: 0; padding: 0; background: #fff; color: #172033; font: 9pt/1.3 Arial, Helvetica, sans-serif; }
@@ -783,6 +1308,13 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   let activeComboboxRow = null;
   let poDropdownEl = null;
 
+  function updatePoItemsCountBadge() {
+    const badge = document.getElementById('po-items-count-badge');
+    if (!badge) return;
+    const count = document.querySelectorAll('#po-items-container .po-item-row').length;
+    badge.textContent = `${count} item`;
+  }
+
   function getPoDropdown() {
     if (!poDropdownEl) {
       poDropdownEl = document.createElement('div');
@@ -790,7 +1322,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       poDropdownEl.className = 'fixed z-[9999] hidden bg-[#18181B]/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl text-xs overflow-hidden';
       document.body.appendChild(poDropdownEl);
 
-      // Tutup jika klik di luar
+      // Tutup jika klik/tap di luar
       document.addEventListener('pointerdown', (e) => {
         if (!poDropdownEl || poDropdownEl.classList.contains('hidden')) return;
         if (poDropdownEl.contains(e.target)) return;
@@ -798,17 +1330,23 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         closePoDropdown();
       });
 
-      // Update posisi saat scroll modal atau window resize
+      // Update posisi saat scroll modal/dialog/daftar item, resize, atau virtual keyboard berubah
       const modalEl = document.getElementById('modal-po');
+      const modalDialogEl = modalEl ? modalEl.querySelector('.po-modal-dialog') : null;
       const itemsContainer = document.getElementById('po-items-container');
-      const handleScroll = () => {
+      const handleScrollOrResize = () => {
         if (activeComboboxRow && !poDropdownEl.classList.contains('hidden')) {
           repositionPoDropdown();
         }
       };
-      if (modalEl) modalEl.addEventListener('scroll', handleScroll, { passive: true });
-      if (itemsContainer) itemsContainer.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', handleScroll, { passive: true });
+      if (modalEl) modalEl.addEventListener('scroll', handleScrollOrResize, { passive: true });
+      if (modalDialogEl) modalDialogEl.addEventListener('scroll', handleScrollOrResize, { passive: true });
+      if (itemsContainer) itemsContainer.addEventListener('scroll', handleScrollOrResize, { passive: true });
+      window.addEventListener('resize', handleScrollOrResize, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleScrollOrResize, { passive: true });
+        window.visualViewport.addEventListener('scroll', handleScrollOrResize, { passive: true });
+      }
     }
     return poDropdownEl;
   }
@@ -818,29 +1356,48 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const anchorEl = activeComboboxRow.querySelector('.po-search-state') || activeComboboxRow.querySelector('.item-search-input');
     if (!anchorEl) return;
     const rect = anchorEl.getBoundingClientRect();
-    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+
+    const vv = window.visualViewport;
+    const vpTop = vv ? vv.offsetTop : 0;
+    const vpLeft = vv ? vv.offsetLeft : 0;
+    const vpWidth = vv ? vv.width : window.innerWidth;
+    const vpHeight = vv ? vv.height : window.innerHeight;
+
+    if (rect.bottom < vpTop || rect.top > vpTop + vpHeight) {
       closePoDropdown();
       return;
     }
 
-    const popoverWidth = Math.min(480, window.innerWidth - 32);
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const popoverHeight = 360;
+    const edgeMargin = vpWidth < 640 ? 12 : 16;
+    const popoverWidth = vpWidth < 640
+      ? Math.max(260, vpWidth - (edgeMargin * 2))
+      : Math.min(520, vpWidth - (edgeMargin * 2));
 
-    if (spaceBelow < 280 && rect.top > 300) {
-      poDropdownEl.style.top = `${Math.max(16, rect.top - popoverHeight - 6)}px`;
+    const spaceBelow = Math.max(0, (vpTop + vpHeight) - rect.bottom - edgeMargin);
+    const spaceAbove = Math.max(0, rect.top - vpTop - edgeMargin);
+    const maxDesktopHeight = 400;
+
+    if (spaceBelow >= 260 || spaceBelow >= spaceAbove) {
+      const maxH = Math.max(150, Math.min(maxDesktopHeight, Math.floor(spaceBelow - 6)));
+      poDropdownEl.style.bottom = 'auto';
+      poDropdownEl.style.top = `${Math.round(rect.bottom + 6)}px`;
+      poDropdownEl.style.maxHeight = `${maxH}px`;
     } else {
-      poDropdownEl.style.top = `${rect.bottom + 6}px`;
+      const maxH = Math.max(150, Math.min(maxDesktopHeight, Math.floor(spaceAbove - 6)));
+      const bottomOffset = Math.max(edgeMargin, Math.round(window.innerHeight - rect.top + 6));
+      poDropdownEl.style.top = 'auto';
+      poDropdownEl.style.bottom = `${bottomOffset}px`;
+      poDropdownEl.style.maxHeight = `${maxH}px`;
     }
 
     let leftPos = rect.left;
-    if (leftPos + popoverWidth > window.innerWidth - 16) {
-      leftPos = window.innerWidth - popoverWidth - 16;
-    }
-    if (leftPos < 16) leftPos = 16;
+    const maxLeft = vpLeft + vpWidth - popoverWidth - edgeMargin;
+    const minLeft = vpLeft + edgeMargin;
+    if (leftPos > maxLeft) leftPos = maxLeft;
+    if (leftPos < minLeft) leftPos = minLeft;
 
-    poDropdownEl.style.left = `${leftPos}px`;
-    poDropdownEl.style.width = `${popoverWidth}px`;
+    poDropdownEl.style.left = `${Math.round(leftPos)}px`;
+    poDropdownEl.style.width = `${Math.round(popoverWidth)}px`;
   }
 
   function closePoDropdown() {
@@ -927,11 +1484,12 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const dropdown = getPoDropdown();
     const selectEl = row.querySelector('.item-select');
 
-    repositionPoDropdown();
-
+    const MAX_DROPDOWN_ITEMS = 100;
     let filtered = [];
+    let totalMatches = 0;
     if (!query) {
-      filtered = availableProducts.slice(0, 35);
+      totalMatches = availableProducts.length;
+      filtered = availableProducts.slice(0, MAX_DROPDOWN_ITEMS);
     } else {
       const scored = [];
       for (const p of availableProducts) {
@@ -944,36 +1502,50 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         }
       }
       scored.sort((a, b) => b.score - a.score);
-      filtered = scored.slice(0, 35).map(s => s.product);
+      totalMatches = scored.length;
+      filtered = scored.slice(0, MAX_DROPDOWN_ITEMS).map(s => s.product);
     }
 
+    const countLabel = totalMatches > filtered.length
+      ? `${filtered.length}/${totalMatches} barang`
+      : `${filtered.length} barang ${query ? 'cocok' : 'tersedia'}`;
+
     const headerHtml = `
-      <div class="px-3.5 py-2.5 bg-black/40 border-b border-white/5 flex items-center justify-between">
-        <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#A0A0A5] uppercase tracking-wider">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#0088CC]"></i>
-          <span>Katalog Master Barang</span>
+      <div class="shrink-0 px-3.5 py-2.5 bg-black/40 border-b border-white/5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#A0A0A5] uppercase tracking-wider min-w-0">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#0088CC] shrink-0"></i>
+          <span class="truncate">Katalog Master Barang</span>
         </div>
-        <span class="text-[10px] font-semibold text-[#0088CC] bg-[#0088CC]/10 px-2.5 py-0.5 rounded-full border border-[#0088CC]/20">
-          ${filtered.length} barang ${query ? 'cocok' : 'tersedia'}
-        </span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="text-[10px] font-semibold text-[#0088CC] bg-[#0088CC]/10 px-2.5 py-0.5 rounded-full border border-[#0088CC]/20">
+            ${countLabel}
+          </span>
+          <button type="button" id="po-dropdown-close-btn" aria-label="Tutup katalog barang"
+            class="w-7 h-7 flex items-center justify-center rounded-lg text-[#A0A0A5] hover:text-white hover:bg-white/10 transition">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
       </div>
     `;
 
     const footerHtml = `
-      <div class="px-3.5 py-2 bg-black/50 border-t border-white/5 flex items-center justify-between text-[10px] text-[#A0A0A5] rounded-b-2xl">
-        <div class="flex items-center gap-3">
+      <div class="shrink-0 px-3.5 py-2 bg-black/50 border-t border-white/5 flex items-center justify-between text-[10px] text-[#A0A0A5] rounded-b-2xl">
+        <div class="po-dropdown-kbd-hint flex items-center gap-3">
           <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">↑↓</kbd> Navigasi</span>
           <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">↵</kbd> Pilih</span>
           <span class="flex items-center gap-1"><kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">Esc</kbd> Tutup</span>
         </div>
-        <span class="text-[#A0A0A5]/60 font-medium">M2Stock Engine</span>
+        <div class="po-dropdown-touch-hint text-[10px] text-[#A0A0A5]">
+          <span>Geser daftar untuk gulir • Ketuk untuk pilih</span>
+        </div>
+        <span class="text-[#A0A0A5]/60 font-medium hidden sm:inline">M2Stock Engine</span>
       </div>
     `;
 
     if (filtered.length === 0) {
       dropdown.innerHTML = `
         ${headerHtml}
-        <div class="p-6 text-center text-[#A0A0A5]">
+        <div class="po-dropdown-list p-6 text-center text-[#A0A0A5]">
           <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center mx-auto mb-2 text-[#A0A0A5]">
             <i data-lucide="search-x" class="w-5 h-5"></i>
           </div>
@@ -983,6 +1555,8 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         ${footerHtml}
       `;
       dropdown.classList.remove('hidden');
+      repositionPoDropdown();
+      dropdown.querySelector('#po-dropdown-close-btn')?.addEventListener('click', closePoDropdown);
       if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons({ root: dropdown });
       }
@@ -1027,15 +1601,40 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     dropdown.innerHTML = `
       ${headerHtml}
-      <div class="max-h-72 overflow-y-auto p-1.5 space-y-1">
+      <div class="po-dropdown-list p-1.5 space-y-1">
         ${itemsHtml}
       </div>
       ${footerHtml}
     `;
 
+    dropdown.querySelector('#po-dropdown-close-btn')?.addEventListener('click', closePoDropdown);
+
+    // Gunakan click + guard jarak geser agar touch scroll di mobile/tablet/PWA berjalan mulus
     dropdown.querySelectorAll('.po-dropdown-item').forEach(itemEl => {
+      let startX = 0;
+      let startY = 0;
+      let wasDragged = false;
+
       itemEl.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
+        startX = e.clientX || 0;
+        startY = e.clientY || 0;
+        wasDragged = false;
+      }, { passive: true });
+
+      itemEl.addEventListener('pointermove', (e) => {
+        if (wasDragged) return;
+        const dx = Math.abs((e.clientX || 0) - startX);
+        const dy = Math.abs((e.clientY || 0) - startY);
+        if (dx > 8 || dy > 8) {
+          wasDragged = true;
+        }
+      }, { passive: true });
+
+      itemEl.addEventListener('click', () => {
+        if (wasDragged) {
+          wasDragged = false;
+          return;
+        }
         const prodId = itemEl.getAttribute('data-id');
         const prod = availableProducts.find(p => String(p.id) === String(prodId));
         if (prod) {
@@ -1046,6 +1645,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     });
 
     dropdown.classList.remove('hidden');
+    repositionPoDropdown();
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons({ root: dropdown });
     }
@@ -1055,12 +1655,6 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   function createItemRow(selectedProductId = '', qty = 1, harga = 0) {
     const row = document.createElement('div');
     row.className = 'po-item-row items-center bg-black/30 p-2.5 rounded-xl border border-white/5';
-
-    const productOptions = availableProducts.map(p => {
-      const cost = p.costPrice || p.cost_price || 0;
-      const isSel = p.id === selectedProductId;
-      return `<option value="${p.id}" data-price="${cost}" data-name="${p.name}" ${isSel ? 'selected' : ''}>${p.name} (Stok: ${p.stock})</option>`;
-    }).join('');
 
     row.innerHTML = `
       <div class="po-item-name relative">
@@ -1098,18 +1692,17 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           </div>
         </div>
 
-        <!-- Hidden native select untuk integritas form submit -->
-        <select required class="item-select hidden" tabindex="-1" aria-hidden="true">
-          <option value="">-- Pilih Barang --</option>
-          ${productOptions}
+        <!-- State carrier tersembunyi untuk sinkronisasi ID & harga produk (dikecualikan dari UI select) -->
+        <select class="item-select hidden" data-native-select hidden tabindex="-1" aria-hidden="true" style="display:none;">
+          <option value=""></option>
         </select>
       </div>
       <div class="po-item-qty">
-        <input type="number" required min="1" step="1" inputmode="numeric" value="${qty}" placeholder="Qty"
+        <input type="number" min="1" step="1" inputmode="numeric" value="${qty}" placeholder="Qty"
                class="item-qty w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white text-center focus:outline-none focus:border-[#0088CC]">
       </div>
       <div class="po-item-price">
-        <input type="number" required min="0" step="1000" value="${harga}" placeholder="Harga"
+        <input type="number" min="0" step="any" inputmode="decimal" value="${harga}" placeholder="Harga"
                class="item-harga w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#0088CC]">
       </div>
       <div class="po-item-subtotal text-right">
@@ -1152,7 +1745,17 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     // Event input & dropdown combobox
     searchInput.addEventListener('focus', () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 1024 && typeof row.scrollIntoView === 'function') {
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
       openPoDropdown(row, searchInput.value.trim());
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setTimeout(() => {
+          if (activeComboboxRow === row && poDropdownEl && !poDropdownEl.classList.contains('hidden')) {
+            repositionPoDropdown();
+          }
+        }, 180);
+      }
     });
 
     searchInput.addEventListener('input', (e) => {
@@ -1245,6 +1848,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         closePoDropdown();
       }
       row.remove();
+      updatePoItemsCountBadge();
       calculateGrandTotal();
     });
 
@@ -1276,6 +1880,28 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     if (grandEl) grandEl.textContent = formatRupiah(grand);
   }
 
+  function getLocalDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function setAutoNoValue(noInput, value) {
+    if (!noInput || !value) return;
+    noInput.value = value;
+    noInput.dataset.autoNo = value;
+  }
+
+  async function resolveNextNoPO(dateStr) {
+    if (typeof poApi.getNextNoPO === 'function') {
+      try {
+        return await poApi.getNextNoPO(dateStr, poEntries);
+      } catch (_) {}
+    }
+    return poApi.generateNoPO(poEntries, dateStr);
+  }
+
   async function openModal() {
     const modal = document.getElementById('modal-po');
     const form = document.getElementById('form-po');
@@ -1284,22 +1910,34 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
 
     form.reset();
 
-    const noInput = document.getElementById('po-no');
-    if (noInput) noInput.value = poApi.generateNoPO();
-
+    const todayStr = getLocalDateString();
     const dateInput = document.getElementById('po-tanggal');
-    if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+    if (dateInput) dateInput.value = todayStr;
 
     const statusSelect = document.getElementById('po-status');
     if (statusSelect) statusSelect.value = 'draft';
 
-    if (availableSuppliers.length === 0 || availableProducts.length === 0) {
-      await loadMasterData();
+    const noInput = document.getElementById('po-no');
+    const initialNo = poApi.generateNoPO(poEntries, todayStr);
+    setAutoNoValue(noInput, initialNo);
+
+    const masterPromise = (availableSuppliers.length === 0 || availableProducts.length === 0)
+      ? loadMasterData()
+      : Promise.resolve();
+    const [, freshNo] = await Promise.all([
+      masterPromise,
+      resolveNextNoPO(todayStr)
+    ]);
+
+    if (noInput && noInput.value === initialNo) {
+      setAutoNoValue(noInput, freshNo);
     }
+
     populateSupplierSelect();
 
     itemsContainer.innerHTML = '';
     itemsContainer.appendChild(createItemRow());
+    updatePoItemsCountBadge();
 
     calculateGrandTotal();
 
@@ -1321,38 +1959,62 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
   async function handleSubmitForm(e) {
     e.preventDefault();
     const submitBtn = document.getElementById('btn-submit-po');
+    const resetSubmitBtn = () => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Simpan PO';
+      }
+    };
+
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Menyimpan...';
     }
 
-    const no_po = document.getElementById('po-no')?.value || '';
-    const tanggal = document.getElementById('po-tanggal')?.value || new Date().toISOString().slice(0, 10);
+    const no_po = (document.getElementById('po-no')?.value || '').trim();
+    const tanggal = document.getElementById('po-tanggal')?.value || '';
     const supplierSelect = document.getElementById('po-supplier');
     const supplier_id = supplierSelect?.value || null;
     const supplier_nama = supplierSelect?.selectedOptions[0]?.dataset?.name || supplierSelect?.selectedOptions[0]?.text || '';
     const status = document.getElementById('po-status')?.value || 'draft';
     const catatan = document.getElementById('po-catatan')?.value || '';
 
+    if (!no_po) {
+      showToast('Isi nomor Purchase Order terlebih dahulu', 'warning');
+      resetSubmitBtn();
+      return;
+    }
+
+    if (!tanggal) {
+      showToast('Pilih tanggal pesanan PO terlebih dahulu', 'warning');
+      resetSubmitBtn();
+      return;
+    }
+
     if (!supplier_id) {
       showToast('Pilih supplier tujuan pesanan', 'warning');
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Simpan PO';
-      }
+      resetSubmitBtn();
       return;
     }
 
     const items = [];
-    let hasInvalid = false;
+    let validationError = '';
     document.querySelectorAll('.po-item-row').forEach(row => {
+      if (validationError) return;
       const selectEl = row.querySelector('.item-select');
       const prodId = selectEl?.value;
       const prodName = selectEl?.selectedOptions[0]?.dataset?.name || '';
-      const qty = Number(row.querySelector('.item-qty')?.value || 1);
-      const harga = Number(row.querySelector('.item-harga')?.value || 0);
+      const rawQty = row.querySelector('.item-qty')?.value;
+      const rawHarga = row.querySelector('.item-harga')?.value;
+      const qty = Number(rawQty === '' || rawQty == null ? 0 : rawQty);
+      const harga = Number(rawHarga === '' || rawHarga == null ? 0 : rawHarga);
+
       if (!prodId) {
-        hasInvalid = true;
+        validationError = 'Pilih produk dari pencarian untuk seluruh rincian item';
+      } else if (!Number.isFinite(qty) || qty < 1) {
+        validationError = 'Jumlah (Qty) minimal 1 unit untuk setiap barang';
+      } else if (!Number.isFinite(harga) || harga < 0) {
+        validationError = 'Harga satuan barang tidak valid';
       } else {
         items.push({
           product_id: prodId,
@@ -1363,17 +2025,17 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       }
     });
 
-    if (hasInvalid || items.length === 0) {
-      showToast('Pilih produk dari master barang untuk seluruh rincian item', 'warning');
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Simpan PO';
-      }
+    if (validationError || items.length === 0) {
+      showToast(validationError || 'Pilih produk dari pencarian untuk seluruh rincian item', 'warning');
+      resetSubmitBtn();
       return;
     }
 
+    const noInput = document.getElementById('po-no');
+    const isAutoNo = Boolean(noInput && noInput.dataset?.autoNo && no_po === noInput.dataset.autoNo);
+
     try {
-      const res = await poApi.create({
+      const payload = {
         no_po,
         tanggal,
         supplier_id,
@@ -1381,7 +2043,17 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         status,
         catatan,
         items
-      });
+      };
+      let res = await poApi.create(payload);
+
+      if (!res.ok && isAutoNo && (res.error?.code === '23505' || /duplicate|unique/i.test(res.error?.message || ''))) {
+        const refreshedNo = await resolveNextNoPO(tanggal);
+        if (refreshedNo && refreshedNo !== payload.no_po) {
+          payload.no_po = refreshedNo;
+          setAutoNoValue(noInput, refreshedNo);
+          res = await poApi.create(payload);
+        }
+      }
 
       if (res.ok) {
         showToast('Purchase Order berhasil dibuat', 'success');
@@ -1394,10 +2066,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       console.error(err);
       showToast('Terjadi kesalahan sistem', 'error');
     } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Simpan PO';
-      }
+      resetSubmitBtn();
     }
   }
 
@@ -1567,11 +2236,30 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
           const res = await poApi.generateFromLowStock();
           if (res.ok && res.data) {
             if (res.data.created) {
-              showToast(`Draft PO ${res.data.no_po} berhasil dibuat (${res.data.item_count} item)!`, 'success');
+              if (Array.isArray(res.data.item_reasons)) {
+                res.data.item_reasons.forEach(entry => {
+                  if (entry?.product_id !== undefined && entry?.product_id !== null) {
+                    recentAutoPoInsights.set(String(entry.product_id), entry);
+                  }
+                });
+              }
+              const noList = Array.isArray(res.data.no_po_list) && res.data.no_po_list.length > 0
+                ? res.data.no_po_list
+                : (res.data.no_po ? [res.data.no_po] : []);
+              let successMsg = `Draft PO ${noList.join(', ')} berhasil diproses (${res.data.item_count || 0} item)!`;
+              if (noList.length > 1) {
+                successMsg = `${noList.length} Draft PO (${noList.join(', ')}) berhasil dibuat/diperbarui (${res.data.item_count || 0} item)!`;
+              } else if (res.data.updated_count > 0 && res.data.created_count === 0) {
+                successMsg = `Draft PO ${noList[0]} diperbarui (+${res.data.item_count || 0} item stok menipis)!`;
+              }
+              showToast(successMsg, 'success');
               currentPage = 1;
               currentStatus = 'all';
               await loadData();
               checkAutoPoConfigAndStock();
+              if (noList.length === 1 && res.data.id && poEntries.some(p => String(p.id) === String(res.data.id))) {
+                await openPrintPOModal(res.data.id);
+              }
             } else {
               showToast(res.data.message || 'Semua barang dalam batas stok aman', 'info');
             }
@@ -1601,13 +2289,33 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     const addHeaderBtn = document.getElementById('btn-add-po-header');
     if (addHeaderBtn) addHeaderBtn.addEventListener('click', openModal);
 
+    const modalDateInput = document.getElementById('po-tanggal');
+    if (modalDateInput) {
+      modalDateInput.addEventListener('change', async () => {
+        const noInput = document.getElementById('po-no');
+        if (!noInput || !noInput.dataset?.autoNo || noInput.value !== noInput.dataset.autoNo) return;
+        const prevAutoNo = noInput.dataset.autoNo;
+        const nextNo = await resolveNextNoPO(modalDateInput.value || getLocalDateString());
+        if (noInput.value === prevAutoNo) {
+          setAutoNoValue(noInput, nextNo);
+        }
+      });
+    }
+
     // Add item row in modal
     const addItemBtn = document.getElementById('btn-add-item-row');
     if (addItemBtn) {
       addItemBtn.addEventListener('click', () => {
         const container = document.getElementById('po-items-container');
         if (container) {
-          container.appendChild(createItemRow());
+          const newRow = createItemRow();
+          container.appendChild(newRow);
+          updatePoItemsCountBadge();
+          if (typeof newRow.scrollIntoView === 'function') {
+            newRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          } else {
+            container.scrollTop = container.scrollHeight;
+          }
           if (window.lucide) window.lucide.createIcons();
         }
       });
@@ -1653,6 +2361,14 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
     }
 
     // Action button delegations
+    if (typeof window !== 'undefined' && window.__poDocClickController) {
+      window.__poDocClickController.abort();
+    }
+    const docClickController = typeof AbortController === 'function' ? new AbortController() : null;
+    if (typeof window !== 'undefined' && docClickController) {
+      window.__poDocClickController = docClickController;
+    }
+
     document.addEventListener('click', (e) => {
       const sendBtn = e.target.closest('.btn-send-po');
       if (sendBtn) {
@@ -1664,24 +2380,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       const receiveBtn = e.target.closest('.btn-receive-po');
       if (receiveBtn) {
         const id = receiveBtn.getAttribute('data-id');
-        if (id) {
-          const payChoice = prompt(
-            'Konfirmasi Penerimaan PO:\nItem produk akan otomatis masuk ke stok gudang.\n\nPilih metode pembayaran ke supplier:\n1. Cash (Tunai)\n2. Transfer (Bank)\n3. Tempo (Hutang Dagang)\n\nKetik 1, 2, atau 3 (Default: 1):',
-            '1'
-          );
-          if (payChoice === null) return;
-
-          let paymentMethod = 'Cash';
-          const trimmed = payChoice.trim().toLowerCase();
-          if (trimmed === '2' || trimmed.includes('transfer')) {
-            paymentMethod = 'Transfer';
-          } else if (trimmed === '3' || trimmed.includes('tempo') || trimmed.includes('hutang')) {
-            paymentMethod = 'Tempo';
-          }
-
-          receiveBtn.disabled = true;
-          handleUpdateStatus(id, 'diterima', `Barang PO diterima (${paymentMethod}) & stok inventori berhasil bertambah`, paymentMethod);
-        }
+        if (id) openReceiveConfirmation(id, receiveBtn);
         return;
       }
 
@@ -1705,7 +2404,7 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
         if (id) openDeleteConfirmation(id, deleteBtn);
         return;
       }
-    });
+    }, docClickController ? { signal: docClickController.signal } : undefined);
 
     const deleteModal = document.getElementById('modal-delete-po');
     const cancelDeleteBtn = document.getElementById('btn-cancel-delete-po');
@@ -1723,6 +2422,31 @@ import { getUserRole } from '../assets/js/utils/rbac.js';
       });
       deleteModal.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeDeleteConfirmation();
+      });
+    }
+
+    // Receive PO Confirmation Modal events
+    const receiveModal = document.getElementById('modal-receive-po');
+    const receiveForm = document.getElementById('form-receive-po');
+    const closeReceiveBtn = document.getElementById('btn-close-receive-po');
+    const cancelReceiveBtn = document.getElementById('btn-cancel-receive-po');
+    const paymentOptionsEl = document.getElementById('receive-po-payment-options');
+    if (closeReceiveBtn) closeReceiveBtn.addEventListener('click', closeReceiveConfirmation);
+    if (cancelReceiveBtn) cancelReceiveBtn.addEventListener('click', closeReceiveConfirmation);
+    if (receiveForm) receiveForm.addEventListener('submit', handleReceiveSubmit);
+    if (paymentOptionsEl) {
+      paymentOptionsEl.addEventListener('change', (e) => {
+        if (e.target && e.target.name === 'po-receive-payment') {
+          syncReceivePaymentSelection(e.target.value);
+        }
+      });
+    }
+    if (receiveModal) {
+      receiveModal.addEventListener('click', (e) => {
+        if (e.target === receiveModal) closeReceiveConfirmation();
+      });
+      receiveModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeReceiveConfirmation();
       });
     }
 

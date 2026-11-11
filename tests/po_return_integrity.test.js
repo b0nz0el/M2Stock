@@ -76,13 +76,13 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(res.data.status).toBe('diterima');
     });
 
-    it('memanggil generate_draft_po_from_low_stock RPC saat Restock Assistant dijalankan', async () => {
+    it('memanggil generate_draft_po_from_low_stock_v2 RPC saat Restock Assistant dijalankan', async () => {
       supabase.rpc.mockResolvedValueOnce({
         data: {
           ok: true,
           created: true,
           id: 'po-auto-1',
-          no_po: 'PO-202610-AUTO123',
+          no_po: 'PO-202611-AUTO001',
           total: 240000,
           item_count: 3
         },
@@ -91,7 +91,7 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
 
       const res = await poApi.generateFromLowStock('sup-target');
 
-      expect(supabase.rpc).toHaveBeenCalledWith('generate_draft_po_from_low_stock', {
+      expect(supabase.rpc).toHaveBeenCalledWith('generate_draft_po_from_low_stock_v2', {
         p_supplier_id: 'sup-target'
       });
       expect(res.ok).toBe(true);
@@ -99,12 +99,12 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(res.data.item_count).toBe(3);
     });
 
-    it('melakukan fallback client-side aman jika RPC generate_draft_po_from_low_stock belum ada di schema cache', async () => {
+    it('melakukan fallback client-side aman jika RPC generate_draft_po_from_low_stock_v2 belum ada di schema cache', async () => {
       supabase.rpc.mockResolvedValueOnce({
         data: null,
         error: {
           code: 'PGRST202',
-          message: 'Could not find the function public.generate_draft_po_from_low_stock(p_supplier_id) in the schema cache'
+          message: 'Could not find the function public.generate_draft_po_from_low_stock_v2(p_supplier_id) in the schema cache'
         }
       });
 
@@ -157,6 +157,74 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(res.ok).toBe(true);
       expect(res.data.created).toBe(true);
       expect(res.data.item_count).toBe(1);
+    });
+
+    it('generateNoPO memulai urutan dari 001 saat belum ada PO, melanjutkan PO tersimpan, dan kembali ke 001 saat dihapus', () => {
+      // Belum ada PO tersimpan -> mulai dari 001
+      expect(poApi.generateNoPO([], '2026-11-11')).toBe('PO-202611-001');
+
+      // Berkelanjutan mengikuti PO yang sudah tersimpan
+      expect(
+        poApi.generateNoPO(
+          [{ no_po: 'PO-202611-001' }, { no_po: 'PO-202611-002' }],
+          '2026-11-11'
+        )
+      ).toBe('PO-202611-003');
+
+      // Mengabaikan PO bulan lain, PO Restock (-AUTO), serta nomor acak lama yang lebih besar jika 001 belum terpakai
+      expect(
+        poApi.generateNoPO(
+          [
+            { no_po: 'PO-202610-001' },
+            { no_po: 'PO-202611-AUTO456' },
+            { no_po: 'PO-202611-378' }
+          ],
+          '2026-11-11'
+        )
+      ).toBe('PO-202611-001');
+
+      // Jika PO 001 dihapus namun 002 masih tersimpan -> isi kembali 001 dulu lalu lanjut lewati 002
+      expect(poApi.generateNoPO([{ no_po: 'PO-202611-002' }], '2026-11-11')).toBe('PO-202611-001');
+      expect(
+        poApi.generateNoPO(
+          [{ no_po: 'PO-202611-001' }, { no_po: 'PO-202611-002' }],
+          '2026-11-11'
+        )
+      ).toBe('PO-202611-003');
+    });
+
+    it('getNextNoPO membaca daftar no_po dari purchase_orders dan fallback aman saat query gagal', async () => {
+      const limitMock = vi.fn().mockResolvedValue({
+        data: [{ no_po: 'PO-202611-001' }, { no_po: 'PO-202611-002' }],
+        error: null
+      });
+      const ilikeMock = vi.fn().mockReturnValue({ limit: limitMock });
+      const selectMock = vi.fn().mockReturnValue({ ilike: ilikeMock });
+      supabase.from.mockReturnValueOnce({ select: selectMock });
+
+      const nextSequential = await poApi.getNextNoPO('2026-11-11');
+      expect(supabase.from).toHaveBeenCalledWith('purchase_orders');
+      expect(selectMock).toHaveBeenCalledWith('no_po');
+      expect(ilikeMock).toHaveBeenCalledWith('no_po', 'PO-202611-%');
+      expect(nextSequential).toBe('PO-202611-003');
+
+      // Simulasi setelah seluruh PO dihapus -> database kosong -> kembali 001
+      const emptyLimitMock = vi.fn().mockResolvedValue({ data: [], error: null });
+      supabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({ limit: emptyLimitMock })
+        })
+      });
+      expect(await poApi.getNextNoPO('2026-11-11')).toBe('PO-202611-001');
+
+      // Fallback saat query error
+      const errLimitMock = vi.fn().mockResolvedValue({ data: null, error: { message: 'network error' } });
+      supabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({ limit: errLimitMock })
+        })
+      });
+      expect(await poApi.getNextNoPO('2026-11-11', [{ no_po: 'PO-202611-001' }])).toBe('PO-202611-002');
     });
   });
 
@@ -343,6 +411,270 @@ describe('PO and Return Integrity & Atomic Workflows', () => {
       expect(poJs).toContain('@page { size: A4 portrait; margin: 10mm; }');
       expect(poJs).toContain('.po-signatures-grid');
       expect(poJs).toContain('.po-document-table tbody tr, .po-document-table thead { break-inside: avoid;');
+    });
+
+    it('generateAutoNoPO melakukan gap-filling mulai dari AUTO001 dan reset setiap ganti bulan', () => {
+      expect(poApi.generateAutoNoPO([], '2026-11-11')).toBe('PO-202611-AUTO001');
+      expect(poApi.generateAutoNoPO([
+        { no_po: 'PO-202611-001' },
+        { no_po: 'PO-202611-AUTO001' },
+        { no_po: 'PO-202611-AUTO003' }
+      ], '2026-11-11')).toBe('PO-202611-AUTO002');
+      expect(poApi.generateAutoNoPO([
+        { no_po: 'PO-202611-AUTO002' },
+        { no_po: 'PO-202611-AUTO003' }
+      ], '2026-11-11')).toBe('PO-202611-AUTO001');
+      expect(poApi.generateAutoNoPO([
+        { no_po: 'PO-202611-AUTO001' },
+        { no_po: 'PO-202611-AUTO002' }
+      ], '2026-12-01')).toBe('PO-202612-AUTO001');
+    });
+
+    it('calculateAutoOrderQty memprioritaskan target_stock/max_stock, demand velocity 18h, atau zero-velocity cap <= 5 serta clamp stok minus ke 0', () => {
+      // Tanpa penjualan 90 hari (zero velocity) -> maksimal min_stock atau 5 unit (hemat modal, cegah ledakan qty)
+      expect(poApi.calculateAutoOrderQty({ stock: -15, min_stock: 10 })).toBe(5);
+      expect(poApi.calculateAutoOrderQty({ stock: -5, min_stock: 0 })).toBe(1);
+      expect(poApi.calculateAutoOrderQty({ stock: 3, min_stock: 40 })).toBe(2);
+      // Fast-moving via Demand Velocity 18 hari (30/30 hari = 1/hari -> target 18 - 1 = 17)
+      expect(poApi.calculateAutoOrderQty(
+        { stock: 1, min_stock: 3 },
+        { sold_7d: 7, sold_30d: 30, sold_90d: 90 }
+      )).toBe(17);
+      // Target eksplisit tetap dihormati
+      expect(poApi.calculateAutoOrderQty({ stock: 3, min_stock: 5, target_stock: 25 })).toBe(22);
+      expect(poApi.calculateAutoOrderQty({ stock: -4, min_stock: 5, max_stock: 18 })).toBe(18);
+      expect(poApi.calculateAutoOrderQty({ stock: 25, min_stock: 5, max_stock: 20 })).toBe(1);
+      expect(poApi.calculateAutoOrderQty({ stock: 0, min_stock: 0 })).toBe(1);
+    });
+
+    it('Auto-PO memisahkan PO per supplier, skip produk di PO draft/dikirim, update Draft PO existing, dan mengisi celah AUTO001/AUTO002', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-11T10:00:00Z'));
+
+      try {
+        supabase.rpc.mockResolvedValueOnce({
+          data: null,
+          error: { code: 'PGRST202', message: 'schema cache missing v2' }
+        });
+
+        const insertedPoiCalls = [];
+        const updatedHeaderCalls = [];
+        const createdRpcCalls = [];
+
+        supabase.rpc.mockImplementation((rpcName, params) => {
+          if (rpcName === 'create_purchase_order_atomic') {
+            createdRpcCalls.push(params);
+            return Promise.resolve({
+              data: { ok: true, id: `new-po-${createdRpcCalls.length}`, no_po: params.p_no_po },
+              error: null
+            });
+          }
+          return Promise.resolve({ data: null, error: null });
+        });
+
+        supabase.from.mockImplementation((table) => {
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockResolvedValue({
+                data: [
+                  // Sudah ada di PO dikirim -> harus di-skip!
+                  { id: 'p-already-ordered', name: 'Filter Ordered', stock: 1, min_stock: 10, cost_price: 50000, supplier_id: 'sup-a', is_active: true },
+                  // Supplier A punya existing draft PO -> masuk update draft existing (stok minus -5, min 10 -> qty 20)
+                  { id: 'p-sup-a-new', name: 'Aerator Negatif', stock: -5, min_stock: 10, cost_price: 25000, supplier_id: 'sup-a', is_active: true },
+                  // Supplier B belum punya draft -> buat PO baru AUTO002 (karena AUTO001 & AUTO003 sudah terpakai)
+                  { id: 'p-sup-b-1', name: 'Heater Target', stock: 4, min_stock: 5, target_stock: 20, cost_price: 40000, supplier_id: 'sup-b', is_active: true }
+                ],
+                error: null
+              })
+            };
+          }
+          if (table === 'purchase_orders') {
+            return {
+              select: vi.fn((cols) => {
+                if (cols === 'no_po') {
+                  const resRows = Promise.resolve({
+                    data: [
+                      { no_po: 'PO-202611-AUTO001' },
+                      { no_po: 'PO-202611-AUTO003' }
+                    ],
+                    error: null
+                  });
+                  return {
+                    ilike: vi.fn(() => ({
+                      limit: vi.fn(() => resRows),
+                      then: resRows.then.bind(resRows)
+                    }))
+                  };
+                }
+                return {
+                  in: vi.fn().mockResolvedValue({
+                    data: [
+                      { id: 'po-draft-a', no_po: 'PO-202611-AUTO001', status: 'draft', supplier_id: 'sup-a', supplier_name: 'Supplier Alpha', total: 100000 },
+                      { id: 'po-ord-1', no_po: 'PO-202611-009', status: 'dikirim', supplier_id: 'sup-a', supplier_name: 'Supplier Alpha', total: 50000 }
+                    ],
+                    error: null
+                  })
+                };
+              }),
+              update: vi.fn((payload) => {
+                updatedHeaderCalls.push(payload);
+                return {
+                  eq: vi.fn().mockResolvedValue({ error: null })
+                };
+              })
+            };
+          }
+          if (table === 'purchase_order_items') {
+            return {
+              select: vi.fn(() => ({
+                in: vi.fn().mockResolvedValue({
+                  data: [
+                    { po_id: 'po-ord-1', product_id: 'p-already-ordered', qty: 2, harga: 25000, subtotal: 50000 }
+                  ],
+                  error: null
+                })
+              })),
+              insert: vi.fn((rows) => {
+                insertedPoiCalls.push(rows);
+                return Promise.resolve({ error: null });
+              })
+            };
+          }
+          if (table === 'suppliers') {
+            return {
+              select: vi.fn().mockResolvedValue({
+                data: [
+                  { id: 'sup-a', name: 'Supplier Alpha' },
+                  { id: 'sup-b', name: 'Supplier Beta' }
+                ],
+                error: null
+              })
+            };
+          }
+          return { select: vi.fn().mockResolvedValue({ data: [], error: null }) };
+        });
+
+        const res = await poApi.generateFromLowStock();
+        expect(res.ok).toBe(true);
+        expect(res.data.created).toBe(true);
+        expect(res.data.po_count).toBe(2);
+        expect(res.data.updated_count).toBe(1);
+        expect(res.data.created_count).toBe(1);
+
+        // Supplier A memperbarui draft po-draft-a (zero-velocity cap <= 5 dengan effective_stock=0 -> qty = 5, bukan 25!)
+        expect(insertedPoiCalls.length).toBe(1);
+        expect(insertedPoiCalls[0]).toEqual([
+          expect.objectContaining({
+            po_id: 'po-draft-a',
+            product_id: 'p-sup-a-new',
+            qty: 5,
+            subtotal: 125000
+          })
+        ]);
+        expect(updatedHeaderCalls[0].total).toBe(225000);
+
+        // Supplier B membuat 1 draft PO baru memakai gap AUTO002 dengan qty target_stock - stock = 16
+        expect(createdRpcCalls.length).toBe(1);
+        expect(createdRpcCalls[0]).toMatchObject({
+          p_no_po: 'PO-202611-AUTO002',
+          p_supplier_id: 'sup-b',
+          p_supplier_name: 'Supplier Beta',
+          p_status: 'draft'
+        });
+        expect(createdRpcCalls[0].p_items).toEqual([
+          expect.objectContaining({
+            product_id: 'p-sup-b-1',
+            qty: 16,
+            harga: 40000,
+            subtotal: 640000
+          })
+        ]);
+        // Produk p-already-ordered tidak boleh masuk PO manapun
+        const allCreatedIds = createdRpcCalls[0].p_items.map(i => i.product_id);
+        expect(allCreatedIds).not.toContain('p-already-ordered');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('updateDraftPO menyimpan item yang diedit, menghitung total akurat, dan menolak PO non-draft', async () => {
+      const deletedPoIds = [];
+      const insertedRows = [];
+      const headerUpdates = [];
+
+      supabase.from.mockImplementation((table) => {
+        if (table === 'purchase_orders') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: 'po-draft-1', status: 'draft' },
+                  error: null
+                })
+              }))
+            })),
+            update: vi.fn((patch) => {
+              headerUpdates.push(patch);
+              return {
+                eq: vi.fn(() => ({
+                  select: vi.fn(() => ({
+                    single: vi.fn().mockResolvedValue({
+                      data: { id: 'po-draft-1', ...patch },
+                      error: null
+                    })
+                  }))
+                }))
+              };
+            })
+          };
+        }
+        if (table === 'purchase_order_items') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn().mockResolvedValue({
+                data: [{ po_id: 'po-draft-1', product_id: 'p1', product_name: 'Item 1', qty: 2, harga: 10000, subtotal: 20000 }],
+                error: null
+              })
+            })),
+            delete: vi.fn(() => ({
+              eq: vi.fn((col, val) => {
+                deletedPoIds.push(val);
+                return Promise.resolve({ error: null });
+              })
+            })),
+            insert: vi.fn((rows) => {
+              insertedRows.push(rows);
+              return {
+                select: vi.fn().mockResolvedValue({ data: rows, error: null })
+              };
+            })
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const res = await poApi.updateDraftPO('po-draft-1', [
+        { product_id: 'p1', product_name: 'Item 1', qty: 7, harga: 15000 }
+      ], { status: 'dikirim' });
+
+      expect(res.ok).toBe(true);
+      expect(deletedPoIds).toEqual(['po-draft-1']);
+      expect(insertedRows[0]).toEqual([
+        expect.objectContaining({ po_id: 'po-draft-1', qty: 7, harga: 15000, subtotal: 105000 })
+      ]);
+      expect(headerUpdates[0]).toMatchObject({ total: 105000, status: 'dikirim' });
+
+      // Tolak edit jika status bukan draft
+      supabase.from.mockImplementationOnce(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'po-locked', status: 'dikirim' }, error: null })
+          }))
+        }))
+      }));
+      const lockedRes = await poApi.updateDraftPO('po-locked', [{ product_id: 'p1', product_name: 'Item 1', qty: 2, harga: 1000 }]);
+      expect(lockedRes.ok).toBe(false);
+      expect(lockedRes.error.code).toBe('PO_LOCKED');
     });
   });
 });

@@ -5260,7 +5260,7 @@
         </button>
       </div>
 
-      <form id="form-po" class="space-y-4">
+      <form id="form-po" class="space-y-4" novalidate>
         <!-- No. PO & Tanggal -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -5300,11 +5300,16 @@
 
         <!-- Section: Rincian Multiple Items -->
         <div class="space-y-2 pt-2 border-t border-white/5">
-          <div class="flex items-center justify-between">
-            <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider">Daftar Item
-              Barang</label>
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <label class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider">Daftar Item
+                Barang</label>
+              <span id="po-items-count-badge"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0088CC]/15 text-[#32ADE6] border border-[#0088CC]/25">1
+                item</span>
+            </div>
             <button type="button" id="btn-add-item-row"
-              class="text-xs text-[#32ADE6] hover:text-[#0088CC] font-semibold flex items-center gap-1 p-1 hover:bg-white/5 rounded transition">
+              class="text-xs text-[#32ADE6] hover:text-[#0088CC] font-semibold flex items-center gap-1 px-2.5 py-1.5 hover:bg-white/5 rounded-lg transition shrink-0">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Item
             </button>
           </div>
@@ -5319,7 +5324,7 @@
           </div>
 
           <!-- Container Dynamic Rows -->
-          <div id="po-items-container" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <div id="po-items-container" class="po-items-scroll-list space-y-2 overflow-y-auto pr-1">
             <!-- Dynamic item rows inserted here -->
           </div>
 
@@ -5387,6 +5392,108 @@
     </div>
   </div>
 
+  <!-- =========================== MODAL (PO: modal-receive-po) =========================== -->
+  <div id="modal-receive-po"
+    class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 items-center justify-center p-4" role="dialog"
+    aria-modal="true" aria-labelledby="modal-receive-po-title" aria-describedby="modal-receive-po-description">
+    <div
+      class="po-receive-dialog bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-[#34C759]/15 grid place-items-center flex-shrink-0 text-[#34C759]">
+            <i data-lucide="package-check" class="w-5 h-5" aria-hidden="true"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 id="modal-receive-po-title" class="text-base font-bold text-white">Konfirmasi Penerimaan PO</h3>
+            <p class="text-xs text-[#A0A0A5] truncate">Verifikasi barang masuk &amp; metode bayar</p>
+          </div>
+        </div>
+        <button type="button" id="btn-close-receive-po" aria-label="Tutup dialog penerimaan PO"
+          class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition shrink-0">
+          <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="po-receive-summary space-y-1.5">
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span class="text-[#A0A0A5]">No. PO</span>
+          <span id="receive-po-no" class="font-mono font-semibold text-white">-</span>
+        </div>
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span class="text-[#A0A0A5]">Supplier</span>
+          <span id="receive-po-supplier" class="font-medium text-white truncate max-w-[65%] text-right">-</span>
+        </div>
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span class="text-[#A0A0A5]">Total Nilai</span>
+          <span id="receive-po-total" class="font-bold text-[#34C759]">Rp 0</span>
+        </div>
+      </div>
+
+      <p id="modal-receive-po-description" class="po-receive-notice">
+        Item produk akan otomatis masuk ke stok gudang saat penerimaan PO dikonfirmasi.
+      </p>
+
+      <form id="form-receive-po" class="space-y-4">
+        <fieldset class="space-y-2.5">
+          <legend class="block text-xs font-semibold text-[#A0A0A5] uppercase tracking-wider mb-1">
+            Pilih Metode Pembayaran ke Supplier
+          </legend>
+          <div class="po-payment-options" id="receive-po-payment-options">
+            <label class="po-payment-option is-selected" data-payment-card="Cash">
+              <input type="radio" name="po-receive-payment" value="Cash" class="po-payment-native-radio" checked>
+              <span class="po-payment-option__icon" aria-hidden="true">
+                <i data-lucide="banknote" class="w-4 h-4"></i>
+              </span>
+              <span class="po-payment-option__body">
+                <span class="po-payment-option__title block">Cash (Tunai)</span>
+                <span class="po-payment-option__desc block">Pembayaran tunai langsung &amp; dicatat ke kas keluar</span>
+              </span>
+              <span class="po-payment-option__radio" aria-hidden="true"></span>
+            </label>
+
+            <label class="po-payment-option" data-payment-card="Transfer">
+              <input type="radio" name="po-receive-payment" value="Transfer" class="po-payment-native-radio">
+              <span class="po-payment-option__icon" aria-hidden="true">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+              </span>
+              <span class="po-payment-option__body">
+                <span class="po-payment-option__title block">Transfer (Bank)</span>
+                <span class="po-payment-option__desc block">Pembayaran via transfer rekening bank</span>
+              </span>
+              <span class="po-payment-option__radio" aria-hidden="true"></span>
+            </label>
+
+            <label class="po-payment-option" data-payment-card="Tempo">
+              <input type="radio" name="po-receive-payment" value="Tempo" class="po-payment-native-radio">
+              <span class="po-payment-option__icon" aria-hidden="true">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </span>
+              <span class="po-payment-option__body">
+                <span class="po-payment-option__title block">Tempo (Hutang Dagang)</span>
+                <span class="po-payment-option__desc block">Dicatat sebagai hutang dagang ke supplier</span>
+              </span>
+              <span class="po-payment-option__radio" aria-hidden="true"></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <p id="receive-po-feedback" class="action-feedback hidden" role="alert" aria-live="assertive"></p>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="btn-cancel-receive-po"
+            class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+            Batal
+          </button>
+          <button type="submit" id="btn-confirm-receive-po"
+            class="bg-[#0088CC] hover:bg-[#0077BB] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+            <i data-lucide="package-check" class="w-4 h-4" aria-hidden="true"></i>
+            <span>Konfirmasi Terima PO</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- =========================== MODAL (PO: modal-print-po) =========================== -->
   <div id="modal-print-po"
     class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4 overflow-y-auto"
@@ -5407,6 +5514,12 @@
           class="p-1.5 hover:bg-white/5 rounded-lg text-[#A0A0A5] hover:text-white transition">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
+      </div>
+
+      <div id="doc-po-draft-banner"
+        class="hidden px-3.5 py-2 rounded-xl bg-[#0088CC]/15 border border-[#0088CC]/35 text-[#8DD3FF] text-xs flex items-center gap-2">
+        <i data-lucide="sparkles" class="w-4 h-4 shrink-0 text-[#32ADE6]" aria-hidden="true"></i>
+        <span><strong>Mode Edit Draf:</strong> Ubah jumlah, harga satuan, atau hapus item langsung di tabel. Klik <strong>Kirim via WhatsApp</strong> atau <strong>Cetak / Simpan PDF</strong> untuk mengunci ke <strong>ORDERED</strong>.</span>
       </div>
 
       <!-- PREVIEW DOKUMEN CETAK PO -->
@@ -5463,6 +5576,7 @@
                 <th class="py-2 px-2 text-center w-16">Jumlah</th>
                 <th class="py-2 px-2 text-right w-28">Harga Satuan</th>
                 <th class="py-2 px-2 text-right w-32">Subtotal</th>
+                <th id="doc-po-action-header" class="po-doc-action-col py-2 px-1 text-center w-10 hidden">Aksi</th>
               </tr>
             </thead>
             <tbody id="doc-po-items-tbody" class="divide-y divide-gray-200">
@@ -5473,6 +5587,7 @@
                 <td colspan="4" class="py-2.5 px-2 text-right uppercase text-[10px] text-gray-700">Total Nilai Pesanan:
                 </td>
                 <td class="po-document-total py-2.5 px-2 text-right text-sm" id="doc-po-total">Rp 0</td>
+                <td id="doc-po-total-action-spacer" class="po-doc-action-col py-2.5 px-1 hidden"></td>
               </tr>
             </tfoot>
           </table>
@@ -6461,7 +6576,7 @@
   <script type="module" src="./pricing.js"></script>
   <script type="module" src="./in.js"></script>
   <script type="module" src="./out.js?v=3.5.82"></script>
-  <script type="module" src="./po.js"></script>
+  <script type="module" src="./po.js?v=3.5.82"></script>
   <script type="module" src="./return.js"></script>
   <script type="module" src="./suppliers.js"></script>
   <script type="module" src="./customers.js"></script>

@@ -93,7 +93,7 @@ if (fs.existsSync(htmlPath)) {
     `$1v${newVersion} (PWA Local-First)$2`
   );
   htmlContent = htmlContent.replace(
-    /(src="\.\/out\.js\?v=)[0-9.]+(")/,
+    /(src="\.\/(?:out|po)\.js\?v=)[0-9.]+(")/g,
     `$1${newVersion}$2`
   );
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');

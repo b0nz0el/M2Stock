@@ -184,6 +184,112 @@ describe('Audio Feedback Engine (Web Audio API)', () => {
 
       expect(() => playAudioFeedback('scan')).not.toThrow();
     });
+
+    it('menggunakan peak gain tinggi (>= 0.85) dan waveform berharmonik untuk volume keras', () => {
+      const createdOscs = [];
+      const createdGains = [];
+      mockAudioContext.createOscillator = vi.fn(() => {
+        const osc = {
+          type: 'sine',
+          frequency: {
+            setValueAtTime: vi.fn(),
+            linearRampToValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn()
+          },
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn()
+        };
+        createdOscs.push(osc);
+        return osc;
+      });
+      mockAudioContext.createGain = vi.fn(() => {
+        const gainNode = {
+          gain: {
+            setValueAtTime: vi.fn(),
+            linearRampToValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn()
+          },
+          connect: vi.fn()
+        };
+        createdGains.push(gainNode);
+        return gainNode;
+      });
+
+      setAudioFeedbackEnabled(true);
+      playAudioFeedback('scan');
+      expect(createdOscs[0].type).toBe('square');
+      expect(createdGains[0].gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number)
+      );
+      expect(createdGains[0].gain.linearRampToValueAtTime.mock.calls[0][0]).toBeGreaterThanOrEqual(0.9);
+
+      playAudioFeedback('cash');
+      expect(createdGains[1].gain.linearRampToValueAtTime.mock.calls[0][0]).toBeGreaterThanOrEqual(0.9);
+      expect(createdGains[2].gain.linearRampToValueAtTime.mock.calls[0][0]).toBe(1.0);
+    });
+
+    it('merangkai WaveShaperNode dan DynamicsCompressorNode sebagai limiter anti-clipping saat didukung', () => {
+      const mockShaper = {
+        curve: null,
+        oversample: 'none',
+        connect: vi.fn()
+      };
+      const mockCompressor = {
+        threshold: { setValueAtTime: vi.fn() },
+        knee: { setValueAtTime: vi.fn() },
+        ratio: { setValueAtTime: vi.fn() },
+        attack: { setValueAtTime: vi.fn() },
+        release: { setValueAtTime: vi.fn() },
+        connect: vi.fn()
+      };
+      const createdGains = [];
+      mockAudioContext.createWaveShaper = vi.fn(() => mockShaper);
+      mockAudioContext.createDynamicsCompressor = vi.fn(() => mockCompressor);
+      mockAudioContext.createGain = vi.fn(() => {
+        const gainNode = {
+          gain: {
+            setValueAtTime: vi.fn(),
+            linearRampToValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn()
+          },
+          connect: vi.fn()
+        };
+        createdGains.push(gainNode);
+        return gainNode;
+      });
+
+      setAudioFeedbackEnabled(true);
+      playAudioFeedback('scan');
+      playAudioFeedback('input');
+
+      expect(mockAudioContext.createWaveShaper).toHaveBeenCalledTimes(1);
+      expect(mockAudioContext.createDynamicsCompressor).toHaveBeenCalledTimes(1);
+      expect(mockShaper.curve).toBeInstanceOf(Float32Array);
+      expect(mockShaper.connect).toHaveBeenCalledWith(mockAudioContext.destination);
+      expect(mockCompressor.connect).toHaveBeenCalledWith(mockShaper);
+      expect(createdGains[0].connect).toHaveBeenCalledWith(mockCompressor);
+      expect(createdGains[1].connect).toHaveBeenCalledWith(mockCompressor);
+    });
+
+    it('melakukan resume AudioContext terlebih dahulu jika state masih suspended', async () => {
+      mockAudioContext.state = 'suspended';
+      mockAudioContext.resume = vi.fn().mockImplementation(() => {
+        mockAudioContext.state = 'running';
+        return Promise.resolve();
+      });
+
+      setAudioFeedbackEnabled(true);
+      playAudioFeedback('scan');
+
+      expect(mockAudioContext.resume).toHaveBeenCalledTimes(1);
+      expect(mockAudioContext.createOscillator).not.toHaveBeenCalled();
+
+      await vi.waitFor(() => {
+        expect(mockAudioContext.createOscillator).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 });
 
