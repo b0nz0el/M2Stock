@@ -34,4 +34,17 @@ describe('security hardening regressions', () => {
     expect(migration).toContain('profiles_update_owner_only');
     expect(migration).toContain("UPPER(profiles.role) = 'OWNER'");
   });
+
+  it('restricts selling price updates on products to verified OWNER in database trigger', () => {
+    const migration = readFileSync(
+      resolve(root, 'supabase/migrations/20261112_protect_product_prices_owner_only.sql'),
+      'utf8'
+    );
+
+    expect(migration).toContain('check_product_price_update_permission');
+    expect(migration).toContain('trg_protect_product_prices');
+    expect(migration).toContain('OLD.sell_price IS DISTINCT FROM NEW.sell_price');
+    expect(migration).toContain('NOT public.is_owner()');
+    expect(migration).toContain('Hanya role OWNER yang berhak mengubah harga produk');
+  });
 });
